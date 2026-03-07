@@ -9,13 +9,13 @@ class ParentPrivacySettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final privacyState = ref.watch(privacyProvider);
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n?.parentPrivacySettings ?? 'Privacy Settings'),
+        title: Text(l10n.parentPrivacySettings),
         elevation: 0,
       ),
       body: privacyState.when(
@@ -24,11 +24,11 @@ class ParentPrivacySettingsScreen extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text('Error loading privacy settings'),
+              Text(l10n.privacySettingsError),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => ref.invalidate(privacyProvider),
-                child: const Text('Retry'),
+                child: Text(l10n.retryAction),
               ),
             ],
           ),
@@ -40,8 +40,8 @@ class ParentPrivacySettingsScreen extends ConsumerWidget {
               children: [
                 // Analytics toggle
                 SwitchListTile(
-                  title: const Text('Analytics'),
-                  subtitle: const Text('Help improve Kinder World with usage data'),
+                  title: Text(l10n.analyticsTitle),
+                  subtitle: Text(l10n.analyticsSubtitle),
                   value: privacySettings.analyticsEnabled,
                   onChanged: (value) {
                     ref.read(privacyControllerProvider.notifier).updateSettings(
@@ -55,10 +55,9 @@ class ParentPrivacySettingsScreen extends ConsumerWidget {
 
                 // Personalized recommendations toggle
                 SwitchListTile(
-                  title: const Text('Personalized Recommendations'),
-                  subtitle: const Text('Receive customized content suggestions'),
-                  value:
-                      privacySettings.personalizedRecommendations,
+                  title: Text(l10n.personalizedRecommendationsTitle),
+                  subtitle: Text(l10n.personalizedRecommendationsSubtitle),
+                  value: privacySettings.personalizedRecommendations,
                   onChanged: (value) {
                     ref.read(privacyControllerProvider.notifier).updateSettings(
                           privacySettings.copyWith(
@@ -71,8 +70,8 @@ class ParentPrivacySettingsScreen extends ConsumerWidget {
 
                 // Data collection opt-out toggle
                 SwitchListTile(
-                  title: const Text('Opt-out of Data Collection'),
-                  subtitle: const Text('Do not collect any usage data'),
+                  title: Text(l10n.dataCollectionOptOutTitle),
+                  subtitle: Text(l10n.dataCollectionOptOutSubtitle),
                   value: privacySettings.dataCollectionOptOut,
                   onChanged: (value) {
                     ref.read(privacyControllerProvider.notifier).updateSettings(
@@ -97,7 +96,7 @@ class ParentPrivacySettingsScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Privacy Information',
+                        l10n.privacyInfoTitle,
                         style: textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
@@ -105,7 +104,7 @@ class ParentPrivacySettingsScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Your privacy is important to us. These settings control what data we collect and how it is used to improve your experience.',
+                        l10n.privacyInfoBody,
                         style: textTheme.bodySmall?.copyWith(fontSize: 13),
                       ),
                     ],

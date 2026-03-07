@@ -1,10 +1,11 @@
 import 'dart:async';
+import 'dart:ui' show lerpDouble;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/app.dart';
-import 'package:kinder_world/core/widgets/auth_design_system.dart';
 import 'package:kinder_world/router.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -15,93 +16,35 @@ class SplashScreen extends ConsumerStatefulWidget {
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen>
-    with TickerProviderStateMixin {
-  late final AnimationController _mainController;
-  late final AnimationController _pulseController;
-
-  late final Animation<double> _logoOpacity;
-  late final Animation<Offset> _logoSlide;
-  late final Animation<double> _titleOpacity;
-  late final Animation<Offset> _titleSlide;
-  late final Animation<double> _taglineOpacity;
-  late final Animation<double> _dotsOpacity;
-  late final Animation<double> _pulse;
+    with SingleTickerProviderStateMixin {
+  Timer? _navigationTimer;
+  late final AnimationController _fadeController;
+  late final Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
-
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
+      statusBarIconBrightness: Brightness.dark,
     ));
 
-    _mainController = AnimationController(
+    _fadeController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2000),
+      duration: _SplashDurations.screenFadeIn,
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeOutCubic,
     );
 
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1300),
-    )..repeat(reverse: true);
-
-    _pulse = Tween<double>(begin: 0.92, end: 1.0).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-
-    // Logo: 0% → 45%
-    _logoOpacity = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(
-        parent: _mainController,
-        curve: const Interval(0.0, 0.45, curve: Curves.easeOut),
-      ),
-    );
-    _logoSlide = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _mainController,
-      curve: const Interval(0.0, 0.45, curve: Curves.easeOut),
-    ));
-
-    // Title: 35% → 68%
-    _titleOpacity = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(
-        parent: _mainController,
-        curve: const Interval(0.35, 0.68, curve: Curves.easeOut),
-      ),
-    );
-    _titleSlide = Tween<Offset>(
-      begin: const Offset(0, 0.2),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _mainController,
-      curve: const Interval(0.35, 0.68, curve: Curves.easeOut),
-    ));
-
-    // Tagline: 55% → 88%
-    _taglineOpacity = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(
-        parent: _mainController,
-        curve: const Interval(0.55, 0.88, curve: Curves.easeOut),
-      ),
-    );
-
-    // Dots: 72% → 100%
-    _dotsOpacity = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(
-        parent: _mainController,
-        curve: const Interval(0.72, 1.0, curve: Curves.easeOut),
-      ),
-    );
-
-    _mainController.forward();
-    Timer(const Duration(milliseconds: 2900), _navigateNext);
+    _fadeController.forward();
+    _navigationTimer = Timer(_SplashDurations.navigationDelay, _navigateNext);
   }
 
   Future<void> _navigateNext() async {
     if (!mounted) return;
+
     final storage = ref.read(secureStorageProvider);
     final token = await storage.getAuthToken();
     final role = await storage.getUserRole();
@@ -126,227 +69,460 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   @override
   void dispose() {
-    _mainController.dispose();
-    _pulseController.dispose();
+    _navigationTimer?.cancel();
+    _fadeController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF0A2F6B),
-              Color(0xFF1565C0),
-              Color(0xFF1976D2),
-              Color(0xFF1E88E5),
-            ],
-            stops: [0.0, 0.35, 0.65, 1.0],
-          ),
-        ),
-        child: Stack(
-          children: [
-            // Ambient decorative circles
-            Positioned(
-              top: -60,
-              right: -40,
-              child: _AmbientCircle(size: 200, opacity: 0.08),
-            ),
-            Positioned(
-              top: 80,
-              left: -80,
-              child: _AmbientCircle(size: 260, opacity: 0.06),
-            ),
-            Positioned(
-              bottom: 100,
-              right: -60,
-              child: _AmbientCircle(size: 220, opacity: 0.07),
-            ),
-            Positioned(
-              bottom: -40,
-              left: 20,
-              child: _AmbientCircle(size: 180, opacity: 0.09),
-            ),
-
-            // Main content
-            SafeArea(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Spacer(flex: 2),
-
-                  // Animated logo with glow
-                  FadeTransition(
-                    opacity: _logoOpacity,
-                    child: SlideTransition(
-                      position: _logoSlide,
-                      child: AnimatedBuilder(
-                        animation: _pulse,
-                        builder: (context, child) => Transform.scale(
-                          scale: _pulse.value,
-                          child: child,
-                        ),
-                        child: _GlowLogo(),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // App name
-                  FadeTransition(
-                    opacity: _titleOpacity,
-                    child: SlideTransition(
-                      position: _titleSlide,
-                      child: const Text(
-                        'Kinder World',
-                        style: TextStyle(
-                          fontSize: 36,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          letterSpacing: -1.0,
-                          height: 1.1,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Tagline
-                  FadeTransition(
-                    opacity: _taglineOpacity,
-                    child: const Text(
-                      'Learning through play',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.white70,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
-
-                  const Spacer(flex: 2),
-
-                  // Animated loading dots
-                  FadeTransition(
-                    opacity: _dotsOpacity,
-                    child: const _LoadingDots(),
-                  ),
-
-                  const SizedBox(height: 48),
-                ],
-              ),
-            ),
-          ],
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final layout = _SplashLayout.fromConstraints(constraints);
+            return _SplashScene(layout: layout);
+          },
         ),
       ),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────
+class _SplashScene extends StatelessWidget {
+  const _SplashScene({required this.layout});
 
-class _GlowLogo extends StatelessWidget {
+  final _SplashLayout layout;
+
   @override
   Widget build(BuildContext context) {
     return Stack(
-      alignment: Alignment.center,
+      fit: StackFit.expand,
       children: [
-        Container(
-          width: 116,
-          height: 116,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.white.withValues(alpha: 0.15),
-                blurRadius: 40,
-                spreadRadius: 10,
-              ),
-            ],
+        const Positioned.fill(
+          child: _AssetImage(
+            assetPath: _SplashAssets.background,
+            fit: BoxFit.cover,
           ),
         ),
-        const AuthBrandMark(size: 88),
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          height: layout.starsHeight,
+          child: const IgnorePointer(
+            child: _AnimatedAsset(
+              animation: _FloatAnimationSpec(
+                duration: _SplashDurations.backgroundStarsFloat,
+                offset: 5,
+              ),
+              child: _AssetImage(
+                assetPath: _SplashAssets.stars,
+                fit: BoxFit.cover,
+                alignment: Alignment.topCenter,
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          top: layout.haloTop,
+          left: layout.haloLeft,
+          width: layout.haloWidth,
+          child: const IgnorePointer(
+            child: _AnimatedAsset(
+              animation: _PulseAnimationSpec(
+                duration: _SplashDurations.haloPulse,
+                minScale: 0.98,
+                maxScale: 1.03,
+                minOpacity: 0.86,
+                maxOpacity: 1,
+              ),
+              child: _AssetImage(
+                assetPath: _SplashAssets.halo,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          top: layout.boyTop,
+          left: layout.boyLeft,
+          height: layout.boyHeight,
+          child: const IgnorePointer(
+            child: _AssetImage(
+              assetPath: _SplashAssets.boy,
+              fit: BoxFit.contain,
+            ),
+          ),
+        ),
+        Positioned(
+          top: layout.planetTop,
+          right: layout.planetRight,
+          width: layout.planetWidth,
+          child: const IgnorePointer(
+            child: _AnimatedAsset(
+              animation: _FloatAnimationSpec(
+                duration: _SplashDurations.planetFloat,
+                offset: 8,
+              ),
+              child: _AssetImage(
+                assetPath: _SplashAssets.planet,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          top: layout.bookTop,
+          left: layout.bookLeft,
+          width: layout.bookWidth,
+          child: const IgnorePointer(
+            child: _AnimatedAsset(
+              animation: _FloatAnimationSpec(
+                duration: _SplashDurations.bookFloat,
+                offset: 6,
+              ),
+              child: _AssetImage(
+                assetPath: _SplashAssets.book,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          top: layout.starTop,
+          left: layout.starLeft,
+          width: layout.starWidth,
+          child: const IgnorePointer(
+            child: _AnimatedAsset(
+              animation: _FloatAnimationSpec(
+                duration: _SplashDurations.starFloat,
+                offset: 7,
+              ),
+              child: _AssetImage(
+                assetPath: _SplashAssets.star,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          top: layout.bulbTop,
+          right: layout.bulbRight,
+          width: layout.bulbWidth,
+          child: const IgnorePointer(
+            child: _AnimatedAsset(
+              animation: _FloatAnimationSpec(
+                duration: _SplashDurations.bulbFloat,
+                offset: 9,
+              ),
+              child: _AssetImage(
+                assetPath: _SplashAssets.bulb,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          left: layout.textHorizontalPadding,
+          right: layout.textHorizontalPadding,
+          bottom: layout.textBottom,
+          child: _SplashBranding(layout: layout),
+        ),
       ],
     );
   }
 }
 
-class _AmbientCircle extends StatelessWidget {
-  final double size;
-  final double opacity;
-  const _AmbientCircle({required this.size, required this.opacity});
+class _SplashBranding extends StatelessWidget {
+  const _SplashBranding({required this.layout});
+
+  final _SplashLayout layout;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white.withValues(alpha: opacity),
-      ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ShaderMask(
+          shaderCallback: (bounds) => const LinearGradient(
+            colors: [
+              Color(0xFFD177C9),
+              Color(0xFF78A9FF),
+              Color(0xFF8FD59A),
+              Color(0xFFFFA8B5),
+            ],
+          ).createShader(bounds),
+          child: Text(
+            'Kinder World',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: layout.titleFontSize,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -1.2,
+              height: 1,
+            ),
+          ),
+        ),
+        SizedBox(height: layout.taglineSpacing),
+        Text(
+          'Learn • Play • Grow',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: const Color(0xFF184F86),
+            fontSize: layout.taglineFontSize,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.2,
+          ),
+        ),
+      ],
     );
   }
 }
 
-class _LoadingDots extends StatefulWidget {
-  const _LoadingDots();
+class _AssetImage extends StatelessWidget {
+  const _AssetImage({
+    required this.assetPath,
+    this.fit = BoxFit.contain,
+    this.alignment = Alignment.center,
+  });
+
+  final String assetPath;
+  final BoxFit fit;
+  final Alignment alignment;
 
   @override
-  State<_LoadingDots> createState() => _LoadingDotsState();
+  Widget build(BuildContext context) {
+    return Image.asset(assetPath, fit: fit, alignment: alignment);
+  }
 }
 
-class _LoadingDotsState extends State<_LoadingDots>
+class _AnimatedAsset extends StatefulWidget {
+  const _AnimatedAsset({
+    required this.animation,
+    required this.child,
+  });
+
+  final _AssetAnimationSpec animation;
+  final Widget child;
+
+  @override
+  State<_AnimatedAsset> createState() => _AnimatedAssetState();
+}
+
+class _AnimatedAssetState extends State<_AnimatedAsset>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
+  late final AnimationController _controller;
+  late final Animation<double> _curvedAnimation;
 
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(
+    _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
-    )..repeat();
+      duration: widget.animation.duration,
+    )..repeat(reverse: true);
+    _curvedAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    );
   }
 
   @override
   void dispose() {
-    _ctrl.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final animation = widget.animation;
     return AnimatedBuilder(
-      animation: _ctrl,
-      builder: (context, _) {
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: List.generate(3, (i) {
-            final delay = i / 3.0;
-            final t = (_ctrl.value - delay).clamp(0.0, 1.0);
-            final opacity = (1.0 - (t * 2 - 1).abs()).clamp(0.3, 1.0);
-            return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: opacity),
-              ),
-            );
-          }),
+      animation: _curvedAnimation,
+      child: widget.child,
+      builder: (context, child) {
+        final translationY = animation.translationY(_curvedAnimation.value);
+        final scale = animation.scale(_curvedAnimation.value);
+        final opacity = animation.opacity(_curvedAnimation.value);
+
+        return Opacity(
+          opacity: opacity,
+          child: Transform.translate(
+            offset: Offset(0, translationY),
+            child: Transform.scale(
+              scale: scale,
+              child: child,
+            ),
+          ),
         );
       },
     );
   }
+}
+
+abstract class _AssetAnimationSpec {
+  const _AssetAnimationSpec({required this.duration});
+
+  final Duration duration;
+
+  double translationY(double t) => 0;
+
+  double scale(double t) => 1;
+
+  double opacity(double t) => 1;
+}
+
+class _FloatAnimationSpec extends _AssetAnimationSpec {
+  const _FloatAnimationSpec({
+    required super.duration,
+    required this.offset,
+  });
+
+  final double offset;
+
+  @override
+  double translationY(double t) => lerpDouble(-offset, offset, t)!;
+}
+
+class _PulseAnimationSpec extends _AssetAnimationSpec {
+  const _PulseAnimationSpec({
+    required super.duration,
+    required this.minScale,
+    required this.maxScale,
+    required this.minOpacity,
+    required this.maxOpacity,
+  });
+
+  final double minScale;
+  final double maxScale;
+  final double minOpacity;
+  final double maxOpacity;
+
+  @override
+  double scale(double t) => lerpDouble(minScale, maxScale, t)!;
+
+  @override
+  double opacity(double t) => lerpDouble(minOpacity, maxOpacity, t)!;
+}
+
+class _SplashLayout {
+  const _SplashLayout({
+    required this.width,
+    required this.height,
+    required this.starsHeight,
+    required this.haloTop,
+    required this.haloLeft,
+    required this.haloWidth,
+    required this.boyTop,
+    required this.boyLeft,
+    required this.boyHeight,
+    required this.planetTop,
+    required this.planetRight,
+    required this.planetWidth,
+    required this.bookTop,
+    required this.bookLeft,
+    required this.bookWidth,
+    required this.starTop,
+    required this.starLeft,
+    required this.starWidth,
+    required this.bulbTop,
+    required this.bulbRight,
+    required this.bulbWidth,
+    required this.textHorizontalPadding,
+    required this.textBottom,
+    required this.titleFontSize,
+    required this.taglineFontSize,
+    required this.taglineSpacing,
+  });
+
+  factory _SplashLayout.fromConstraints(BoxConstraints constraints) {
+    final width = constraints.maxWidth;
+    final height = constraints.maxHeight;
+    final scale = (width / 390).clamp(0.85, 1.18);
+
+    final haloWidth = width * 0.78;
+    final boyHeight = height * 0.58;
+    final boyWidth = boyHeight * 0.62;
+    final starWidth = width * 0.17;
+
+    return _SplashLayout(
+      width: width,
+      height: height,
+      starsHeight: height * 0.46,
+      haloTop: height * 0.19,
+      haloLeft: (width - haloWidth) / 2,
+      haloWidth: haloWidth,
+      boyTop: height * 0.17,
+      boyLeft: (width - boyWidth) / 2,
+      boyHeight: boyHeight,
+      planetTop: height * 0.24,
+      planetRight: width * 0.08,
+      planetWidth: width * 0.38,
+      bookTop: height * 0.17,
+      bookLeft: width * 0.08,
+      bookWidth: width * 0.22,
+      starTop: height * 0.10,
+      starLeft: (width - starWidth) / 2,
+      starWidth: starWidth,
+      bulbTop: height * 0.43,
+      bulbRight: width * 0.08,
+      bulbWidth: width * 0.18,
+      textHorizontalPadding: width * 0.08,
+      textBottom: height * 0.08,
+      titleFontSize: 44 * scale,
+      taglineFontSize: 20 * scale,
+      taglineSpacing: 10 * scale,
+    );
+  }
+
+  final double width;
+  final double height;
+  final double starsHeight;
+  final double haloTop;
+  final double haloLeft;
+  final double haloWidth;
+  final double boyTop;
+  final double boyLeft;
+  final double boyHeight;
+  final double planetTop;
+  final double planetRight;
+  final double planetWidth;
+  final double bookTop;
+  final double bookLeft;
+  final double bookWidth;
+  final double starTop;
+  final double starLeft;
+  final double starWidth;
+  final double bulbTop;
+  final double bulbRight;
+  final double bulbWidth;
+  final double textHorizontalPadding;
+  final double textBottom;
+  final double titleFontSize;
+  final double taglineFontSize;
+  final double taglineSpacing;
+}
+
+class _SplashAssets {
+  static const background = 'assets/images/background.png';
+  static const stars = 'assets/images/small_stars.png';
+  static const halo = 'assets/images/halo.png';
+  static const boy = 'assets/images/boy.png';
+  static const planet = 'assets/images/planet.png';
+  static const book = 'assets/images/book2.png';
+  static const star = 'assets/images/star.png';
+  static const bulb = 'assets/images/bulb.png';
+}
+
+class _SplashDurations {
+  static const screenFadeIn = Duration(milliseconds: 900);
+  static const navigationDelay = Duration(milliseconds: 2900);
+  static const backgroundStarsFloat = Duration(milliseconds: 4200);
+  static const haloPulse = Duration(milliseconds: 2400);
+  static const starFloat = Duration(milliseconds: 2600);
+  static const bookFloat = Duration(milliseconds: 3000);
+  static const bulbFloat = Duration(milliseconds: 3400);
+  static const planetFloat = Duration(milliseconds: 3600);
 }

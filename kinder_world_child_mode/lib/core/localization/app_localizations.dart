@@ -742,6 +742,70 @@ abstract class AppLocalizations {
   String get billingTitle;
   String get billingComingSoon;
 
+  // ── Parent Forgot Password Screen ──
+  String get resetPassword;
+  String get parentAccount;
+  String get forgotYourPassword;
+  String get forgotPasswordDescription;
+  String get emailAddress;
+  String get emailPlaceholder;
+  String get emailValidationEmpty;
+  String get emailValidationInvalid;
+  String get spamFolderNote;
+  String get sendResetLink;
+  String get backToLogin;
+  String get checkYourInbox;
+  String resetLinkSentTo(String email);
+  String get step1OpenEmail;
+  String get step2ClickLink;
+  String get step3CreatePassword;
+  String get didntReceiveIt;
+
+  // ── Child Forgot Password Screen ──
+  String get needHelp;
+  String get wellAskYourParent;
+  String get forgotYourPictures;
+  String get forgotPicturesDescription;
+  String get yourChildId;
+  String get childIdHint;
+  String get childIdRequired;
+  String get parentsEmail;
+  String get parentEmailHint;
+  String get parentEmailRequired;
+  String get parentEmailInvalid;
+  String get parentWillGetEmail;
+  String get askParentForHelp;
+  String get backToChildLogin;
+  String get messageSentTitle;
+  String messageSentToParent(String email);
+  String get whatHappensNext;
+  String get childStep1;
+  String get childStep2;
+  String get childStep3;
+  String get tryAgainDifferentInfo;
+
+  // ── Parent Register Screen ──
+  String get personalInformation;
+  String get securitySection;
+  String get accountCreatedWelcome;
+
+  // ── UI Redesign — Role Selection / Login / Register / Widgets ──
+  String get signIn;
+  String get whoIsUsingKinderWorld;
+  String get secureAndStructured;
+  String get funAndPlayful;
+  String get loginFailed;
+  String get parentPortal;
+  String get useGmailOrMicrosoftEmail;
+  String get registrationFailed;
+  String get nameTooShort;
+  String get useAllowedEmail;
+  String get passwordTooShortRegister;
+  String get joinKinderWorld;
+  String get passwordWeak;
+  String get passwordFair;
+  String get passwordStrong;
+  String get passwordVeryStrong;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

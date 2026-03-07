@@ -2076,4 +2076,185 @@ class AppLocalizationsEn extends AppLocalizations {
   String get billingComingSoon =>
       'Billing management is coming soon. You can update payment methods and invoices here once the backend is ready.';
 
+  // ── Parent Forgot Password Screen ──
+  @override
+  String get resetPassword => 'Reset Password';
+
+  @override
+  String get parentAccount => 'Parent Account';
+
+  @override
+  String get forgotYourPassword => 'Forgot your password?';
+
+  @override
+  String get forgotPasswordDescription =>
+      'No worries! Enter your email address and we\'ll send you a link to reset your password.';
+
+  @override
+  String get emailAddress => 'Email Address';
+
+  @override
+  String get emailPlaceholder => 'parent@email.com';
+
+  @override
+  String get emailValidationEmpty => 'Please enter your email address';
+
+  @override
+  String get emailValidationInvalid =>
+      'Please enter a valid email (Gmail, Outlook, etc.)';
+
+  @override
+  String get spamFolderNote =>
+      'Check your spam folder if you don\'t see the email within a few minutes.';
+
+  @override
+  String get sendResetLink => 'Send Reset Link';
+
+  @override
+  String get backToLogin => 'Back to Login';
+
+  @override
+  String get checkYourInbox => 'Check your inbox!';
+
+  @override
+  String resetLinkSentTo(String email) =>
+      'We\'ve sent a password reset link to\n$email';
+
+  @override
+  String get step1OpenEmail => 'Open the email from Kinder World';
+
+  @override
+  String get step2ClickLink => 'Click the "Reset Password" link';
+
+  @override
+  String get step3CreatePassword => 'Create your new password';
+
+  @override
+  String get didntReceiveIt => 'Didn\'t receive it? Try again';
+
+  // ── Child Forgot Password Screen ──
+  @override
+  String get needHelp => 'Need Help?';
+
+  @override
+  String get wellAskYourParent => 'We\'ll ask your parent!';
+
+  @override
+  String get forgotYourPictures => 'Forgot your pictures?';
+
+  @override
+  String get forgotPicturesDescription =>
+      'No problem! Tell us your Child ID and your parent\'s email. We\'ll send them a message to help you get back in.';
+
+  @override
+  String get yourChildId => 'Your Child ID';
+
+  @override
+  String get childIdHint => 'e.g. Ava123';
+
+  @override
+  String get childIdRequired => 'Please enter your Child ID';
+
+  @override
+  String get parentsEmail => 'Parent\'s Email';
+
+  @override
+  String get parentEmailHint => 'parent@email.com';
+
+  @override
+  String get parentEmailRequired => 'Please enter your parent\'s email';
+
+  @override
+  String get parentEmailInvalid => 'Please enter a valid email';
+
+  @override
+  String get parentWillGetEmail =>
+      'Your parent will get an email and can help you log back in!';
+
+  @override
+  String get askParentForHelp => 'Ask Parent for Help';
+
+  @override
+  String get backToChildLogin => 'Back to Child Login';
+
+  @override
+  String get messageSentTitle => 'Message Sent!';
+
+  @override
+  String messageSentToParent(String email) =>
+      'We sent a message to your parent at\n$email';
+
+  @override
+  String get whatHappensNext => 'What happens next?';
+
+  @override
+  String get childStep1 => 'Your parent gets an email from us';
+
+  @override
+  String get childStep2 => 'They\'ll help you set new picture passwords';
+
+  @override
+  String get childStep3 => 'You\'ll be back playing in no time!';
+
+  @override
+  String get tryAgainDifferentInfo => 'Try again with different info';
+
+  // ── Parent Register Screen ──
+  @override
+  String get personalInformation => 'Personal Information';
+
+  @override
+  String get securitySection => 'Security';
+
+  @override
+  String get accountCreatedWelcome => 'Account created! Welcome to Kinder World.';
+
+  // ── UI Redesign — Role Selection / Login / Register / Widgets ──
+  @override
+  String get signIn => 'Sign In';
+
+  @override
+  String get whoIsUsingKinderWorld => 'Who\'s using\nKinder World?';
+
+  @override
+  String get secureAndStructured => 'Secure & Structured';
+
+  @override
+  String get funAndPlayful => 'Fun & Playful';
+
+  @override
+  String get loginFailed => 'Login failed. Please try again.';
+
+  @override
+  String get parentPortal => 'Parent Portal';
+
+  @override
+  String get useGmailOrMicrosoftEmail => 'Use Gmail or Microsoft email';
+
+  @override
+  String get registrationFailed => 'Registration failed. Please try again.';
+
+  @override
+  String get nameTooShort => 'Name must be at least 2 characters';
+
+  @override
+  String get useAllowedEmail => 'Use Gmail, Outlook, Hotmail, or Live email';
+
+  @override
+  String get passwordTooShortRegister => 'Password must be at least 8 characters';
+
+  @override
+  String get joinKinderWorld => 'Join Kinder World';
+
+  @override
+  String get passwordWeak => 'Weak';
+
+  @override
+  String get passwordFair => 'Fair';
+
+  @override
+  String get passwordStrong => 'Strong';
+
+  @override
+  String get passwordVeryStrong => 'Very Strong';
 }
