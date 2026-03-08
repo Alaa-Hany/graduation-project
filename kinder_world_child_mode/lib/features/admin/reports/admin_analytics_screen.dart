@@ -412,44 +412,79 @@ class _UsageChart extends StatelessWidget {
       ),
     );
 
-    return SizedBox(
-      height: 220,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: points.map((point) {
-          return Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _Bar(color: scheme.primary, value: point.users, maxValue: maxValue),
-                        const SizedBox(width: 2),
-                        _Bar(color: scheme.secondary, value: point.children, maxValue: maxValue),
-                        const SizedBox(width: 2),
-                        _Bar(color: scheme.tertiary, value: point.activities, maxValue: maxValue),
-                        const SizedBox(width: 2),
-                        _Bar(color: scheme.error, value: point.tickets, maxValue: maxValue),
-                      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const pointWidth = 42.0;
+        final chartWidth = math.max(
+          constraints.maxWidth,
+          points.length * pointWidth,
+        );
+
+        return SizedBox(
+          height: 220,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: chartWidth,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: points.map((point) {
+                  return SizedBox(
+                    width: pointWidth,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Expanded(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _Bar(
+                                  color: scheme.primary,
+                                  value: point.users,
+                                  maxValue: maxValue,
+                                ),
+                                const SizedBox(width: 2),
+                                _Bar(
+                                  color: scheme.secondary,
+                                  value: point.children,
+                                  maxValue: maxValue,
+                                ),
+                                const SizedBox(width: 2),
+                                _Bar(
+                                  color: scheme.tertiary,
+                                  value: point.activities,
+                                  maxValue: maxValue,
+                                ),
+                                const SizedBox(width: 2),
+                                _Bar(
+                                  color: scheme.error,
+                                  value: point.tickets,
+                                  maxValue: maxValue,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            point.label,
+                            style: Theme.of(context).textTheme.bodySmall,
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    point.label,
-                    style: Theme.of(context).textTheme.bodySmall,
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+                  );
+                }).toList(),
               ),
             ),
-          );
-        }).toList(),
-      ),
+          ),
+        );
+      },
     );
   }
 }

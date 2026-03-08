@@ -388,15 +388,15 @@ class AdminManagementRepository {
     String contentType = '',
     int page = 1,
   }) async {
+    final query = <String, dynamic>{'page': page};
+    if (search.isNotEmpty) query['search'] = search;
+    if (status.isNotEmpty) query['status'] = status;
+    if (categoryId != null) query['category_id'] = categoryId;
+    if (contentType.isNotEmpty) query['content_type'] = contentType;
+
     final response = await _network.get(
       '/admin/contents',
-      queryParameters: {
-        'search': search,
-        'status': status,
-        'category_id': categoryId,
-        'content_type': contentType,
-        'page': page,
-      },
+      queryParameters: query,
       options: await _adminOptions(),
     );
     final body = Map<String, dynamic>.from(response.data as Map);
@@ -477,14 +477,14 @@ class AdminManagementRepository {
     int? contentId,
     int page = 1,
   }) async {
+    final query = <String, dynamic>{'page': page};
+    if (status.isNotEmpty) query['status'] = status;
+    if (categoryId != null) query['category_id'] = categoryId;
+    if (contentId != null) query['content_id'] = contentId;
+
     final response = await _network.get(
       '/admin/quizzes',
-      queryParameters: {
-        'status': status,
-        'category_id': categoryId,
-        'content_id': contentId,
-        'page': page,
-      },
+      queryParameters: query,
       options: await _adminOptions(),
     );
     final body = Map<String, dynamic>.from(response.data as Map);

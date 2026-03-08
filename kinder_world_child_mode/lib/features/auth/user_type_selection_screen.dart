@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
+import 'package:kinder_world/router.dart';
 
 class UserTypeSelectionScreen extends ConsumerStatefulWidget {
   const UserTypeSelectionScreen({super.key});
@@ -220,6 +221,29 @@ class _UserTypeSelectionScreenState
                             tagIcon: Icons.star_rounded,
                             isPressed: _pressedPanel == 'child',
                             onTap: () => _selectUserType('child'),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.center,
+                      child: TextButton(
+                        onPressed: () => context.go(Routes.adminLogin),
+                        style: TextButton.styleFrom(
+                          minimumSize: const Size(0, 32),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: Text(
+                          'Admin',
+                          style: textTheme.bodySmall?.copyWith(
+                            color: auth.textMuted,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
