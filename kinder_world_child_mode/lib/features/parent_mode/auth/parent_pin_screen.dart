@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/providers/parent_pin_provider.dart';
+import 'package:kinder_world/core/localization/app_localizations.dart';
 
 class ParentPinScreen extends ConsumerStatefulWidget {
   final String? redirectPath;
@@ -121,7 +122,7 @@ class _ParentPinScreenState extends ConsumerState<ParentPinScreen>
               const SizedBox(height: 32),
               
               Text(
-                'Parent Access',
+                AppLocalizations.of(context)!.parentAccess,
                 style: textTheme.titleLarge?.copyWith(
                   fontSize: AppConstants.largeFontSize * 1.2,
                   fontWeight: FontWeight.bold,
@@ -130,7 +131,7 @@ class _ParentPinScreenState extends ConsumerState<ParentPinScreen>
               const SizedBox(height: 8),
               
               Text(
-                'Enter your PIN to continue',
+                AppLocalizations.of(context)!.enterPinToContinue,
                 style: textTheme.bodyMedium?.copyWith(
                   fontSize: AppConstants.fontSize,
                   color: colors.onSurfaceVariant,
@@ -231,13 +232,13 @@ class _ParentPinScreenState extends ConsumerState<ParentPinScreen>
                 onPressed: () {
                   // In a real app, this would trigger a reset flow
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please contact support to reset your PIN'),
+                    SnackBar(
+                      content: Text(AppLocalizations.of(context)!.contactSupportToResetPin),
                     ),
                   );
                 },
                 child: Text(
-                  'Forgot PIN?',
+                  AppLocalizations.of(context)!.forgotPin,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontSize: 16,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,

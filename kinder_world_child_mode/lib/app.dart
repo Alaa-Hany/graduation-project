@@ -9,6 +9,7 @@ import 'package:kinder_world/core/theme/app_theme.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
 import 'package:kinder_world/core/network/network_service.dart';
 import 'package:kinder_world/core/providers/connectivity_provider.dart';
+import 'package:kinder_world/core/providers/locale_provider.dart';
 import 'package:kinder_world/router.dart';
 import 'package:logger/logger.dart';
 import 'package:kinder_world/core/providers/theme_provider.dart';
@@ -31,19 +32,32 @@ final networkServiceProvider = Provider<NetworkService>((ref) {
   );
 });
 
-final localeProvider = StateProvider<Locale>((ref) => const Locale('en'));
-
-class KinderWorldApp extends ConsumerWidget {
+class KinderWorldApp extends ConsumerStatefulWidget {
   const KinderWorldApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<KinderWorldApp> createState() => _KinderWorldAppState();
+}
+
+class _KinderWorldAppState extends ConsumerState<KinderWorldApp> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      ref.read(localeProvider.notifier).loadSavedLocale();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final locale = ref.watch(localeProvider);
     final themeSettings = ref.watch(themeControllerProvider);
     final palette = ref.watch(themePaletteProvider);
 
     return MaterialApp.router(
-      title: 'Kinder World',
+      onGenerateTitle: (context) =>
+          custom_localizations.AppLocalizations.of(context)?.appTitle ??
+          'Kinder World',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme(palette: palette),
       darkTheme: AppTheme.darkTheme(palette: palette),

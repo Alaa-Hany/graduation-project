@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kinder_world/app.dart';
+import 'package:kinder_world/core/providers/locale_provider.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 
@@ -58,8 +58,9 @@ class _ParentLanguageScreenState extends ConsumerState<ParentLanguageScreen> {
                   padding: const EdgeInsets.only(bottom: 12.0),
                   child: InkWell(
                     onTap: () {
-                      ref.read(localeProvider.notifier).state =
-                          Locale(language['code']!);
+                      ref
+                          .read(localeProvider.notifier)
+                          .setLanguageCode(language['code']!);
                     },
                     borderRadius: BorderRadius.circular(16),
                     child: Container(

@@ -8,6 +8,7 @@ import 'package:kinder_world/core/providers/activity_filter_controller.dart';
 import 'package:kinder_world/core/providers/content_controller.dart';
 import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
+import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/features/child_mode/learn/coloring_gallery_screen.dart';
 
 class LearnScreen extends ConsumerStatefulWidget {
@@ -105,6 +106,7 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -135,7 +137,7 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
                     }
                   },
                   decoration: InputDecoration(
-                    hintText: 'Search pages...',
+                    hintText: l10n.searchPages,
                     prefixIcon: const Icon(Icons.search),
                     filled: true,
                     fillColor:
@@ -167,14 +169,14 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(Icons.wb_sunny_outlined,
+                      children: [
+                        const Icon(Icons.wb_sunny_outlined,
                             color: AppColors.primary, size: 24),
-                        SizedBox(width: 12),
+                        const SizedBox(width: 12),
                         Flexible(
                           child: Text(
-                            "Let's explore and learn something fun!",
-                            style: TextStyle(
+                            l10n.letsExploreAndLearn,
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                               color: AppColors.primary,
@@ -199,6 +201,7 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
   }
 
   Widget _buildSearchResults(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final query = _searchQuery.trim().toLowerCase();
     final results = query.isEmpty
         ? _categories
@@ -209,7 +212,7 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
     if (results.isEmpty) {
       return Center(
         child: Text(
-          'No pages found',
+          l10n.noPagesFound,
           style:
               TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
@@ -229,7 +232,7 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
         if (category.containsKey('image')) {
           return _buildCategoryCard(
             context,
-            category['title'],
+            _localizedSearchTitle(context, category['title'] as String),
             category['image'],
             category['color'],
             category['route'],
@@ -255,7 +258,7 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
             ),
             child: Center(
               child: Text(
-                category['title'],
+                _localizedSearchTitle(context, category['title'] as String),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: AppConstants.fontSize,
@@ -294,6 +297,17 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
         break;
       default:
         break;
+    }
+  }
+
+  String _localizedSearchTitle(BuildContext context, String title) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (title) {
+      case 'Behavioral': return l10n.categoryBehavioral;
+      case 'Educational': return l10n.categoryEducational;
+      case 'Skillful': return l10n.categorySkillful;
+      case 'Entertaining': return l10n.categoryEntertaining;
+      default: return title;
     }
   }
 
@@ -478,6 +492,7 @@ class EntertainingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Color(0xFFF3E5F5),
       appBar: AppBar(
@@ -501,14 +516,14 @@ class EntertainingScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
-                children: const [
-                  Icon(Icons.sentiment_satisfied_alt,
+                children: [
+                  const Icon(Icons.sentiment_satisfied_alt,
                       color: AppColors.entertaining, size: 28),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'I found something fun for you!',
-                      style: TextStyle(
+                      l10n.foundSomethingFun,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: AppColors.entertaining,
@@ -773,6 +788,7 @@ class BehavioralScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Color(0xFFE8F5E9),
       appBar: AppBar(
@@ -790,7 +806,7 @@ class BehavioralScreen extends StatelessWidget {
           children: [
             const ChildHeader(compact: true),
             Text(
-              "Let's practice kindness today!",
+              l10n.letsPracticeKindness,
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -1017,6 +1033,7 @@ class MethodContentScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Color(0xFFE8F5E9),
       body: SafeArea(
@@ -1058,14 +1075,14 @@ class MethodContentScreen extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Row(
-                    children: const [
-                      Icon(Icons.lightbulb_outline,
+                    children: [
+                      const Icon(Icons.lightbulb_outline,
                           color: AppColors.behavioral, size: 24),
-                      SizedBox(width: 12),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Let\'s try a new skill today!',
-                          style: TextStyle(
+                          l10n.letsTryNewSkill,
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                             color: AppColors.behavioral,
@@ -1201,6 +1218,7 @@ class SkillfulScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Color(0xFFFFF3E0),
       appBar: AppBar(
@@ -1218,7 +1236,7 @@ class SkillfulScreen extends StatelessWidget {
           children: [
             const ChildHeader(compact: true),
             Text(
-              'Let\'s create something fun!',
+              l10n.letsCreateSomethingFun,
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -1384,6 +1402,7 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Color(0xFFFFF3E0).withOpacity(0.5),
       body: SafeArea(
@@ -1438,7 +1457,7 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
                   },
                   decoration: InputDecoration(
                     border: InputBorder.none,
-                    hintText: 'Search activities...',
+                    hintText: l10n.searchActivities,
                     hintStyle: TextStyle(color: Colors.grey[500]),
                     prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
                   ),
@@ -1494,7 +1513,7 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
               child: _filteredVideos.isEmpty
                   ? Center(
                       child: Text(
-                      "No activities found.",
+                      l10n.noActivitiesFound,
                       style: TextStyle(color: Colors.grey[500]),
                     ))
                   : ListView.builder(
@@ -1513,6 +1532,7 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
   }
 
   Widget _buildVideoCard(Map<String, dynamic> video) {
+    final l10n = AppLocalizations.of(context)!;
     return InkWell(
       onTap: () {
         Navigator.of(context).push(
@@ -1580,7 +1600,7 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        'Watch Now',
+                        l10n.watchNow,
                         style: const TextStyle(
                           color: AppColors.skillful,
                           fontSize: 12,
@@ -1616,6 +1636,7 @@ class SkillVideoScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Color(0xFFFFF8E1),
       body: SafeArea(
@@ -1732,8 +1753,8 @@ class SkillVideoScreen extends StatelessWidget {
                                       color: Colors.orange[700]),
                                 ),
                                 const SizedBox(width: 10),
-                                const Text(
-                                  "Let's Create!",
+                                Text(
+                                  l10n.letsCreate,
                                   style: TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
@@ -1744,7 +1765,7 @@ class SkillVideoScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 15),
                             Text(
-                              "Follow the steps in this video to learn how to create $videoTitle. Have fun and be creative!",
+                              l10n.followStepsInVideo(videoTitle),
                               style: TextStyle(
                                 fontSize: 16,
                                 height: 1.5,
@@ -1764,8 +1785,8 @@ class SkillVideoScreen extends StatelessWidget {
                                   shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(20)),
                                 ),
-                                child: const Text(
-                                  "I'm Done!",
+                                child: Text(
+                                  l10n.imDone,
                                   style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold),
@@ -1837,6 +1858,7 @@ class EducationalScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Color(0xFFE3F2FD),
       appBar: AppBar(
@@ -1859,19 +1881,25 @@ class EducationalScreen extends StatelessWidget {
                 color: Colors.white.withOpacity(0.8),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Row(
-                children: const [
-                  Icon(Icons.lightbulb, color: AppColors.educational, size: 32),
-                  SizedBox(width: 16),
-                  Text(
-                    "Let's learn something new!",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.educational,
-                    ),
-                  ),
-                ],
+              child: Builder(
+                builder: (ctx) {
+                  final l10n = AppLocalizations.of(ctx)!;
+                  return Row(
+                    children: [
+                      const Icon(Icons.lightbulb,
+                          color: AppColors.educational, size: 32),
+                      const SizedBox(width: 16),
+                      Text(
+                        l10n.letsLearnSomethingNew,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.educational,
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
             const SizedBox(height: 32),
@@ -1993,6 +2021,7 @@ class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Color(0xFFE3F2FD),
       body: SafeArea(
@@ -2047,7 +2076,7 @@ class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
                   },
                   decoration: InputDecoration(
                     border: InputBorder.none,
-                    hintText: 'Search lessons...',
+                    hintText: l10n.searchLessons,
                     hintStyle: TextStyle(color: Colors.grey[500]),
                     prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
                   ),
@@ -2104,7 +2133,7 @@ class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
               child: _filteredLessons.isEmpty
                   ? Center(
                       child: Text(
-                      "No lessons found.",
+                      l10n.noLessonsFound,
                       style: TextStyle(color: Colors.grey[500]),
                     ))
                   : ListView.builder(
@@ -2231,6 +2260,7 @@ class LessonDetailScreen extends StatefulWidget {
 class _LessonDetailScreenState extends State<LessonDetailScreen> {
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Color(0xFFE1F5FE),
       body: SafeArea(
@@ -2344,8 +2374,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                                       color: AppColors.educational),
                                 ),
                                 const SizedBox(width: 10),
-                                const Text(
-                                  "Ready for a fun quiz?",
+                                Text(
+                                  l10n.readyForFunQuiz,
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -2356,7 +2386,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                             ),
                             const SizedBox(height: 14),
                             Text(
-                              "Play a quick quiz to earn stars and show what you learned!",
+                              l10n.playQuizToEarnStars,
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: Colors.grey[600],
@@ -2376,8 +2406,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                                   );
                                 },
                                 icon: const Icon(Icons.play_circle_fill),
-                                label: const Text(
-                                  "Start Quiz",
+                                label: Text(
+                                  l10n.startQuiz,
                                   style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold),
@@ -2455,25 +2485,26 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
         _showResult = false;
       });
     } else {
+      final l10n = AppLocalizations.of(context)!;
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.celebration, color: Colors.orange, size: 28),
-              SizedBox(width: 10),
-              Text('Great Job!'),
+              const Icon(Icons.celebration, color: Colors.orange, size: 28),
+              const SizedBox(width: 10),
+              Text(l10n.greatJob),
             ],
           ),
-          content: const Text('You completed the quiz!'),
+          content: Text(l10n.youCompletedQuiz),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text(
-                'Awesome!',
-                style: TextStyle(
+              child: Text(
+                l10n.awesome,
+                style: const TextStyle(
                   color: Colors.orange,
                   fontWeight: FontWeight.bold,
                 ),
@@ -2487,6 +2518,7 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final currentQ = _quizData[_currentQuestionIndex];
 
     return Scaffold(
@@ -2541,16 +2573,16 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Quiz Time!',
-                            style: TextStyle(
+                          Text(
+                            l10n.quizTime,
+                            style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Question ${_currentQuestionIndex + 1} of ${_quizData.length}',
+                            l10n.questionOf(_currentQuestionIndex + 1, _quizData.length),
                             style: TextStyle(color: Colors.grey[600]),
                           ),
                         ],
@@ -2657,8 +2689,8 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
                   ),
                   child: Text(
                     _currentQuestionIndex < _quizData.length - 1
-                        ? 'Next Question'
-                        : 'Finish',
+                        ? l10n.nextQuestion
+                        : l10n.lessonFinish,
                     style: const TextStyle(
                         fontSize: 18, fontWeight: FontWeight.bold),
                   ),

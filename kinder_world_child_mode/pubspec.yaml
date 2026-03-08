@@ -105,7 +105,6 @@ flutter:
     - assets/animations/
     - assets/sounds/
     - assets/videos/
-    
     - assets/images/child/learn/
 
   # fonts:

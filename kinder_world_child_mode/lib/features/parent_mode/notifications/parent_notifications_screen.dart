@@ -167,7 +167,7 @@ class _ParentNotificationsScreenState
                     return ParentEmptyState(
                       icon: Icons.notifications_none_rounded,
                       title: l10n.noNotifications,
-                      subtitle: 'You\'re all caught up! New alerts and activity summaries will appear here.',
+                      subtitle: l10n.allCaughtUp,
                     );
                   }
                   return ListView.separated(
@@ -215,6 +215,7 @@ class _NotificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final type = notification['type']?.toString() ?? 'info';
@@ -265,7 +266,7 @@ class _NotificationCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          notification['title']?.toString() ?? 'Notification',
+                          notification['title']?.toString() ?? l10n.notificationFallback,
                           style: textTheme.titleMedium?.copyWith(
                             fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
                           ),

@@ -275,9 +275,9 @@ class _HeroHeader extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 14),
-                  const Text(
-                    'Kinder World',
-                    style: TextStyle(
+                  Text(
+                    AppLocalizations.of(context)!.appTitle,
+                    style: const TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w900,
                       color: Colors.white,
@@ -293,7 +293,7 @@ class _HeroHeader extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Learn. Play. Grow.',
+                    AppLocalizations.of(context)!.splashTagline,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
@@ -324,28 +324,28 @@ class _FeatureGrid extends StatelessWidget {
       _FeatureItem(
         icon: Icons.school_rounded,
         label: l10n.educational,
-        description: 'Interactive lessons',
+        description: l10n.interactiveLessons,
         color: AppColors.educational,
         gradientColors: const [Color(0xFF3F51B5), Color(0xFF7986CB)],
       ),
       _FeatureItem(
         icon: Icons.sports_esports_rounded,
         label: l10n.funGames,
-        description: 'Learn through play',
+        description: l10n.learnThroughPlay,
         color: AppColors.entertaining,
         gradientColors: const [Color(0xFF00ACC1), Color(0xFF4DD0E1)],
       ),
       _FeatureItem(
         icon: Icons.psychology_rounded,
         label: l10n.aiPowered,
-        description: 'Personalized for your child',
+        description: l10n.personalizedForChild,
         color: AppColors.behavioral,
         gradientColors: const [Color(0xFFE91E63), Color(0xFFF48FB1)],
       ),
       _FeatureItem(
         icon: Icons.shield_rounded,
         label: l10n.safe,
-        description: 'COPPA & GDPR compliant',
+        description: l10n.coppaGdprCompliant,
         color: AppColors.success,
         gradientColors: const [Color(0xFF388E3C), Color(0xFF81C784)],
       ),

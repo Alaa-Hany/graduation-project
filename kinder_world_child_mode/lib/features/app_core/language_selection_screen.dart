@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kinder_world/app.dart';
+import 'package:kinder_world/core/providers/locale_provider.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/widgets/auth_design_system.dart';
 import 'package:kinder_world/router.dart';
@@ -45,7 +45,7 @@ class _LanguageSelectionScreenState
   }
 
   void _selectLanguage(String code) {
-    ref.read(localeProvider.notifier).state = Locale(code);
+    ref.read(localeProvider.notifier).setLanguageCode(code);
   }
 
   @override

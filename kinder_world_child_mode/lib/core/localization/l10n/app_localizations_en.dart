@@ -2257,4 +2257,550 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get passwordVeryStrong => 'Very Strong';
+
+  // ── Parent PIN Screen ──
+  @override
+  String get parentAccess => 'Parent Access';
+
+  @override
+  String get enterPinToContinue => 'Enter your PIN to continue';
+
+  @override
+  String get forgotPin => 'Forgot PIN?';
+
+  @override
+  String get contactSupportToResetPin => 'Please contact support to reset your PIN';
+
+  // ── Child Header ──
+  @override
+  String get friendFallback => 'Friend';
+
+  @override
+  String levelLabel(int level) => 'Level $level';
+
+  // ── Router fallback messages ──
+  @override
+  String get unexpectedError => 'An unexpected error occurred';
+
+  @override
+  String get pageNotFound => 'Page not found';
+
+  // ── No Internet Screen (specific) ──
+  @override
+  String get noInternetConnection => 'No internet connection';
+
+  @override
+  String get pleaseTryAgain => 'Please try again';
+
+  // ── Error Screen ──
+  @override
+  String get oopsSomethingWentWrong => 'Oops! Something went wrong';
+
+  // ── Maintenance Screen ──
+  @override
+  String get estimatedCompletion => 'Estimated Completion';
+
+  @override
+  String get followUsForUpdates => 'Follow us for updates:';
+
+  // ── Help & Support Screen (extra) ──
+  @override
+  String get weAreHereToSupportYou => 'We\'re here to support you';
+
+  @override
+  String get emailSupport => 'Email Support';
+
+  @override
+  String get liveChat => 'Live Chat';
+
+  @override
+  String get available247 => 'Available 24/7';
+
+  @override
+  String get phoneSupport => 'Phone Support';
+
+  @override
+  String get phoneNumber => '1-800-KINDER';
+
+  @override
+  String get additionalResources => 'Additional Resources';
+
+  @override
+  String get privacyPolicyResource => 'Privacy Policy';
+
+  @override
+  String get termsOfServiceResource => 'Terms of Service';
+
+  // ── Data Sync Screen (extra) ──
+  @override
+  String get hoursAgoSync => '2 hours ago';
+
+  // ── AI Buddy Screen ──
+  @override
+  String get aiBuddyName => 'Kinder';
+
+  @override
+  String get aiBuddyOnline => 'Online';
+
+  @override
+  String get aiCompanionSubtitle => 'Your AI learning companion ✨';
+
+  @override
+  String get tapMicToSpeak => 'Tap the mic to speak...';
+
+  @override
+  String get askKinderAnything => 'Ask Kinder anything...';
+
+  @override
+  String get aiInitialGreeting => 'Hi there! 👋 I\'m Kinder, your learning buddy! How can I help you today?';
+
+  // ── Lesson Flow Screen ──
+  @override
+  String get lessonFinish => 'Finish';
+
+  @override
+  String get startLearning => 'Start Learning!';
+
+  @override
+  String get learningContent => 'Learning Content';
+
+  @override
+  String get todayWeWillLearn => 'Today we will learn about:';
+
+  @override
+  String get letsPractice => 'Let\'s Practice!';
+
+  @override
+  String get interactiveActivity => 'Interactive Activity';
+
+  @override
+  String get tapCorrectAnswer => 'Tap the correct answer!';
+
+  @override
+  String get quickQuiz => 'Quick Quiz';
+
+  @override
+  String questionOf(int current, int total) => 'Question $current of $total';
+
+  @override
+  String get whatDidYouLearn => 'What did you learn in this lesson?';
+
+  @override
+  String get greatJob => 'Great Job!';
+
+  @override
+  String get youCompletedLesson => 'You completed the lesson!';
+
+  @override
+  String get correct => 'Correct';
+
+  @override
+  String get xpEarned => 'XP Earned';
+
+  @override
+  String get daysLabel => 'days';
+
+  @override
+  String get xpReward => 'XP Reward';
+
+  @override
+  String get difficulty => 'Difficulty';
+
+  @override
+  String get beginner => 'Beginner';
+
+  @override
+  String get intermediate => 'Intermediate';
+
+  @override
+  String get advanced => 'Advanced';
+
+  @override
+  String get countingNumbers => 'Counting Numbers 1-10';
+
+  @override
+  String get countingNumbersDesc => 'Learn to count from 1 to 10';
+
+  @override
+  String get lessonTime => 'Time';
+
+  // ── Coloring Gallery Screen ──
+  @override
+  String get coloringTitle => 'Coloring';
+
+  @override
+  String get all => 'All';
+
+  @override
+  String get noColoringPages => 'No coloring pages available';
+
+  @override
+  String get tapToColor => 'Tap to Color';
+
+  @override
+  String coloringPageN(int n) => 'Coloring Page $n';
+
+  // ── Subject Screen ──
+  @override
+  String get availableLessons => 'Available Lessons';
+
+  @override
+  String lessonDurationMin(int minutes) => '$minutes min';
+
+  // ── Subscription Screen (extra) ──
+  @override
+  String get freePlan => 'Free';
+
+  @override
+  String get freePlanPrice => '\$0';
+
+  @override
+  String get familyPlanLabel => 'Family';
+
+  @override
+  String get familyPlanPrice => '\$9.99';
+
+  // ── Theme Mode Toggle ──
+  @override
+  String get darkLabel => 'Dark';
+
+  @override
+  String get lightLabel => 'Light';
+
+  // ── Child Login Screen (extra) ──
+  @override
+  String get pleaseEnterRealName => 'Please enter a real name';
+
+  // ── Learn Screen ──
+  @override String get searchPages => 'Search pages...';
+  @override String get letsExploreAndLearn => "Let's explore and learn something fun!";
+  @override String get noPagesFound => 'No pages found';
+  @override String get categoryBehavioral => 'Behavioral';
+  @override String get categoryEducational => 'Educational';
+  @override String get categorySkillful => 'Skillful';
+  @override String get categoryEntertaining => 'Entertaining';
+
+  // ── Entertaining Screen ──
+  @override String get foundSomethingFun => 'I found something fun for you!';
+
+  // ── Behavioral Screen ──
+  @override String get letsPracticeKindness => "Let's practice kindness today!";
+
+  // ── Method Content Screen ──
+  @override String get letsTryNewSkill => "Let's try a new skill today!";
+
+  // ── Skillful Screen ──
+  @override String get letsCreateSomethingFun => "Let's create something fun!";
+  @override String get searchActivities => 'Search activities...';
+  @override String get noActivitiesFound => 'No activities found.';
+  @override String get watchNow => 'Watch Now';
+  @override String get letsCreate => "Let's Create!";
+  @override String followStepsInVideo(String title) =>
+      'Follow the steps in this video to learn how to create $title. Have fun and be creative!';
+  @override String get imDone => "I'm Done!";
+
+  // ── Educational Screen ──
+  @override String get letsLearnSomethingNew => "Let's learn something new!";
+  @override String get searchLessons => 'Search lessons...';
+  @override String get noLessonsFound => 'No lessons found.';
+
+  // ── Lesson Detail / Quiz Screen ──
+  @override String get readyForFunQuiz => 'Ready for a fun quiz?';
+  @override String get playQuizToEarnStars =>
+      'Play a quick quiz to earn stars and show what you learned!';
+  @override String get startQuiz => 'Start Quiz';
+  @override String get quizTime => 'Quiz Time!';
+  @override String get youCompletedQuiz => 'You completed the quiz!';
+  @override String get awesome => 'Awesome!';
+  @override String get nextQuestion => 'Next Question';
+
+  // ── Welcome Screen features ──
+  @override
+  String get interactiveLessons => 'Interactive lessons';
+
+  @override
+  String get interactiveLessonsDesc => 'Engaging content for every age';
+
+  @override
+  String get learnThroughPlay => 'Learn through play';
+
+  @override
+  String get learnThroughPlayDesc => 'Fun activities & games';
+
+  @override
+  String get personalizedForChild => 'Personalized for your child';
+
+  @override
+  String get personalizedForChildDesc => 'AI-powered learning paths';
+
+  @override
+  String get coppaGdprCompliant => 'COPPA & GDPR compliant';
+
+  @override
+  String get coppaGdprCompliantDesc => 'Your child\'s safety first';
+
+  // ── Coloring Page Screen ──
+  @override
+  String get tapShapeToFill => 'Tap any white shape to fill it!';
+
+  @override
+  String get undo => 'Undo';
+
+  @override
+  String get redo => 'Redo';
+
+  @override
+  String get eraser => 'Eraser';
+
+  @override
+  String get awesomeColoring => 'Awesome coloring!';
+
+  @override
+  String couldNotLoadColoringPage(String error) =>
+      'Could not load coloring page: $error';
+
+  @override
+  String interactiveFillDisabled(String error) =>
+      'Interactive fill disabled: $error';
+
+  // ── Parent Settings Screen ──
+  @override
+  String get parentFallback => 'Parent';
+
+  @override
+  String get changePasswordSubtitle => 'Update your login credentials';
+
+  @override
+  String get notificationsSubtitle => 'Alerts, reminders & summaries';
+
+  @override
+  String get childProfilesSubtitle => 'Manage your children\'s accounts';
+
+  @override
+  String get parentalControlsSubtitle => 'Screen time, content filters & limits';
+
+  @override
+  String get premiumActive => 'Premium — Active';
+
+  @override
+  String get upgradePlan => 'Upgrade your plan';
+
+  @override
+  String get languageSubtitle => 'English / العربية';
+
+  @override
+  String get themeSubtitle => 'Light, dark or system default';
+
+  @override
+  String get privacySettingsSubtitle => 'Data sharing & permissions';
+
+  @override
+  String get helpFaqSubtitle => 'Guides and frequently asked questions';
+
+  @override
+  String get contactUsSubtitle => 'Get in touch with our team';
+
+  @override
+  String get aboutSubtitle => 'Version, licenses & credits';
+
+  @override
+  String get logoutTitle => 'Log out?';
+
+  @override
+  String get logoutMessage =>
+      'You will need to sign in again to access the parent dashboard.';
+
+  // ── Child Home Screen ──
+  @override
+  String get noActiveChildSession => 'No active child session';
+
+  @override
+  String get signInToContinue => 'Please sign in to continue your adventure!';
+
+  @override
+  String get goToLogin => 'Go to Login';
+
+  @override
+  String get exploreLessons => 'Explore Lessons';
+
+  @override
+  String get newTopicsAwait => 'New topics and activities await!';
+
+  @override
+  String get goLabel => 'Go!';
+
+  @override
+  String get goalComplete => '🎉 Goal complete!';
+
+  @override
+  String completeActivitiesToday(int n) => 'Complete $n activities today';
+
+  @override
+  String get xpBonusEarned => '+ 50 XP bonus earned!';
+
+  @override
+  String get myActivities => 'My Activities';
+
+  @override
+  String get exploreNewActivities => 'Explore New Activities';
+
+  @override
+  String get discoverSomethingAmazing => 'Discover something amazing today!';
+
+  @override
+  String get xpBonusLabel => '⭐ +50 XP Bonus';
+
+  @override
+  String xpDisplay(int xp) => '⭐ $xp XP';
+
+  @override
+  String levelBubble(int level) => 'Lv.$level';
+
+  // ── Play Screen ──
+  @override
+  String get nothingFound => 'Nothing found';
+
+  @override
+  String get tryDifferentSearch => 'Try a different search or category!';
+
+  @override
+  String get featured => 'Featured';
+
+  @override
+  String get allVideos => 'All Videos';
+
+  @override
+  String get playTime => 'Play Time';
+
+  @override
+  String get safeAndFunVideos => 'Safe & fun videos for you';
+
+  @override
+  String get safeMode => 'Safe Mode';
+
+  @override
+  String get searchVideos => 'Search videos...';
+
+  @override
+  String get fanFavourite => 'Fan Favourite';
+
+  @override
+  String get todaysPick => "Today's Pick";
+
+  @override
+  String get topRated => 'Top Rated';
+
+  @override
+  String get kindnessTab => 'Kindness';
+
+  @override
+  String get learningTab => 'Learning';
+
+  @override
+  String get skillsTab => 'Skills';
+
+  // ── Parent Dashboard Screen ──
+  @override
+  String get goodMorningOverview => "Good morning — here's today's overview";
+
+  @override
+  String get goodAfternoonOverview => "Good afternoon — here's what's happening";
+
+  @override
+  String get goodEveningOverview => "Good evening — here's your daily summary";
+
+  @override
+  String get noChildrenAddedSubtitleDashboard =>
+      'Add your first child to start tracking their learning journey.';
+
+  @override
+  String childrenLinkedCount(int n) => '$n linked';
+
+  @override
+  String get manage => 'Manage';
+
+  @override
+  String xpProgressDisplay(int current, int max) => '$current/$max XP';
+
+  @override
+  String get aggregatedAcrossChildren => 'Aggregated across all children';
+
+  @override
+  String get minutesLabel => 'Minutes';
+
+  @override
+  String get premiumAnalysis => 'Premium analysis';
+
+  @override
+  String get viewFullReport => 'View Full Report';
+
+  @override
+  String completedAnActivity(String name) => '$name completed an activity';
+
+  @override
+  String get weeklyActivity => 'Weekly Activity';
+
+  @override
+  String get activitiesCompletedPerDay => 'Activities completed per day';
+
+  // ── Subscription Screen (extra) ──
+  @override
+  String get foreverLabel => 'forever';
+
+  @override
+  String get perMonthLabel => '/ month';
+
+  // ── Notifications Screen ──
+  @override
+  String get allCaughtUp =>
+      "You're all caught up! New alerts and activity summaries will appear here.";
+
+  @override
+  String get notificationFallback => 'Notification';
+
+  // ── Reports Screen ──
+  @override
+  String ageLabel(int age) => 'Age $age';
+
+  // ── Parent Child Profile Screen ──
+  @override
+  String get xpProgress => 'XP Progress';
+
+  @override
+  String xpValue(int xp) => '$xp XP';
+
+  @override
+  String xpToNextLevel(int xp) => '$xp to next level';
+
+  @override
+  String levelBadge(int level) => 'Lv. $level';
+
+  // ── About Screen ──
+  @override
+  String versionBuildLabel(String version, String build) =>
+      'Version $version (Build $build)';
+
+  @override
+  String get loadingVersion => 'Loading version...';
+
+  @override
+  String get aboutFallbackText =>
+      'Kinder World helps parents guide learning in a safe environment.';
+
+  // ── Child Home Screen (motivational / axis) ──
+  @override
+  String get funTab => 'Fun';
+
+  @override
+  String streakOnFire(int streak) => '🏆 7+ day streak — you\'re on fire!';
+
+  @override
+  String streakDaysStrong(int streak) => '⚡ $streak days strong, keep going!';
+
+  @override
+  String activitiesCompletedAmazing(int count) =>
+      '🎯 $count activities completed — amazing!';
+
+  @override
+  String get readyForAdventure => '🚀 Ready for today\'s adventure?';
 }

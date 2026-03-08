@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
+import 'package:kinder_world/core/localization/app_localizations.dart';
 
 class NoInternetScreen extends ConsumerStatefulWidget {
   const NoInternetScreen({super.key});
@@ -89,7 +90,7 @@ class _NoInternetScreenState extends ConsumerState<NoInternetScreen>
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'No internet connection',
+                    AppLocalizations.of(context)!.noInternetConnection,
                     style: textTheme.titleMedium?.copyWith(
                       fontSize: AppConstants.fontSize,
                       fontWeight: FontWeight.bold,
@@ -98,7 +99,7 @@ class _NoInternetScreenState extends ConsumerState<NoInternetScreen>
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Please try again',
+                    AppLocalizations.of(context)!.pleaseTryAgain,
                     style: textTheme.bodySmall?.copyWith(
                       fontSize: 14,
                       color: colors.onSurfaceVariant,
@@ -118,9 +119,9 @@ class _NoInternetScreenState extends ConsumerState<NoInternetScreen>
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(fontWeight: FontWeight.w600),
+                      child: Text(
+                        AppLocalizations.of(context)!.cancel,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ),
                   ),

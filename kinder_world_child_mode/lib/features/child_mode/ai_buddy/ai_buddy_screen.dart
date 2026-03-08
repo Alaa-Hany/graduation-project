@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
+import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
 
@@ -54,50 +55,61 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
   late Animation<double> _pulseScale;
   late Animation<double> _pulseGlow;
 
-  final List<ChatMessage> _messages = [
-    ChatMessage(
-      text: 'Hi! I\'m Kinder ⭐  your learning buddy!\nHow can I help you today?',
-      isUser: false,
-      timestamp: DateTime.now(),
-    ),
-  ];
+  late List<ChatMessage> _messages;
+  bool _messagesInitialized = false;
 
   final TextEditingController _textCtrl = TextEditingController();
   final ScrollController _scrollCtrl = ScrollController();
   bool _isVoiceMode = false;
 
-  static const _quickActions = <_QuickAction>[
+  List<_QuickAction> _getQuickActions(AppLocalizations l10n) => [
     _QuickAction(
-      title: 'Recommend\nLesson',
+      title: l10n.recommendLesson,
       emoji: '📚',
       color: ChildColors.learningBlue,
       action: 'recommend_lesson',
     ),
     _QuickAction(
-      title: 'Suggest\nGame',
+      title: l10n.suggestGame,
       emoji: '🎮',
       color: ChildColors.skillPurple,
       action: 'suggest_game',
     ),
     _QuickAction(
-      title: 'Tell me a\nStory',
+      title: l10n.tellStory,
       emoji: '📖',
       color: ChildColors.kindnessPink,
       action: 'tell_story',
     ),
     _QuickAction(
-      title: 'Fun\nFact',
+      title: l10n.funFact,
       emoji: '🔬',
       color: ChildColors.funCyan,
       action: 'fun_fact',
     ),
     _QuickAction(
-      title: 'Motivate\nMe',
+      title: l10n.motivation,
       emoji: '🚀',
       color: ChildColors.streakFire,
       action: 'motivation',
     ),
   ];
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_messagesInitialized) {
+      final l10n = AppLocalizations.of(context)!;
+      _messages = [
+        ChatMessage(
+          text: l10n.aiInitialGreeting,
+          isUser: false,
+          timestamp: DateTime.now(),
+        ),
+      ];
+      _messagesInitialized = true;
+    }
+  }
 
   @override
   void initState() {
@@ -213,14 +225,15 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     return Scaffold(
       backgroundColor: colors.surface,
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(colors),
-            _buildQuickActions(colors),
+            _buildHeader(colors, l10n),
+            _buildQuickActions(colors, l10n),
             const Divider(height: 1),
             Expanded(child: _buildChatList(colors)),
             _buildInputBar(colors),
@@ -232,7 +245,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
 
   // ── HEADER (Kinder avatar + identity) ─────────────────────────────────────
 
-  Widget _buildHeader(ColorScheme colors) {
+  Widget _buildHeader(ColorScheme colors, AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
@@ -321,18 +334,18 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
                                 .withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.circle,
                                 size: 7,
                                 color: ChildColors.successGreen,
                               ),
-                              SizedBox(width: 4),
+                              const SizedBox(width: 4),
                               Text(
-                                'Online',
-                                style: TextStyle(
+                                l10n.aiBuddyOnline,
+                                style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
                                   color: ChildColors.successGreen,
@@ -345,7 +358,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Your AI learning companion ✨',
+                      l10n.aiCompanionSubtitle,
                       style: TextStyle(
                         fontSize: 13,
                         color: colors.onSurfaceVariant,
@@ -361,7 +374,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
 
           // Quick action label
           Text(
-            'Quick Actions',
+            l10n.quickActions,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
@@ -375,7 +388,8 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
 
   // ── QUICK ACTIONS ─────────────────────────────────────────────────────────
 
-  Widget _buildQuickActions(ColorScheme colors) {
+  Widget _buildQuickActions(ColorScheme colors, AppLocalizations l10n) {
+    final actions = _getQuickActions(l10n);
     return Container(
       color: colors.surface,
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
@@ -383,9 +397,9 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
         height: 86,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
-          itemCount: _quickActions.length,
+          itemCount: actions.length,
           separatorBuilder: (_, __) => const SizedBox(width: 10),
-          itemBuilder: (_, i) => _buildQuickActionCard(_quickActions[i]),
+          itemBuilder: (_, i) => _buildQuickActionCard(actions[i]),
         ),
       ),
     );
@@ -612,9 +626,9 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
                 child: TextField(
                   controller: _textCtrl,
                   decoration: InputDecoration(
-                    hintText: _isVoiceMode
-                        ? 'Tap the mic to speak...'
-                        : 'Ask Kinder anything...',
+                  hintText: _isVoiceMode
+                      ? AppLocalizations.of(context)!.tapMicToSpeak
+                      : AppLocalizations.of(context)!.askKinderAnything,
                     border: InputBorder.none,
                     contentPadding:
                         const EdgeInsets.symmetric(vertical: 11),

@@ -1,5 +1,6 @@
 import 'dart:async';
-import 'dart:ui' show lerpDouble;
+import 'dart:math' as math;
+import 'dart:ui' show ImageFilter, lerpDouble;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -100,10 +101,12 @@ class _SplashScene extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
+        const Positioned.fill(child: _SplashBackground()),
         const Positioned.fill(
-          child: _AssetImage(
-            assetPath: _SplashAssets.background,
-            fit: BoxFit.cover,
+          child: IgnorePointer(
+            child: CustomPaint(
+              painter: _SparklesPainter(),
+            ),
           ),
         ),
         Positioned(
@@ -121,26 +124,6 @@ class _SplashScene extends StatelessWidget {
                 assetPath: _SplashAssets.stars,
                 fit: BoxFit.cover,
                 alignment: Alignment.topCenter,
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          top: layout.haloTop,
-          left: layout.haloLeft,
-          width: layout.haloWidth,
-          child: const IgnorePointer(
-            child: _AnimatedAsset(
-              animation: _PulseAnimationSpec(
-                duration: _SplashDurations.haloPulse,
-                minScale: 0.98,
-                maxScale: 1.03,
-                minOpacity: 0.86,
-                maxOpacity: 1,
-              ),
-              child: _AssetImage(
-                assetPath: _SplashAssets.halo,
-                fit: BoxFit.contain,
               ),
             ),
           ),
@@ -191,18 +174,47 @@ class _SplashScene extends StatelessWidget {
           ),
         ),
         Positioned(
-          top: layout.starTop,
-          left: layout.starLeft,
-          width: layout.starWidth,
+          top: layout.book2Top,
+          left: layout.book2Left,
+          width: layout.book2Width,
           child: const IgnorePointer(
             child: _AnimatedAsset(
               animation: _FloatAnimationSpec(
-                duration: _SplashDurations.starFloat,
+                duration: _SplashDurations.book2Float,
                 offset: 7,
               ),
               child: _AssetImage(
-                assetPath: _SplashAssets.star,
+                assetPath: _SplashAssets.book2,
                 fit: BoxFit.contain,
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          top: layout.starTop,
+          left: layout.starLeft,
+          width: layout.starWidth,
+          child: IgnorePointer(
+            child: _AnimatedAsset(
+              animation: const _FloatAnimationSpec(
+                duration: _SplashDurations.starFloat,
+                offset: 7,
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  ImageFiltered(
+                    imageFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: const _AssetImage(
+                      assetPath: _SplashAssets.star,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                  const _AssetImage(
+                    assetPath: _SplashAssets.star,
+                    fit: BoxFit.contain,
+                  ),
+                ],
               ),
             ),
           ),
@@ -220,6 +232,28 @@ class _SplashScene extends StatelessWidget {
               child: _AssetImage(
                 assetPath: _SplashAssets.bulb,
                 fit: BoxFit.contain,
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: layout.fogHeight,
+          child: const IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [
+                    Color(0xB3FFFFFF),
+                    Color(0x55FFFFFF),
+                    Color(0x00FFFFFF),
+                  ],
+                  stops: [0.0, 0.5, 1.0],
+                ),
               ),
             ),
           ),
@@ -245,39 +279,93 @@ class _SplashBranding extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [
-              Color(0xFFD177C9),
-              Color(0xFF78A9FF),
-              Color(0xFF8FD59A),
-              Color(0xFFFFA8B5),
-            ],
-          ).createShader(bounds),
-          child: Text(
-            'Kinder World',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: layout.titleFontSize,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -1.2,
-              height: 1,
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            ImageFiltered(
+              imageFilter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+              child: Text(
+                'Kinder World',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.95),
+                  fontSize: layout.titleFontSize,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -1,
+                  height: 1,
+                ),
+              ),
             ),
-          ),
+            Text(
+              'Kinder World',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                foreground: Paint()
+                  ..style = PaintingStyle.stroke
+                  ..strokeWidth = layout.titleStrokeWidth
+                  ..color = Colors.white,
+                fontSize: layout.titleFontSize,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -1,
+                height: 1,
+              ),
+            ),
+            ShaderMask(
+              shaderCallback: (bounds) => const LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  Color(0xFFE98BC8),
+                  Color(0xFF8F89E7),
+                  Color(0xFF77B8FF),
+                  Color(0xFF8BE18A),
+                  Color(0xFFF1DA75),
+                  Color(0xFFF3A281),
+                ],
+              ).createShader(bounds),
+              child: Text(
+                'Kinder World',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: layout.titleFontSize,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -1,
+                  height: 1,
+                ),
+              ),
+            ),
+          ],
         ),
         SizedBox(height: layout.taglineSpacing),
         Text(
           'Learn • Play • Grow',
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: const Color(0xFF184F86),
+            color: const Color(0xFF1A3A6B),
             fontSize: layout.taglineFontSize,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.2,
           ),
         ),
       ],
+    );
+  }
+}
+
+class _SplashBackground extends StatelessWidget {
+  const _SplashBackground();
+
+  @override
+  Widget build(BuildContext context) {
+    return const DecoratedBox(
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/images/background.png'),
+          fit: BoxFit.cover,
+          alignment: Alignment.center,
+        ),
+      ),
     );
   }
 }
@@ -386,35 +474,9 @@ class _FloatAnimationSpec extends _AssetAnimationSpec {
   double translationY(double t) => lerpDouble(-offset, offset, t)!;
 }
 
-class _PulseAnimationSpec extends _AssetAnimationSpec {
-  const _PulseAnimationSpec({
-    required super.duration,
-    required this.minScale,
-    required this.maxScale,
-    required this.minOpacity,
-    required this.maxOpacity,
-  });
-
-  final double minScale;
-  final double maxScale;
-  final double minOpacity;
-  final double maxOpacity;
-
-  @override
-  double scale(double t) => lerpDouble(minScale, maxScale, t)!;
-
-  @override
-  double opacity(double t) => lerpDouble(minOpacity, maxOpacity, t)!;
-}
-
 class _SplashLayout {
   const _SplashLayout({
-    required this.width,
-    required this.height,
     required this.starsHeight,
-    required this.haloTop,
-    required this.haloLeft,
-    required this.haloWidth,
     required this.boyTop,
     required this.boyLeft,
     required this.boyHeight,
@@ -424,15 +486,20 @@ class _SplashLayout {
     required this.bookTop,
     required this.bookLeft,
     required this.bookWidth,
+    required this.book2Top,
+    required this.book2Left,
+    required this.book2Width,
     required this.starTop,
     required this.starLeft,
     required this.starWidth,
     required this.bulbTop,
     required this.bulbRight,
     required this.bulbWidth,
+    required this.fogHeight,
     required this.textHorizontalPadding,
     required this.textBottom,
     required this.titleFontSize,
+    required this.titleStrokeWidth,
     required this.taglineFontSize,
     required this.taglineSpacing,
   });
@@ -441,48 +508,41 @@ class _SplashLayout {
     final width = constraints.maxWidth;
     final height = constraints.maxHeight;
     final scale = (width / 390).clamp(0.85, 1.18);
-
-    final haloWidth = width * 0.78;
-    final boyHeight = height * 0.58;
-    final boyWidth = boyHeight * 0.62;
-    final starWidth = width * 0.17;
+    final boyHeight = height * 0.72;
+    final boyWidth = boyHeight * 0.60;
+    final starWidth = width * 0.11;
 
     return _SplashLayout(
-      width: width,
-      height: height,
-      starsHeight: height * 0.46,
-      haloTop: height * 0.19,
-      haloLeft: (width - haloWidth) / 2,
-      haloWidth: haloWidth,
-      boyTop: height * 0.17,
+      starsHeight: height * 0.78,
+      boyTop: height * 0.07,
       boyLeft: (width - boyWidth) / 2,
       boyHeight: boyHeight,
-      planetTop: height * 0.24,
-      planetRight: width * 0.08,
-      planetWidth: width * 0.38,
-      bookTop: height * 0.17,
-      bookLeft: width * 0.08,
-      bookWidth: width * 0.22,
-      starTop: height * 0.10,
-      starLeft: (width - starWidth) / 2,
+      planetTop: height * 0.27,
+      planetRight: width * 0.04,
+      planetWidth: width * 0.17,
+      bookTop: height * 0.15,
+      bookLeft: width * 0.07,
+      bookWidth: width * 0.16,
+      book2Top: height * 0.52,
+      book2Left: width * 0.08,
+      book2Width: width * 0.15,
+      starTop: height * 0.13,
+      starLeft: width * 0.74,
       starWidth: starWidth,
-      bulbTop: height * 0.43,
-      bulbRight: width * 0.08,
-      bulbWidth: width * 0.18,
-      textHorizontalPadding: width * 0.08,
-      textBottom: height * 0.08,
-      titleFontSize: 44 * scale,
-      taglineFontSize: 20 * scale,
-      taglineSpacing: 10 * scale,
+      bulbTop: height * 0.57,
+      bulbRight: width * 0.06,
+      bulbWidth: width * 0.13,
+      fogHeight: height * 0.34,
+      textHorizontalPadding: width * 0.06,
+      textBottom: height * 0.04,
+      titleFontSize: 42 * scale,
+      titleStrokeWidth: 8 * scale,
+      taglineFontSize: 18 * scale,
+      taglineSpacing: 12 * scale,
     );
   }
 
-  final double width;
-  final double height;
   final double starsHeight;
-  final double haloTop;
-  final double haloLeft;
-  final double haloWidth;
   final double boyTop;
   final double boyLeft;
   final double boyHeight;
@@ -492,26 +552,30 @@ class _SplashLayout {
   final double bookTop;
   final double bookLeft;
   final double bookWidth;
+  final double book2Top;
+  final double book2Left;
+  final double book2Width;
   final double starTop;
   final double starLeft;
   final double starWidth;
   final double bulbTop;
   final double bulbRight;
   final double bulbWidth;
+  final double fogHeight;
   final double textHorizontalPadding;
   final double textBottom;
   final double titleFontSize;
+  final double titleStrokeWidth;
   final double taglineFontSize;
   final double taglineSpacing;
 }
 
 class _SplashAssets {
-  static const background = 'assets/images/background.png';
   static const stars = 'assets/images/small_stars.png';
-  static const halo = 'assets/images/halo.png';
   static const boy = 'assets/images/boy.png';
   static const planet = 'assets/images/planet.png';
   static const book = 'assets/images/book2.png';
+  static const book2 = 'assets/images/book1.png';
   static const star = 'assets/images/star.png';
   static const bulb = 'assets/images/bulb.png';
 }
@@ -520,9 +584,85 @@ class _SplashDurations {
   static const screenFadeIn = Duration(milliseconds: 900);
   static const navigationDelay = Duration(milliseconds: 2900);
   static const backgroundStarsFloat = Duration(milliseconds: 4200);
-  static const haloPulse = Duration(milliseconds: 2400);
   static const starFloat = Duration(milliseconds: 2600);
   static const bookFloat = Duration(milliseconds: 3000);
+  static const book2Float = Duration(milliseconds: 3200);
   static const bulbFloat = Duration(milliseconds: 3400);
   static const planetFloat = Duration(milliseconds: 3600);
+}
+
+class _SparklesPainter extends CustomPainter {
+  const _SparklesPainter();
+
+  static const List<List<double>> _sparkles = [
+    [0.14, 0.10, 6.0, 0.90],
+    [0.83, 0.13, 5.5, 0.85],
+    [0.07, 0.28, 4.5, 0.70],
+    [0.91, 0.26, 5.0, 0.80],
+    [0.22, 0.48, 4.0, 0.65],
+    [0.78, 0.44, 4.5, 0.75],
+    [0.10, 0.60, 3.5, 0.60],
+    [0.89, 0.58, 4.0, 0.68],
+    [0.36, 0.16, 3.0, 0.60],
+    [0.66, 0.20, 3.5, 0.65],
+    [0.50, 0.06, 4.5, 0.80],
+    [0.18, 0.74, 3.0, 0.50],
+    [0.82, 0.72, 3.5, 0.55],
+    [0.44, 0.38, 2.5, 0.45],
+    [0.62, 0.64, 3.0, 0.52],
+    [0.30, 0.85, 2.5, 0.40],
+    [0.70, 0.82, 3.0, 0.45],
+    [0.55, 0.52, 2.0, 0.38],
+    [0.05, 0.45, 3.0, 0.55],
+    [0.95, 0.40, 3.5, 0.60],
+  ];
+
+  void _drawSparkle(
+    Canvas canvas,
+    double cx,
+    double cy,
+    double size,
+    double opacity,
+  ) {
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: opacity)
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+    const points = 8;
+    for (int i = 0; i < points; i++) {
+      final angle = i * math.pi / 4 - math.pi / 2;
+      final radius = i.isEven ? size : size * 0.28;
+      final x = cx + radius * math.cos(angle);
+      final y = cy + radius * math.sin(angle);
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    path.close();
+    canvas.drawPath(path, paint);
+    canvas.drawCircle(
+      Offset(cx, cy),
+      size * 0.18,
+      Paint()..color = Colors.white.withValues(alpha: opacity * 0.9),
+    );
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (final sparkle in _sparkles) {
+      _drawSparkle(
+        canvas,
+        size.width * sparkle[0],
+        size.height * sparkle[1],
+        sparkle[2],
+        sparkle[3],
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

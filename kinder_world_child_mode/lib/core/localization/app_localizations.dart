@@ -806,6 +806,257 @@ abstract class AppLocalizations {
   String get passwordFair;
   String get passwordStrong;
   String get passwordVeryStrong;
+
+  // ── Parent PIN Screen ──
+  String get parentAccess;
+  String get enterPinToContinue;
+  String get forgotPin;
+  String get contactSupportToResetPin;
+
+  // ── Child Header ──
+  String get friendFallback;
+  String levelLabel(int level);
+
+  // ── Router fallback messages ──
+  String get unexpectedError;
+  String get pageNotFound;
+
+  // ── No Internet Screen (specific) ──
+  String get noInternetConnection;
+  String get pleaseTryAgain;
+
+  // ── Error Screen ──
+  String get oopsSomethingWentWrong;
+
+  // ── Maintenance Screen ──
+  String get estimatedCompletion;
+  String get followUsForUpdates;
+
+  // ── Help & Support Screen (extra) ──
+  String get weAreHereToSupportYou;
+  String get emailSupport;
+  String get liveChat;
+  String get available247;
+  String get phoneSupport;
+  String get phoneNumber;
+  String get additionalResources;
+  String get privacyPolicyResource;
+  String get termsOfServiceResource;
+
+  // ── Data Sync Screen (extra) ──
+  String get hoursAgoSync;
+
+  // ── AI Buddy Screen ──
+  String get aiBuddyName;
+  String get aiBuddyOnline;
+  String get aiCompanionSubtitle;
+  String get tapMicToSpeak;
+  String get askKinderAnything;
+  String get aiInitialGreeting;
+
+  // ── Lesson Flow Screen ──
+  String get lessonFinish;
+  String get startLearning;
+  String get learningContent;
+  String get todayWeWillLearn;
+  String get letsPractice;
+  String get interactiveActivity;
+  String get tapCorrectAnswer;
+  String get quickQuiz;
+  String questionOf(int current, int total);
+  String get whatDidYouLearn;
+  String get greatJob;
+  String get youCompletedLesson;
+  String get correct;
+  String get xpEarned;
+  String get daysLabel;
+  String get xpReward;
+  String get difficulty;
+  String get beginner;
+  String get intermediate;
+  String get advanced;
+  String get countingNumbers;
+  String get countingNumbersDesc;
+  String get lessonTime;
+
+  // ── Coloring Gallery Screen ──
+  String get coloringTitle;
+  String get all;
+  String get noColoringPages;
+  String get tapToColor;
+  String coloringPageN(int n);
+
+  // ── Subject Screen ──
+  String get availableLessons;
+  String lessonDurationMin(int minutes);
+
+  // ── Subscription Screen (extra) ──
+  String get freePlan;
+  String get freePlanPrice;
+  String get familyPlanLabel;
+  String get familyPlanPrice;
+
+  // ── Theme Mode Toggle ──
+  String get darkLabel;
+  String get lightLabel;
+
+  // ── Child Login Screen (extra) ──
+  String get pleaseEnterRealName;
+
+  // ── Learn Screen ──
+  String get searchPages;
+  String get letsExploreAndLearn;
+  String get noPagesFound;
+  String get categoryBehavioral;
+  String get categoryEducational;
+  String get categorySkillful;
+  String get categoryEntertaining;
+
+  // ── Entertaining Screen ──
+  String get foundSomethingFun;
+
+  // ── Behavioral Screen ──
+  String get letsPracticeKindness;
+
+  // ── Method Content Screen ──
+  String get letsTryNewSkill;
+
+  // ── Skillful Screen ──
+  String get letsCreateSomethingFun;
+  String get searchActivities;
+  String get noActivitiesFound;
+  String get watchNow;
+  String get letsCreate;
+  String followStepsInVideo(String title);
+  String get imDone;
+
+  // ── Educational Screen ──
+  String get letsLearnSomethingNew;
+  String get searchLessons;
+  String get noLessonsFound;
+
+  // ── Lesson Detail / Quiz Screen ──
+  String get readyForFunQuiz;
+  String get playQuizToEarnStars;
+  String get startQuiz;
+  String get quizTime;
+  String get youCompletedQuiz;
+  String get awesome;
+  String get nextQuestion;
+
+  // ── Welcome Screen features ──
+  String get interactiveLessons;
+  String get interactiveLessonsDesc;
+  String get learnThroughPlay;
+  String get learnThroughPlayDesc;
+  String get personalizedForChild;
+  String get personalizedForChildDesc;
+  String get coppaGdprCompliant;
+  String get coppaGdprCompliantDesc;
+
+  // ── Coloring Page Screen ──
+  String get tapShapeToFill;
+  String get undo;
+  String get redo;
+  String get eraser;
+  String get awesomeColoring;
+  String couldNotLoadColoringPage(String error);
+  String interactiveFillDisabled(String error);
+
+  // ── Parent Settings Screen ──
+  String get parentFallback;
+  String get changePasswordSubtitle;
+  String get notificationsSubtitle;
+  String get childProfilesSubtitle;
+  String get parentalControlsSubtitle;
+  String get premiumActive;
+  String get upgradePlan;
+  String get languageSubtitle;
+  String get themeSubtitle;
+  String get privacySettingsSubtitle;
+  String get helpFaqSubtitle;
+  String get contactUsSubtitle;
+  String get aboutSubtitle;
+  String get logoutTitle;
+  String get logoutMessage;
+
+  // ── Child Home Screen ──
+  String get noActiveChildSession;
+  String get signInToContinue;
+  String get goToLogin;
+  String get exploreLessons;
+  String get newTopicsAwait;
+  String get goLabel;
+  String get goalComplete;
+  String completeActivitiesToday(int n);
+  String get xpBonusEarned;
+  String get myActivities;
+  String get exploreNewActivities;
+  String get discoverSomethingAmazing;
+  String get xpBonusLabel;
+  String xpDisplay(int xp);
+  String levelBubble(int level);
+
+  // ── Play Screen ──
+  String get nothingFound;
+  String get tryDifferentSearch;
+  String get featured;
+  String get allVideos;
+  String get playTime;
+  String get safeAndFunVideos;
+  String get safeMode;
+  String get searchVideos;
+  String get fanFavourite;
+  String get todaysPick;
+  String get topRated;
+  String get kindnessTab;
+  String get learningTab;
+  String get skillsTab;
+
+  // ── Parent Dashboard Screen ──
+  String get goodMorningOverview;
+  String get goodAfternoonOverview;
+  String get goodEveningOverview;
+  String get noChildrenAddedSubtitleDashboard;
+  String childrenLinkedCount(int n);
+  String get manage;
+  String xpProgressDisplay(int current, int max);
+  String get aggregatedAcrossChildren;
+  String get minutesLabel;
+  String get premiumAnalysis;
+  String get viewFullReport;
+  String completedAnActivity(String name);
+  String get weeklyActivity;
+  String get activitiesCompletedPerDay;
+
+  // ── Subscription Screen (extra) ──
+  String get foreverLabel;
+  String get perMonthLabel;
+
+  // ── Notifications Screen ──
+  String get allCaughtUp;
+  String get notificationFallback;
+
+  // ── Reports Screen ──
+  String ageLabel(int age);
+
+  // ── Parent Child Profile Screen ──
+  String get xpProgress;
+  String xpValue(int xp);
+  String xpToNextLevel(int xp);
+  String levelBadge(int level);
+
+  // ── About Screen ──
+  String versionBuildLabel(String version, String build);
+  String get loadingVersion;
+  String get aboutFallbackText;
+
+  // ── Child Home Screen (motivational / axis) ──
+  String get funTab;
+  String streakOnFire(int streak);
+  String streakDaysStrong(int streak);
+  String activitiesCompletedAmazing(int count);
+  String get readyForAdventure;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

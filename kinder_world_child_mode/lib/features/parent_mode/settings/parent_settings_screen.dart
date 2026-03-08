@@ -56,7 +56,7 @@ class ParentSettingsScreen extends ConsumerWidget {
           children: [
             // ── Profile Header ──────────────────────────────────────────
             _ProfileHeader(
-              name: user?.name ?? 'Parent',
+              name: user?.name ?? l10n.parentFallback,
               email: user?.email ?? '',
               isPremium: isPremium,
               onEditTap: () =>
@@ -72,7 +72,7 @@ class ParentSettingsScreen extends ConsumerWidget {
                   icon: Icons.lock_rounded,
                   iconColor: ParentColors.activityPurple,
                   title: l10n.changePassword,
-                  subtitle: 'Update your login credentials',
+                  subtitle: l10n.changePasswordSubtitle,
                   onTap: () => _safeNavigate(
                       () => context.push(Routes.parentChangePassword)),
                 ),
@@ -80,7 +80,7 @@ class ParentSettingsScreen extends ConsumerWidget {
                   icon: Icons.notifications_rounded,
                   iconColor: ParentColors.alertAmber,
                   title: l10n.notifications,
-                  subtitle: 'Alerts, reminders & summaries',
+                  subtitle: l10n.notificationsSubtitle,
                   showDivider: false,
                   onTap: () => _safeNavigate(
                       () => context.push(Routes.parentNotifications)),
@@ -97,7 +97,7 @@ class ParentSettingsScreen extends ConsumerWidget {
                   icon: Icons.child_care_rounded,
                   iconColor: ParentColors.parentGreenLight,
                   title: l10n.childProfiles,
-                  subtitle: 'Manage your children\'s accounts',
+                  subtitle: l10n.childProfilesSubtitle,
                   onTap: () => _safeNavigate(
                       () => context.push(Routes.parentChildManagement)),
                 ),
@@ -105,7 +105,7 @@ class ParentSettingsScreen extends ConsumerWidget {
                   icon: Icons.security_rounded,
                   iconColor: ParentColors.alertRed,
                   title: l10n.parentalControls,
-                  subtitle: 'Screen time, content filters & limits',
+                  subtitle: l10n.parentalControlsSubtitle,
                   onTap: () => _safeNavigate(
                       () => context.push(Routes.parentControls)),
                 ),
@@ -113,7 +113,7 @@ class ParentSettingsScreen extends ConsumerWidget {
                   icon: Icons.workspace_premium_rounded,
                   iconColor: ParentColors.xpGold,
                   title: l10n.subscription,
-                  subtitle: isPremium ? 'Premium — Active' : 'Upgrade your plan',
+                  subtitle: isPremium ? l10n.premiumActive : l10n.upgradePlan,
                   trailing: isPremium
                       ? const ParentStatusBadge(status: ParentBadgeStatus.premium)
                       : null,
@@ -133,7 +133,7 @@ class ParentSettingsScreen extends ConsumerWidget {
                   icon: Icons.language_rounded,
                   iconColor: ParentColors.infoBlue,
                   title: l10n.language,
-                  subtitle: 'English / العربية',
+                  subtitle: l10n.languageSubtitle,
                   onTap: () => _safeNavigate(
                       () => context.push(Routes.parentLanguage)),
                 ),
@@ -141,7 +141,7 @@ class ParentSettingsScreen extends ConsumerWidget {
                   icon: Icons.palette_rounded,
                   iconColor: ParentColors.activityPurple,
                   title: l10n.theme,
-                  subtitle: 'Light, dark or system default',
+                  subtitle: l10n.themeSubtitle,
                   onTap: () =>
                       _safeNavigate(() => context.push(Routes.parentTheme)),
                 ),
@@ -149,7 +149,7 @@ class ParentSettingsScreen extends ConsumerWidget {
                   icon: Icons.privacy_tip_rounded,
                   iconColor: ParentColors.parentGreen,
                   title: l10n.privacySettings,
-                  subtitle: 'Data sharing & permissions',
+                  subtitle: l10n.privacySettingsSubtitle,
                   showDivider: false,
                   onTap: () => _safeNavigate(
                       () => context.push(Routes.parentPrivacySettings)),
@@ -166,7 +166,7 @@ class ParentSettingsScreen extends ConsumerWidget {
                   icon: Icons.help_rounded,
                   iconColor: ParentColors.infoBlue,
                   title: l10n.helpFaq,
-                  subtitle: 'Guides and frequently asked questions',
+                  subtitle: l10n.helpFaqSubtitle,
                   onTap: () =>
                       _safeNavigate(() => context.push(Routes.parentHelp)),
                 ),
@@ -174,7 +174,7 @@ class ParentSettingsScreen extends ConsumerWidget {
                   icon: Icons.mail_rounded,
                   iconColor: ParentColors.parentGreenLight,
                   title: l10n.contactUs,
-                  subtitle: 'Get in touch with our team',
+                  subtitle: l10n.contactUsSubtitle,
                   onTap: () =>
                       _safeNavigate(() => context.push(Routes.parentContactUs)),
                 ),
@@ -182,7 +182,7 @@ class ParentSettingsScreen extends ConsumerWidget {
                   icon: Icons.info_rounded,
                   iconColor: Colors.blueGrey,
                   title: l10n.about,
-                  subtitle: 'Version, licenses & credits',
+                  subtitle: l10n.aboutSubtitle,
                   showDivider: false,
                   onTap: () =>
                       _safeNavigate(() => context.push(Routes.parentAbout)),
@@ -222,7 +222,7 @@ class ParentSettingsScreen extends ConsumerWidget {
             // ── App version footnote ─────────────────────────────────────
             Center(
               child: Text(
-                'Kinder World • v1.0.0',
+                l10n.appVersionLabel('1.0.0'),
                 style: TextStyle(
                   fontSize: 12,
                   color: colors.onSurfaceVariant.withValues(alpha: 0.5),
@@ -242,17 +242,15 @@ class ParentSettingsScreen extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          'Log out?',
-          style: TextStyle(fontWeight: FontWeight.w800),
+        title: Text(
+          l10n.logoutTitle,
+          style: const TextStyle(fontWeight: FontWeight.w800),
         ),
-        content: const Text(
-          'You will need to sign in again to access the parent dashboard.',
-        ),
+        content: Text(l10n.logoutMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(

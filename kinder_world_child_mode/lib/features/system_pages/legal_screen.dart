@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/theme/app_colors.dart';
+import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/app.dart';
 
 class LegalScreen extends ConsumerWidget {
@@ -14,7 +15,8 @@ class LegalScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final title = _getTitle(type);
+    final l10n = AppLocalizations.of(context)!;
+    final title = _getTitle(type, l10n);
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final endpoint = _getEndpoint(type);
@@ -62,16 +64,16 @@ class LegalScreen extends ConsumerWidget {
                         color: AppColors.primary,
                       ),
                       const SizedBox(height: 24),
-                      const Text(
-                        'No content yet',
-                        style: TextStyle(
+                      Text(
+                        l10n.legalNoContent,
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        _getPlaceholder(type),
+                        _getPlaceholder(type, l10n),
                         textAlign: TextAlign.center,
                         style: textTheme.bodyMedium?.copyWith(
                           fontSize: 16,
@@ -102,29 +104,29 @@ class LegalScreen extends ConsumerWidget {
     );
   }
 
-  String _getTitle(String type) {
+  String _getTitle(String type, AppLocalizations l10n) {
     switch (type) {
       case 'terms':
-        return 'Terms of Service';
+        return l10n.legalTermsTitle;
       case 'privacy':
-        return 'Privacy Policy';
+        return l10n.legalPrivacyTitle;
       case 'coppa':
-        return 'COPPA & Children\'s Privacy';
+        return l10n.legalCoppaTitle;
       default:
-        return 'Legal';
+        return l10n.legalTitle;
     }
   }
 
-  static String _getPlaceholder(String type) {
+  static String _getPlaceholder(String type, AppLocalizations l10n) {
     switch (type) {
       case 'terms':
-        return 'Terms will be available soon.';
+        return l10n.legalTermsPlaceholder;
       case 'privacy':
-        return 'Privacy policy details are coming soon.';
+        return l10n.legalPrivacyPlaceholder;
       case 'coppa':
-        return 'COPPA compliance information will be posted shortly.';
+        return l10n.legalCoppaPlaceholder;
       default:
-        return 'We will share the requested information soon.';
+        return l10n.legalPlaceholder;
     }
   }
 

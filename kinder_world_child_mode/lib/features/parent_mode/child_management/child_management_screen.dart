@@ -565,57 +565,62 @@ class _ChildManagementScreenState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded,
-              size: 20,
-              color: Theme.of(context).colorScheme.onSurface),
-          onPressed: () => context.go(Routes.parentDashboard),
-        ),
-        title: Text(
-          l10n.childManagement,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: Theme.of(context).colorScheme.onSurface,
-            letterSpacing: -0.3,
+    return WillPopScope(
+      onWillPop: () async {
+        context.go(Routes.parentSettings);
+        return false;
+      },
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back_ios_new_rounded,
+                size: 20,
+                color: Theme.of(context).colorScheme.onSurface),
+            onPressed: () => context.go(Routes.parentSettings),
+          ),
+          title: Text(
+            l10n.childManagement,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: Theme.of(context).colorScheme.onSurface,
+              letterSpacing: -0.3,
+            ),
+          ),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Divider(
+                height: 1,
+                color: Theme.of(context)
+                    .colorScheme
+                    .outlineVariant
+                    .withValues(alpha: 0.4)),
           ),
         ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Divider(
-              height: 1,
-              color: Theme.of(context)
-                  .colorScheme
-                  .outlineVariant
-                  .withValues(alpha: 0.4)),
-        ),
-      ),
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: FutureBuilder<String?>(
-                  future: ref.read(secureStorageProvider).getParentId(),
-                  builder: (context, parentIdSnapshot) {
-                    final parentId = parentIdSnapshot.data ?? '';
-                    if (_childrenFuture == null || _cachedParentId != parentId) {
-                      _cachedParentId = parentId;
-                      _childrenFuture = _loadChildrenForParent(parentId);
-                    }
-                    return FutureBuilder<List<ChildProfile>>(
-                      future: _childrenFuture,
-                      builder: (context, childrenSnapshot) {
-                        final repoChildren = childrenSnapshot.data ?? [];
-                        final children = repoChildren;
+        body: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(24.0),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: FutureBuilder<String?>(
+                    future: ref.read(secureStorageProvider).getParentId(),
+                    builder: (context, parentIdSnapshot) {
+                      final parentId = parentIdSnapshot.data ?? '';
+                      if (_childrenFuture == null || _cachedParentId != parentId) {
+                        _cachedParentId = parentId;
+                        _childrenFuture = _loadChildrenForParent(parentId);
+                      }
+                      return FutureBuilder<List<ChildProfile>>(
+                        future: _childrenFuture,
+                        builder: (context, childrenSnapshot) {
+                          final repoChildren = childrenSnapshot.data ?? [];
+                          final children = repoChildren;
 
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -751,12 +756,12 @@ class _ChildManagementScreenState
                           TextField(
                             decoration: InputDecoration(
                               labelText: l10n.childName,
-                              errorText: name.trim().isEmpty 
+                              errorText: name.trim().isEmpty
                                 ? null
                                 : (name.trim().toLowerCase() == 'child'
-                                  ? 'Please enter a real name'
+                                  ? l10n.pleaseEnterRealName
                                   : (name.trim().length < 2
-                                    ? 'Name must be at least 2 characters'
+                                    ? l10n.nameTooShort
                                     : null)),
                             ),
                             textCapitalization: TextCapitalization.words,
@@ -1042,6 +1047,7 @@ class _ChildManagementScreenState
         },
         backgroundColor: ParentColors.parentGreen,
         child: const Icon(Icons.add),
+        ),
       ),
     );
   }

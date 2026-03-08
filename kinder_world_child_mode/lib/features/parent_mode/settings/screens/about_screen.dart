@@ -35,7 +35,8 @@ class _ParentAboutScreenState extends ConsumerState<ParentAboutScreen> {
         return data['body'].toString();
       }
     } catch (_) {}
-    return 'Kinder World helps parents guide learning in a safe environment.';
+    // fallback text is resolved in build via l10n.aboutFallbackText
+    return '';
   }
 
   void _openLegal(String type) {
@@ -57,13 +58,13 @@ class _ParentAboutScreenState extends ConsumerState<ParentAboutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n?.parentAbout ?? 'About'),
+        title: Text(l10n.parentAbout),
         elevation: 0,
       ),
       body: Padding(
@@ -74,7 +75,7 @@ class _ParentAboutScreenState extends ConsumerState<ParentAboutScreen> {
             Icon(Icons.school, size: 80, color: colors.primary),
             const SizedBox(height: 16),
             Text(
-              'Kinder World',
+              l10n.aboutAppName,
               style: textTheme.titleLarge?.copyWith(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -86,18 +87,26 @@ class _ParentAboutScreenState extends ConsumerState<ParentAboutScreen> {
               builder: (context, snapshot) {
                 if (snapshot.hasData) {
                   return Text(
-                    'Version ${snapshot.data!.version} (Build ${snapshot.data!.buildNumber})',
+                    l10n.versionBuildLabel(
+                      snapshot.data!.version,
+                      snapshot.data!.buildNumber,
+                    ),
                     style: Theme.of(context).textTheme.bodySmall,
                   );
                 }
-                return const Text('Loading version...');
+                return Text(l10n.loadingVersion);
               },
             ),
             const SizedBox(height: 20),
             FutureBuilder<String>(
               future: _aboutTextFuture,
               builder: (context, snapshot) {
-                final text = snapshot.data ?? 'Loading...';
+                final raw = snapshot.data;
+                final text = (raw == null)
+                    ? l10n.loading
+                    : raw.isEmpty
+                        ? l10n.aboutFallbackText
+                        : raw;
                 return Text(
                   text,
                   textAlign: TextAlign.center,
@@ -109,17 +118,17 @@ class _ParentAboutScreenState extends ConsumerState<ParentAboutScreen> {
             ),
             const Spacer(),
             _LegalButton(
-              title: 'Terms of Service',
+              title: l10n.termsOfService,
               onTap: () => _openLegal('terms'),
             ),
             const SizedBox(height: 10),
             _LegalButton(
-              title: 'Privacy Policy',
+              title: l10n.privacyPolicy,
               onTap: () => _openLegal('privacy'),
             ),
             const SizedBox(height: 10),
             _LegalButton(
-              title: 'COPPA & Children\'s Privacy',
+              title: l10n.legalCoppaTitle,
               onTap: () => _openLegal('coppa'),
             ),
             const SizedBox(height: 16),

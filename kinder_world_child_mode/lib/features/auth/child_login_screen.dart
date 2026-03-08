@@ -801,13 +801,13 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                 isValidEmail(parentEmail) &&
                 selectedPassword.length == 3 &&
                 !isSaving;
-            final nameError = nameTouched
+                    final nameError = nameTouched
                 ? (childName.isEmpty
                     ? l10n.fieldRequired
                     : (childName.toLowerCase() == 'child'
-                        ? 'Please enter a real name'
+                        ? l10n.pleaseEnterRealName
                         : (childName.length < 2
-                            ? 'Name must be at least 2 characters'
+                            ? l10n.nameTooShort
                             : null)))
                 : null;
             final emailError = emailTouched && !isValidEmail(parentEmail)
@@ -1451,7 +1451,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
         Center(
           child: TextButton(
             onPressed: _isLoading ? null : () => context.go('/child/forgot-password'),
-            child: const Text('Forgot Password?'),
+            child: Text(l10n.forgotPassword),
           ),
         ),
         const SizedBox(height: 12),
@@ -1595,7 +1595,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
         Center(
           child: TextButton(
             onPressed: _isLoading ? null : () => context.go('/child/forgot-password'),
-            child: const Text('Forgot Password?'),
+            child: Text(l10n.forgotPassword),
           ),
         ),
       ],

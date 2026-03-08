@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
+import 'package:kinder_world/core/localization/app_localizations.dart';
 
 class DataSyncScreen extends ConsumerStatefulWidget {
   const DataSyncScreen({super.key});
@@ -15,7 +16,7 @@ class _DataSyncScreenState extends ConsumerState<DataSyncScreen>
     with SingleTickerProviderStateMixin {
   bool _isSyncing = false;
   double _syncProgress = 0.0;
-  String _syncStatus = 'Ready to sync';
+  String? _syncStatusKey = 'syncReady';
   
   late AnimationController _controller;
   late Animation<double> _rotationAnimation;
@@ -44,11 +45,32 @@ class _DataSyncScreenState extends ConsumerState<DataSyncScreen>
     super.dispose();
   }
 
+  String _getSyncStatus(AppLocalizations l10n) {
+    switch (_syncStatusKey) {
+      case 'syncReady':
+        return l10n.syncReady;
+      case 'syncStarting':
+        return l10n.syncStarting;
+      case 'syncingChildProfiles':
+        return l10n.syncingChildProfiles;
+      case 'syncingProgressData':
+        return l10n.syncingProgressData;
+      case 'syncingActivities':
+        return l10n.syncingActivities;
+      case 'syncFinalizing':
+        return l10n.syncFinalizing;
+      case 'syncCompleted':
+        return l10n.syncCompleted;
+      default:
+        return l10n.syncReady;
+    }
+  }
+
   Future<void> _startSync() async {
     setState(() {
       _isSyncing = true;
       _syncProgress = 0.0;
-      _syncStatus = 'Starting sync...';
+      _syncStatusKey = 'syncStarting';
     });
     
     _controller.repeat();
@@ -62,13 +84,13 @@ class _DataSyncScreenState extends ConsumerState<DataSyncScreen>
           _syncProgress = i / 100;
           
           if (i < 30) {
-            _syncStatus = 'Syncing child profiles...';
+            _syncStatusKey = 'syncingChildProfiles';
           } else if (i < 60) {
-            _syncStatus = 'Syncing progress data...';
+            _syncStatusKey = 'syncingProgressData';
           } else if (i < 90) {
-            _syncStatus = 'Syncing activities...';
+            _syncStatusKey = 'syncingActivities';
           } else {
-            _syncStatus = 'Finalizing sync...';
+            _syncStatusKey = 'syncFinalizing';
           }
         });
       }
@@ -79,7 +101,7 @@ class _DataSyncScreenState extends ConsumerState<DataSyncScreen>
     if (mounted) {
       setState(() {
         _isSyncing = false;
-        _syncStatus = 'Sync completed successfully!';
+        _syncStatusKey = 'syncCompleted';
       });
       
       _controller.stop();
@@ -100,7 +122,7 @@ class _DataSyncScreenState extends ConsumerState<DataSyncScreen>
           onPressed: () => context.go('/parent/settings'),
         ),
         title: Text(
-          'Data Sync',
+          AppLocalizations.of(context)!.dataSyncTitle,
           style: textTheme.titleMedium?.copyWith(
             fontSize: AppConstants.fontSize,
             fontWeight: FontWeight.bold,
@@ -144,7 +166,7 @@ class _DataSyncScreenState extends ConsumerState<DataSyncScreen>
               
               // Sync status
               Text(
-                _syncStatus,
+                _getSyncStatus(AppLocalizations.of(context)!),
                 style: textTheme.titleLarge?.copyWith(
                   fontSize: AppConstants.largeFontSize,
                   fontWeight: FontWeight.bold,
@@ -190,33 +212,33 @@ class _DataSyncScreenState extends ConsumerState<DataSyncScreen>
                     ),
                   ],
                 ),
-                child: const Column(
+                child: Column(
                   children: [
                     _SyncDetailItem(
                       icon: Icons.person,
-                      label: 'Child Profiles',
-                      value: '2 synced',
+                      label: AppLocalizations.of(context)!.syncChildProfilesLabel,
+                      value: AppLocalizations.of(context)!.syncedCount(2),
                       isSynced: true,
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     _SyncDetailItem(
                       icon: Icons.analytics,
-                      label: 'Progress Data',
-                      value: '15 activities',
+                      label: AppLocalizations.of(context)!.syncProgressDataLabel,
+                      value: AppLocalizations.of(context)!.activitiesCount(15),
                       isSynced: true,
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     _SyncDetailItem(
                       icon: Icons.settings,
-                      label: 'Settings',
-                      value: 'Synced',
+                      label: AppLocalizations.of(context)!.syncSettingsLabel,
+                      value: AppLocalizations.of(context)!.syncedLabel,
                       isSynced: true,
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     _SyncDetailItem(
                       icon: Icons.cloud,
-                      label: 'Last Sync',
-                      value: '2 hours ago',
+                      label: AppLocalizations.of(context)!.syncLastSyncLabel,
+                      value: AppLocalizations.of(context)!.hoursAgoSync,
                       isSynced: null,
                     ),
                   ],
@@ -240,7 +262,7 @@ class _DataSyncScreenState extends ConsumerState<DataSyncScreen>
                   child: _isSyncing
                     ? CircularProgressIndicator(color: colors.onPrimary)
                     : Text(
-                        'Sync Now',
+                        AppLocalizations.of(context)!.syncNow,
                         style: textTheme.titleSmall?.copyWith(
                           fontSize: AppConstants.fontSize,
                           fontWeight: FontWeight.bold,

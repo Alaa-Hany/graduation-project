@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/features/child_mode/learn/coloring_progress_storage.dart';
 import 'package:path_drawing/path_drawing.dart';
 import 'package:xml/xml.dart';
@@ -11,7 +12,7 @@ class ColoringPageScreen extends StatefulWidget {
   const ColoringPageScreen({
     super.key,
     required this.svgAssetPath,
-    this.title = 'Coloring',
+    this.title = '',
   });
 
   final String svgAssetPath;
@@ -98,7 +99,7 @@ class _ColoringPageScreenState extends State<ColoringPageScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = 'Could not load coloring page: $e';
+        _error = e.toString();
       });
     }
   }
@@ -160,6 +161,7 @@ class _ColoringPageScreenState extends State<ColoringPageScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final template = _template;
 
     return Scaffold(
@@ -168,7 +170,7 @@ class _ColoringPageScreenState extends State<ColoringPageScreen> {
         elevation: 0,
         backgroundColor: Colors.transparent,
         title: Text(
-          widget.title,
+          widget.title.isEmpty ? l10n.coloringTitle : widget.title,
           style: const TextStyle(
             fontFamily: 'Comic Sans MS',
             fontWeight: FontWeight.w900,
@@ -205,10 +207,10 @@ class _ColoringPageScreenState extends State<ColoringPageScreen> {
                       const Icon(Icons.auto_awesome_rounded,
                           color: Color(0xFFFFB300), size: 20),
                       const SizedBox(width: 8),
-                      const Flexible(
+                      Flexible(
                         child: Text(
-                          'Tap any white shape to fill it!',
-                          style: TextStyle(
+                          l10n.tapShapeToFill,
+                          style: const TextStyle(
                             fontFamily: 'Comic Sans MS',
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF18578C),
@@ -248,10 +250,11 @@ class _ColoringPageScreenState extends State<ColoringPageScreen> {
   }
 
   Widget _buildCanvas(SvgColoringTemplate? template) {
+    final l10n = AppLocalizations.of(context)!;
     if (_error != null) {
       return Center(
         child: Text(
-          _error!,
+          l10n.couldNotLoadColoringPage(_error!),
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
       );
@@ -279,7 +282,7 @@ class _ColoringPageScreenState extends State<ColoringPageScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    'Interactive fill disabled: $_error',
+                    l10n.interactiveFillDisabled(_error!),
                     style: const TextStyle(color: Colors.white, fontSize: 12),
                   ),
                 ),
@@ -509,6 +512,7 @@ class _ColoringPageScreenState extends State<ColoringPageScreen> {
   }
 
   Widget _buildControls() {
+    final l10n = AppLocalizations.of(context)!;
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, _) {
@@ -517,7 +521,7 @@ class _ColoringPageScreenState extends State<ColoringPageScreen> {
             Expanded(
               child: _ControlButton(
                 icon: Icons.undo_rounded,
-                label: 'Undo',
+                label: l10n.undo,
                 enabled: _controller.canUndo,
                 onTap: _controller.undo,
               ),
@@ -526,7 +530,7 @@ class _ColoringPageScreenState extends State<ColoringPageScreen> {
             Expanded(
               child: _ControlButton(
                 icon: Icons.redo_rounded,
-                label: 'Redo',
+                label: l10n.redo,
                 enabled: _controller.canRedo,
                 onTap: _controller.redo,
               ),
@@ -535,7 +539,7 @@ class _ColoringPageScreenState extends State<ColoringPageScreen> {
             Expanded(
               child: _ControlButton(
                 icon: Icons.refresh_rounded,
-                label: 'Reset',
+                label: l10n.reset,
                 enabled: _controller.colorsByAreaId.isNotEmpty,
                 onTap: _controller.reset,
               ),
@@ -544,7 +548,7 @@ class _ColoringPageScreenState extends State<ColoringPageScreen> {
             Expanded(
               child: _ControlButton(
                 icon: Icons.cleaning_services_rounded,
-                label: 'Eraser',
+                label: l10n.eraser,
                 enabled: true,
                 selected: _controller.selectedColor == Colors.white,
                 onTap: _controller.enableEraser,
@@ -1120,14 +1124,15 @@ class _CompletionRewardBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       mainAxisSize: MainAxisSize.min,
-      children: const [
-        _SunStarBadge(),
-        SizedBox(height: 8),
+      children: [
+        const _SunStarBadge(),
+        const SizedBox(height: 8),
         Text(
-          'Awesome coloring!',
-          style: TextStyle(
+          l10n.awesomeColoring,
+          style: const TextStyle(
             fontFamily: 'Comic Sans MS',
             fontWeight: FontWeight.w900,
             color: Color(0xFF18578C),

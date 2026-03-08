@@ -10,6 +10,7 @@ import 'package:kinder_world/core/providers/theme_provider.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/features/child_mode/profile/child_profile_screen.dart';
+import 'package:kinder_world/core/localization/app_localizations.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NAVIGATION SHELL — wraps all child tabs with the premium bottom nav bar
@@ -92,16 +93,16 @@ class _ChildBottomNav extends StatelessWidget {
     required this.colors,
   });
 
-  static const _items = [
-    _NavItem(icon: Icons.home_rounded, label: 'Home'),
-    _NavItem(icon: Icons.auto_stories_rounded, label: 'Learn'),
-    _NavItem(icon: Icons.sports_esports_rounded, label: 'Play'),
-    _NavItem(icon: Icons.smart_toy_rounded, label: 'AI Buddy'),
-    _NavItem(icon: Icons.face_rounded, label: 'Profile'),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final items = [
+      _NavItem(icon: Icons.home_rounded, label: l10n.home),
+      _NavItem(icon: Icons.auto_stories_rounded, label: l10n.learn),
+      _NavItem(icon: Icons.sports_esports_rounded, label: l10n.play),
+      _NavItem(icon: Icons.smart_toy_rounded, label: l10n.aiBuddy),
+      _NavItem(icon: Icons.face_rounded, label: l10n.profile),
+    ];
     return Container(
       decoration: BoxDecoration(
         color: colors.surface,
@@ -118,9 +119,9 @@ class _ChildBottomNav extends StatelessWidget {
         child: SizedBox(
           height: 64,
           child: Row(
-            children: List.generate(_items.length, (i) {
+            children: List.generate(items.length, (i) {
               return _NavItemWidget(
-                item: _items[i],
+                item: items[i],
                 isSelected: currentIndex == i,
                 onTap: () => onTap(i),
                 colors: colors,
@@ -241,6 +242,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
     }
 
     if (sessionState.error != null || childProfile == null) {
+      final l10n = AppLocalizations.of(context)!;
       return Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Center(
@@ -248,11 +250,11 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
             padding: const EdgeInsets.all(24.0),
             child: ChildEmptyState(
               emoji: '🔒',
-              title: sessionState.error ?? 'No active child session',
-              subtitle: 'Please sign in to continue your adventure!',
+              title: sessionState.error ?? l10n.noActiveChildSession,
+              subtitle: l10n.signInToContinue,
               action: ElevatedButton(
                 onPressed: () => context.go('/child/login'),
-                child: const Text('Go to Login'),
+                child: Text(l10n.goToLogin),
               ),
             ),
           ),
@@ -360,6 +362,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
   // ── HERO SECTION ───────────────────────────────────────────────────────────
 
   Widget _buildHeroSection(ChildProfile child) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     final firstName = child.name.split(' ').first;
     final greeting = childTimeGreeting();
@@ -405,7 +408,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _motivationalLine(child),
+                      _motivationalLine(child, l10n),
                       style: const TextStyle(
                         fontSize: 13,
                         color: Colors.white70,
@@ -424,7 +427,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
           Row(
             children: [
               Text(
-                'Level ${child.level}',
+                l10n.levelBubble(child.level),
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -447,7 +450,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
               ),
               const SizedBox(width: 10),
               Text(
-                '⭐ $currentXpInLevel XP',
+                l10n.xpDisplay(currentXpInLevel),
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -461,18 +464,19 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
     );
   }
 
-  String _motivationalLine(ChildProfile child) {
-    if (child.streak >= 7) return '🏆 7+ day streak — you\'re on fire!';
-    if (child.streak >= 3) return '⚡ ${child.streak} days strong, keep going!';
+  String _motivationalLine(ChildProfile child, AppLocalizations l10n) {
+    if (child.streak >= 7) return l10n.streakOnFire(child.streak);
+    if (child.streak >= 3) return l10n.streakDaysStrong(child.streak);
     if (child.activitiesCompleted >= 10) {
-      return '🎯 ${child.activitiesCompleted} activities completed — amazing!';
+      return l10n.activitiesCompletedAmazing(child.activitiesCompleted);
     }
-    return '🚀 Ready for today\'s adventure?';
+    return l10n.readyForAdventure;
   }
 
   // ── STATS ROW ──────────────────────────────────────────────────────────────
 
   Widget _buildStatsRow(ChildProfile child) {
+    final l10n = AppLocalizations.of(context)!;
     final currentXpInLevel = child.xp % 1000;
     return KinderCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
@@ -480,8 +484,8 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           ChildStatBubble(
-            value: 'Lv.${child.level}',
-            label: 'Level',
+            value: l10n.levelBubble(child.level),
+            label: l10n.level,
             icon: Icons.star_rounded,
             color: ChildColors.xpGold,
             onTap: () => Navigator.of(context).push(
@@ -495,13 +499,13 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
           ),
           ChildStatBubble(
             value: '${child.streak}',
-            label: 'Streak',
+            label: l10n.streak,
             icon: Icons.local_fire_department_rounded,
             color: ChildColors.streakFire,
           ),
           ChildStatBubble(
             value: '${child.activitiesCompleted}',
-            label: 'Done',
+            label: l10n.done,
             icon: Icons.check_circle_rounded,
             color: ChildColors.successGreen,
           ),
@@ -513,10 +517,11 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
   // ── CONTINUE LEARNING ──────────────────────────────────────────────────────
 
   Widget _buildContinueLearning() {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const ChildSectionHeader(title: 'Continue Learning'),
+        ChildSectionHeader(title: l10n.continueLearning),
         const SizedBox(height: 12),
         KinderCard(
           onTap: () => context.go('/child/learn'),
@@ -545,9 +550,9 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Explore Lessons',
-                      style: TextStyle(
+                    Text(
+                      l10n.exploreLessons,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
@@ -555,7 +560,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      'New topics and activities await!',
+                      l10n.newTopicsAwait,
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.white.withValues(alpha: 0.8),
@@ -571,9 +576,9 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                   color: Colors.white.withValues(alpha: 0.25),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text(
-                  'Go!',
-                  style: TextStyle(
+                child: Text(
+                  l10n.goLabel,
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
@@ -595,6 +600,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
           .read(progressControllerProvider.notifier)
           .loadTodayProgress(child.id),
       builder: (context, snapshot) {
+        final l10n = AppLocalizations.of(context)!;
         final done = snapshot.hasData ? snapshot.data!.length : 0;
         const target = 3;
         final progress = (done / target).clamp(0.0, 1.0);
@@ -604,7 +610,9 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ChildSectionHeader(
-              title: isComplete ? 'Daily Goal ✅' : 'Daily Goal',
+              title: isComplete
+                  ? '${l10n.dailyGoal} ✅'
+                  : l10n.dailyGoal,
             ),
             const SizedBox(height: 12),
             KinderCard(
@@ -622,8 +630,8 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                     children: [
                       Text(
                         isComplete
-                            ? '🎉 Goal complete!'
-                            : 'Complete $target activities today',
+                            ? l10n.goalComplete
+                            : l10n.completeActivitiesToday(target),
                         style: TextStyle(
                           fontSize: AppConstants.fontSize,
                           fontWeight: FontWeight.w700,
@@ -677,9 +685,9 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                   ),
                   if (isComplete) ...[
                     const SizedBox(height: 10),
-                    const Text(
-                      '+ 50 XP bonus earned!',
-                      style: TextStyle(
+                    Text(
+                      l10n.xpBonusEarned,
+                      style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: ChildColors.xpGold,
@@ -698,50 +706,51 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
   // ── ACTIVITIES HISTORY ─────────────────────────────────────────────────────
 
   Widget _buildMyActivitiesHistory() {
+    final l10n = AppLocalizations.of(context)!;
     final axes = [
-      const _AxisHistory(
+      _AxisHistory(
         index: 0,
-        label: 'Kindness',
+        label: l10n.kindnessTab,
         emoji: '💖',
         color: ChildColors.kindnessPink,
         icon: Icons.favorite_rounded,
-        items: [
+        items: const [
           _HistoryItem(title: 'Sharing Stars', subtitle: 'Today · 8 min', xp: 30),
           _HistoryItem(title: 'Kind Words', subtitle: 'Yesterday · 6 min', xp: 20),
           _HistoryItem(title: 'Helping Hands', subtitle: '2 days ago · 10 min', xp: 40),
         ],
       ),
-      const _AxisHistory(
+      _AxisHistory(
         index: 1,
-        label: 'Learning',
+        label: l10n.learningTab,
         emoji: '📚',
         color: ChildColors.learningBlue,
         icon: Icons.school_rounded,
-        items: [
+        items: const [
           _HistoryItem(title: 'Numbers Adventure', subtitle: 'Today · 12 min', xp: 45),
           _HistoryItem(title: 'Color Quest', subtitle: 'Yesterday · 7 min', xp: 25),
           _HistoryItem(title: 'Story Time', subtitle: '2 days ago · 9 min', xp: 35),
         ],
       ),
-      const _AxisHistory(
+      _AxisHistory(
         index: 2,
-        label: 'Skills',
+        label: l10n.skillsTab,
         emoji: '🧩',
         color: ChildColors.skillPurple,
         icon: Icons.extension_rounded,
-        items: [
+        items: const [
           _HistoryItem(title: 'Puzzle Builder', subtitle: 'Today · 5 min', xp: 18),
           _HistoryItem(title: 'Shape Match', subtitle: 'Yesterday · 8 min', xp: 28),
           _HistoryItem(title: 'Memory Game', subtitle: '2 days ago · 11 min', xp: 38),
         ],
       ),
-      const _AxisHistory(
+      _AxisHistory(
         index: 3,
-        label: 'Fun',
+        label: l10n.funTab,
         emoji: '🎵',
         color: ChildColors.funCyan,
         icon: Icons.music_note_rounded,
-        items: [
+        items: const [
           _HistoryItem(title: 'Dance Party', subtitle: 'Today · 6 min', xp: 22),
           _HistoryItem(title: 'Sing Along', subtitle: 'Yesterday · 5 min', xp: 18),
           _HistoryItem(title: 'Magic Show', subtitle: '2 days ago · 9 min', xp: 32),
@@ -754,7 +763,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const ChildSectionHeader(title: 'My Activities'),
+        ChildSectionHeader(title: l10n.myActivities),
         const SizedBox(height: 12),
 
         // Category chips
@@ -855,16 +864,17 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
   // ── ACTIVITY OF THE DAY ────────────────────────────────────────────────────
 
   Widget _buildActivityOfTheDay() {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const ChildSectionHeader(title: 'Activity of the Day'),
+        ChildSectionHeader(title: l10n.activityOfTheDay),
         const SizedBox(height: 12),
         KinderCard(
           onTap: () => context.go('/child/home/activity-of-day'),
-          gradientColors: [
-            const Color(0xFFFF9800),
-            const Color(0xFFFF6B35),
+          gradientColors: const [
+            Color(0xFFFF9800),
+            Color(0xFFFF6B35),
           ],
           gradientBegin: Alignment.topLeft,
           gradientEnd: Alignment.bottomRight,
@@ -890,9 +900,9 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Explore New Activities',
-                      style: TextStyle(
+                    Text(
+                      l10n.exploreNewActivities,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
@@ -901,16 +911,16 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Discover something amazing today!',
+                      l10n.discoverSomethingAmazing,
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.white.withValues(alpha: 0.85),
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      '⭐ +50 XP Bonus',
-                      style: TextStyle(
+                    Text(
+                      l10n.xpBonusLabel,
+                      style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: ChildColors.xpGold,
@@ -938,9 +948,9 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                     ),
                   ],
                 ),
-                child: const Text(
-                  'Start',
-                  style: TextStyle(
+                child: Text(
+                  l10n.start,
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFFFF6B35),

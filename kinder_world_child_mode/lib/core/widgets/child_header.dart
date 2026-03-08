@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/widgets/avatar_view.dart';
+import 'package:kinder_world/core/localization/app_localizations.dart';
 
 class ChildHeader extends ConsumerWidget {
   final bool compact;
@@ -19,9 +20,10 @@ class ChildHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final child = ref.watch(currentChildProvider);
+    final l10n = AppLocalizations.of(context)!;
     final name = (child?.name.isNotEmpty ?? false)
         ? child!.name
-        : (child?.id ?? 'Friend');
+        : (child?.id ?? l10n.friendFallback);
     final level = child?.level ?? 1;
     final theme = Theme.of(context);
     final titleStyle = theme.textTheme.titleMedium?.copyWith(
@@ -50,9 +52,9 @@ class ChildHeader extends ConsumerWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Hello, $name', style: titleStyle),
+              Text(l10n.helloName(name), style: titleStyle),
               const SizedBox(height: 2),
-              Text('Level $level', style: subtitleStyle),
+              Text(l10n.levelLabel(level), style: subtitleStyle),
             ],
           ),
         ],

@@ -51,6 +51,7 @@ import 'package:kinder_world/features/system_pages/legal_screen.dart';
 import 'package:kinder_world/features/system_pages/data_sync_screen.dart';
 import 'package:kinder_world/features/system_pages/error_screen.dart';
 import 'package:kinder_world/features/system_pages/maintenance_screen.dart';
+import 'package:kinder_world/core/localization/app_localizations.dart';
 
 // ========= Route Paths (keep as consts here to avoid scattering strings) =========
 class Routes {
@@ -364,7 +365,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             }
           }
           if (child == null) {
-            return const ErrorScreen(error: 'Child profile not found');
+            return ErrorScreen(error: AppLocalizations.of(context)?.childProfileNotFound ?? 'Child profile not found');
           }
           return ParentChildProfileScreen(child: child);
         },
@@ -453,7 +454,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.error,
         builder: (context, state) => ErrorScreen(
-          error: state.extra as String? ?? 'An unexpected error occurred',
+          error: state.extra as String? ?? (AppLocalizations.of(context)?.unexpectedError ?? 'An unexpected error occurred'),
         ),
       ),
       GoRoute(
@@ -474,7 +475,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
 
     errorBuilder: (context, state) => ErrorScreen(
-      error: state.error?.toString() ?? 'Page not found',
+      error: state.error?.toString() ?? (AppLocalizations.of(context)?.pageNotFound ?? 'Page not found'),
     ),
   );
 });

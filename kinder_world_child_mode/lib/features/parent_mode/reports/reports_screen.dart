@@ -242,11 +242,14 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                       .withValues(alpha: 0.2),
                 ),
                 title: Text(child.name),
-                subtitle: Text(
-                  child.age > 0
-                      ? 'Age ${child.age} - Level ${child.level}'
-                      : 'Age — - Level ${child.level}',
-                ),
+                subtitle: Builder(builder: (ctx) {
+                  final loc = AppLocalizations.of(ctx)!;
+                  return Text(
+                    child.age > 0
+                        ? '${loc.childAge} ${child.age} · ${loc.level} ${child.level}'
+                        : '${loc.level} ${child.level}',
+                  );
+                }),
                 trailing: _selectedChild?.id == child.id
                     ? Icon(
                         Icons.check,
@@ -633,8 +636,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
           const SizedBox(height: 16),
           _buildAchievementItem(
             '*',
-            'Math Master',
-            'Completed 10 math activities',
+            l10n.achievementMathMasterTitle,
+            l10n.achievementMathMasterReportSubtitle,
             '2 ${l10n.daysAgo}',
             textTheme,
             colors,
@@ -642,8 +645,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
           const SizedBox(height: 12),
           _buildAchievementItem(
             '!',
-            'Perfect Score',
-            'Got 100% in Science Quiz',
+            l10n.achievementPerfectScoreTitle,
+            l10n.achievementPerfectScoreSubtitle,
             '3 ${l10n.daysAgo}',
             textTheme,
             colors,
@@ -651,8 +654,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
           const SizedBox(height: 12),
           _buildAchievementItem(
             '+',
-            '5-Day Streak',
-            'Used app for 5 consecutive days',
+            l10n.achievementFiveDayStreakTitle,
+            l10n.achievementFiveDayStreakSubtitle,
             l10n.justNow,
             textTheme,
             colors,
@@ -689,30 +692,39 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
           Row(
             children: [
               Expanded(
-                child: ParentStatCard(
-                  value: activities,
-                  label: 'Activities',
-                  icon: Icons.check_circle_rounded,
-                  color: ParentColors.parentGreen,
-                ),
+                child: Builder(builder: (ctx) {
+                  final loc = AppLocalizations.of(ctx)!;
+                  return ParentStatCard(
+                    value: activities,
+                    label: loc.activities,
+                    icon: Icons.check_circle_rounded,
+                    color: ParentColors.parentGreen,
+                  );
+                }),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: ParentStatCard(
-                  value: score,
-                  label: 'Avg Score',
-                  icon: Icons.star_rounded,
-                  color: ParentColors.xpGold,
-                ),
+                child: Builder(builder: (ctx) {
+                  final loc = AppLocalizations.of(ctx)!;
+                  return ParentStatCard(
+                    value: score,
+                    label: loc.avgScoreLabel,
+                    icon: Icons.star_rounded,
+                    color: ParentColors.xpGold,
+                  );
+                }),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: ParentStatCard(
-                  value: time,
-                  label: 'Screen Time',
-                  icon: Icons.timer_rounded,
-                  color: ParentColors.infoBlue,
-                ),
+                child: Builder(builder: (ctx) {
+                  final loc = AppLocalizations.of(ctx)!;
+                  return ParentStatCard(
+                    value: time,
+                    label: loc.screenTime,
+                    icon: Icons.timer_rounded,
+                    color: ParentColors.infoBlue,
+                  );
+                }),
               ),
             ],
           ),

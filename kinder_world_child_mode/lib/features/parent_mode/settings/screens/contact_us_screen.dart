@@ -32,11 +32,11 @@ class _ParentContactUsScreenState extends ConsumerState<ParentContactUsScreen> {
   @override
   Widget build(BuildContext context) {
     final supportState = ref.watch(supportControllerProvider);
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n?.parentContactUs ?? 'Contact Us'),
+        title: Text(l10n.parentContactUs),
         elevation: 0,
       ),
       body: Padding(
@@ -45,7 +45,7 @@ class _ParentContactUsScreenState extends ConsumerState<ParentContactUsScreen> {
           children: [
             // Intro text
             Text(
-              'We\'d love to hear from you. Send us your message and we\'ll get back to you shortly.',
+              l10n.contactUsIntro,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 24),
@@ -55,8 +55,8 @@ class _ParentContactUsScreenState extends ConsumerState<ParentContactUsScreen> {
               controller: _subjectController,
               maxLines: 1,
               decoration: InputDecoration(
-                labelText: 'Subject *',
-                hintText: 'What is your inquiry about?',
+                labelText: l10n.subjectLabel,
+                hintText: l10n.subjectHint,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -71,8 +71,8 @@ class _ParentContactUsScreenState extends ConsumerState<ParentContactUsScreen> {
               maxLines: 8,
               minLines: 6,
               decoration: InputDecoration(
-                labelText: 'Message *',
-                hintText: 'Please describe your inquiry in detail...',
+                labelText: l10n.messageLabel,
+                hintText: l10n.messageHint,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -117,11 +117,12 @@ class _ParentContactUsScreenState extends ConsumerState<ParentContactUsScreen> {
                     // Validation
                     final messenger = ScaffoldMessenger.of(context);
                     final navigator = Navigator.of(context);
-                    
+                    final loc = AppLocalizations.of(context)!;
+
                     if (_subjectController.text.trim().isEmpty) {
                       messenger.showSnackBar(
-                        const SnackBar(
-                          content: Text('Please enter a subject'),
+                        SnackBar(
+                          content: Text(loc.subjectRequiredError),
                         ),
                       );
                       return;
@@ -129,8 +130,8 @@ class _ParentContactUsScreenState extends ConsumerState<ParentContactUsScreen> {
 
                     if (_messageController.text.trim().isEmpty) {
                       messenger.showSnackBar(
-                        const SnackBar(
-                          content: Text('Please enter a message'),
+                        SnackBar(
+                          content: Text(loc.messageRequiredError),
                         ),
                       );
                       return;
@@ -145,11 +146,9 @@ class _ParentContactUsScreenState extends ConsumerState<ParentContactUsScreen> {
 
                     if (success && mounted) {
                       messenger.showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Message sent successfully. We\'ll get back to you soon.',
-                          ),
-                          duration: Duration(seconds: 3),
+                        SnackBar(
+                          content: Text(loc.messageSentSuccess),
+                          duration: const Duration(seconds: 3),
                         ),
                       );
                       navigator.pop();
@@ -167,7 +166,7 @@ class _ParentContactUsScreenState extends ConsumerState<ParentContactUsScreen> {
                       ),
                     ),
                   ),
-                  orElse: () => const Text('Send Message'),
+                  orElse: () => Text(l10n.sendMessage),
                 ),
               ),
             ),

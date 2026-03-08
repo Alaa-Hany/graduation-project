@@ -14,6 +14,7 @@ import 'package:kinder_world/core/widgets/avatar_view.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
 import 'package:kinder_world/core/widgets/picture_password_row.dart';
+import 'package:kinder_world/core/providers/locale_provider.dart';
 import 'package:kinder_world/app.dart';
 
 // ==========================================
@@ -166,7 +167,7 @@ class ChildProfileScreen extends ConsumerWidget {
                           ],
                         ),
                         child: Text(
-                          'Lv. ${child.level}',
+                          l10n.levelLabel(child.level),
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w800,
@@ -316,9 +317,9 @@ class ChildProfileScreen extends ConsumerWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        _buildAchievementBadge(context, '🏆', 'First Quiz', 'Completed first quiz'),
-                        _buildAchievementBadge(context, '🔥', '5 Day Streak', 'Keep it up!'),
-                        _buildAchievementBadge(context, '⭐', 'Math Master', '100% accuracy'),
+                        _buildAchievementBadge(context, '🏆', l10n.achievementFirstQuizTitle, l10n.achievementFirstQuizSubtitle),
+                        _buildAchievementBadge(context, '🔥', l10n.achievementStreakTitle, l10n.achievementStreakSubtitle),
+                        _buildAchievementBadge(context, '⭐', l10n.achievementMathMasterTitle, l10n.achievementMathMasterSubtitle),
                       ],
                     ),
                   ],
@@ -344,8 +345,8 @@ class ChildProfileScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Levels',
+                    Text(
+                            l10n.levels,
                             style: textTheme.titleMedium?.copyWith(
                               fontSize: AppConstants.fontSize,
                               fontWeight: FontWeight.bold,
@@ -353,7 +354,7 @@ class ChildProfileScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'Track your level journey',
+                            l10n.levelJourneySubtitle,
                             style: textTheme.bodySmall?.copyWith(
                               fontSize: 12,
                               color: colors.onSurfaceVariant,
@@ -386,9 +387,9 @@ class ChildProfileScreen extends ConsumerWidget {
                         ),
                         elevation: 3,
                       ),
-                      child: const Text(
-                        'Levels',
-                        style: TextStyle(fontWeight: FontWeight.w700),
+                      child: Text(
+                        l10n.levels,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
                   ],
@@ -549,14 +550,14 @@ class ChildLevelsScreen extends StatelessWidget {
                   children: [
                     _buildStatPill(
                       icon: Icons.emoji_events,
-                      label: 'Level',
+                      label: AppLocalizations.of(context)!.level,
                       value: '$currentLevel',
                       color: const Color(0xFFFFC34A),
                     ),
                     const SizedBox(width: 12),
                     _buildStatPill(
                       icon: Icons.star,
-                      label: 'XP',
+                      label: AppLocalizations.of(context)!.xp,
                       value: '$coins/1000',
                       color: const Color(0xFF7AE3FF),
                     ),
@@ -601,14 +602,14 @@ class ChildLevelsScreen extends StatelessWidget {
                                     if (!node.isUnlocked) {
                                       messenger.showSnackBar(
                                         SnackBar(
-                                          content: const Row(
+                                          content: Row(
                                             children: [
-                                              Icon(Icons.lock_rounded, color: Colors.white),
-                                              SizedBox(width: 10),
+                                              const Icon(Icons.lock_rounded, color: Colors.white),
+                                              const SizedBox(width: 10),
                                               Expanded(
                                                 child: Text(
-                                                  'Oops! Finish the previous level first.',
-                                                  style: TextStyle(fontWeight: FontWeight.w600),
+                                                  AppLocalizations.of(context)!.levelLockedMessage,
+                                                  style: const TextStyle(fontWeight: FontWeight.w600),
                                                 ),
                                               ),
                                             ],
@@ -630,10 +631,10 @@ class ChildLevelsScreen extends StatelessWidget {
                                             const Icon(Icons.play_circle_fill, color: Colors.white),
                                             const SizedBox(width: 10),
                                             Expanded(
-                                              child: Text(
-                                                'Great job! Start Level ${node.level}!',
-                                                style: const TextStyle(fontWeight: FontWeight.w600),
-                                              ),
+                                          child: Text(
+                                            AppLocalizations.of(context)!.levelStartMessage(node.level),
+                                            style: const TextStyle(fontWeight: FontWeight.w600),
+                                          ),
                                             ),
                                           ],
                                         ),
@@ -912,7 +913,7 @@ class _ChildSettingsScreenState extends ConsumerState<ChildSettingsScreen> {
             onChanged: (value) => setState(() => _settingsQuery = value),
             onSubmitted: (value) => _openSettingByQuery(value, locale),
             decoration: InputDecoration(
-              hintText: 'Search settings...',
+            hintText: l10n.searchSettingsHint,
               prefixIcon: const Icon(Icons.search),
               filled: true,
               fillColor: colors.surfaceContainerHighest,
@@ -949,6 +950,7 @@ class _ChildSettingsScreenState extends ConsumerState<ChildSettingsScreen> {
   }
 
   List<Widget> _buildFilteredSettings(BuildContext context, Locale locale) {
+    final l10n = AppLocalizations.of(context)!;
     final query = _settingsQuery.trim().toLowerCase();
     bool match(String text) =>
         query.isEmpty || text.toLowerCase().contains(query);
@@ -956,16 +958,16 @@ class _ChildSettingsScreenState extends ConsumerState<ChildSettingsScreen> {
     final sections = <Widget>[];
 
     if (match('account') || match('edit profile') || match('change avatar')) {
-      sections.add(_buildSectionHeader(context, "Account"));
+      sections.add(_buildSectionHeader(context, l10n.accountSection));
       sections.add(const SizedBox(height: 10));
       sections.add(_buildSettingsCard(
         context,
         children: [
-          _buildListTile(context, title: "Edit Profile", icon: Icons.person_outline, onTap: () {
+          _buildListTile(context, title: l10n.editProfile, icon: Icons.person_outline, onTap: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsEditProfileScreen()));
           }),
           _buildDivider(),
-          _buildListTile(context, title: "Change Avatar", icon: Icons.face_retouching_natural_outlined, onTap: () {
+          _buildListTile(context, title: l10n.changeAvatar, icon: Icons.face_retouching_natural_outlined, onTap: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsAvatarSelectionScreen()));
           }),
         ],
@@ -974,38 +976,38 @@ class _ChildSettingsScreenState extends ConsumerState<ChildSettingsScreen> {
     }
 
     if (match('preferences') || match('sound') || match('music')) {
-      sections.add(_buildSectionHeader(context, "Preferences"));
+      sections.add(_buildSectionHeader(context, l10n.preferencesSection));
       sections.add(const SizedBox(height: 10));
       sections.add(_buildSettingsCard(
         context,
         children: [
-          _buildSwitchTile(context, title: "Sound Effects", icon: Icons.volume_up_outlined, value: _soundEnabled, onChanged: (val) => setState(() => _soundEnabled = val)),
+          _buildSwitchTile(context, title: l10n.soundEffects, icon: Icons.volume_up_outlined, value: _soundEnabled, onChanged: (val) => setState(() => _soundEnabled = val)),
           _buildDivider(),
-          _buildSwitchTile(context, title: "Background Music", icon: Icons.music_note_outlined, value: _musicEnabled, onChanged: (val) => setState(() => _musicEnabled = val)),
+          _buildSwitchTile(context, title: l10n.backgroundMusic, icon: Icons.music_note_outlined, value: _musicEnabled, onChanged: (val) => setState(() => _musicEnabled = val)),
         ],
       ));
       sections.add(const SizedBox(height: 30));
     }
 
     if (match('app') || match('language') || match('themes') || match('about') || match('privacy')) {
-      sections.add(_buildSectionHeader(context, "App Settings"));
+      sections.add(_buildSectionHeader(context, l10n.appSettingsSection));
       sections.add(const SizedBox(height: 10));
       sections.add(_buildSettingsCard(
         context,
         children: [
-          _buildListTile(context, title: "Language", subtitle: _languageLabel(locale), icon: Icons.language_outlined, onTap: () {
+          _buildListTile(context, title: l10n.language, subtitle: _languageLabel(locale), icon: Icons.language_outlined, onTap: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsLanguageScreen()));
           }),
           _buildDivider(),
-          _buildListTile(context, title: "Themes", subtitle: "Light & Calm", icon: Icons.color_lens_outlined, onTap: () {
+          _buildListTile(context, title: l10n.themes, subtitle: l10n.lightAndCalm, icon: Icons.color_lens_outlined, onTap: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const ChildThemeScreen()));
           }),
           _buildDivider(),
-          _buildListTile(context, title: "About Us", icon: Icons.info_outline, onTap: () {
+          _buildListTile(context, title: l10n.aboutUs, icon: Icons.info_outline, onTap: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsAboutUsScreen()));
           }),
           _buildDivider(),
-          _buildListTile(context, title: "Privacy Policy", icon: Icons.lock_outline, onTap: () {
+          _buildListTile(context, title: l10n.privacyPolicy, icon: Icons.lock_outline, onTap: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsPrivacyPolicyScreen()));
           }),
         ],
@@ -1017,7 +1019,7 @@ class _ChildSettingsScreenState extends ConsumerState<ChildSettingsScreen> {
       return [
         Center(
           child: Text(
-            'No settings found',
+            l10n.noSettingsFound,
             style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ),
@@ -1107,7 +1109,7 @@ class _ChildSettingsScreenState extends ConsumerState<ChildSettingsScreen> {
   String _languageLabel(Locale locale) {
     switch (locale.languageCode) {
       case 'ar':
-        return 'العربية؟';
+        return 'العربية';
       case 'en':
       default:
         return 'English (US)';
@@ -1155,7 +1157,7 @@ class SettingsLanguageScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Select Language", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(AppLocalizations.of(context)!.selectLanguage, style: const TextStyle(fontWeight: FontWeight.bold)),
         leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context)),
       ),
       body: ListView(
@@ -1168,10 +1170,11 @@ class SettingsLanguageScreen extends ConsumerWidget {
             final isSelected = locale.languageCode == language['code'];
             return InkWell(
               onTap: () {
-                ref.read(localeProvider.notifier).state =
-                    Locale(language['code'] as String);
+                ref
+                    .read(localeProvider.notifier)
+                    .setLanguageCode(language['code'] as String);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Language changed to ${language['name']}")),
+                  SnackBar(content: Text(AppLocalizations.of(context)!.languageChanged(language['name'] as String))),
                 );
               },
               child: Container(
@@ -1249,7 +1252,7 @@ class _SettingsAvatarSelectionScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Choose Avatar", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(AppLocalizations.of(context)!.chooseAvatar, style: const TextStyle(fontWeight: FontWeight.bold)),
         leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context)),
         actions: [
           TextButton(
@@ -1266,10 +1269,10 @@ class _SettingsAvatarSelectionScreenState
                     if (!mounted) return;
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Avatar Saved")),
+                      SnackBar(content: Text(AppLocalizations.of(context)!.avatarSaved)),
                     );
                   },
-            child: const Text("Save", style: TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(AppLocalizations.of(context)!.save, style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -1375,7 +1378,7 @@ class _SettingsEditProfileScreenState
     if (!_formKey.currentState!.validate()) return;
     if (_selectedPictures.length != 3) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select 3 pictures')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.pleaseSelectThreePictures)),
       );
       return;
     }
@@ -1398,7 +1401,7 @@ class _SettingsEditProfileScreenState
       } catch (_) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to update picture password')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.failedToUpdatePicturePassword)),
         );
         return;
       }
@@ -1416,7 +1419,7 @@ class _SettingsEditProfileScreenState
     if (!mounted) return;
     Navigator.pop(context);
     ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Profile Updated')));
+        .showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.profileUpdated)));
   }
 
   @override
@@ -1426,7 +1429,7 @@ class _SettingsEditProfileScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Edit Profile", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(AppLocalizations.of(context)!.editProfile, style: const TextStyle(fontWeight: FontWeight.bold)),
         leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context)),
       ),
       body: SingleChildScrollView(
@@ -1448,31 +1451,31 @@ class _SettingsEditProfileScreenState
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text("Change your avatar from Profile screen",
+                    child: Text(AppLocalizations.of(context)!.changeAvatarFromProfile,
                         style: theme.textTheme.bodySmall),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
-              Text("Name", style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+              Text(AppLocalizations.of(context)!.nameLabel, style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(
-                  hintText: "Enter your name",
+                  hintText: AppLocalizations.of(context)!.enterYourName,
                   filled: true,
                   fillColor: colors.surfaceContainerHighest,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                 ),
                 validator: (value) {
-                  if (value == null || value.trim().isEmpty) return 'Please enter a name';
+                  if (value == null || value.trim().isEmpty) return AppLocalizations.of(context)!.pleaseEnterName;
                   return null;
                 },
               ),
               const SizedBox(height: 24),
-              Text("Picture Password", style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+              Text(AppLocalizations.of(context)!.picturePassword, style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
               const SizedBox(height: 4),
-              Text("Choose exactly 3 pictures", style: theme.textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant)),
+              Text(AppLocalizations.of(context)!.chooseExactlyThreePictures, style: theme.textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant)),
               const SizedBox(height: 8),
               PicturePasswordRow(
                 picturePassword: _selectedPictures,
@@ -1528,7 +1531,7 @@ class _SettingsEditProfileScreenState
                     foregroundColor: colors.onPrimary,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
-                  child: const Text("Save Changes", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  child: Text(AppLocalizations.of(context)!.saveChanges, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 ),
               ),
               const SizedBox(height: 20),
@@ -1560,7 +1563,7 @@ class ChildThemeScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Themes', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(AppLocalizations.of(context)!.themes, style: const TextStyle(fontWeight: FontWeight.bold)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -1589,8 +1592,8 @@ class ChildThemeScreen extends ConsumerWidget {
               children: [
                 const Icon(Icons.dark_mode),
                 const SizedBox(width: 12),
-                const Expanded(
-                  child: Text('Dark / Light'),
+                Expanded(
+                  child: Text(AppLocalizations.of(context)!.darkLight),
                 ),
                 Switch(
                   value: themeSettings.mode == ThemeMode.dark,
@@ -1605,7 +1608,7 @@ class ChildThemeScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
           Text(
-            'Choose a calm color',
+            AppLocalizations.of(context)!.chooseCalmColor,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -1683,7 +1686,7 @@ class SettingsAboutUsScreen extends StatelessWidget {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text("About Us", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(AppLocalizations.of(context)!.aboutUs, style: const TextStyle(fontWeight: FontWeight.bold)),
         leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context)),
       ),
       body: SingleChildScrollView(
@@ -1693,19 +1696,19 @@ class SettingsAboutUsScreen extends StatelessWidget {
             const ChildHeader(compact: true),
             Center(child: Icon(Icons.child_care, size: 80, color: theme.colorScheme.primary)),
             const SizedBox(height: 20),
-            Text("Kinder World App", style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.kinderWorldAppTitle, style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
-            Text("Version 1.0.0", style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey)),
+            Text(AppLocalizations.of(context)!.versionLabel('1.0.0'), style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey)),
             const SizedBox(height: 30),
             Text(
-              "Kinder World is a fun and educational application designed to help children learn through play. We focus on behavioral, educational, and skillful activities to provide a holistic learning experience.",
+              AppLocalizations.of(context)!.aboutAppDescription,
               style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
               textAlign: TextAlign.justify,
             ),
             const SizedBox(height: 20),
             const Divider(),
             const SizedBox(height: 20),
-            Text("Contact Us", style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.contactUs, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             _buildContactRow(Icons.email, "support@kinderworld.com"),
             const SizedBox(height: 10),
@@ -1739,7 +1742,7 @@ class SettingsPrivacyPolicyScreen extends StatelessWidget {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Privacy Policy", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(AppLocalizations.of(context)!.privacyPolicy, style: const TextStyle(fontWeight: FontWeight.bold)),
         leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context)),
       ),
       body: SingleChildScrollView(
@@ -1748,26 +1751,26 @@ class SettingsPrivacyPolicyScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const ChildHeader(compact: true),
-            Text("Last Updated: October 2023", style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey)),
+            Text(AppLocalizations.of(context)!.privacyLastUpdated('October 2023'), style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey)),
             const SizedBox(height: 20),
-            Text("1. Introduction", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.privacyIntroTitle, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text(
-              "We respect your privacy and are committed to protecting it through our compliance with this policy.",
+              AppLocalizations.of(context)!.privacyIntroBody,
               style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
             ),
             const SizedBox(height: 20),
-            Text("2. Data Collection", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.privacyDataCollectionTitle, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text(
-              "We collect information to provide better services to all our users. This includes personal details like name and avatar, and usage data to track progress.",
+              AppLocalizations.of(context)!.privacyDataCollectionBody,
               style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
             ),
             const SizedBox(height: 20),
-            Text("3. Security", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.privacySecurityTitle, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text(
-              "We implement a variety of security measures to maintain the safety of your personal information.",
+              AppLocalizations.of(context)!.privacySecurityBody,
               style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
             ),
           ],

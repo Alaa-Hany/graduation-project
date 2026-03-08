@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/features/child_mode/profile/child_profile_screen.dart';
 
@@ -16,12 +17,13 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
   int _selectedTab = 0;
   String _searchQuery = '';
 
+  // 'key' is stable for filtering; 'label' is kept for legacy but not used for filtering
   static const _tabs = <Map<String, Object>>[
-    {'label': 'All', 'emoji': '🌟', 'color': Color(0xFF6C63FF)},
-    {'label': 'Kindness', 'emoji': '💖', 'color': Color(0xFFE91E63)},
-    {'label': 'Learning', 'emoji': '📚', 'color': Color(0xFF3F51B5)},
-    {'label': 'Skills', 'emoji': '🧩', 'color': Color(0xFF9C27B0)},
-    {'label': 'Music', 'emoji': '🎵', 'color': Color(0xFF00BCD4)},
+    {'key': 'all',      'emoji': '🌟', 'color': Color(0xFF6C63FF)},
+    {'key': 'kindness', 'emoji': '💖', 'color': Color(0xFFE91E63)},
+    {'key': 'learning', 'emoji': '📚', 'color': Color(0xFF3F51B5)},
+    {'key': 'skills',   'emoji': '🧩', 'color': Color(0xFF9C27B0)},
+    {'key': 'music',    'emoji': '🎵', 'color': Color(0xFF00BCD4)},
   ];
 
   static const _cards = <Map<String, String>>[
@@ -145,15 +147,15 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
 
   List<Map<String, String>> get _filteredCards {
     final query = _searchQuery.trim().toLowerCase();
-    final label = _tabs[_selectedTab]['label'] as String;
-    final tag = switch (label) {
-      'Kindness' => 'Behavioral',
-      'Learning' => 'Educational',
-      'Skills' => 'Skillful',
-      'Music' => 'Entertaining',
-      _ => label,
+    final key = _tabs[_selectedTab]['key'] as String;
+    final tag = switch (key) {
+      'kindness' => 'Behavioral',
+      'learning' => 'Educational',
+      'skills'   => 'Skillful',
+      'music'    => 'Entertaining',
+      _          => 'All',
     };
-    final base = label == 'All'
+    final base = key == 'all'
         ? _cards
         : _cards.where((c) => c['tag'] == tag).toList();
     final filtered = query.isEmpty
@@ -165,6 +167,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     return Scaffold(
       backgroundColor: colors.surface,
@@ -172,17 +175,17 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(colors),
-            _buildCategoryTabs(),
+            _buildHeader(colors, l10n),
+            _buildCategoryTabs(l10n),
             const SizedBox(height: 14),
-            _buildSearchBar(colors),
+            _buildSearchBar(colors, l10n),
             const SizedBox(height: 12),
             Expanded(
               child: _filteredCards.isEmpty
-                  ? const ChildEmptyState(
+                  ? ChildEmptyState(
                       emoji: '🎬',
-                      title: 'Nothing found',
-                      subtitle: 'Try a different search or category!',
+                      title: l10n.nothingFound,
+                      subtitle: l10n.tryDifferentSearch,
                     )
                   : ListView(
                       padding: const EdgeInsets.only(
@@ -193,9 +196,9 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
                       children: [
                         // Featured row (only in "All" tab, no search active)
                         if (_selectedTab == 0 && _searchQuery.isEmpty) ...[
-                          _buildFeaturedSection(),
+                          _buildFeaturedSection(l10n),
                           const SizedBox(height: 20),
-                          const ChildSectionHeader(title: 'All Videos'),
+                          ChildSectionHeader(title: l10n.allVideos),
                           const SizedBox(height: 12),
                         ],
                         ..._filteredCards
@@ -214,7 +217,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
 
   // ── HEADER ─────────────────────────────────────────────────────────────────
 
-  Widget _buildHeader(ColorScheme colors) {
+  Widget _buildHeader(ColorScheme colors, AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
       child: Row(
@@ -224,7 +227,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Play Time',
+                l10n.playTime,
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
@@ -233,7 +236,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
                 ),
               ),
               Text(
-                'Safe & fun videos for you',
+                l10n.safeAndFunVideos,
                 style: TextStyle(
                   fontSize: 13,
                   color: colors.onSurfaceVariant,
@@ -253,14 +256,14 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
                 width: 1,
               ),
             ),
-            child: const Row(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.shield_rounded, size: 14, color: Colors.green),
-                SizedBox(width: 4),
+                const Icon(Icons.shield_rounded, size: 14, color: Colors.green),
+                const SizedBox(width: 4),
                 Text(
-                  'Safe Mode',
-                  style: TextStyle(
+                  l10n.safeMode,
+                  style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: Colors.green,
@@ -284,7 +287,14 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
 
   // ── CATEGORY TABS ──────────────────────────────────────────────────────────
 
-  Widget _buildCategoryTabs() {
+  Widget _buildCategoryTabs(AppLocalizations l10n) {
+    final tabLabels = [
+      l10n.all,
+      l10n.kindnessTab,
+      l10n.learningTab,
+      l10n.skillsTab,
+      l10n.music,
+    ];
     return SizedBox(
       height: 48,
       child: ListView.separated(
@@ -295,7 +305,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
         itemBuilder: (_, i) {
           final tab = _tabs[i];
           return ChildCategoryChip(
-            label: tab['label'] as String,
+            label: tabLabels[i],
             emoji: tab['emoji'] as String,
             color: tab['color'] as Color,
             isSelected: _selectedTab == i,
@@ -308,13 +318,13 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
 
   // ── SEARCH BAR ─────────────────────────────────────────────────────────────
 
-  Widget _buildSearchBar(ColorScheme colors) {
+  Widget _buildSearchBar(ColorScheme colors, AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: TextField(
         onChanged: (v) => setState(() => _searchQuery = v),
         decoration: InputDecoration(
-          hintText: 'Search videos...',
+          hintText: l10n.searchVideos,
           prefixIcon: Icon(
             Icons.search_rounded,
             color: colors.onSurfaceVariant,
@@ -339,11 +349,11 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
 
   // ── FEATURED SECTION ───────────────────────────────────────────────────────
 
-  Widget _buildFeaturedSection() {
+  Widget _buildFeaturedSection(AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const ChildSectionHeader(title: 'Featured'),
+        ChildSectionHeader(title: l10n.featured),
         const SizedBox(height: 12),
         SizedBox(
           height: 180,
@@ -358,8 +368,27 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
     );
   }
 
+  String _resolveFeaturedLabel(String rawLabel, AppLocalizations l10n) {
+    return switch (rawLabel) {
+      'Fan Favourite' => l10n.fanFavourite,
+      "Today's Pick"  => l10n.todaysPick,
+      'Top Rated'     => l10n.topRated,
+      _               => rawLabel,
+    };
+  }
+
+  String _featuredLabel(String raw, AppLocalizations l10n) {
+    return switch (raw) {
+      'Fan Favourite' => l10n.fanFavourite,
+      'Today\'s Pick' => l10n.todaysPick,
+      'Top Rated' => l10n.topRated,
+      _ => raw,
+    };
+  }
+
   Widget _buildFeaturedCard(Map<String, String> card) {
     final colors = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     return SizedBox(
       width: 200,
       child: KinderCard(
@@ -424,7 +453,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          card['label'] ?? '',
+                          _featuredLabel(card['label'] ?? '', l10n),
                           style: const TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,

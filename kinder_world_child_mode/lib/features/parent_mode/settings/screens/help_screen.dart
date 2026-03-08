@@ -50,13 +50,13 @@ class _ParentHelpScreenState extends ConsumerState<ParentHelpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final query = _searchController.text.trim();
     final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n?.parentHelp ?? 'Help & FAQ'),
+        title: Text(l10n.parentHelp),
         elevation: 0,
       ),
       body: Padding(
@@ -66,7 +66,7 @@ class _ParentHelpScreenState extends ConsumerState<ParentHelpScreen> {
             TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search FAQs...',
+                hintText: l10n.searchFaqsHint,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -116,7 +116,7 @@ class _ParentHelpScreenState extends ConsumerState<ParentHelpScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          query.isEmpty ? 'No FAQs yet' : 'No results found',
+                          query.isEmpty ? l10n.noFaqsYet : l10n.noResultsFound,
                           style: TextStyle(
                             fontSize: 16,
                             color: colors.onSurfaceVariant,
@@ -124,7 +124,7 @@ class _ParentHelpScreenState extends ConsumerState<ParentHelpScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'We are preparing helpful articles for you.',
+                          l10n.helpPreparingArticles,
                           textAlign: TextAlign.center,
                           style: TextStyle(color: colors.onSurfaceVariant),
                         ),
@@ -156,7 +156,7 @@ class _ParentHelpScreenState extends ConsumerState<ParentHelpScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () => context.push(Routes.parentContactUs),
-                child: const Text('Contact Us'),
+                child: Text(l10n.contactUsAction),
               ),
             ),
           ],

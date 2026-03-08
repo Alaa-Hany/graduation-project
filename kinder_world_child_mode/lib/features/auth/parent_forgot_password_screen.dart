@@ -12,8 +12,7 @@ class ParentForgotPasswordScreen extends StatefulWidget {
       _ParentForgotPasswordScreenState();
 }
 
-class _ParentForgotPasswordScreenState
-    extends State<ParentForgotPasswordScreen>
+class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
@@ -61,7 +60,6 @@ class _ParentForgotPasswordScreenState
     if (!_formKey.currentState!.validate()) return;
     setState(() => _sending = true);
 
-    // Simulate API call
     await Future.delayed(const Duration(milliseconds: 1200));
 
     if (!mounted) return;
@@ -70,25 +68,36 @@ class _ParentForgotPasswordScreenState
       _sent = true;
     });
 
-    // Re-animate for success state
-    _animController.reset();
-    _animController.forward();
+    _animController
+      ..reset()
+      ..forward();
+  }
+
+  void _resetState() {
+    setState(() {
+      _sent = false;
+      _emailController.clear();
+    });
+    _animController
+      ..reset()
+      ..forward();
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // ── Gradient background header ──
           Positioned(
             top: 0,
             left: 0,
             right: 0,
             child: Container(
-              height: MediaQuery.of(context).size.height * 0.28,
+              height: screenHeight * 0.28,
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -129,13 +138,13 @@ class _ParentForgotPasswordScreenState
                     ),
                   ),
                   SafeArea(
+                    bottom: false,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: 8),
-                          // Back button
                           GestureDetector(
                             onTap: () => context.go('/parent/login'),
                             child: Container(
@@ -156,7 +165,6 @@ class _ParentForgotPasswordScreenState
                             ),
                           ),
                           const Spacer(),
-                          // Header icon + title
                           Row(
                             children: [
                               Container(
@@ -209,15 +217,17 @@ class _ParentForgotPasswordScreenState
               ),
             ),
           ),
-
-          // ── Main content ──
           Positioned.fill(
-            top: MediaQuery.of(context).size.height * 0.26,
+            top: screenHeight * 0.26,
             child: FadeTransition(
               opacity: _fade,
               child: SlideTransition(
                 position: _slide,
-              child: _sent ? _buildSuccessState(l10n) : _buildFormState(l10n),
+                child: SafeArea(
+                  top: false,
+                  child:
+                      _sent ? _buildSuccessState(l10n) : _buildFormState(l10n),
+                ),
               ),
             ),
           ),
@@ -226,7 +236,6 @@ class _ParentForgotPasswordScreenState
     );
   }
 
-  // ── Form state ──
   Widget _buildFormState(AppLocalizations l10n) {
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
@@ -254,8 +263,6 @@ class _ParentForgotPasswordScreenState
               ),
             ),
             const SizedBox(height: 32),
-
-            // Email field
             AuthInputField(
               controller: _emailController,
               label: l10n.emailAddress,
@@ -275,8 +282,6 @@ class _ParentForgotPasswordScreenState
               },
             ),
             const SizedBox(height: 12),
-
-            // Helper text
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
@@ -287,26 +292,27 @@ class _ParentForgotPasswordScreenState
                 ),
               ),
               child: Row(
-                  children: [
-                    const Icon(Icons.info_outline_rounded,
-                        size: 16, color: AppColors.info),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        l10n.spamFolderNote,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF6B7280),
-                          height: 1.5,
-                        ),
+                children: [
+                  const Icon(
+                    Icons.info_outline_rounded,
+                    size: 16,
+                    color: AppColors.info,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      l10n.spamFolderNote,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF6B7280),
+                        height: 1.5,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 28),
-
-            // Send button
             GradientButton(
               label: l10n.sendResetLink,
               isLoading: _sending,
@@ -324,16 +330,17 @@ class _ParentForgotPasswordScreenState
                     ),
             ),
             const SizedBox(height: 20),
-
-            // Back to login
             Center(
               child: TextButton(
                 onPressed: () => context.go('/parent/login'),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.arrow_back_rounded,
-                        size: 14, color: AppColors.primary),
+                    const Icon(
+                      Icons.arrow_back_rounded,
+                      size: 14,
+                      color: AppColors.primary,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       l10n.backToLogin,
@@ -353,130 +360,123 @@ class _ParentForgotPasswordScreenState
     );
   }
 
-  // ── Success state ──
   Widget _buildSuccessState(AppLocalizations l10n) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-      child: Column(
-        children: [
-          const SizedBox(height: 20),
-          // Success icon
-          Container(
-            width: 110,
-            height: 110,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.success.withValues(alpha: 0.10),
-            ),
-            child: const Icon(
-              Icons.mark_email_read_rounded,
-              size: 56,
-              color: AppColors.success,
-            ),
-          ),
-          const SizedBox(height: 28),
-          Text(
-            l10n.checkYourInbox,
-            style: const TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w900,
-              color: Color(0xFF111827),
-              letterSpacing: -0.5,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            l10n.resetLinkSentTo(_emailController.text.trim()),
-            style: const TextStyle(
-              fontSize: 15,
-              color: Color(0xFF6B7280),
-              height: 1.6,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-
-          // Steps card
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF9FAFB),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight:
+                  constraints.maxHeight > 52 ? constraints.maxHeight - 52 : 0,
             ),
             child: Column(
               children: [
-                _StepRow(
-                  step: '1',
-                  text: l10n.step1OpenEmail,
-                  color: AppColors.primary,
+                const SizedBox(height: 8),
+                Container(
+                  width: 110,
+                  height: 110,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.success.withValues(alpha: 0.10),
+                  ),
+                  child: const Icon(
+                    Icons.mark_email_read_rounded,
+                    size: 56,
+                    color: AppColors.success,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  l10n.checkYourInbox,
+                  style: const TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF111827),
+                    letterSpacing: -0.5,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
-                _StepRow(
-                  step: '2',
-                  text: l10n.step2ClickLink,
-                  color: AppColors.primary,
+                Text(
+                  l10n.resetLinkSentTo(_emailController.text.trim()),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: Color(0xFF6B7280),
+                    height: 1.6,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                  ),
+                  child: Column(
+                    children: [
+                      _StepRow(
+                        step: '1',
+                        text: l10n.step1OpenEmail,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(height: 12),
+                      _StepRow(
+                        step: '2',
+                        text: l10n.step2ClickLink,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(height: 12),
+                      _StepRow(
+                        step: '3',
+                        text: l10n.step3CreatePassword,
+                        color: AppColors.primary,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                GradientButton(
+                  label: l10n.backToLogin,
+                  onPressed: () => context.go('/parent/login'),
+                  gradientColors: const [
+                    Color(0xFF1565C0),
+                    Color(0xFF42A5F5),
+                  ],
                 ),
                 const SizedBox(height: 12),
-                _StepRow(
-                  step: '3',
-                  text: l10n.step3CreatePassword,
-                  color: AppColors.primary,
+                TextButton(
+                  onPressed: _resetState,
+                  child: Text(
+                    l10n.didntReceiveIt,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF6B7280),
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 32),
-
-          // Back to login button
-          GradientButton(
-            label: l10n.backToLogin,
-            onPressed: () => context.go('/parent/login'),
-            gradientColors: const [
-              Color(0xFF1565C0),
-              Color(0xFF42A5F5),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Resend link
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _sent = false;
-                _emailController.clear();
-              });
-              _animController.reset();
-              _animController.forward();
-            },
-            child: Text(
-              l10n.didntReceiveIt,
-              style: const TextStyle(
-                fontSize: 13,
-                color: Color(0xFF6B7280),
-              ),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// _StepRow — numbered step in success card
-// ─────────────────────────────────────────────────────────────────────────────
 class _StepRow extends StatelessWidget {
-  final String step;
-  final String text;
-  final Color color;
-
   const _StepRow({
     required this.step,
     required this.text,
     required this.color,
   });
+
+  final String step;
+  final String text;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
