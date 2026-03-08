@@ -164,7 +164,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                         ),
                       ),
                       const SizedBox(height: 8),
-
                       // COPPA note
                       Center(
                         child: Text(

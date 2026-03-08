@@ -19,11 +19,11 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
 
   // 'key' is stable for filtering; 'label' is kept for legacy but not used for filtering
   static const _tabs = <Map<String, Object>>[
-    {'key': 'all',      'emoji': '🌟', 'color': Color(0xFF6C63FF)},
+    {'key': 'all', 'emoji': '🌟', 'color': Color(0xFF6C63FF)},
     {'key': 'kindness', 'emoji': '💖', 'color': Color(0xFFE91E63)},
     {'key': 'learning', 'emoji': '📚', 'color': Color(0xFF3F51B5)},
-    {'key': 'skills',   'emoji': '🧩', 'color': Color(0xFF9C27B0)},
-    {'key': 'music',    'emoji': '🎵', 'color': Color(0xFF00BCD4)},
+    {'key': 'skills', 'emoji': '🧩', 'color': Color(0xFF9C27B0)},
+    {'key': 'music', 'emoji': '🎵', 'color': Color(0xFF00BCD4)},
   ];
 
   static const _cards = <Map<String, String>>[
@@ -145,30 +145,44 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
     },
   ];
 
-  List<Map<String, String>> get _filteredCards {
+  List<Map<String, String>> _filteredCards(AppLocalizations l10n) {
     final query = _searchQuery.trim().toLowerCase();
     final key = _tabs[_selectedTab]['key'] as String;
     final tag = switch (key) {
       'kindness' => 'Behavioral',
       'learning' => 'Educational',
-      'skills'   => 'Skillful',
-      'music'    => 'Entertaining',
-      _          => 'All',
+      'skills' => 'Skillful',
+      'music' => 'Entertaining',
+      _ => 'All',
     };
-    final base = key == 'all'
-        ? _cards
-        : _cards.where((c) => c['tag'] == tag).toList();
+    final localizedCards = _cards
+        .map(
+          (card) => {
+            ...card,
+            'title': _localizedVideoTitle(card['title'] ?? '', l10n),
+            'tag': _localizedTag(card['tag'] ?? '', l10n),
+          },
+        )
+        .toList();
+    final localizedTag = key == 'all' ? null : _localizedTag(tag, l10n);
+    final base = localizedTag == null
+        ? localizedCards
+        : localizedCards.where((c) => c['tag'] == localizedTag).toList();
     final filtered = query.isEmpty
         ? base
-        : base.where((c) => (c['title'] ?? '').toLowerCase().contains(query)).toList();
+        : base
+            .where((c) => (c['title'] ?? '').toLowerCase().contains(query))
+            .toList();
     final seed = query.hashCode ^ _selectedTab.hashCode;
-    return (filtered.toList()..shuffle(Random(seed))).cast<Map<String, String>>();
+    return (filtered.toList()..shuffle(Random(seed)))
+        .cast<Map<String, String>>();
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
+    final filteredCards = _filteredCards(l10n);
     return Scaffold(
       backgroundColor: colors.surface,
       body: SafeArea(
@@ -181,7 +195,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
             _buildSearchBar(colors, l10n),
             const SizedBox(height: 12),
             Expanded(
-              child: _filteredCards.isEmpty
+              child: filteredCards.isEmpty
                   ? ChildEmptyState(
                       emoji: '🎬',
                       title: l10n.nothingFound,
@@ -201,11 +215,10 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
                           ChildSectionHeader(title: l10n.allVideos),
                           const SizedBox(height: 12),
                         ],
-                        ..._filteredCards
-                            .map((c) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 14),
-                                  child: _buildMediaCard(c, colors),
-                                )),
+                        ...filteredCards.map((c) => Padding(
+                              padding: const EdgeInsets.only(bottom: 14),
+                              child: _buildMediaCard(c, colors),
+                            )),
                       ],
                     ),
             ),
@@ -350,6 +363,14 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
   // ── FEATURED SECTION ───────────────────────────────────────────────────────
 
   Widget _buildFeaturedSection(AppLocalizations l10n) {
+    final featuredCards = _featured
+        .map(
+          (card) => {
+            ...card,
+            'title': _localizedFeaturedTitle(card['title'] ?? '', l10n),
+          },
+        )
+        .toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -359,22 +380,13 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
           height: 180,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            itemCount: _featured.length,
+            itemCount: featuredCards.length,
             separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (_, i) => _buildFeaturedCard(_featured[i]),
+            itemBuilder: (_, i) => _buildFeaturedCard(featuredCards[i]),
           ),
         ),
       ],
     );
-  }
-
-  String _resolveFeaturedLabel(String rawLabel, AppLocalizations l10n) {
-    return switch (rawLabel) {
-      'Fan Favourite' => l10n.fanFavourite,
-      "Today's Pick"  => l10n.todaysPick,
-      'Top Rated'     => l10n.topRated,
-      _               => rawLabel,
-    };
   }
 
   String _featuredLabel(String raw, AppLocalizations l10n) {
@@ -382,6 +394,47 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
       'Fan Favourite' => l10n.fanFavourite,
       'Today\'s Pick' => l10n.todaysPick,
       'Top Rated' => l10n.topRated,
+      _ => raw,
+    };
+  }
+
+  String _localizedFeaturedTitle(String raw, AppLocalizations l10n) {
+    return switch (raw) {
+      'Tom & Jerry\nKeep Calm' =>
+        l10n.videoTomAndJerryKeepCalm.replaceAll(' | ', '\n'),
+      'Kindness\nChallenge' =>
+        l10n.videoKindnessChallenge.replaceAll(' ', '\n'),
+      'Math Basics\nFun Edition' =>
+        l10n.videoMathBasicsFun.replaceAll(' | ', '\n'),
+      _ => raw,
+    };
+  }
+
+  String _localizedVideoTitle(String raw, AppLocalizations l10n) {
+    return switch (raw) {
+      'Tom & Jerry | Keep Calm' => l10n.videoTomAndJerryKeepCalm,
+      'Momo & Mimi | Arabic' => l10n.videoMomoAndMimiArabic,
+      'Kindness Challenge' => l10n.videoKindnessChallenge,
+      'Build & Create' => l10n.videoBuildAndCreate,
+      'Math Basics | Fun' => l10n.videoMathBasicsFun,
+      'Science Wonders' => l10n.videoScienceWonders,
+      'Story Time' => l10n.historyStoryTime,
+      'Coloring Fun' => l10n.videoColoringFun,
+      'Alphabet Song' => l10n.videoAlphabetSong,
+      'Animal Friends' => l10n.videoAnimalFriends,
+      'Dance Party' => l10n.historyDanceParty,
+      'Sharing Time' => l10n.videoSharingTime,
+      'Puzzle Play' => l10n.videoPuzzlePlay,
+      _ => raw,
+    };
+  }
+
+  String _localizedTag(String raw, AppLocalizations l10n) {
+    return switch (raw) {
+      'Behavioral' => l10n.categoryBehavioral,
+      'Educational' => l10n.categoryEducational,
+      'Skillful' => l10n.categorySkillful,
+      'Entertaining' => l10n.categoryEntertaining,
       _ => raw,
     };
   }
@@ -659,11 +712,14 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
   }
 
   Color _tagColor(String tag) {
+    final l10n = AppLocalizations.of(context)!;
     return switch (tag) {
-      'Behavioral' => ChildColors.kindnessPink,
-      'Educational' => ChildColors.learningBlue,
-      'Skillful' => ChildColors.skillPurple,
-      'Entertaining' => ChildColors.funCyan,
+      var value when value == l10n.categoryBehavioral =>
+        ChildColors.kindnessPink,
+      var value when value == l10n.categoryEducational =>
+        ChildColors.learningBlue,
+      var value when value == l10n.categorySkillful => ChildColors.skillPurple,
+      var value when value == l10n.categoryEntertaining => ChildColors.funCyan,
       _ => ChildColors.learningBlue,
     };
   }

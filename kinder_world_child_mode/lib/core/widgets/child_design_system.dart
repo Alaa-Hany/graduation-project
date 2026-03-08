@@ -13,9 +13,9 @@ import 'package:kinder_world/core/theme/theme_extensions.dart';
 /// Returns a localized, time-aware greeting prefix with emoji.
 String childTimeGreeting() {
   final hour = DateTime.now().hour;
-  if (hour < 12) return '☀️ Good Morning,';
-  if (hour < 17) return '🌤️ Good Afternoon,';
-  return '🌙 Good Evening,';
+  if (hour < 12) return 'Good Morning,';
+  if (hour < 17) return 'Good Afternoon,';
+  return 'Good Evening,';
 }
 
 /// Child-specific accent colors that complement the themed palette.
@@ -296,7 +296,11 @@ class ChildStreakBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('🔥', style: TextStyle(fontSize: 14)),
+          Icon(
+            Icons.local_fire_department_rounded,
+            size: 14,
+            color: context.colors.onPrimary,
+          ),
           const SizedBox(width: 5),
           Text(
             '$streak day${streak == 1 ? '' : 's'}',
@@ -441,10 +445,10 @@ class ChildCategoryChip extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               label,
-              style: TextStyle(
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: isSelected ? Colors.white : colors.onSurface,
+                color: isSelected ? colors.onPrimary : colors.onSurface,
               ),
             ),
           ],
@@ -495,7 +499,7 @@ class ChildEmptyState extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               subtitle,
-              style: TextStyle(
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontSize: 14,
                 color: colors.onSurfaceVariant,
               ),
@@ -587,3 +591,5 @@ class _TypingDotsIndicatorState extends State<TypingDotsIndicator>
     );
   }
 }
+
+

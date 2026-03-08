@@ -68,14 +68,17 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
       await _applyPlan(tier);
       if (!mounted) return;
       messenger.showSnackBar(
-        SnackBar(content: Text('${_planTitle(tier, AppLocalizations.of(context)!)} activated.')),
+        SnackBar(
+            content: Text(
+                '${_planTitle(tier, AppLocalizations.of(context)!)} activated.')),
       );
     } finally {
-      if (!mounted) return;
-      setState(() {
-        _isProcessing = false;
-        _processingTier = null;
-      });
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+          _processingTier = null;
+        });
+      }
     }
   }
 
@@ -83,8 +86,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
-    final plan =
-        ref.watch(planInfoProvider).asData?.value ?? PlanInfo.fromTier(PlanTier.free);
+    final plan = ref.watch(planInfoProvider).asData?.value ??
+        PlanInfo.fromTier(PlanTier.free);
     final isPremium = plan.tier != PlanTier.free;
 
     return Scaffold(
@@ -116,8 +119,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Divider(
-              height: 1,
-              color: colors.outlineVariant.withValues(alpha: 0.4)),
+              height: 1, color: colors.outlineVariant.withValues(alpha: 0.4)),
         ),
       ),
       body: SafeArea(
@@ -338,7 +340,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                 ),
                 child: Text(
                   l10n.recommendedLabel.toUpperCase(),
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
@@ -452,7 +454,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                         ),
                       )
                     : Text(
-                        isCurrent ? l10n.currentPlanLabel : l10n.choosePlanLabel,
+                        isCurrent
+                            ? l10n.currentPlanLabel
+                            : l10n.choosePlanLabel,
                         style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,

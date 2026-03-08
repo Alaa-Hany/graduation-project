@@ -39,7 +39,7 @@ class AppConstants {
   static const int minContentAge = 5;
   
   // Avatar defaults
-  static const String defaultChildAvatar = 'assets/images/avatars/girl1.png';
+  static const String defaultChildAvatar = 'assets/images/avatars/av1.png';
   
   // Subscription
   static const int freeTrialDays = 14;

@@ -269,7 +269,7 @@ class ParentStatCard extends StatelessWidget {
 /// Premium settings row tile with icon, title, optional subtitle and trailing.
 class ParentSettingsTile extends StatelessWidget {
   final IconData icon;
-  final Color iconColor;
+  final Color? iconColor;
   final String title;
   final String? subtitle;
   final Widget? trailing;
@@ -281,7 +281,7 @@ class ParentSettingsTile extends StatelessWidget {
     super.key,
     required this.icon,
     required this.title,
-    this.iconColor = const Color(0xFF2E7D32),
+    this.iconColor,
     this.subtitle,
     this.trailing,
     this.onTap,
@@ -293,6 +293,7 @@ class ParentSettingsTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final parent = context.parentTheme;
+    final resolvedIconColor = iconColor ?? parent.primary;
     final titleColor =
         isDestructive ? parent.alert : colors.onSurface;
     final effectiveTrailing = trailing ??
@@ -316,13 +317,13 @@ class ParentSettingsTile extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: isDestructive
                         ? parent.alert.withValues(alpha: 0.10)
-                        : iconColor.withValues(alpha: 0.12),
+                        : resolvedIconColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     icon,
                     size: 18,
-                    color: isDestructive ? parent.alert : iconColor,
+                    color: isDestructive ? parent.alert : resolvedIconColor,
                   ),
                 ),
                 const SizedBox(width: 14),

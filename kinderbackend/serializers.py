@@ -55,6 +55,7 @@ def child_to_json(child: ChildProfile) -> Dict:
         "date_of_birth": _iso_date(getattr(child, "date_of_birth", None)),
         "age": resolved_age,
         "avatar": getattr(child, "avatar", None),
+        "is_active": bool(getattr(child, "is_active", True)),
         "created_at": _iso_z(child.created_at),
         "updated_at": _iso_z(getattr(child, "updated_at", None)),
     }

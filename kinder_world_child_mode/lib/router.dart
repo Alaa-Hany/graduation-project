@@ -3,6 +3,11 @@ import 'package:go_router/go_router.dart';
 
 import 'package:kinder_world/app.dart';
 
+import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
+import 'package:kinder_world/features/admin/auth/admin_login_screen.dart';
+import 'package:kinder_world/features/admin/dashboard/admin_dashboard_screen.dart';
+import 'package:kinder_world/features/admin/shared/admin_access_denied_screen.dart';
+
 import 'package:kinder_world/features/app_core/splash_screen.dart';
 import 'package:kinder_world/features/app_core/language_selection_screen.dart';
 import 'package:kinder_world/features/app_core/onboarding_screen.dart';
@@ -88,7 +93,7 @@ class Routes {
   static const parentBilling = '/parent/billing';
   static const parentNotifications = '/parent/notifications';
   static const parentDataSync = '/parent/data-sync';
-  
+
   // Parent Settings sub-routes
   static const parentProfile = '/parent/profile';
   static const parentChangePassword = '/parent/change-password';
@@ -101,6 +106,20 @@ class Routes {
   static const parentTerms = '/parent/legal/terms';
   static const parentPrivacyPolicy = '/parent/legal/privacy';
   static const parentCoppa = '/parent/legal/coppa';
+
+  // Admin
+  static const adminLogin = '/admin/login';
+  static const adminDashboard = '/admin/dashboard';
+  static const adminUsers = '/admin/users';
+  static const adminChildren = '/admin/children';
+  static const adminContent = '/admin/content';
+  static const adminReports = '/admin/reports';
+  static const adminSupport = '/admin/support';
+  static const adminSubscriptions = '/admin/subscriptions';
+  static const adminAdmins = '/admin/admins';
+  static const adminAudit = '/admin/audit';
+  static const adminSettings = '/admin/settings';
+  static const adminAccessDenied = '/admin/access-denied';
 
   // System
   static const noInternet = '/no-internet';
@@ -123,6 +142,26 @@ bool _isPublicRoute(String path) {
       path == Routes.maintenance;
 }
 
+bool _isAdminRoute(String path) => path.startsWith('/admin/');
+
+String? _requiredAdminPermissionForPath(String path) {
+  if (path == Routes.adminUsers || path.startsWith('${Routes.adminUsers}/')) {
+    return 'admin.users.view';
+  }
+  if (path == Routes.adminChildren ||
+      path.startsWith('${Routes.adminChildren}/')) {
+    return 'admin.children.view';
+  }
+  if (path == Routes.adminContent) return 'admin.content.view';
+  if (path == Routes.adminReports) return 'admin.analytics.view';
+  if (path == Routes.adminSupport) return 'admin.support.view';
+  if (path == Routes.adminSubscriptions) return 'admin.subscription.view';
+  if (path == Routes.adminAdmins) return 'admin.admins.manage';
+  if (path == Routes.adminAudit) return 'admin.audit.view';
+  if (path == Routes.adminSettings) return 'admin.settings.edit';
+  return null;
+}
+
 bool _isParentAuthRoute(String path) {
   return path == Routes.parentLogin || path == Routes.parentRegister;
 }
@@ -134,6 +173,7 @@ bool _isAnyParentRoute(String path) => path.startsWith('/parent/');
 final routerProvider = Provider<GoRouter>((ref) {
   final secureStorage = ref.watch(secureStorageProvider);
   final logger = ref.watch(loggerProvider);
+  final adminAuthState = ref.watch(adminAuthProvider);
 
   return GoRouter(
     initialLocation: Routes.splash,
@@ -146,13 +186,35 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Always allow public/system routes
       if (_isPublicRoute(path)) return null;
 
+      // ── Admin route guard ──────────────────────────────────────────────
+      if (_isAdminRoute(path)) {
+        if (path == Routes.adminLogin) {
+          return adminAuthState.isAuthenticated ? Routes.adminDashboard : null;
+        }
+        if (path == Routes.adminAccessDenied) return null;
+
+        if (!adminAuthState.isAuthenticated) {
+          return Routes.adminLogin;
+        }
+        final requiredPermission = _requiredAdminPermissionForPath(path);
+        if (requiredPermission != null &&
+            !(adminAuthState.admin?.hasPermission(requiredPermission) ??
+                false)) {
+          return Routes.adminAccessDenied;
+        }
+        return null;
+      }
+
       // Read session
       final authToken = await secureStorage.getAuthToken();
-      final userRole = await secureStorage.getUserRole(); // expected: 'parent' | 'child' | null
-      final childSession = await secureStorage.getChildSession(); // null if no selected child / guest not set
+      final userRole = await secureStorage
+          .getUserRole(); // expected: 'parent' | 'child' | null
+      final childSession = await secureStorage
+          .getChildSession(); // null if no selected child / guest not set
 
       // Debugging logs to diagnose navigation issues
-      logger.d('Router redirect check -> path: $path | auth: ${authToken != null} | role: $userRole | childSession: $childSession');
+      logger.d(
+          'Router redirect check -> path: $path | auth: ${authToken != null} | role: $userRole | childSession: $childSession');
 
       final isAuthenticated = authToken != null;
 
@@ -177,8 +239,12 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // Prevent authenticated users from staying on login/register screens
       if (_isParentAuthRoute(path)) {
-        if (userRole == 'parent') return Routes.parentDashboard;
-        if (userRole == 'child') return childSession == null ? Routes.childLogin : Routes.childHome;
+        if (userRole == 'parent') {
+          return Routes.parentDashboard;
+        }
+        if (userRole == 'child') {
+          return childSession == null ? Routes.childLogin : Routes.childHome;
+        }
       }
 
       // Role-based protection
@@ -365,7 +431,9 @@ final routerProvider = Provider<GoRouter>((ref) {
             }
           }
           if (child == null) {
-            return ErrorScreen(error: AppLocalizations.of(context)?.childProfileNotFound ?? 'Child profile not found');
+            return ErrorScreen(
+                error: AppLocalizations.of(context)?.childProfileNotFound ??
+                    'Child profile not found');
           }
           return ParentChildProfileScreen(child: child);
         },
@@ -446,6 +514,79 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const DataSyncScreen(),
       ),
 
+      // ── Admin Routes ────────────────────────────────────────────────────
+      GoRoute(
+        path: Routes.adminLogin,
+        builder: (context, state) => const AdminLoginScreen(),
+      ),
+      GoRoute(
+        path: Routes.adminDashboard,
+        builder: (context, state) =>
+            const AdminDashboardScreen(activePath: Routes.adminDashboard),
+      ),
+      GoRoute(
+        path: Routes.adminUsers,
+        builder: (context, state) =>
+            const AdminDashboardScreen(activePath: Routes.adminUsers),
+      ),
+      GoRoute(
+        path: '${Routes.adminUsers}/:userId',
+        builder: (context, state) => AdminDashboardScreen(
+          activePath: '${Routes.adminUsers}/${state.pathParameters['userId']}',
+        ),
+      ),
+      GoRoute(
+        path: Routes.adminChildren,
+        builder: (context, state) =>
+            const AdminDashboardScreen(activePath: Routes.adminChildren),
+      ),
+      GoRoute(
+        path: '${Routes.adminChildren}/:childId',
+        builder: (context, state) => AdminDashboardScreen(
+          activePath:
+              '${Routes.adminChildren}/${state.pathParameters['childId']}',
+        ),
+      ),
+      GoRoute(
+        path: Routes.adminContent,
+        builder: (context, state) =>
+            const AdminDashboardScreen(activePath: Routes.adminContent),
+      ),
+      GoRoute(
+        path: Routes.adminReports,
+        builder: (context, state) =>
+            const AdminDashboardScreen(activePath: Routes.adminReports),
+      ),
+      GoRoute(
+        path: Routes.adminSupport,
+        builder: (context, state) =>
+            const AdminDashboardScreen(activePath: Routes.adminSupport),
+      ),
+      GoRoute(
+        path: Routes.adminSubscriptions,
+        builder: (context, state) =>
+            const AdminDashboardScreen(activePath: Routes.adminSubscriptions),
+      ),
+      GoRoute(
+        path: Routes.adminAdmins,
+        builder: (context, state) =>
+            const AdminDashboardScreen(activePath: Routes.adminAdmins),
+      ),
+      GoRoute(
+        path: Routes.adminAudit,
+        builder: (context, state) =>
+            const AdminDashboardScreen(activePath: Routes.adminAudit),
+      ),
+      GoRoute(
+        path: Routes.adminSettings,
+        builder: (context, state) =>
+            const AdminDashboardScreen(activePath: Routes.adminSettings),
+      ),
+      GoRoute(
+        path: Routes.adminAccessDenied,
+        builder: (context, state) => const AdminAccessDeniedScreen(),
+      ),
+
       // System Pages
       GoRoute(
         path: Routes.noInternet,
@@ -454,7 +595,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.error,
         builder: (context, state) => ErrorScreen(
-          error: state.extra as String? ?? (AppLocalizations.of(context)?.unexpectedError ?? 'An unexpected error occurred'),
+          error: state.extra as String? ??
+              (AppLocalizations.of(context)?.unexpectedError ??
+                  'An unexpected error occurred'),
         ),
       ),
       GoRoute(
@@ -475,7 +618,8 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
 
     errorBuilder: (context, state) => ErrorScreen(
-      error: state.error?.toString() ?? (AppLocalizations.of(context)?.pageNotFound ?? 'Page not found'),
+      error: state.error?.toString() ??
+          (AppLocalizations.of(context)?.pageNotFound ?? 'Page not found'),
     ),
   );
 });

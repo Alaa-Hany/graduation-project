@@ -1,5 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:kinder_world/core/constants/app_constants.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 
 /// Unified avatar display widget that handles both avatar paths and avatar IDs
 /// Maps avatar_1, avatar_2, avatar_3, avatar_4 to their corresponding icons
@@ -11,61 +13,44 @@ class AvatarView extends StatelessWidget {
   final Color? backgroundColor;
   final String fallbackAsset;
 
-  // Avatar ID to icon data mapping
-  static const Map<String, _AvatarIconData> _avatarIconMap = {
-    'avatar_1': _AvatarIconData(
-      icon: Icons.face,
-      backgroundColor: Color(0xFFE3F2FD),
-      iconColor: Color(0xFF1E88E5),
-    ),
-    'avatar_2': _AvatarIconData(
-      icon: Icons.sentiment_satisfied_alt,
-      backgroundColor: Color(0xFFFFF3E0),
-      iconColor: Color(0xFFFB8C00),
-    ),
-    'avatar_3': _AvatarIconData(
-      icon: Icons.emoji_emotions,
-      backgroundColor: Color(0xFFF3E5F5),
-      iconColor: Color(0xFF8E24AA),
-    ),
-    'avatar_4': _AvatarIconData(
-      icon: Icons.mood,
-      backgroundColor: Color(0xFFE8F5E9),
-      iconColor: Color(0xFF43A047),
-    ),
-    'avatar_5': _AvatarIconData(
-      icon: Icons.star,
-      backgroundColor: Color(0xFFFFF9C4),
-      iconColor: Color(0xFFF57F17),
-    ),
-    'avatar_6': _AvatarIconData(
-      icon: Icons.pets,
-      backgroundColor: Color(0xFFFFE0B2),
-      iconColor: Color(0xFFE65100),
-    ),
-    'avatar_7': _AvatarIconData(
-      icon: Icons.favorite,
-      backgroundColor: Color(0xFFFCE4EC),
-      iconColor: Color(0xFFC2185B),
-    ),
-    'avatar_8': _AvatarIconData(
-      icon: Icons.rocket_launch,
-      backgroundColor: Color(0xFFE1F5FE),
-      iconColor: Color(0xFF0277BD),
-    ),
-    'avatar_neutral': _AvatarIconData(
-      icon: Icons.account_circle,
-      backgroundColor: Color(0xFFE0E0E0),
-      iconColor: Color(0xFF757575),
-    ),
-  };
-
   static const Map<String, String> _legacyAvatarMap = {
+    // Legacy paths - maps old storage format to new format
     'assets/avatars/kids/boy_01.png': 'assets/images/avatars/boy1.png',
     'assets/avatars/kids/boy_02.png': 'assets/images/avatars/boy2.png',
     'assets/avatars/kids/girl_01.png': 'assets/images/avatars/girl1.png',
     'assets/avatars/kids/girl_02.png': 'assets/images/avatars/girl2.png',
-    'assets/avatars/kids/neutral_01.png': 'assets/images/avatars/girl1.png',
+    'assets/avatars/kids/neutral_01.png': 'assets/images/avatars/av1.png',
+    // Direct mappings for consistency - no conversion needed
+    'assets/images/avatars/boy1.png': 'assets/images/avatars/boy1.png',
+    'assets/images/avatars/boy2.png': 'assets/images/avatars/boy2.png',
+    'assets/images/avatars/boy3.png': 'assets/images/avatars/boy3.png',
+    'assets/images/avatars/boy4.png': 'assets/images/avatars/boy4.png',
+    'assets/images/avatars/girl1.png': 'assets/images/avatars/girl1.png',
+    'assets/images/avatars/girl2.png': 'assets/images/avatars/girl2.png',
+    'assets/images/avatars/girl3.png': 'assets/images/avatars/girl3.png',
+    'assets/images/avatars/girl4.png': 'assets/images/avatars/girl4.png',
+    'assets/images/avatars/av1.png': 'assets/images/avatars/av1.png',
+    'assets/images/avatars/av2.png': 'assets/images/avatars/av2.png',
+    'assets/images/avatars/av3.png': 'assets/images/avatars/av3.png',
+    'assets/images/avatars/av4.png': 'assets/images/avatars/av4.png',
+    'assets/images/avatars/av5.png': 'assets/images/avatars/av5.png',
+    'assets/images/avatars/av6.png': 'assets/images/avatars/av6.png',
+    // Avatar IDs for compatibility
+    'avatar_1': 'assets/images/avatars/boy1.png',
+    'avatar_2': 'assets/images/avatars/boy2.png',
+    'avatar_3': 'assets/images/avatars/boy3.png',
+    'avatar_4': 'assets/images/avatars/boy4.png',
+    'avatar_5': 'assets/images/avatars/girl1.png',
+    'avatar_6': 'assets/images/avatars/girl2.png',
+    'avatar_7': 'assets/images/avatars/girl3.png',
+    'avatar_8': 'assets/images/avatars/girl4.png',
+    'avatar_9': 'assets/images/avatars/av1.png',
+    'avatar_10': 'assets/images/avatars/av2.png',
+    'avatar_11': 'assets/images/avatars/av3.png',
+    'avatar_12': 'assets/images/avatars/av4.png',
+    'avatar_13': 'assets/images/avatars/av5.png',
+    'avatar_14': 'assets/images/avatars/av6.png',
+    'avatar_neutral': 'assets/images/avatars/av1.png',
   };
 
   const AvatarView({
@@ -74,16 +59,67 @@ class AvatarView extends StatelessWidget {
     this.radius = 24,
     this.fit = BoxFit.cover,
     this.backgroundColor,
-    this.fallbackAsset = 'assets/images/avatars/girl1.png',
+    this.fallbackAsset = AppConstants.defaultChildAvatar,
     super.key,
   });
 
   /// Get icon data from avatarId
-  _AvatarIconData? _resolveIconData() {
-    if (avatarId != null && _avatarIconMap.containsKey(avatarId)) {
-      return _avatarIconMap[avatarId];
+  _AvatarIconData? _resolveIconData(BuildContext context) {
+    if (avatarId == null) return null;
+    final colors = context.colors;
+    final child = context.childTheme;
+    final parent = context.parentTheme;
+    final palette = <String, _AvatarIconData>{
+      'avatar_1': _AvatarIconData(
+        icon: Icons.face,
+        backgroundColor: child.learning.subtle(0.14),
+        iconColor: child.learning,
+      ),
+      'avatar_2': _AvatarIconData(
+        icon: Icons.sentiment_satisfied_alt,
+        backgroundColor: parent.reward.subtle(0.16),
+        iconColor: parent.reward,
+      ),
+      'avatar_3': _AvatarIconData(
+        icon: Icons.emoji_emotions,
+        backgroundColor: child.skill.subtle(0.14),
+        iconColor: child.skill,
+      ),
+      'avatar_4': _AvatarIconData(
+        icon: Icons.mood,
+        backgroundColor: child.success.subtle(0.14),
+        iconColor: child.success,
+      ),
+      'avatar_5': _AvatarIconData(
+        icon: Icons.star,
+        backgroundColor: child.xp.subtle(0.18),
+        iconColor: parent.warning,
+      ),
+      'avatar_6': _AvatarIconData(
+        icon: Icons.pets,
+        backgroundColor: colors.tertiaryContainer,
+        iconColor: colors.tertiary,
+      ),
+      'avatar_7': _AvatarIconData(
+        icon: Icons.favorite,
+        backgroundColor: child.kindness.subtle(0.14),
+        iconColor: child.kindness,
+      ),
+      'avatar_8': _AvatarIconData(
+        icon: Icons.rocket_launch,
+        backgroundColor: child.fun.subtle(0.14),
+        iconColor: child.fun,
+      ),
+      'avatar_neutral': _AvatarIconData(
+        icon: Icons.account_circle,
+        backgroundColor: colors.surfaceContainerHighest,
+        iconColor: colors.onSurfaceVariant,
+      ),
+    };
+    if (_legacyAvatarMap.containsKey(avatarId)) {
+      return null;
     }
-    return null;
+    return palette[avatarId];
   }
 
   /// Get asset path from either avatarPath or avatarId (legacy support)
@@ -110,7 +146,7 @@ class AvatarView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // First try to get icon data (new approach)
-    final iconData = _resolveIconData();
+    final iconData = _resolveIconData(context);
     if (iconData != null) {
       return Container(
         width: radius * 2,
@@ -129,7 +165,7 @@ class AvatarView extends StatelessWidget {
 
     // Fallback to image path (legacy support)
     final resolvedPath = _resolvePath();
-    const fallbackImage = 'assets/images/avatars/girl1.png';
+    final fallbackImage = fallbackAsset;
     
     if (resolvedPath != null && _isNetworkImage(resolvedPath)) {
       return CachedNetworkImage(

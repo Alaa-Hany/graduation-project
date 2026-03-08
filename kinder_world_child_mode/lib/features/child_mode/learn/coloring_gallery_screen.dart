@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
 import 'package:kinder_world/features/child_mode/learn/coloring_page_screen.dart';
@@ -14,82 +15,72 @@ class ColoringGalleryScreen extends StatefulWidget {
 }
 
 class _ColoringGalleryScreenState extends State<ColoringGalleryScreen> {
-  String _selectedLevel = 'All';
+  String _selectedLevel = 'all';
   final Map<String, ColoringProgressData> _progressBySvgPath = {};
   final Map<String, SvgColoringTemplate> _templateBySvgPath = {};
 
   static const List<String> _levels = [
-    'All',
-    'Beginner',
-    'Intermediate',
-    'Advanced',
+    'all',
+    'beginner',
+    'intermediate',
+    'advanced',
   ];
 
   static const List<Map<String, String>> _items = [
     {
-      'title': 'Coloring Page 1',
       'image': 'assets/images/coloring/kids_coloring_final_v4_1.svg',
       'svg': 'assets/images/coloring/kids_coloring_final_v4_1.svg',
-      'level': 'Beginner',
+      'level': 'beginner',
     },
     {
-      'title': 'Coloring Page 2',
       'image': 'assets/images/coloring/house_coloring_fixed.svg',
       'svg': 'assets/images/coloring/house_coloring_fixed.svg',
-      'level': 'Beginner',
+      'level': 'beginner',
     },
     {
-      'title': 'Coloring Page 3',
       'image': 'assets/images/coloring/fish_coloring_v2.svg',
       'svg': 'assets/images/coloring/fish_coloring_v2.svg',
-      'level': 'Beginner',
+      'level': 'beginner',
     },
     {
-      'title': 'Coloring Page 4',
       'image': 'assets/images/coloring/butterfly_coloring.svg',
       'svg': 'assets/images/coloring/butterfly_coloring.svg',
-      'level': 'Beginner',
+      'level': 'beginner',
     },
     {
-      'title': 'Coloring Page 5',
       'image': 'assets/images/coloring/apple_coloring.svg',
       'svg': 'assets/images/coloring/apple_coloring.svg',
-      'level': 'Beginner',
+      'level': 'beginner',
     },
     {
-      'title': 'Coloring Page 6',
       'image': 'assets/images/coloring/rabbit2_coloring.svg',
       'svg': 'assets/images/coloring/rabbit2_coloring.svg',
-      'level': 'Beginner',
+      'level': 'beginner',
     },
     {
-      'title': 'Coloring Page 7',
       'image': 'assets/images/coloring/coloring_bw_fixed.svg',
       'svg': 'assets/images/coloring/coloring_bw_fixed.svg',
-      'level': 'Beginner',
+      'level': 'beginner',
     },
     {
-      'title': 'Coloring Page 8',
       'image': 'assets/images/coloring/bird_coloring.svg',
       'svg': 'assets/images/coloring/bird_coloring.svg',
-      'level': 'Beginner',
+      'level': 'beginner',
     },
     {
-      'title': 'Coloring Page 9',
       'image': 'assets/images/coloring/new_coloring.svg',
       'svg': 'assets/images/coloring/new_coloring.svg',
-      'level': 'Beginner',
+      'level': 'beginner',
     },
     {
-      'title': 'Coloring Page 10',
       'image': 'assets/images/coloring/coloring3.svg',
       'svg': 'assets/images/coloring/coloring3.svg',
-      'level': 'Beginner',
+      'level': 'beginner',
     },
   ];
 
   List<Map<String, String>> get _filteredItems {
-    if (_selectedLevel == 'All') return _items;
+    if (_selectedLevel == 'all') return _items;
     return _items.where((item) => item['level'] == _selectedLevel).toList();
   }
 
@@ -129,6 +120,7 @@ class _ColoringGalleryScreenState extends State<ColoringGalleryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: const Color(0xFFEAF8FF),
       appBar: AppBar(
@@ -138,9 +130,9 @@ class _ColoringGalleryScreenState extends State<ColoringGalleryScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
-          'Coloring',
-          style: TextStyle(
+        title: Text(
+          l10n.coloringTitle,
+          style: const TextStyle(
             color: Color(0xFF1D4E89),
             fontWeight: FontWeight.w900,
             fontFamily: 'Comic Sans MS',
@@ -198,7 +190,7 @@ class _ColoringGalleryScreenState extends State<ColoringGalleryScreen> {
                           ),
                           child: Center(
                             child: Text(
-                              level,
+                              _levelLabel(level, l10n),
                               style: TextStyle(
                                 fontWeight: FontWeight.w800,
                                 fontFamily: 'Comic Sans MS',
@@ -234,10 +226,10 @@ class _ColoringGalleryScreenState extends State<ColoringGalleryScreen> {
                               ),
                             ],
                           ),
-                          child: const Text(
-                            'No coloring pages available',
+                          child: Text(
+                            l10n.noColoringPages,
                             textAlign: TextAlign.center,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w900,
                               fontFamily: 'Comic Sans MS',
@@ -254,8 +246,9 @@ class _ColoringGalleryScreenState extends State<ColoringGalleryScreen> {
                           final svgPath = item['svg']!;
                           final progress = _progressBySvgPath[svgPath];
                           final template = _templateBySvgPath[svgPath];
+                          final title = l10n.coloringPageN(index + 1);
                           return _ColoringItemCard(
-                            title: item['title']!,
+                            title: title,
                             imagePath: item['image']!,
                             previewTemplate: template,
                             previewColors:
@@ -266,7 +259,7 @@ class _ColoringGalleryScreenState extends State<ColoringGalleryScreen> {
                                 MaterialPageRoute(
                                   builder: (_) => ColoringPageScreen(
                                     svgAssetPath: item['svg']!,
-                                    title: item['title']!,
+                                    title: title,
                                   ),
                                 ),
                               );
@@ -282,6 +275,16 @@ class _ColoringGalleryScreenState extends State<ColoringGalleryScreen> {
         ],
       ),
     );
+  }
+
+  String _levelLabel(String level, AppLocalizations l10n) {
+    return switch (level) {
+      'all' => l10n.all,
+      'beginner' => l10n.beginner,
+      'intermediate' => l10n.intermediate,
+      'advanced' => l10n.advanced,
+      _ => level,
+    };
   }
 }
 
@@ -432,17 +435,17 @@ class _ColoringItemCardState extends State<_ColoringItemCard> {
                         ),
                         if (widget.isCompleted) ...[
                           const SizedBox(height: 4),
-                          const Row(
+                          Row(
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.wb_sunny_rounded,
                                 size: 18,
                                 color: Color(0xFFFFB300),
                               ),
-                              SizedBox(width: 6),
+                              const SizedBox(width: 6),
                               Text(
-                                'Great job!',
-                                style: TextStyle(
+                                AppLocalizations.of(context)!.greatJob,
+                                style: const TextStyle(
                                   fontWeight: FontWeight.w800,
                                   color: Color(0xFF2E7D32),
                                   fontFamily: 'Comic Sans MS',
@@ -469,9 +472,9 @@ class _ColoringItemCardState extends State<_ColoringItemCard> {
                               ),
                             ],
                           ),
-                          child: const Text(
-                            'Tap to Color',
-                            style: TextStyle(
+                          child: Text(
+                            AppLocalizations.of(context)!.tapToColor,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w800,
                               fontFamily: 'Comic Sans MS',
@@ -520,9 +523,9 @@ class _PlayfulBackground extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Positioned.fill(
+        const Positioned.fill(
           child: DecoratedBox(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
@@ -553,9 +556,9 @@ class _GallerySunStarBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    return const Stack(
       clipBehavior: Clip.none,
-      children: const [
+      children: [
         Icon(
           Icons.wb_sunny_rounded,
           color: Color(0xFFFFC107),

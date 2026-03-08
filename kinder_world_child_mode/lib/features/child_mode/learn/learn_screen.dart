@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
-import 'package:kinder_world/core/models/activity.dart';
 import 'package:kinder_world/core/providers/content_controller.dart';
 import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
@@ -301,11 +300,16 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
   String _localizedSearchTitle(BuildContext context, String title) {
     final l10n = AppLocalizations.of(context)!;
     switch (title) {
-      case 'Behavioral': return l10n.categoryBehavioral;
-      case 'Educational': return l10n.categoryEducational;
-      case 'Skillful': return l10n.categorySkillful;
-      case 'Entertaining': return l10n.categoryEntertaining;
-      default: return title;
+      case 'Behavioral':
+        return l10n.categoryBehavioral;
+      case 'Educational':
+        return l10n.categoryEducational;
+      case 'Skillful':
+        return l10n.categorySkillful;
+      case 'Entertaining':
+        return l10n.categoryEntertaining;
+      default:
+        return title;
     }
   }
 
@@ -395,7 +399,6 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
       ),
     );
   }
-
 }
 
 // ==========================================
@@ -500,7 +503,12 @@ class EntertainingScreen extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final item = _items[index];
                   return _buildFunCard(
-                      context, item['title'], item['image'], item['color']);
+                    context,
+                    item['title'],
+                    item['image'],
+                    item['color'],
+                    l10n,
+                  );
                 },
               ),
             ),
@@ -511,7 +519,12 @@ class EntertainingScreen extends StatelessWidget {
   }
 
   Widget _buildFunCard(
-      BuildContext context, String title, String imagePath, Color color) {
+    BuildContext context,
+    String title,
+    String imagePath,
+    Color color,
+    AppLocalizations l10n,
+  ) {
     return InkWell(
       // MODIFIED: Navigate to Detail Screen
       onTap: () {
@@ -556,7 +569,7 @@ class EntertainingScreen extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 20.0),
               child: Text(
-                title,
+                _localizedEntertainmentTitle(title, l10n),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,
@@ -569,6 +582,19 @@ class EntertainingScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _localizedEntertainmentTitle(String raw, AppLocalizations l10n) {
+    return switch (raw) {
+      'Puppet Show' => l10n.puppetShows,
+      'Interactive Stories' => l10n.interactiveStories,
+      'Songs & Music' => l10n.songsAndMusic,
+      'Funny Clips' => l10n.funnyClips,
+      'Brain Teasers' => l10n.entertainmentBrainTeasers,
+      'Games' => l10n.entertainmentGames,
+      'Cartoons' => l10n.entertainmentCartoons,
+      _ => raw,
+    };
   }
 }
 
@@ -617,13 +643,14 @@ class EntertainmentDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final items = _getItems();
 
     return Scaffold(
       backgroundColor: Color(0xFFF3E5F5),
       appBar: AppBar(
         title: Text(
-          categoryTitle,
+          _localizedCategoryTitle(l10n),
           style: TextStyle(
               color: AppColors.entertaining, fontWeight: FontWeight.bold),
         ),
@@ -652,7 +679,10 @@ class EntertainmentDetailScreen extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final item = items[index];
                   return _buildContentCard(
-                      context, item['title'], item['image']);
+                    context,
+                    _localizedContentTitle(item['title'], l10n),
+                    item['image'],
+                  );
                 },
               ),
             ),
@@ -715,6 +745,36 @@ class EntertainmentDetailScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _localizedCategoryTitle(AppLocalizations l10n) {
+    return switch (categoryTitle) {
+      'Games' => l10n.entertainmentGames,
+      'Cartoons' => l10n.entertainmentCartoons,
+      'Songs & Music' => l10n.songsAndMusic,
+      'Puppet Show' => l10n.puppetShows,
+      'Interactive Stories' => l10n.interactiveStories,
+      'Funny Clips' => l10n.funnyClips,
+      'Brain Teasers' => l10n.entertainmentBrainTeasers,
+      _ => categoryTitle,
+    };
+  }
+
+  String _localizedContentTitle(String raw, AppLocalizations l10n) {
+    return switch (raw) {
+      'Puzzle Game' => l10n.contentPuzzleGame,
+      'Racing Cars' => l10n.contentRacingCars,
+      'Memory Match' => l10n.historyMemoryGame,
+      'Coloring Fun' => l10n.videoColoringFun,
+      'Adventure Time' => l10n.contentAdventureTime,
+      'Funny Animals' => l10n.contentFunnyAnimals,
+      'Space Heroes' => l10n.contentSpaceHeroes,
+      'Magic World' => l10n.contentMagicWorld,
+      'ABC Song' => l10n.contentAbcSong,
+      'Baby Shark' => l10n.contentBabyShark,
+      'Twinkle Star' => l10n.contentTwinkleStar,
+      _ => raw,
+    };
   }
 }
 
@@ -980,14 +1040,13 @@ class MethodContentScreen extends ConsumerWidget {
 
   const MethodContentScreen({super.key, required this.methodTitle});
 
-  final List<Map<String, dynamic>> _activities = const [
-    {'title': 'Kindness Challenge', 'image': ''},
-    {'title': 'Respect & Sharing', 'image': ''},
-  ];
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final activities = [
+      l10n.videoKindnessChallenge,
+      l10n.activityRespectSharing
+    ];
     return Scaffold(
       backgroundColor: Color(0xFFE8F5E9),
       body: SafeArea(
@@ -1059,10 +1118,10 @@ class MethodContentScreen extends ConsumerWidget {
                 Align(
                   alignment: Alignment.center,
                   child: Column(
-                    children: _activities.map((activity) {
+                    children: activities.map((activity) {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 16.0),
-                        child: _buildActivityCard(context, activity['title']),
+                        child: _buildActivityCard(context, activity),
                       );
                     }).toList(),
                   ),
@@ -1215,9 +1274,11 @@ class SkillfulScreen extends StatelessWidget {
   }
 
   Widget _buildSkillCard(BuildContext context, Map<String, dynamic> skill) {
+    final l10n = AppLocalizations.of(context)!;
+    final rawTitle = skill['title'] as String;
     return InkWell(
       onTap: () {
-        if (skill['title'] == 'Coloring') {
+        if (rawTitle == 'Coloring') {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => const ColoringGalleryScreen(),
@@ -1228,7 +1289,7 @@ class SkillfulScreen extends StatelessWidget {
 
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => SkillDetailScreen(skillTitle: skill['title']),
+            builder: (context) => SkillDetailScreen(skillTitle: rawTitle),
           ),
         );
       },
@@ -1275,7 +1336,7 @@ class SkillfulScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      skill['title'],
+                      _localizedSkillTitle(rawTitle, l10n),
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -1284,7 +1345,7 @@ class SkillfulScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      skill['desc'],
+                      _localizedSkillDescription(rawTitle, l10n),
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey[600],
@@ -1304,6 +1365,32 @@ class SkillfulScreen extends StatelessWidget {
       ),
     );
   }
+
+  String _localizedSkillTitle(String raw, AppLocalizations l10n) {
+    return switch (raw) {
+      'Cooking' => l10n.skillCooking,
+      'Drawing' => l10n.skillDrawing,
+      'Coloring' => l10n.coloringTitle,
+      'Music' => l10n.music,
+      'Singing' => l10n.skillSinging,
+      'Handcrafts' => l10n.skillHandcrafts,
+      'Sports' => l10n.skillSports,
+      _ => raw,
+    };
+  }
+
+  String _localizedSkillDescription(String raw, AppLocalizations l10n) {
+    return switch (raw) {
+      'Cooking' => l10n.skillCookingDesc,
+      'Drawing' => l10n.skillDrawingDesc,
+      'Coloring' => l10n.skillColoringDesc,
+      'Music' => l10n.skillMusicDesc,
+      'Singing' => l10n.skillSingingDesc,
+      'Handcrafts' => l10n.skillHandcraftsDesc,
+      'Sports' => l10n.skillSportsDesc,
+      _ => '',
+    };
+  }
 }
 
 // Skill Detail Screen (With Search & Filters)
@@ -1317,26 +1404,32 @@ class SkillDetailScreen extends StatefulWidget {
 
 class _SkillDetailScreenState extends State<SkillDetailScreen> {
   String _searchQuery = "";
-  String _selectedLevel = "All";
+  String _selectedLevel = "all";
 
-  final List<String> _levels = ["All", "Beginner", "Intermediate", "Advanced"];
+  final List<String> _levels = ["all", "beginner", "intermediate", "advanced"];
 
   List<Map<String, dynamic>> _getAllVideos() {
+    final l10n = AppLocalizations.of(context)!;
+    final skillTitle = _localizedSkillTitle(widget.skillTitle, l10n);
     return [
       {
-        'title': '${widget.skillTitle} Basics',
-        'level': 'Beginner',
-        'image': ''
-      },
-      {'title': '${widget.skillTitle} Fun', 'level': 'Beginner', 'image': ''},
-      {
-        'title': 'Advanced ${widget.skillTitle}',
-        'level': 'Advanced',
+        'title': l10n.skillVideoBasics(skillTitle),
+        'level': 'beginner',
         'image': ''
       },
       {
-        'title': 'Mastering ${widget.skillTitle}',
-        'level': 'Intermediate',
+        'title': l10n.skillVideoFun(skillTitle),
+        'level': 'beginner',
+        'image': ''
+      },
+      {
+        'title': l10n.skillVideoAdvanced(skillTitle),
+        'level': 'advanced',
+        'image': ''
+      },
+      {
+        'title': l10n.skillVideoMastering(skillTitle),
+        'level': 'intermediate',
         'image': ''
       },
     ];
@@ -1349,7 +1442,7 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
           .toLowerCase()
           .contains(_searchQuery.toLowerCase());
       final matchesLevel =
-          _selectedLevel == "All" || video['level'] == _selectedLevel;
+          _selectedLevel == "all" || video['level'] == _selectedLevel;
       return matchesQuery && matchesLevel;
     }).toList();
   }
@@ -1373,7 +1466,7 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    widget.skillTitle,
+                    _localizedSkillTitle(widget.skillTitle, l10n),
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -1400,7 +1493,8 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
-                        color: Colors.grey.withValues(alpha: 0.1), blurRadius: 5)
+                        color: Colors.grey.withValues(alpha: 0.1),
+                        blurRadius: 5)
                   ],
                 ),
                 child: TextField(
@@ -1450,7 +1544,7 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
                           ),
                         ),
                         child: Text(
-                          level,
+                          _levelLabel(level, l10n),
                           style: TextStyle(
                             color: isSelected ? Colors.white : Colors.grey[700],
                             fontWeight: FontWeight.w600,
@@ -1581,6 +1675,29 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
       ),
     );
   }
+
+  String _localizedSkillTitle(String raw, AppLocalizations l10n) {
+    return switch (raw) {
+      'Cooking' => l10n.skillCooking,
+      'Drawing' => l10n.skillDrawing,
+      'Coloring' => l10n.coloringTitle,
+      'Music' => l10n.music,
+      'Singing' => l10n.skillSinging,
+      'Handcrafts' => l10n.skillHandcrafts,
+      'Sports' => l10n.skillSports,
+      _ => raw,
+    };
+  }
+
+  String _levelLabel(String level, AppLocalizations l10n) {
+    return switch (level) {
+      'all' => l10n.all,
+      'beginner' => l10n.beginner,
+      'intermediate' => l10n.intermediate,
+      'advanced' => l10n.advanced,
+      _ => level,
+    };
+  }
 }
 
 // Skill Video Player Screen
@@ -1666,7 +1783,8 @@ class SkillVideoScreen extends StatelessWidget {
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppColors.skillful.withValues(alpha: 0.4),
+                                    color: AppColors.skillful
+                                        .withValues(alpha: 0.4),
                                     blurRadius: 15,
                                     offset: const Offset(0, 5),
                                   ),
@@ -1948,17 +2066,28 @@ class EducationalSubjectScreen extends StatefulWidget {
 
 class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
   String _searchQuery = "";
-  String _selectedLevel = "All";
+  String _selectedLevel = "all";
 
-  final List<String> _levels = ["All", "Beginner", "Intermediate", "Advanced"];
+  final List<String> _levels = ["all", "beginner", "intermediate", "advanced"];
 
-  final List<Map<String, dynamic>> _allLessons = const [
-    {'title': 'Introduction to Basics', 'level': 'Beginner', 'image': ''},
-    {'title': 'Advanced Concepts', 'level': 'Advanced', 'image': ''},
-    {'title': 'Intermediate Practice', 'level': 'Intermediate', 'image': ''},
-    {'title': 'Fun with Math', 'level': 'Beginner', 'image': ''},
-    {'title': 'Deep Dive', 'level': 'Advanced', 'image': ''},
-  ];
+  List<Map<String, dynamic>> get _allLessons {
+    final l10n = AppLocalizations.of(context)!;
+    return [
+      {
+        'title': l10n.lessonIntroductionToBasics,
+        'level': 'beginner',
+        'image': ''
+      },
+      {'title': l10n.lessonAdvancedConcepts, 'level': 'advanced', 'image': ''},
+      {
+        'title': l10n.lessonIntermediatePractice,
+        'level': 'intermediate',
+        'image': ''
+      },
+      {'title': l10n.lessonFunWithMath, 'level': 'beginner', 'image': ''},
+      {'title': l10n.lessonDeepDive, 'level': 'advanced', 'image': ''},
+    ];
+  }
 
   List<Map<String, dynamic>> get _filteredLessons {
     return _allLessons.where((lesson) {
@@ -1967,7 +2096,7 @@ class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
           .toLowerCase()
           .contains(_searchQuery.toLowerCase());
       final matchesLevel =
-          _selectedLevel == "All" || lesson['level'] == _selectedLevel;
+          _selectedLevel == "all" || lesson['level'] == _selectedLevel;
       return matchesQuery && matchesLevel;
     }).toList();
   }
@@ -1991,7 +2120,7 @@ class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    widget.subjectTitle,
+                    _localizedSubjectTitle(widget.subjectTitle, l10n),
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -2018,7 +2147,8 @@ class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
-                        color: Colors.grey.withValues(alpha: 0.1), blurRadius: 5)
+                        color: Colors.grey.withValues(alpha: 0.1),
+                        blurRadius: 5)
                   ],
                 ),
                 child: TextField(
@@ -2069,7 +2199,7 @@ class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
                           ),
                         ),
                         child: Text(
-                          level,
+                          _levelLabel(level, l10n),
                           style: TextStyle(
                             color: isSelected ? Colors.white : Colors.grey[700],
                             fontWeight: FontWeight.w600,
@@ -2196,6 +2326,28 @@ class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
       ),
     );
   }
+
+  String _localizedSubjectTitle(String raw, AppLocalizations l10n) {
+    return switch (raw) {
+      'English' => l10n.english,
+      'Arabic' => l10n.arabic,
+      'Geography' => l10n.geography,
+      'History' => l10n.history,
+      'Science' => l10n.science,
+      'Math' => l10n.mathematics,
+      _ => raw,
+    };
+  }
+
+  String _levelLabel(String level, AppLocalizations l10n) {
+    return switch (level) {
+      'all' => l10n.all,
+      'beginner' => l10n.beginner,
+      'intermediate' => l10n.intermediate,
+      'advanced' => l10n.advanced,
+      _ => level,
+    };
+  }
 }
 
 /// Lesson Detail Screen (Video + Kids Quiz)
@@ -2319,8 +2471,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                                   width: 44,
                                   height: 44,
                                   decoration: BoxDecoration(
-                                    color:
-                                        AppColors.educational.withValues(alpha: 0.15),
+                                    color: AppColors.educational
+                                        .withValues(alpha: 0.15),
                                     shape: BoxShape.circle,
                                   ),
                                   child: const Icon(Icons.quiz,
@@ -2535,7 +2687,8 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            l10n.questionOf(_currentQuestionIndex + 1, _quizData.length),
+                            l10n.questionOf(
+                                _currentQuestionIndex + 1, _quizData.length),
                             style: TextStyle(color: Colors.grey[600]),
                           ),
                         ],

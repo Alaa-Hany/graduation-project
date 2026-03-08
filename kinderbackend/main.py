@@ -26,6 +26,19 @@ from routers.support import router as support_router
 from routers.features import router as features_router
 from routers.parental_controls import router as parental_controls_router
 from routers.billing_methods import router as billing_methods_router
+from routers.admin_auth import router as admin_auth_router
+from routers.admin_admins import router as admin_admins_router
+from routers.admin_audit import router as admin_audit_router
+from routers.admin_analytics import router as admin_analytics_router
+from routers.admin_cms import router as admin_cms_router
+from routers.admin_settings import router as admin_settings_router
+from routers.admin_children import router as admin_children_router
+from routers.admin_seed import router as admin_seed_router
+from routers.admin_support import router as admin_support_router
+from routers.admin_subscriptions import router as admin_subscriptions_router
+from routers.admin_users import router as admin_users_router
+# Import admin_models so SQLAlchemy registers the tables with Base.metadata
+import admin_models  # noqa: F401
 
 # Configure logging
 logging.basicConfig(
@@ -61,6 +74,7 @@ def run_startup_db_migrations():
     _run_with_db_lock_retry(ensure_user_columns)
     _run_with_db_lock_retry(ensure_child_columns)
     _run_with_db_lock_retry(ensure_parental_controls_columns)
+    _run_with_db_lock_retry(ensure_support_ticket_columns)
 
 
 def _run_with_db_lock_retry(action, attempts: int = 6, delay_seconds: float = 0.35):
@@ -116,6 +130,11 @@ def ensure_child_columns():
         if "avatar" not in columns:
             conn.exec_driver_sql("ALTER TABLE child_profiles ADD COLUMN avatar TEXT")
             columns.add("avatar")
+        if "is_active" not in columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE child_profiles ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT 1"
+            )
+            columns.add("is_active")
 
 
 def ensure_parental_controls_columns():
@@ -174,6 +193,37 @@ def ensure_parental_controls_columns():
                 "ALTER TABLE parental_controls ADD COLUMN emergency_lock BOOLEAN NOT NULL DEFAULT 0"
             )
             columns.add("emergency_lock")
+
+
+def ensure_support_ticket_columns():
+    inspector = inspect(engine)
+    if "support_tickets" not in inspector.get_table_names():
+        return
+    columns = {col["name"] for col in inspector.get_columns("support_tickets")}
+    with engine.begin() as conn:
+        if "status" not in columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE support_tickets ADD COLUMN status TEXT NOT NULL DEFAULT 'open'"
+            )
+            columns.add("status")
+        if "assigned_admin_id" not in columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE support_tickets ADD COLUMN assigned_admin_id INTEGER"
+            )
+            columns.add("assigned_admin_id")
+        if "closed_at" not in columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE support_tickets ADD COLUMN closed_at DATETIME"
+            )
+            columns.add("closed_at")
+        if "updated_at" not in columns:
+            conn.exec_driver_sql(
+                "ALTER TABLE support_tickets ADD COLUMN updated_at DATETIME"
+            )
+            conn.exec_driver_sql(
+                "UPDATE support_tickets SET updated_at = CURRENT_TIMESTAMP WHERE updated_at IS NULL"
+            )
+            columns.add("updated_at")
 
 
 class RegisterIn(BaseModel):
@@ -658,3 +708,16 @@ app.include_router(content_router)
 app.include_router(support_router)
 app.include_router(features_router)
 app.include_router(parental_controls_router)
+
+# ── Admin system (Phase 1) ────────────────────────────────────────────────────
+app.include_router(admin_auth_router)
+app.include_router(admin_admins_router)
+app.include_router(admin_users_router)
+app.include_router(admin_children_router)
+app.include_router(admin_audit_router)
+app.include_router(admin_support_router)
+app.include_router(admin_analytics_router)
+app.include_router(admin_cms_router)
+app.include_router(admin_subscriptions_router)
+app.include_router(admin_settings_router)
+app.include_router(admin_seed_router)

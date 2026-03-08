@@ -3,40 +3,40 @@ import '../app_localizations.dart';
 class AppLocalizationsEn extends AppLocalizations {
   @override
   String get appTitle => 'Kinder World';
-  
+
   @override
   String get welcome => 'Welcome';
-  
+
   @override
   String get next => 'Next';
-  
+
   @override
   String get back => 'Back';
-  
+
   @override
   String get continueText => 'Continue';
-  
+
   @override
   String get skip => 'Skip';
-  
+
   @override
   String get done => 'Done';
-  
+
   @override
   String get cancel => 'Cancel';
-  
+
   @override
   String get save => 'Save';
-  
+
   @override
   String get delete => 'Delete';
-  
+
   @override
   String get edit => 'Edit';
-  
+
   @override
   String get loading => 'Loading...';
-  
+
   @override
   String get error => 'Error';
 
@@ -45,13 +45,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get success => 'Success';
-  
+
   @override
   String get retry => 'Retry';
-  
+
   @override
   String get noInternet => 'No Internet Connection';
-  
+
   @override
   String get offlineMode => 'Offline Mode';
 
@@ -78,7 +78,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get checkingConnection => 'Checking connection...';
 
   @override
-  String get stillNoConnection => 'Still no connection. Please check your internet.';
+  String get stillNoConnection =>
+      'Still no connection. Please check your internet.';
 
   @override
   String get tryAgain => 'Try Again';
@@ -168,13 +169,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get legalTermsPlaceholder => 'Terms will be available soon.';
 
   @override
-  String get legalPrivacyPlaceholder => 'Privacy policy details are coming soon.';
+  String get legalPrivacyPlaceholder =>
+      'Privacy policy details are coming soon.';
 
   @override
-  String get legalCoppaPlaceholder => 'COPPA compliance information will be posted shortly.';
+  String get legalCoppaPlaceholder =>
+      'COPPA compliance information will be posted shortly.';
 
   @override
-  String get legalPlaceholder => 'We will share the requested information soon.';
+  String get legalPlaceholder =>
+      'We will share the requested information soon.';
 
   @override
   String get maintenanceTitle => 'Under Maintenance';
@@ -289,9 +293,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String appVersionLabel(String version) => '$appTitle v$version';
-  
+
   @override
-  String get parentDashboardSubtitle => 'Welcome back! Here\'s what\'s happening';
+  String get parentDashboardSubtitle =>
+      'Welcome back! Here\'s what\'s happening';
 
   @override
   String get noChildrenAddedTitle => 'No children added yet';
@@ -539,13 +544,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get splashTagline => 'Learn. Play. Grow.';
-  
+
   @override
   String get login => 'Login';
-  
+
   @override
   String get register => 'Register';
-  
+
   @override
   String get email => 'Email';
 
@@ -557,7 +562,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get parentEmail => 'Parent Email';
-  
+
   @override
   String get password => 'Password';
 
@@ -566,13 +571,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get passwordRequired => 'Please enter your password';
-  
+
   @override
   String get confirmPassword => 'Confirm Password';
-  
+
   @override
   String get forgotPassword => 'Forgot Password?';
-  
+
   @override
   String get parentLogin => 'Parent Login';
 
@@ -584,28 +589,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get createAccount => 'Create Account';
-  
+
   @override
   String get childLogin => 'Child Login';
 
   @override
   String get childId => 'Child ID';
-  
+
   @override
   String get picturePassword => 'Picture Password';
-  
+
   @override
   String get selectPicturePassword => 'Select Your Picture Password';
-  
+
   @override
   String get confirmPicturePassword => 'Confirm Your Picture Password';
-  
+
   @override
   String get picturePasswordError => 'Pictures do not match. Try again.';
-  
+
   @override
   String get loginError => 'Login failed. Please check your credentials.';
-  
+
   @override
   String get registerError => 'Registration failed. Please try again.';
 
@@ -613,10 +618,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agreeToTermsError => 'Please agree to the terms and conditions';
 
   @override
-  String get registrationSuccess => 'Registration successful! Welcome to Kinder World!';
+  String get registrationSuccess =>
+      'Registration successful! Welcome to Kinder World!';
 
   @override
-  String get registerSubtitle => 'Join Kinder World and start your child\'s learning journey';
+  String get registerSubtitle =>
+      'Join Kinder World and start your child\'s learning journey';
 
   @override
   String get fullNameLabel => 'Full Name';
@@ -640,13 +647,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get passwordCreateRequired => 'Please create a password';
 
   @override
-  String get passwordUppercaseRequired => 'Password must include uppercase letter';
+  String get passwordUppercaseRequired =>
+      'Password must include uppercase letter';
 
   @override
   String get passwordNumberRequired => 'Password must include number';
 
   @override
-  String get passwordSpecialRequired => 'Password must include special character (!@#\$%^&*)';
+  String get passwordSpecialRequired =>
+      'Password must include special character (!@#\$%^&*)';
 
   @override
   String get confirmPasswordHint => 'Confirm your password';
@@ -671,391 +680,393 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get alreadyHaveAccount => 'Already have an account? ';
-  
+
   @override
   String get selectUserType => 'Select User Type';
 
   @override
-  String get selectUserTypeSubtitle => 'Choose how you want to use Kinder World';
-  
+  String get selectUserTypeSubtitle =>
+      'Choose how you want to use Kinder World';
+
   @override
   String get childMode => 'Child Mode';
-  
+
   @override
   String get parentMode => 'Parent Mode';
-  
+
   @override
   String get teacherMode => 'Teacher Mode';
 
   @override
-  String get parentModeDescription => 'Monitor progress, set controls, manage family';
+  String get parentModeDescription =>
+      'Monitor progress, set controls, manage family';
 
   @override
   String get childModeDescription => 'Learn, play, and explore safely';
-  
+
   @override
   String get home => 'Home';
-  
+
   @override
   String get learn => 'Learn';
-  
+
   @override
   String get play => 'Play';
-  
+
   @override
   String get aiBuddy => 'AI Buddy';
-  
+
   @override
   String get profile => 'Profile';
-  
+
   @override
   String get hello => 'Hello';
-  
+
   @override
   String get dailyGoal => 'Daily Goal';
-  
+
   @override
   String get continueLearning => 'Continue Learning';
-  
+
   @override
   String get recommendedForYou => 'Recommended for You';
-  
+
   @override
   String get activityOfTheDay => 'Activity of the Day';
-  
+
   @override
   String get moodIndicator => 'How are you feeling?';
-  
+
   @override
   String get happy => 'Happy';
-  
+
   @override
   String get sad => 'Sad';
-  
+
   @override
   String get excited => 'Excited';
-  
+
   @override
   String get tired => 'Tired';
-  
+
   @override
   String get angry => 'Angry';
-  
+
   @override
   String get calm => 'Calm';
-  
+
   @override
   String get educationalContent => 'Educational Content';
-  
+
   @override
   String get behavioralSkills => 'Behavioral Skills';
-  
+
   @override
   String get skillfulActivities => 'Skillful Activities';
-  
+
   @override
   String get subjects => 'Subjects';
-  
+
   @override
   String get mathematics => 'Mathematics';
-  
+
   @override
   String get science => 'Science';
-  
+
   @override
   String get reading => 'Reading';
-  
+
   @override
   String get history => 'History';
-  
+
   @override
   String get geography => 'Geography';
-  
+
   @override
   String get languages => 'Languages';
-  
+
   @override
   String get socialStories => 'Social Stories';
-  
+
   @override
   String get emotionCards => 'Emotion Cards';
-  
+
   @override
   String get problemSolving => 'Problem Solving';
-  
+
   @override
   String get drawing => 'Drawing';
-  
+
   @override
   String get music => 'Music';
-  
+
   @override
   String get crafts => 'Crafts';
-  
+
   @override
   String get cooking => 'Cooking';
-  
+
   @override
   String get quiz => 'Quiz';
-  
+
   @override
   String get lesson => 'Lesson';
-  
+
   @override
   String get game => 'Game';
-  
+
   @override
   String get story => 'Story';
-  
+
   @override
   String get video => 'Video';
-  
+
   @override
   String get complete => 'Complete';
-  
+
   @override
   String get start => 'Start';
-  
+
   @override
   String get entertainment => 'Entertainment';
-  
+
   @override
   String get educationalGames => 'Educational Games';
-  
+
   @override
   String get puppetShows => 'Puppet Shows';
-  
+
   @override
   String get interactiveStories => 'Interactive Stories';
-  
+
   @override
   String get miniChallenges => 'Mini Challenges';
-  
+
   @override
   String get natureVideos => 'Nature Videos';
-  
+
   @override
   String get brainTeasers => 'Brain Teasers';
-  
+
   @override
   String get cartoonMovies => 'Cartoon Movies';
-  
+
   @override
   String get songs => 'Songs';
-  
+
   @override
   String get funnyClips => 'Funny Clips';
-  
+
   @override
   String get askMeAnything => 'Ask me anything!';
-  
+
   @override
   String get quickActions => 'Quick Actions';
-  
+
   @override
   String get recommendLesson => 'Recommend Lesson';
-  
+
   @override
   String get suggestGame => 'Suggest Game';
-  
+
   @override
   String get tellStory => 'Tell Story';
-  
+
   @override
   String get funFact => 'Fun Fact';
-  
+
   @override
   String get motivation => 'Motivation';
-  
+
   @override
   String typeMessage(String name) => 'Type your message to $name...';
-  
+
   @override
   String get voiceChat => 'Voice Chat';
-  
+
   @override
   String get textChat => 'Text Chat';
-  
+
   @override
   String get aiThinking => 'AI is thinking...';
-  
+
   @override
   String get aiError => 'Sorry, I didn\'t understand that. Please try again.';
-  
+
   @override
   String get progress => 'Progress';
-  
+
   @override
   String get xp => 'XP';
-  
+
   @override
   String get level => 'Level';
-  
+
   @override
   String get streak => 'Streak';
-  
+
   @override
   String get achievements => 'Achievements';
-  
+
   @override
   String get badges => 'Badges';
-  
+
   @override
   String get dailyStreak => 'Daily Streak';
-  
+
   @override
   String get weeklyProgress => 'Weekly Progress';
-  
+
   @override
   String get monthlyProgress => 'Monthly Progress';
-  
+
   @override
   String get parentDashboard => 'Parent Dashboard';
-  
+
   @override
   String get overview => 'Overview';
-  
+
   @override
   String get childProfiles => 'Child Profiles';
-  
+
   @override
   String get addChild => 'Add Child';
-  
+
   @override
   String get editChild => 'Edit Child Profile';
-  
+
   @override
   String get childName => 'Child Name';
-  
+
   @override
   String get childAge => 'Age';
-  
+
   @override
   String get childInterests => 'Interests';
-  
+
   @override
   String get avatar => 'Avatar';
-  
+
   @override
   String get saveChanges => 'Save Changes';
-  
+
   @override
   String get reports => 'Reports';
-  
+
   @override
   String get activityReports => 'Activity Reports';
-  
+
   @override
   String get learningProgress => 'Learning Progress';
-  
+
   @override
   String get skillDevelopment => 'Skill Development';
-  
+
   @override
   String get behavioralProgress => 'Behavioral Progress';
-  
+
   @override
   String get screenTimeReport => 'Screen Time Report';
-  
+
   @override
   String get aiInsights => 'AI Insights';
-  
+
   @override
   String get recentActivities => 'Recent Activities';
-  
+
   @override
   String get timeSpent => 'Time Spent';
-  
+
   @override
   String get completedActivities => 'Completed Activities';
-  
+
   @override
   String get averageScore => 'Average Score';
-  
+
   @override
   String get strengths => 'Strengths';
-  
+
   @override
   String get areasForImprovement => 'Areas for Improvement';
-  
+
   @override
   String get parentalControls => 'Parental Controls';
-  
+
   @override
   String get contentRestrictions => 'Content Restrictions';
-  
+
   @override
   String get screenTime => 'Screen Time';
-  
+
   @override
   String get dailyLimit => 'Daily Limit';
-  
+
   @override
   String get allowedHours => 'Allowed Hours';
-  
+
   @override
   String get sleepMode => 'Sleep Mode';
-  
+
   @override
   String get emergencyLock => 'Emergency Lock';
-  
+
   @override
   String get contentFiltering => 'Content Filtering';
-  
+
   @override
   String get ageAppropriate => 'Age Appropriate';
-  
+
   @override
   String get blockContent => 'Block Content';
-  
+
   @override
   String get allowContent => 'Allow Content';
-  
+
   @override
   String get timeLimits => 'Time Limits';
-  
+
   @override
   String get breakReminders => 'Break Reminders';
-  
+
   @override
   String get smartControl => 'Smart Control';
-  
+
   @override
   String get aiRecommendations => 'AI Recommendations';
-  
+
   @override
   String get settings => 'Settings';
-  
+
   @override
   String get notifications => 'Notifications';
-  
+
   @override
   String get privacySettings => 'Privacy Settings';
-  
+
   @override
   String get dataSharing => 'Data Sharing';
-  
+
   @override
   String get parentalConsent => 'Parental Consent';
-  
+
   @override
   String get accessibility => 'Accessibility';
-  
+
   @override
   String get fontSize => 'Font Size';
-  
+
   @override
   String get contrast => 'Contrast';
-  
+
   @override
   String get language => 'Language';
-  
+
   @override
   String get english => 'English';
-  
+
   @override
   String get arabic => 'العربية';
-  
+
   @override
   String get theme => 'Theme';
 
@@ -1071,28 +1082,28 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get themePaletteHint =>
       'Pick a palette and mode that fits your family.';
-  
+
   @override
   String get lightMode => 'Light Mode';
-  
+
   @override
   String get darkMode => 'Dark Mode';
-  
+
   @override
   String get eyeFriendlyMode => 'Eye-Friendly Mode';
-  
+
   @override
   String get auto => 'Auto';
-  
+
   @override
   String get sound => 'Sound';
-  
+
   @override
   String get soundEffects => 'Sound Effects';
 
   @override
   String get backgroundMusic => 'Background Music';
-  
+
   @override
   String get voiceGuidance => 'Voice Guidance';
 
@@ -1120,146 +1131,146 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get progressReset => 'Progress Reset';
-  
+
   @override
   String get subscription => 'Subscription';
-  
+
   @override
   String get freeTrial => 'Free Trial';
-  
+
   @override
   String get familyPlan => 'Family Plan';
-  
+
   @override
   String get premiumFeatures => 'Premium Features';
-  
+
   @override
   String get upgradeNow => 'Upgrade Now';
-  
+
   @override
   String get manageSubscription => 'Manage Subscription';
-  
+
   @override
   String get paymentMethod => 'Payment Method';
-  
+
   @override
   String get billingInfo => 'Billing Information';
-  
+
   @override
   String get trialEnds => 'Trial Ends';
-  
+
   @override
   String get subscriptionActive => 'Subscription Active';
-  
+
   @override
   String get subscriptionExpired => 'Subscription Expired';
-  
+
   @override
   String get safety => 'Safety';
-  
+
   @override
   String get privacy => 'Privacy';
-  
+
   @override
   String get childProtection => 'Child Protection';
-  
+
   @override
   String get dataSecurity => 'Data Security';
-  
+
   @override
   String get parentalConsentRequired => 'Parental Consent Required';
-  
+
   @override
   String get minimalDataCollection => 'Minimal Data Collection';
-  
+
   @override
   String get encryptedStorage => 'Encrypted Storage';
-  
+
   @override
   String get help => 'Help';
-  
+
   @override
   String get support => 'Support';
-  
+
   @override
   String get faq => 'FAQ';
-  
+
   @override
   String get contactUs => 'Contact Us';
-  
+
   @override
   String get tutorial => 'Tutorial';
-  
+
   @override
   String get walkthrough => 'Walkthrough';
-  
+
   @override
   String get feedback => 'Feedback';
-  
+
   @override
   String get maintenanceMode => 'App is under maintenance';
-  
+
   @override
   String get updateRequired => 'Update Required';
-  
+
   @override
   String get syncData => 'Syncing Data...';
-  
+
   @override
   String get dataSyncComplete => 'Data Sync Complete';
-  
+
   @override
   String get sessionExpired => 'Session Expired';
-  
+
   @override
   String get logoutConfirm => 'Are you sure you want to logout?';
-  
+
   @override
   String get exitConfirm => 'Are you sure you want to exit?';
-  
+
   @override
   String get deleteConfirm => 'Are you sure you want to delete?';
-  
+
   @override
   String get fieldRequired => 'This field is required';
-  
+
   @override
   String get invalidEmail => 'Please enter a valid email';
 
   @override
   String get parentEmailNotFound =>
       'Parent email not found. Please sign in as a parent.';
-  
+
   @override
   String get passwordTooShort => 'Password must be at least 6 characters';
-  
+
   @override
   String get passwordsDontMatch => 'Passwords do not match';
-  
+
   @override
   String get invalidAge => 'Please enter a valid age (5-12)';
-  
+
   @override
   String get selectAvatar => 'Please select an avatar';
-  
+
   @override
   String get increaseFontSize => 'Increase Font Size';
-  
+
   @override
   String get decreaseFontSize => 'Decrease Font Size';
-  
+
   @override
   String get highContrast => 'High Contrast';
-  
+
   @override
   String get screenReader => 'Screen Reader Support';
-  
+
   @override
   String get voiceCommands => 'Voice Commands';
-  
+
   @override
   String get switchAccess => 'Switch Access';
-  
+
   @override
   String get chooseProfileToContinue => 'Choose your profile to continue.';
 
@@ -1276,10 +1287,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get childProfileNotFound => 'Child profile not found.';
 
   @override
-  String get failedToStartSession => 'Failed to start session. Please try again.';
+  String get failedToStartSession =>
+      'Failed to start session. Please try again.';
 
   @override
-  String get incorrectPicturePassword => 'Incorrect picture password. Please try again.';
+  String get incorrectPicturePassword =>
+      'Incorrect picture password. Please try again.';
 
   @override
   String get childLoginNotFound => 'Child not found';
@@ -1528,7 +1541,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chooseLanguageTitle => 'Choose Your Language';
-  
+
   @override
   String get chooseLanguageSubtitle => 'Select your preferred language';
 
@@ -1789,64 +1802,65 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get achievementMathMasterSubtitle => '100% accuracy';
-  
+
   @override
   String get choosePlan => 'Choose Your Plan';
-  
+
   @override
   String get currentPlan => 'Current Plan';
-  
+
   @override
-  String get deleteChildDescription => 'This will permanently delete the child profile and all associated data. This action cannot be undone.';
-  
+  String get deleteChildDescription =>
+      'This will permanently delete the child profile and all associated data. This action cannot be undone.';
+
   @override
   String get deleteChildFailed => 'Failed to delete child profile';
-  
+
   @override
   String get deleteChildSuccess => 'Child profile deleted successfully';
-  
+
   @override
   String get deleteChildTitle => 'Delete Child Profile';
-  
+
   @override
   String get freePlanChildLimit => 'Free plan allows 1 child';
-  
+
   @override
   String get planAdvancedReports => 'Advanced Learning Reports';
-  
+
   @override
   String get planAiInsightsPro => 'AI-Powered Learning Insights';
-  
+
   @override
   String get planBasicReports => 'Basic Progress Reports';
-  
+
   @override
   String planChildLimit(int count) => 'Manage up to $count children';
-  
+
   @override
   String get planExclusiveContent => 'Exclusive Premium Content';
-  
+
   @override
   String get planFamilyDashboard => 'Family Dashboard';
-  
+
   @override
   String get planFamilyPlus => 'Family Plus';
-  
+
   @override
   String get planFeatureInPremium => 'Available in Premium';
-  
+
   @override
   String get planFree => 'Free';
-  
+
   @override
   String get planOfflineDownloads => 'Offline Access';
-  
+
   @override
   String get planPremium => 'Premium';
-  
+
   @override
   String get planSmartControls => 'Parental Controls';
-  
+
   @override
   String get planUnlimitedChildren => 'Unlimited Children';
 
@@ -1936,7 +1950,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get personalizedRecommendationsTitle => 'Personalized Recommendations';
 
   @override
-  String get personalizedRecommendationsSubtitle => 'Receive customized content suggestions';
+  String get personalizedRecommendationsSubtitle =>
+      'Receive customized content suggestions';
 
   @override
   String get dataCollectionOptOutTitle => 'Opt-out of Data Collection';
@@ -1961,7 +1976,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noResultsFound => 'No results found';
 
   @override
-  String get helpPreparingArticles => 'We are preparing helpful articles for you.';
+  String get helpPreparingArticles =>
+      'We are preparing helpful articles for you.';
 
   @override
   String get noFaqFound => 'No FAQ found';
@@ -1970,7 +1986,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contactUsAction => 'Contact Us';
 
   @override
-  String get contactUsIntro => "We'd love to hear from you. Send us your message and we'll get back to you shortly.";
+  String get contactUsIntro =>
+      "We'd love to hear from you. Send us your message and we'll get back to you shortly.";
 
   @override
   String get contactEmailLabel => 'Email';
@@ -2015,7 +2032,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get messageSent => 'Your message has been sent successfully!';
 
   @override
-  String get messageSentSuccess => "Message sent successfully. We'll get back to you soon.";
+  String get messageSentSuccess =>
+      "Message sent successfully. We'll get back to you soon.";
 
   @override
   String get sendMessage => 'Send Message';
@@ -2125,7 +2143,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get samplePaymentMethod => '**** **** **** 1234';
 
-
   @override
   String get billingTitle => 'Billing';
 
@@ -2175,7 +2192,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sendResetLink => 'Send Reset Link';
 
   @override
-  String get resetLinkSent => 'A reset link has been sent to your email address';
+  String get resetLinkSent =>
+      'A reset link has been sent to your email address';
 
   @override
   String get backToLogin => 'Back to Login';
@@ -2308,7 +2326,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get securitySection => 'Security';
 
   @override
-  String get accountCreatedWelcome => 'Account created! Welcome to Kinder World.';
+  String get accountCreatedWelcome =>
+      'Account created! Welcome to Kinder World.';
 
   // ── UI Redesign — Role Selection / Login / Register / Widgets ──
   @override
@@ -2342,7 +2361,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get useAllowedEmail => 'Use Gmail, Outlook, Hotmail, or Live email';
 
   @override
-  String get passwordTooShortRegister => 'Password must be at least 8 characters';
+  String get passwordTooShortRegister =>
+      'Password must be at least 8 characters';
 
   @override
   String get joinKinderWorld => 'Join Kinder World';
@@ -2367,8 +2387,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get parentPinTitle => 'Parent Verification';
 
   @override
-  String get parentPinSubtitle =>
-      'Enter your PIN to access parent settings.';
+  String get parentPinSubtitle => 'Enter your PIN to access parent settings.';
 
   @override
   String get parentPinHint => 'Enter a 4-digit PIN';
@@ -2393,7 +2412,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get forgotPin => 'Forgot PIN?';
 
   @override
-  String get contactSupportToResetPin => 'Please contact support to reset your PIN';
+  String get contactSupportToResetPin =>
+      'Please contact support to reset your PIN';
 
   // ── Child Header ──
   @override
@@ -2482,7 +2502,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get askKinderAnything => 'Ask Kinder anything...';
 
   @override
-  String get aiInitialGreeting => 'Hi there! 👋 I\'m Kinder, your learning buddy! How can I help you today?';
+  String get aiInitialGreeting =>
+      'Hi there! 👋 I\'m Kinder, your learning buddy! How can I help you today?';
 
   // ── Lesson Flow Screen ──
   @override
@@ -2602,47 +2623,74 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pleaseEnterRealName => 'Please enter a real name';
 
   // ── Learn Screen ──
-  @override String get searchPages => 'Search pages...';
-  @override String get letsExploreAndLearn => "Let's explore and learn something fun!";
-  @override String get noPagesFound => 'No pages found';
-  @override String get categoryBehavioral => 'Behavioral';
-  @override String get categoryEducational => 'Educational';
-  @override String get categorySkillful => 'Skillful';
-  @override String get categoryEntertaining => 'Entertaining';
+  @override
+  String get searchPages => 'Search pages...';
+  @override
+  String get letsExploreAndLearn => "Let's explore and learn something fun!";
+  @override
+  String get noPagesFound => 'No pages found';
+  @override
+  String get categoryBehavioral => 'Behavioral';
+  @override
+  String get categoryEducational => 'Educational';
+  @override
+  String get categorySkillful => 'Skillful';
+  @override
+  String get categoryEntertaining => 'Entertaining';
 
   // ── Entertaining Screen ──
-  @override String get foundSomethingFun => 'I found something fun for you!';
+  @override
+  String get foundSomethingFun => 'I found something fun for you!';
 
   // ── Behavioral Screen ──
-  @override String get letsPracticeKindness => "Let's practice kindness today!";
+  @override
+  String get letsPracticeKindness => "Let's practice kindness today!";
 
   // ── Method Content Screen ──
-  @override String get letsTryNewSkill => "Let's try a new skill today!";
+  @override
+  String get letsTryNewSkill => "Let's try a new skill today!";
 
   // ── Skillful Screen ──
-  @override String get letsCreateSomethingFun => "Let's create something fun!";
-  @override String get searchActivities => 'Search activities...';
-  @override String get noActivitiesFound => 'No activities found.';
-  @override String get watchNow => 'Watch Now';
-  @override String get letsCreate => "Let's Create!";
-  @override String followStepsInVideo(String title) =>
+  @override
+  String get letsCreateSomethingFun => "Let's create something fun!";
+  @override
+  String get searchActivities => 'Search activities...';
+  @override
+  String get noActivitiesFound => 'No activities found.';
+  @override
+  String get watchNow => 'Watch Now';
+  @override
+  String get letsCreate => "Let's Create!";
+  @override
+  String followStepsInVideo(String title) =>
       'Follow the steps in this video to learn how to create $title. Have fun and be creative!';
-  @override String get imDone => "I'm Done!";
+  @override
+  String get imDone => "I'm Done!";
 
   // ── Educational Screen ──
-  @override String get letsLearnSomethingNew => "Let's learn something new!";
-  @override String get searchLessons => 'Search lessons...';
-  @override String get noLessonsFound => 'No lessons found.';
+  @override
+  String get letsLearnSomethingNew => "Let's learn something new!";
+  @override
+  String get searchLessons => 'Search lessons...';
+  @override
+  String get noLessonsFound => 'No lessons found.';
 
   // ── Lesson Detail / Quiz Screen ──
-  @override String get readyForFunQuiz => 'Ready for a fun quiz?';
-  @override String get playQuizToEarnStars =>
+  @override
+  String get readyForFunQuiz => 'Ready for a fun quiz?';
+  @override
+  String get playQuizToEarnStars =>
       'Play a quick quiz to earn stars and show what you learned!';
-  @override String get startQuiz => 'Start Quiz';
-  @override String get quizTime => 'Quiz Time!';
-  @override String get youCompletedQuiz => 'You completed the quiz!';
-  @override String get awesome => 'Awesome!';
-  @override String get nextQuestion => 'Next Question';
+  @override
+  String get startQuiz => 'Start Quiz';
+  @override
+  String get quizTime => 'Quiz Time!';
+  @override
+  String get youCompletedQuiz => 'You completed the quiz!';
+  @override
+  String get awesome => 'Awesome!';
+  @override
+  String get nextQuestion => 'Next Question';
 
   // ── Welcome Screen features ──
   @override
@@ -2707,7 +2755,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get childProfilesSubtitle => 'Manage your children\'s accounts';
 
   @override
-  String get parentalControlsSubtitle => 'Screen time, content filters & limits';
+  String get parentalControlsSubtitle =>
+      'Screen time, content filters & limits';
 
   @override
   String get premiumActive => 'Premium — Active';
@@ -2834,7 +2883,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get goodMorningOverview => "Good morning — here's today's overview";
 
   @override
-  String get goodAfternoonOverview => "Good afternoon — here's what's happening";
+  String get goodAfternoonOverview =>
+      "Good afternoon — here's what's happening";
 
   @override
   String get goodEveningOverview => "Good evening — here's your daily summary";
@@ -2933,4 +2983,1108 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get readyForAdventure => '🚀 Ready for today\'s adventure?';
+
+  @override
+  String get todayLabel => 'Today';
+
+  @override
+  String get yesterdayLabel => 'Yesterday';
+
+  @override
+  String daysAgoCount(int count) => '$count days ago';
+
+  @override
+  String minutesShort(int minutes) => '$minutes min';
+
+  @override
+  String get historySharingStars => 'Sharing Stars';
+
+  @override
+  String get historyKindWords => 'Kind Words';
+
+  @override
+  String get historyHelpingHands => 'Helping Hands';
+
+  @override
+  String get historyNumbersAdventure => 'Numbers Adventure';
+
+  @override
+  String get historyColorQuest => 'Color Quest';
+
+  @override
+  String get historyStoryTime => 'Story Time';
+
+  @override
+  String get historyPuzzleBuilder => 'Puzzle Builder';
+
+  @override
+  String get historyShapeMatch => 'Shape Match';
+
+  @override
+  String get historyMemoryGame => 'Memory Game';
+
+  @override
+  String get historyDanceParty => 'Dance Party';
+
+  @override
+  String get historySingAlong => 'Sing Along';
+
+  @override
+  String get historyMagicShow => 'Magic Show';
+
+  @override
+  String get songsAndMusic => 'Songs & Music';
+
+  @override
+  String get entertainmentBrainTeasers => 'Brain Teasers';
+
+  @override
+  String get entertainmentGames => 'Games';
+
+  @override
+  String get entertainmentCartoons => 'Cartoons';
+
+  @override
+  String get contentPuzzleGame => 'Puzzle Game';
+
+  @override
+  String get contentRacingCars => 'Racing Cars';
+
+  @override
+  String get contentAdventureTime => 'Adventure Time';
+
+  @override
+  String get contentFunnyAnimals => 'Funny Animals';
+
+  @override
+  String get contentSpaceHeroes => 'Space Heroes';
+
+  @override
+  String get contentMagicWorld => 'Magic World';
+
+  @override
+  String get contentAbcSong => 'ABC Song';
+
+  @override
+  String get contentBabyShark => 'Baby Shark';
+
+  @override
+  String get contentTwinkleStar => 'Twinkle Star';
+
+  @override
+  String get videoTomAndJerryKeepCalm => 'Tom & Jerry | Keep Calm';
+
+  @override
+  String get videoMomoAndMimiArabic => 'Momo & Mimi | Arabic';
+
+  @override
+  String get videoKindnessChallenge => 'Kindness Challenge';
+
+  @override
+  String get videoBuildAndCreate => 'Build & Create';
+
+  @override
+  String get videoMathBasicsFun => 'Math Basics | Fun';
+
+  @override
+  String get videoScienceWonders => 'Science Wonders';
+
+  @override
+  String get videoColoringFun => 'Coloring Fun';
+
+  @override
+  String get videoAlphabetSong => 'Alphabet Song';
+
+  @override
+  String get videoAnimalFriends => 'Animal Friends';
+
+  @override
+  String get videoSharingTime => 'Sharing Time';
+
+  @override
+  String get videoPuzzlePlay => 'Puzzle Play';
+
+  @override
+  String get activityRespectSharing => 'Respect & Sharing';
+
+  @override
+  String get skillCooking => 'Cooking';
+
+  @override
+  String get skillCookingDesc => 'Yummy food';
+
+  @override
+  String get skillDrawing => 'Drawing';
+
+  @override
+  String get skillDrawingDesc => 'Express art';
+
+  @override
+  String get skillColoringDesc => 'Use colors';
+
+  @override
+  String get skillMusicDesc => 'Play instruments';
+
+  @override
+  String get skillSinging => 'Singing';
+
+  @override
+  String get skillSingingDesc => 'Learn songs';
+
+  @override
+  String get skillHandcrafts => 'Handcrafts';
+
+  @override
+  String get skillHandcraftsDesc => 'Cut & Paste';
+
+  @override
+  String get skillSports => 'Sports';
+
+  @override
+  String get skillSportsDesc => 'Stay fit';
+
+  @override
+  String skillVideoBasics(String skill) => '$skill Basics';
+
+  @override
+  String skillVideoFun(String skill) => '$skill Fun';
+
+  @override
+  String skillVideoAdvanced(String skill) => 'Advanced $skill';
+
+  @override
+  String skillVideoMastering(String skill) => 'Mastering $skill';
+
+  @override
+  String get lessonIntroductionToBasics => 'Introduction to Basics';
+
+  @override
+  String get lessonAdvancedConcepts => 'Advanced Concepts';
+
+  @override
+  String get lessonIntermediatePractice => 'Intermediate Practice';
+
+  @override
+  String get lessonFunWithMath => 'Fun with Math';
+
+  @override
+  String get lessonDeepDive => 'Deep Dive';
+
+  // ── Admin Portal ──────────────────────────────────────────────────────────
+  @override
+  String get adminWelcome => 'Admin Portal';
+
+  @override
+  String get adminLoginSubtitle => 'Sign in to manage Kinder World';
+
+  @override
+  String get adminEmail => 'Admin Email';
+
+  @override
+  String get adminEmailRequired => 'Email is required';
+
+  @override
+  String get adminEmailInvalid => 'Enter a valid email address';
+
+  @override
+  String get adminPassword => 'Admin Password';
+
+  @override
+  String get adminPasswordRequired => 'Password is required';
+
+  @override
+  String get adminSignIn => 'Sign In';
+
+  @override
+  String get adminLoginFooter =>
+      'Kinder World Admin Portal — authorised access only';
+
+  @override
+  String get adminDashboard => 'Admin Dashboard';
+
+  @override
+  String get adminDashboardWelcome => 'Welcome back';
+
+  @override
+  String get adminDashboardSubtitle =>
+      'Here\'s what\'s happening in Kinder World';
+
+  @override
+  String get adminDashboardPermissionsTitle => 'Your permissions';
+
+  @override
+  String get adminMenuTooltip => 'Menu';
+
+  @override
+  String get adminRefreshTooltip => 'Refresh';
+
+  @override
+  String get adminSidebarOverview => 'Overview';
+
+  @override
+  String get adminSidebarUsers => 'Users';
+
+  @override
+  String get adminSidebarChildren => 'Children';
+
+  @override
+  String get adminSidebarContent => 'Content';
+
+  @override
+  String get adminSidebarReports => 'Reports';
+
+  @override
+  String get adminSidebarSupport => 'Support';
+
+  @override
+  String get adminSidebarSubscriptions => 'Subscriptions';
+
+  @override
+  String get adminSidebarSettings => 'Settings';
+
+  @override
+  String get adminSidebarAudit => 'Audit Log';
+
+  @override
+  String get adminSidebarAdmins => 'Admins';
+
+  @override
+  String get adminLogout => 'Logout';
+
+  @override
+  String get adminLogoutConfirm =>
+      'Are you sure you want to log out of the admin portal?';
+
+  @override
+  String get adminSessionExpired =>
+      'Your admin session has expired. Please sign in again.';
+
+  @override
+  String get adminAccessDenied => 'Access Denied';
+
+  @override
+  String get adminPermissionDenied => 'Permission Denied';
+
+  @override
+  String get adminPermissionDeniedMessage =>
+      'You do not have permission to access this section. Contact your system administrator.';
+
+  @override
+  String get adminDisabledAccount =>
+      'Your admin account has been disabled. Please contact the system administrator.';
+
+  @override
+  String get adminRoleSuperAdmin => 'Super Admin';
+
+  @override
+  String get adminRoleContentAdmin => 'Content Admin';
+
+  @override
+  String get adminRoleSupportAdmin => 'Support Admin';
+
+  @override
+  String get adminRoleAnalyticsAdmin => 'Analytics Admin';
+
+  @override
+  String get adminRoleFinanceAdmin => 'Finance Admin';
+
+  @override
+  String get adminUsersTitle => 'Users management';
+
+  @override
+  String get adminUsersSubtitle =>
+      'Search, review, and manage parent accounts.';
+
+  @override
+  String get adminUsersSearchLabel => 'Search users';
+
+  @override
+  String get adminUsersStatusFilter => 'Status';
+
+  @override
+  String get adminUsersStatusAll => 'All';
+
+  @override
+  String get adminUsersStatusActive => 'Active';
+
+  @override
+  String get adminUsersStatusDisabled => 'Disabled';
+
+  @override
+  String get adminUsersNameColumn => 'Name';
+
+  @override
+  String get adminUsersEmailColumn => 'Email';
+
+  @override
+  String get adminUsersPlanColumn => 'Plan';
+
+  @override
+  String get adminUsersChildrenColumn => 'Children';
+
+  @override
+  String get adminUsersStatusColumn => 'Status';
+
+  @override
+  String get adminUsersActionsColumn => 'Actions';
+
+  @override
+  String get adminUsersViewAction => 'View';
+
+  @override
+  String get adminUsersEditTitle => 'Edit user';
+
+  @override
+  String get adminUsersNameField => 'Name';
+
+  @override
+  String get adminUsersEmailField => 'Email';
+
+  @override
+  String get adminUsersPlanField => 'Plan';
+
+  @override
+  String get adminPlanFree => 'Free';
+
+  @override
+  String get adminPlanPremium => 'Premium';
+
+  @override
+  String get adminPlanFamilyPlus => 'Family Plus';
+
+  @override
+  String get adminUsersUpdatedMessage => 'User updated successfully';
+
+  @override
+  String get adminUsersDisableTitle => 'Disable user';
+
+  @override
+  String get adminUsersDisableConfirm => 'Disable this user account?';
+
+  @override
+  String get adminUsersDisableAction => 'Disable';
+
+  @override
+  String get adminUsersDisabledMessage => 'User disabled successfully';
+
+  @override
+  String get adminUsersEnableTitle => 'Enable user';
+
+  @override
+  String get adminUsersEnableConfirm => 'Enable this user account?';
+
+  @override
+  String get adminUsersEnableAction => 'Enable';
+
+  @override
+  String get adminUsersEnabledMessage => 'User enabled successfully';
+
+  @override
+  String adminUsersDetailTitle(String email) => 'User details: $email';
+
+  @override
+  String get adminUsersOverviewCard => 'Overview';
+
+  @override
+  String get adminUsersActivityCard => 'Activity summary';
+
+  @override
+  String get adminUsersNotificationsMetric => 'Notifications';
+
+  @override
+  String get adminUsersSupportMetric => 'Support tickets';
+
+  @override
+  String get adminUsersLastUpdatedMetric => 'Last updated';
+
+  @override
+  String get adminUsersChildrenSection => 'Children';
+
+  @override
+  String get adminUsersNotificationsSection => 'Recent notifications';
+
+  @override
+  String get adminUsersSupportSection => 'Support tickets';
+
+  @override
+  String get adminChildrenTitle => 'Children management';
+
+  @override
+  String get adminChildrenSubtitle => 'Inspect and maintain child profiles.';
+
+  @override
+  String get adminChildrenParentFilter => 'Parent ID';
+
+  @override
+  String get adminChildrenAgeFilter => 'Age';
+
+  @override
+  String get adminChildrenStatusFilter => 'Status';
+
+  @override
+  String get adminChildrenNameColumn => 'Name';
+
+  @override
+  String get adminChildrenParentColumn => 'Parent';
+
+  @override
+  String get adminChildrenAgeColumn => 'Age';
+
+  @override
+  String get adminChildrenStatusColumn => 'Status';
+
+  @override
+  String get adminChildrenActionsColumn => 'Actions';
+
+  @override
+  String get adminChildrenEditTitle => 'Edit child';
+
+  @override
+  String get adminChildrenNameField => 'Name';
+
+  @override
+  String get adminChildrenAgeField => 'Age';
+
+  @override
+  String get adminChildrenAvatarField => 'Avatar';
+
+  @override
+  String get adminChildrenUpdatedMessage => 'Child updated successfully';
+
+  @override
+  String get adminChildrenDeactivateTitle => 'Deactivate child';
+
+  @override
+  String get adminChildrenDeactivateConfirm => 'Deactivate this child profile?';
+
+  @override
+  String get adminChildrenDeactivateAction => 'Deactivate';
+
+  @override
+  String get adminChildrenDeactivatedMessage =>
+      'Child deactivated successfully';
+
+  @override
+  String adminChildrenDetailTitle(String name) => 'Child details: $name';
+
+  @override
+  String get adminChildrenOverviewCard => 'Overview';
+
+  @override
+  String get adminChildrenProgressCard => 'Progress';
+
+  @override
+  String get adminChildrenProgressDaysMetric => 'Days since created';
+
+  @override
+  String get adminChildrenProgressEventsMetric => 'Audit events';
+
+  @override
+  String get adminChildrenMilestonesSection => 'Milestones';
+
+  @override
+  String get adminChildrenActivitySection => 'Activity log';
+
+  @override
+  String get adminAuditTitle => 'Audit logs';
+
+  @override
+  String get adminAuditSubtitle =>
+      'Review sensitive admin actions and trace system changes.';
+
+  @override
+  String get adminAuditAdminFilter => 'Admin ID';
+
+  @override
+  String get adminAuditActionFilter => 'Action';
+
+  @override
+  String get adminAuditDateFromFilter => 'Date from';
+
+  @override
+  String get adminAuditDateToFilter => 'Date to';
+
+  @override
+  String get adminAuditApplyFilters => 'Apply filters';
+
+  @override
+  String get adminAuditActionColumn => 'Action';
+
+  @override
+  String get adminAuditEntityColumn => 'Entity';
+
+  @override
+  String get adminAuditAdminColumn => 'Admin';
+
+  @override
+  String get adminAuditTimeColumn => 'Timestamp';
+
+  @override
+  String get adminAuditNetworkColumn => 'IP / Agent';
+
+  @override
+  String adminPaginationSummary(int page, int totalPages, int total) =>
+      'Page $page of $totalPages • $total records';
+
+  @override
+  String get adminPaginationPrevious => 'Previous';
+
+  @override
+  String get adminPaginationNext => 'Next';
+
+  @override
+  String get adminSupportTicketsTitle => 'Support tickets';
+
+  @override
+  String get adminSupportTicketsSubtitle =>
+      'Review, assign, reply to, and close support requests.';
+
+  @override
+  String get adminSupportStatusFilter => 'Status';
+
+  @override
+  String get adminSupportStatusAll => 'All statuses';
+
+  @override
+  String get adminSupportStatusOpen => 'Open';
+
+  @override
+  String get adminSupportStatusInProgress => 'In progress';
+
+  @override
+  String get adminSupportStatusClosed => 'Closed';
+
+  @override
+  String get adminSupportAssignedToMe => 'Assign to me';
+
+  @override
+  String get adminSupportAssign => 'Assign';
+
+  @override
+  String get adminSupportAssignSuccess => 'Ticket assigned successfully';
+
+  @override
+  String get adminSupportReply => 'Reply';
+
+  @override
+  String get adminSupportReplyHint => 'Type your reply';
+
+  @override
+  String get adminSupportReplySuccess => 'Reply sent successfully';
+
+  @override
+  String get adminSupportClose => 'Close ticket';
+
+  @override
+  String get adminSupportCloseConfirm =>
+      'Are you sure you want to close this ticket?';
+
+  @override
+  String get adminSupportCloseSuccess => 'Ticket closed successfully';
+
+  @override
+  String get adminSupportRequester => 'Requester';
+
+  @override
+  String get adminSupportAssignee => 'Assignee';
+
+  @override
+  String get adminSupportThread => 'Thread';
+
+  @override
+  String get adminSupportNoTickets => 'No tickets found';
+
+  @override
+  String get adminSupportNoTicketSelected => 'Select a ticket to view details';
+
+  @override
+  String adminSupportMessagesCount(int count) => '$count messages';
+
+  @override
+  String get adminAnalyticsTitle => 'Analytics overview';
+
+  @override
+  String get adminAnalyticsSubtitle =>
+      'Monitor platform growth, activity trends, and support health.';
+
+  @override
+  String get adminAnalyticsRangeWeek => 'Week';
+
+  @override
+  String get adminAnalyticsRangeMonth => 'Month';
+
+  @override
+  String get adminAnalyticsTotalUsers => 'Total users';
+
+  @override
+  String get adminAnalyticsActiveChildren => 'Active children';
+
+  @override
+  String get adminAnalyticsActivitiesToday => 'Activities today';
+
+  @override
+  String get adminAnalyticsOpenTickets => 'Open tickets';
+
+  @override
+  String get adminAnalyticsSubscriptionsTitle => 'Subscriptions summary';
+
+  @override
+  String get adminAnalyticsUsageTitle => 'Usage trend';
+
+  @override
+  String get adminAnalyticsNewUsers => 'Users';
+
+  @override
+  String get adminAnalyticsNewChildren => 'Children';
+
+  @override
+  String get adminAnalyticsActivities => 'Activities';
+
+  @override
+  String get adminAnalyticsTickets => 'Tickets';
+
+  @override
+  String get adminAnalyticsRecentTickets => 'Recent ticket summary';
+
+  @override
+  String get adminAnalyticsPaidSubscriptions => 'Paid subscriptions';
+
+  @override
+  String get adminAnalyticsFreeSubscriptions => 'Free subscriptions';
+
+  @override
+  String get adminAnalyticsNoData => 'No data available';
+
+  @override
+  String get adminCmsTitle => 'Content management';
+
+  @override
+  String get adminCmsSubtitle =>
+      'Manage categories, educational content, and quizzes.';
+
+  @override
+  String get adminCmsCategoriesTab => 'Categories';
+
+  @override
+  String get adminCmsContentsTab => 'Contents';
+
+  @override
+  String get adminCmsQuizzesTab => 'Quizzes';
+
+  @override
+  String get adminCmsAddCategory => 'Add category';
+
+  @override
+  String get adminCmsAddContent => 'Add content';
+
+  @override
+  String get adminCmsAddQuiz => 'Add quiz';
+
+  @override
+  String get adminCmsCategoryCreateTitle => 'Create category';
+
+  @override
+  String get adminCmsCategoryEditTitle => 'Edit category';
+
+  @override
+  String get adminCmsCategorySlug => 'Slug';
+
+  @override
+  String get adminCmsCategorySaved => 'Category saved';
+
+  @override
+  String get adminCmsDeleteCategoryTitle => 'Delete category';
+
+  @override
+  String get adminCmsDeleteCategoryConfirm => 'Delete this category?';
+
+  @override
+  String get adminCmsCategoryUsage => 'Content / quizzes';
+
+  @override
+  String get adminCmsNoCategory => 'No category';
+
+  @override
+  String get adminCmsAllCategories => 'All categories';
+
+  @override
+  String get adminCmsCreateContentTitle => 'Create content';
+
+  @override
+  String get adminCmsEditContentTitle => 'Edit content';
+
+  @override
+  String get adminCmsTypeLabel => 'Type';
+
+  @override
+  String get adminCmsTypeLesson => 'Lesson';
+
+  @override
+  String get adminCmsTypeStory => 'Story';
+
+  @override
+  String get adminCmsTypeVideo => 'Video';
+
+  @override
+  String get adminCmsTypeActivity => 'Activity';
+
+  @override
+  String get adminCmsStatusLabel => 'Status';
+
+  @override
+  String get adminCmsStatusAll => 'All statuses';
+
+  @override
+  String get adminCmsStatusDraft => 'Draft';
+
+  @override
+  String get adminCmsStatusReview => 'Review';
+
+  @override
+  String get adminCmsStatusPublished => 'Published';
+
+  @override
+  String get adminCmsTitleEnLabel => 'English title';
+
+  @override
+  String get adminCmsTitleArLabel => 'Arabic title';
+
+  @override
+  String get adminCmsDescriptionEnLabel => 'English description';
+
+  @override
+  String get adminCmsDescriptionArLabel => 'Arabic description';
+
+  @override
+  String get adminCmsBodyEnLabel => 'English body';
+
+  @override
+  String get adminCmsBodyArLabel => 'Arabic body';
+
+  @override
+  String get adminCmsThumbnailLabel => 'Thumbnail URL';
+
+  @override
+  String get adminCmsAgeGroupLabel => 'Age group';
+
+  @override
+  String get adminCmsMetadataLabel => 'Metadata JSON';
+
+  @override
+  String get adminCmsLinkedQuizzes => 'Linked quizzes';
+
+  @override
+  String get adminCmsPreviewTitle => 'Preview';
+
+  @override
+  String get adminCmsPreviewAction => 'Preview';
+
+  @override
+  String get adminCmsPublishAction => 'Publish';
+
+  @override
+  String get adminCmsUnpublishAction => 'Unpublish';
+
+  @override
+  String get adminCmsDeleteContentTitle => 'Delete content';
+
+  @override
+  String get adminCmsDeleteContentConfirm => 'Delete this content item?';
+
+  @override
+  String get adminCmsLinkedContentLabel => 'Linked content';
+
+  @override
+  String get adminCmsNoLinkedContent => 'No linked content';
+
+  @override
+  String get adminCmsCreateQuizTitle => 'Create quiz';
+
+  @override
+  String get adminCmsEditQuizTitle => 'Edit quiz';
+
+  @override
+  String get adminCmsQuestionsJsonLabel => 'Questions JSON';
+
+  @override
+  String get adminCmsQuestionsLabel => 'questions';
+
+  @override
+  String get adminCmsDeleteQuizTitle => 'Delete quiz';
+
+  @override
+  String get adminCmsDeleteQuizConfirm => 'Delete this quiz?';
+
+  @override
+  String get adminCmsQuizSaved => 'Quiz saved';
+
+  @override
+  String get adminCmsCategoryLabel => 'Category';
+
+  @override
+  String get adminCmsSearchLabel => 'Search';
+
+  @override
+  String get adminSubscriptionsTitle => 'Subscriptions';
+
+  @override
+  String get adminSubscriptionsSubtitle =>
+      'Review plans, finance actions, and subscription overrides.';
+
+  @override
+  String get adminSubscriptionsSearchLabel => 'Search';
+
+  @override
+  String get adminSubscriptionsStatusFilter => 'Status';
+
+  @override
+  String get adminSubscriptionsStatusAll => 'All statuses';
+
+  @override
+  String get adminSubscriptionsStatusActive => 'Active';
+
+  @override
+  String get adminSubscriptionsStatusFree => 'Free';
+
+  @override
+  String get adminSubscriptionsStatusDisabled => 'Disabled';
+
+  @override
+  String get adminSubscriptionsPlanFilter => 'Plan';
+
+  @override
+  String get adminSubscriptionsPlanAll => 'All plans';
+
+  @override
+  String get adminSubscriptionsNoSelection =>
+      'Select a subscription to view details';
+
+  @override
+  String get adminSubscriptionsUserName => 'Name';
+
+  @override
+  String get adminSubscriptionsStatusLabel => 'Status';
+
+  @override
+  String get adminSubscriptionsChildrenMetric => 'Children';
+
+  @override
+  String get adminSubscriptionsPaymentMethodsMetric => 'Payment methods';
+
+  @override
+  String get adminSubscriptionsFeaturesTitle => 'Enabled features';
+
+  @override
+  String get adminSubscriptionsOverrideTitle => 'Override plan';
+
+  @override
+  String get adminSubscriptionsOverrideAction => 'Override plan';
+
+  @override
+  String get adminSubscriptionsCancelTitle => 'Cancel subscription';
+
+  @override
+  String get adminSubscriptionsCancelConfirm =>
+      'Move this user back to the FREE plan?';
+
+  @override
+  String get adminSubscriptionsCancelAction => 'Cancel';
+
+  @override
+  String get adminSubscriptionsRefundAction => 'Refund';
+
+  @override
+  String get adminSubscriptionsRefundNotSupported =>
+      'Refunds are not supported by the current payment model';
+
+  @override
+  String get adminSystemSettingsTitle => 'System settings';
+
+  @override
+  String get adminSystemSettingsSubtitle =>
+      'Control global maintenance mode, feature flags, and defaults.';
+
+  @override
+  String get adminSettingsMaintenanceMode => 'Maintenance mode';
+
+  @override
+  String get adminSettingsMaintenanceModeHint =>
+      'Temporarily disable normal app access.';
+
+  @override
+  String get adminSettingsRegistrationEnabled => 'Registration enabled';
+
+  @override
+  String get adminSettingsRegistrationEnabledHint =>
+      'Allow new parent registrations.';
+
+  @override
+  String get adminSettingsAiBuddyEnabled => 'AI Buddy enabled';
+
+  @override
+  String get adminSettingsAiBuddyEnabledHint =>
+      'Enable AI Buddy across the app.';
+
+  @override
+  String get adminSettingsFeatureFlagsTitle => 'Feature flags';
+
+  @override
+  String get adminSettingsDefaultsTitle => 'Defaults';
+
+  @override
+  String get adminSettingsDefaultPlanLabel => 'Default plan';
+
+  @override
+  String get adminSettingsDefaultChildLimitLabel => 'Default child limit';
+
+  @override
+  String get adminAdminsTitle => 'Admin management';
+
+  @override
+  String get adminAdminsSubtitle =>
+      'Manage admin accounts, role assignments, and permission maps.';
+
+  @override
+  String get adminAdminsIdLabel => 'ID';
+
+  @override
+  String get adminAdminsUsersTab => 'Admin users';
+
+  @override
+  String get adminAdminsRolesTab => 'Roles & permissions';
+
+  @override
+  String get adminAdminsSearchLabel => 'Search admins';
+
+  @override
+  String get adminAdminsStatusFilter => 'Status';
+
+  @override
+  String get adminAdminsCreateAction => 'Create admin';
+
+  @override
+  String get adminAdminsCreateTitle => 'Create admin';
+
+  @override
+  String get adminAdminsNameField => 'Name';
+
+  @override
+  String get adminAdminsEmailField => 'Email';
+
+  @override
+  String get adminAdminsPasswordField => 'Password';
+
+  @override
+  String get adminAdminsInitialRolesLabel => 'Initial roles';
+
+  @override
+  String get adminAdminsCreatedMessage => 'Admin account created successfully';
+
+  @override
+  String get adminAdminsEditTitle => 'Edit admin';
+
+  @override
+  String get adminAdminsPasswordHelper =>
+      'Leave blank to keep the current password';
+
+  @override
+  String get adminAdminsUpdatedMessage => 'Admin account updated successfully';
+
+  @override
+  String get adminAdminsEnableTitle => 'Enable admin';
+
+  @override
+  String get adminAdminsDisableTitle => 'Disable admin';
+
+  @override
+  String get adminAdminsEnableConfirm => 'Enable this admin account?';
+
+  @override
+  String get adminAdminsDisableConfirm => 'Disable this admin account?';
+
+  @override
+  String get adminAdminsEnableAction => 'Enable';
+
+  @override
+  String get adminAdminsDisableAction => 'Disable';
+
+  @override
+  String get adminAdminsEnabledMessage => 'Admin account enabled successfully';
+
+  @override
+  String get adminAdminsDisabledMessage =>
+      'Admin account disabled successfully';
+
+  @override
+  String get adminAdminsAssignRoleTitle => 'Assign role';
+
+  @override
+  String get adminAdminsAssignRoleAction => 'Assign role';
+
+  @override
+  String get adminAdminsRoleAssignedMessage => 'Role assigned successfully';
+
+  @override
+  String get adminAdminsRemoveRoleTitle => 'Remove role';
+
+  @override
+  String adminAdminsRemoveRoleConfirm(String roleName) =>
+      'Remove $roleName from this admin?';
+
+  @override
+  String get adminAdminsRemoveRoleAction => 'Remove role';
+
+  @override
+  String get adminAdminsRoleRemovedMessage => 'Role removed successfully';
+
+  @override
+  String get adminAdminsCreateRoleTitle => 'Create role';
+
+  @override
+  String get adminAdminsCreateRoleAction => 'Create role';
+
+  @override
+  String get adminAdminsRoleNameField => 'Role name';
+
+  @override
+  String get adminAdminsRoleDescriptionField => 'Role description';
+
+  @override
+  String get adminAdminsRoleCreatedMessage => 'Role created successfully';
+
+  @override
+  String get adminAdminsEditRoleTitle => 'Edit role';
+
+  @override
+  String get adminAdminsEditRoleAction => 'Edit role';
+
+  @override
+  String get adminAdminsRoleUpdatedMessage => 'Role updated successfully';
+
+  @override
+  String get adminAdminsPermissionsUpdatedMessage =>
+      'Role permissions updated successfully';
+
+  @override
+  String get adminAdminsRolesSection => 'Assigned roles';
+
+  @override
+  String get adminAdminsPermissionsSection => 'Permissions';
+
+  @override
+  String get adminAdminsSavePermissionsAction => 'Save permissions';
+
+  @override
+  String get adminAdminsNoSelection =>
+      'Select an admin account to view details';
+
+  @override
+  String get adminAdminsNoRoleSelection => 'Select a role to edit permissions';
+
+  @override
+  String get adminAdminsCurrentAdminHint =>
+      'Your own admin account is protected from self-disable and self-role removal.';
+
+  @override
+  String get adminAdminsEditAction => 'Edit admin';
 }

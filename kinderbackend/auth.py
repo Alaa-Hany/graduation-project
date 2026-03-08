@@ -1,10 +1,24 @@
+import logging
+import os
 from datetime import datetime, timedelta
 from typing import Optional, Dict
 from jose import jwt
 import bcrypt
 
-SECRET_KEY = "CHANGE_ME_TO_A_LONG_RANDOM_SECRET"
+logger = logging.getLogger(__name__)
+
+SECRET_KEY = (
+    os.getenv("KINDER_JWT_SECRET")
+    or os.getenv("JWT_SECRET_KEY")
+    or os.getenv("SECRET_KEY")
+    or "CHANGE_ME_TO_A_LONG_RANDOM_SECRET"
+)
 ALGORITHM = "HS256"
+
+if SECRET_KEY == "CHANGE_ME_TO_A_LONG_RANDOM_SECRET":
+    logger.warning(
+        "Using fallback JWT secret. Set KINDER_JWT_SECRET (or JWT_SECRET_KEY) in production."
+    )
 
 def hash_password(password: str) -> str:
     hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())

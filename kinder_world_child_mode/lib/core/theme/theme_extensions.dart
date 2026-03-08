@@ -308,4 +308,14 @@ extension BuildContextThemeX on BuildContext {
   AuthThemeTokens get authTheme => theme.auth;
   ParentThemeTokens get parentTheme => theme.parentTokens;
   ChildThemeTokens get childTheme => theme.childTokens;
+
+  Color get successColor => childTheme.success;
+  Color get warningColor => parentTheme.warning;
+  Color get infoColor => parentTheme.info;
+  Color get rewardColor => parentTheme.reward;
+  Color get subtleSurface => colors.surfaceContainerHighest;
+}
+
+extension ThemeColorX on Color {
+  Color subtle([double alpha = 0.12]) => withValues(alpha: alpha);
 }

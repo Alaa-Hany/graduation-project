@@ -129,14 +129,7 @@ class AuthTextField extends StatelessWidget {
             ),
             prefixIcon: Icon(prefixIcon, size: 20, color: auth.textHint),
             suffixIcon: suffix,
-            filled: true,
             fillColor: auth.inputBackground,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: auth.inputBorder, width: 1.5),
-            ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: BorderSide(color: auth.inputBorder, width: 1.5),
@@ -153,7 +146,7 @@ class AuthTextField extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
               borderSide: BorderSide(color: theme.colorScheme.error, width: 2),
             ),
-          ),
+          ).applyDefaults(theme.inputDecorationTheme),
         ),
       ],
     );
@@ -188,14 +181,15 @@ class AuthPrimaryButton extends StatelessWidget {
       height: 54,
       child: FilledButton(
         onPressed: isLoading ? null : onPressed,
-        style: FilledButton.styleFrom(
-          backgroundColor: resolvedColor,
-          disabledBackgroundColor: resolvedColor.withValues(alpha: 0.5),
-          foregroundColor: colors.onPrimary,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+        style: context.theme.filledButtonTheme.style?.copyWith(
+          backgroundColor: WidgetStatePropertyAll(resolvedColor),
+          foregroundColor: WidgetStatePropertyAll(colors.onPrimary),
+          minimumSize: const WidgetStatePropertyAll(Size(double.infinity, 54)),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
           ),
-          elevation: 0,
         ),
         child: isLoading
             ? SizedBox(
@@ -245,11 +239,16 @@ class AuthSecondaryButton extends StatelessWidget {
       height: 54,
       child: OutlinedButton(
         onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: resolvedColor, width: 1.5),
-          foregroundColor: resolvedColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+        style: context.theme.outlinedButtonTheme.style?.copyWith(
+          side: WidgetStatePropertyAll(
+            BorderSide(color: resolvedColor, width: 1.5),
+          ),
+          foregroundColor: WidgetStatePropertyAll(resolvedColor),
+          minimumSize: const WidgetStatePropertyAll(Size(double.infinity, 54)),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
           ),
         ),
         child: Text(

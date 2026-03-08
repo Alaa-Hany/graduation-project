@@ -23,6 +23,7 @@ class User(Base):
     notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
     privacy_setting = relationship("PrivacySetting", back_populates="user", uselist=False, cascade="all, delete-orphan")
     support_tickets = relationship("SupportTicket", back_populates="user", cascade="all, delete-orphan")
+    payment_methods = relationship("PaymentMethod", cascade="all, delete-orphan")
 
 
 class ChildProfile(Base):
@@ -37,6 +38,7 @@ class ChildProfile(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
     age = Column(Integer, nullable=True)
     avatar = Column(String, nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False, server_default=text("1"))
 
     parent = relationship("User", back_populates="children")
 
@@ -76,9 +78,122 @@ class SupportTicket(Base):
     subject = Column(String, nullable=False)
     message = Column(String, nullable=False)
     email = Column(String, nullable=True)
+    status = Column(String, nullable=False, default="open", server_default=text("'open'"), index=True)
+    assigned_admin_id = Column(Integer, ForeignKey("admin_users.id", ondelete="SET NULL"), nullable=True, index=True)
+    closed_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
 
     user = relationship("User", back_populates="support_tickets")
+    assigned_admin = relationship("AdminUser", foreign_keys=[assigned_admin_id])
+    thread_messages = relationship(
+        "SupportTicketMessage",
+        back_populates="ticket",
+        cascade="all, delete-orphan",
+        order_by="SupportTicketMessage.created_at",
+    )
+
+
+class SupportTicketMessage(Base):
+    __tablename__ = "support_ticket_messages"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    ticket_id = Column(Integer, ForeignKey("support_tickets.id", ondelete="CASCADE"), nullable=False, index=True)
+    admin_user_id = Column(Integer, ForeignKey("admin_users.id", ondelete="SET NULL"), nullable=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    message = Column(String, nullable=False)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+
+    ticket = relationship("SupportTicket", back_populates="thread_messages")
+    admin_user = relationship("AdminUser", foreign_keys=[admin_user_id])
+    user = relationship("User")
+
+
+class ContentCategory(Base):
+    __tablename__ = "categories"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    slug = Column(String, unique=True, nullable=False, index=True)
+    title_en = Column(String, nullable=False)
+    title_ar = Column(String, nullable=False)
+    description_en = Column(String, nullable=True)
+    description_ar = Column(String, nullable=True)
+    created_by = Column(Integer, ForeignKey("admin_users.id", ondelete="SET NULL"), nullable=True, index=True)
+    updated_by = Column(Integer, ForeignKey("admin_users.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+    deleted_at = Column(DateTime, nullable=True, index=True)
+
+    creator = relationship("AdminUser", foreign_keys=[created_by])
+    updater = relationship("AdminUser", foreign_keys=[updated_by])
+    contents = relationship("ContentItem", back_populates="category")
+    quizzes = relationship("Quiz", back_populates="category")
+
+
+class ContentItem(Base):
+    __tablename__ = "contents"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    category_id = Column(Integer, ForeignKey("categories.id", ondelete="SET NULL"), nullable=True, index=True)
+    content_type = Column(String, nullable=False, default="lesson", server_default=text("'lesson'"), index=True)
+    status = Column(String, nullable=False, default="draft", server_default=text("'draft'"), index=True)
+    title_en = Column(String, nullable=False)
+    title_ar = Column(String, nullable=False)
+    description_en = Column(String, nullable=True)
+    description_ar = Column(String, nullable=True)
+    body_en = Column(String, nullable=True)
+    body_ar = Column(String, nullable=True)
+    thumbnail_url = Column(String, nullable=True)
+    age_group = Column(String, nullable=True)
+    metadata_json = Column(JSON, nullable=True)
+    created_by = Column(Integer, ForeignKey("admin_users.id", ondelete="SET NULL"), nullable=True, index=True)
+    updated_by = Column(Integer, ForeignKey("admin_users.id", ondelete="SET NULL"), nullable=True, index=True)
+    published_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+    deleted_at = Column(DateTime, nullable=True, index=True)
+
+    category = relationship("ContentCategory", back_populates="contents")
+    creator = relationship("AdminUser", foreign_keys=[created_by])
+    updater = relationship("AdminUser", foreign_keys=[updated_by])
+    quizzes = relationship("Quiz", back_populates="content")
+
+
+class Quiz(Base):
+    __tablename__ = "quizzes"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    content_id = Column(Integer, ForeignKey("contents.id", ondelete="SET NULL"), nullable=True, index=True)
+    category_id = Column(Integer, ForeignKey("categories.id", ondelete="SET NULL"), nullable=True, index=True)
+    status = Column(String, nullable=False, default="draft", server_default=text("'draft'"), index=True)
+    title_en = Column(String, nullable=False)
+    title_ar = Column(String, nullable=False)
+    description_en = Column(String, nullable=True)
+    description_ar = Column(String, nullable=True)
+    questions_json = Column(JSON, nullable=False, default=list)
+    created_by = Column(Integer, ForeignKey("admin_users.id", ondelete="SET NULL"), nullable=True, index=True)
+    updated_by = Column(Integer, ForeignKey("admin_users.id", ondelete="SET NULL"), nullable=True, index=True)
+    published_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+    deleted_at = Column(DateTime, nullable=True, index=True)
+
+    content = relationship("ContentItem", back_populates="quizzes")
+    category = relationship("ContentCategory", back_populates="quizzes")
+    creator = relationship("AdminUser", foreign_keys=[created_by])
+    updater = relationship("AdminUser", foreign_keys=[updated_by])
+
+
+class SystemSetting(Base):
+    __tablename__ = "system_settings"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    key = Column(String, unique=True, nullable=False, index=True)
+    value_json = Column(JSON, nullable=False)
+    updated_by = Column(Integer, ForeignKey("admin_users.id", ondelete="SET NULL"), nullable=True, index=True)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    updater = relationship("AdminUser", foreign_keys=[updated_by])
 
 
 class ParentalControl(Base):
@@ -107,4 +222,3 @@ class PaymentMethod(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     label = Column(String, nullable=False)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
-

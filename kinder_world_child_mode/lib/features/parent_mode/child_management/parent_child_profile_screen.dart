@@ -18,9 +18,17 @@ class ParentChildProfileScreen extends StatelessWidget {
     'avatar_1': 'assets/images/avatars/boy1.png',
     'avatar_2': 'assets/images/avatars/boy2.png',
     'avatar_3': 'assets/images/avatars/boy3.png',
-    'avatar_4': 'assets/images/avatars/girl1.png',
-    'avatar_5': 'assets/images/avatars/girl2.png',
-    'avatar_6': 'assets/images/avatars/girl3.png',
+    'avatar_4': 'assets/images/avatars/boy4.png',
+    'avatar_5': 'assets/images/avatars/girl1.png',
+    'avatar_6': 'assets/images/avatars/girl2.png',
+    'avatar_7': 'assets/images/avatars/girl3.png',
+    'avatar_8': 'assets/images/avatars/girl4.png',
+    'avatar_9': 'assets/images/avatars/av1.png',
+    'avatar_10': 'assets/images/avatars/av2.png',
+    'avatar_11': 'assets/images/avatars/av3.png',
+    'avatar_12': 'assets/images/avatars/av4.png',
+    'avatar_13': 'assets/images/avatars/av5.png',
+    'avatar_14': 'assets/images/avatars/av6.png',
   };
 
   @override
@@ -57,8 +65,7 @@ class ParentChildProfileScreen extends StatelessWidget {
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Divider(
-              height: 1,
-              color: colors.outlineVariant.withValues(alpha: 0.4)),
+              height: 1, color: colors.outlineVariant.withValues(alpha: 0.4)),
         ),
       ),
       body: SafeArea(
@@ -78,8 +85,8 @@ class ParentChildProfileScreen extends StatelessWidget {
                         Container(
                           width: 100,
                           height: 100,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
                               colors: [
                                 ParentColors.parentGreen,
                                 ParentColors.parentGreenLight,
@@ -202,7 +209,7 @@ class ParentChildProfileScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ParentSectionHeader(title: 'XP Progress'),
+                    const ParentSectionHeader(title: 'XP Progress'),
                     const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,

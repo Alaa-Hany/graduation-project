@@ -16,6 +16,31 @@ class _ParentHelpScreenState extends ConsumerState<ParentHelpScreen> {
   late final TextEditingController _searchController;
   late Future<List<Map<String, dynamic>>> _faqFuture;
 
+  List<Map<String, String>> _localizedFaqItems(AppLocalizations l10n) {
+    return [
+      {
+        'question': l10n.helpFaqQ1,
+        'answer': l10n.helpFaqA1,
+      },
+      {
+        'question': l10n.helpFaqQ2,
+        'answer': l10n.helpFaqA2,
+      },
+      {
+        'question': l10n.helpFaqQ3,
+        'answer': l10n.helpFaqA3,
+      },
+      {
+        'question': l10n.helpFaqQ4,
+        'answer': l10n.helpFaqA4,
+      },
+      {
+        'question': l10n.helpFaqQ5,
+        'answer': l10n.helpFaqA5,
+      },
+    ];
+  }
+
   @override
   void initState() {
     super.initState();
@@ -88,10 +113,18 @@ class _ParentHelpScreenState extends ConsumerState<ParentHelpScreen> {
               child: FutureBuilder<List<Map<String, dynamic>>>(
                 future: _faqFuture,
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
+                  if (snapshot.connectionState == ConnectionState.waiting &&
+                      _searchController.text.trim().isEmpty) {
                     return const Center(child: CircularProgressIndicator());
                   }
-                  final items = snapshot.data ?? [];
+                  final localizedItems = _localizedFaqItems(l10n)
+                      .map((item) => Map<String, dynamic>.from(item))
+                      .toList();
+                  final remoteItems = snapshot.data ?? [];
+                  final useLocalizedItems =
+                      Localizations.localeOf(context).languageCode == 'ar' ||
+                      remoteItems.isEmpty;
+                  final items = useLocalizedItems ? localizedItems : remoteItems;
                   final filtered = query.isEmpty
                       ? items
                       : items

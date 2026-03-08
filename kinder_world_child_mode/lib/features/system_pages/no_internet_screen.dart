@@ -114,13 +114,6 @@ class _NoInternetScreenState extends ConsumerState<NoInternetScreen>
                     height: 46,
                     child: ElevatedButton(
                       onPressed: () => context.pop(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: colors.primary,
-                        foregroundColor: colors.onPrimary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
                       child: Text(
                         AppLocalizations.of(context)!.cancel,
                         style: textTheme.labelLarge?.copyWith(

@@ -27,6 +27,7 @@ def contact_support(
         subject=payload.subject,
         message=payload.message,
         email=payload.email,
+        status="open",
     )
     db.add(ticket)
     db.commit()

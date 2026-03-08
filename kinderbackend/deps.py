@@ -6,6 +6,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
+from admin_auth import ADMIN_TOKEN_TYPE
 from auth import ALGORITHM, SECRET_KEY
 from database import SessionLocal
 from models import User
@@ -27,6 +28,8 @@ def decode_bearer(authorization: Optional[str]) -> Optional[str]:
     token = authorization.replace("Bearer ", "").strip()
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        if payload.get("token_type") == ADMIN_TOKEN_TYPE:
+            raise HTTPException(status_code=401, detail="Invalid token type")
         return payload.get("sub")
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
@@ -42,6 +45,8 @@ def get_current_user(
     token = creds.credentials
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        if payload.get("token_type") == ADMIN_TOKEN_TYPE:
+            raise HTTPException(status_code=401, detail="Invalid token type")
         user_id = payload.get("sub")
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")

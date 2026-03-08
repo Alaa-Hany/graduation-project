@@ -11,7 +11,7 @@ class SecureStorage {
     ),
   );
 
-  // Storage keys
+  // Storage keys — parent/child session
   static const String _keyAuthToken = 'auth_token';
   static const String _keyRefreshToken = 'refresh_token';
   static const String _keyUserId = 'user_id';
@@ -21,6 +21,15 @@ class SecureStorage {
   static const String _keyChildSession = 'child_session';
   static const String _keyIsPremium = 'is_premium';
   static const String _keyPlanType = 'plan_type';
+
+  // Storage keys — admin session (fully separate namespace)
+  static const String _keyAdminToken = 'admin_access_token';
+  static const String _keyAdminRefreshToken = 'admin_refresh_token';
+  static const String _keyAdminId = 'admin_id';
+  static const String _keyAdminEmail = 'admin_email';
+  static const String _keyAdminName = 'admin_name';
+  static const String _keyAdminRoles = 'admin_roles';
+  static const String _keyAdminPermissions = 'admin_permissions';
 
   // ==================== AUTH TOKEN ====================
 
@@ -282,6 +291,158 @@ class SecureStorage {
   Future<bool> clearPlanType() async {
     try {
       await _storage.delete(key: _keyPlanType);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // ==================== ADMIN SESSION ====================
+
+  Future<String?> getAdminToken() async {
+    try {
+      return await _storage.read(key: _keyAdminToken);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<bool> saveAdminToken(String token) async {
+    try {
+      await _storage.write(key: _keyAdminToken, value: token);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<String?> getAdminRefreshToken() async {
+    try {
+      return await _storage.read(key: _keyAdminRefreshToken);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<bool> saveAdminRefreshToken(String token) async {
+    try {
+      await _storage.write(key: _keyAdminRefreshToken, value: token);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<String?> getAdminId() async {
+    try {
+      return await _storage.read(key: _keyAdminId);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<bool> saveAdminId(String id) async {
+    try {
+      await _storage.write(key: _keyAdminId, value: id);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<String?> getAdminEmail() async {
+    try {
+      return await _storage.read(key: _keyAdminEmail);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<bool> saveAdminEmail(String email) async {
+    try {
+      await _storage.write(key: _keyAdminEmail, value: email);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<String?> getAdminName() async {
+    try {
+      return await _storage.read(key: _keyAdminName);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<bool> saveAdminName(String name) async {
+    try {
+      await _storage.write(key: _keyAdminName, value: name);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Roles stored as comma-separated string: "super_admin,content_admin"
+  Future<List<String>> getAdminRoles() async {
+    try {
+      final raw = await _storage.read(key: _keyAdminRoles);
+      if (raw == null || raw.isEmpty) return [];
+      return raw.split(',').where((s) => s.isNotEmpty).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<bool> saveAdminRoles(List<String> roles) async {
+    try {
+      await _storage.write(key: _keyAdminRoles, value: roles.join(','));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Permissions stored as comma-separated string
+  Future<List<String>> getAdminPermissions() async {
+    try {
+      final raw = await _storage.read(key: _keyAdminPermissions);
+      if (raw == null || raw.isEmpty) return [];
+      return raw.split(',').where((s) => s.isNotEmpty).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<bool> saveAdminPermissions(List<String> permissions) async {
+    try {
+      await _storage.write(key: _keyAdminPermissions, value: permissions.join(','));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> isAdminAuthenticated() async {
+    try {
+      final token = await getAdminToken();
+      return token != null && token.isNotEmpty;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Clear only admin session data — does NOT touch parent/child session.
+  Future<bool> clearAdminSession() async {
+    try {
+      await _storage.delete(key: _keyAdminToken);
+      await _storage.delete(key: _keyAdminRefreshToken);
+      await _storage.delete(key: _keyAdminId);
+      await _storage.delete(key: _keyAdminEmail);
+      await _storage.delete(key: _keyAdminName);
+      await _storage.delete(key: _keyAdminRoles);
+      await _storage.delete(key: _keyAdminPermissions);
       return true;
     } catch (e) {
       return false;

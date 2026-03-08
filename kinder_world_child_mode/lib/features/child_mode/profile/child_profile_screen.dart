@@ -10,6 +10,7 @@ import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/providers/theme_provider.dart';
 import 'package:kinder_world/core/theme/theme_palette.dart';
 import 'package:kinder_world/core/theme/app_colors.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/avatar_view.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
@@ -30,6 +31,7 @@ class ChildProfileScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final childTheme = context.childTheme;
     final child = ref.watch(currentChildProvider);
     final childName = (child?.name.isNotEmpty ?? false) ? child!.name : child?.id;
 
@@ -150,16 +152,16 @@ class ChildProfileScreen extends ConsumerWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
+                          gradient: LinearGradient(
                             colors: [
-                              ChildColors.buddyStart,
-                              ChildColors.buddyEnd,
+                              childTheme.buddyStart,
+                              childTheme.buddyEnd,
                             ],
                           ),
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: ChildColors.buddyStart
+                              color: childTheme.buddyStart
                                   .withValues(alpha: 0.4),
                               blurRadius: 8,
                               offset: const Offset(0, 3),
@@ -168,10 +170,10 @@ class ChildProfileScreen extends ConsumerWidget {
                         ),
                         child: Text(
                           l10n.levelLabel(child.level),
-                          style: const TextStyle(
+                          style: textTheme.labelMedium?.copyWith(
                             fontSize: 12,
                             fontWeight: FontWeight.w800,
-                            color: Colors.white,
+                            color: colors.onPrimary,
                           ),
                         ),
                       ),
@@ -206,19 +208,19 @@ class ChildProfileScreen extends ConsumerWidget {
                     value: '${child.xp % 1000}',
                     label: l10n.xp,
                     icon: Icons.star_rounded,
-                    color: ChildColors.xpGold,
+                    color: childTheme.xp,
                   ),
                   ChildStatBubble(
                     value: '${child.streak}',
                     label: l10n.streak,
                     icon: Icons.local_fire_department_rounded,
-                    color: ChildColors.streakFire,
+                    color: childTheme.streak,
                   ),
                   ChildStatBubble(
                     value: '${child.activitiesCompleted}',
                     label: l10n.activities,
                     icon: Icons.check_circle_rounded,
-                    color: ChildColors.successGreen,
+                    color: childTheme.success,
                   ),
                 ],
               ),
@@ -376,8 +378,8 @@ class ChildProfileScreen extends ConsumerWidget {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFE6D7F7),
-                        foregroundColor: const Color(0xFF5D2E9E),
+                        backgroundColor: colors.secondaryContainer,
+                        foregroundColor: colors.onSecondaryContainer,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -461,13 +463,14 @@ class ChildProfileScreen extends ConsumerWidget {
   Widget _buildAchievementBadge(BuildContext context, String emoji, String title, String description) {
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final childTheme = context.childTheme;
     return Column(
       children: [
         Container(
           width: 60,
           height: 60,
           decoration: BoxDecoration(
-            color: AppColors.xpColor.withValues(alpha: 0.1),
+            color: childTheme.xp.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Center(child: Text(emoji, style: const TextStyle(fontSize: 24))),
@@ -1278,8 +1281,11 @@ class _SettingsAvatarSelectionScreenState
                     ),
                     child: CircleAvatar(
                       backgroundColor: Colors.grey[200],
-                      backgroundImage: AssetImage(avatarPath),
-                      onBackgroundImageError: (exception, stackTrace) {},
+                      child: AvatarView(
+                        avatarPath: avatarPath,
+                        radius: 28,
+                        backgroundColor: Colors.transparent,
+                      ),
                     ),
                   ),
                 );

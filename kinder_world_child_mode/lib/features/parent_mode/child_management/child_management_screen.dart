@@ -41,8 +41,7 @@ class ChildManagementScreen extends ConsumerStatefulWidget {
       _ChildManagementScreenState();
 }
 
-class _ChildManagementScreenState
-    extends ConsumerState<ChildManagementScreen> {
+class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
   final List<_AvatarOption> _avatarOptions = const [
     _AvatarOption(
       id: 'assets/images/avatars/boy1.png',
@@ -66,6 +65,13 @@ class _ChildManagementScreenState
       iconColor: Color(0xFF0277BD),
     ),
     _AvatarOption(
+      id: 'assets/images/avatars/boy4.png',
+      assetPath: 'assets/images/avatars/boy4.png',
+      icon: Icons.child_care,
+      backgroundColor: Color(0xFFFFE0B2),
+      iconColor: Color(0xFFF57C00),
+    ),
+    _AvatarOption(
       id: 'assets/images/avatars/girl1.png',
       assetPath: 'assets/images/avatars/girl1.png',
       icon: Icons.emoji_emotions,
@@ -85,6 +91,55 @@ class _ChildManagementScreenState
       icon: Icons.face_retouching_natural,
       backgroundColor: Color(0xFFFCE4EC),
       iconColor: Color(0xFFC2185B),
+    ),
+    _AvatarOption(
+      id: 'assets/images/avatars/girl4.png',
+      assetPath: 'assets/images/avatars/girl4.png',
+      icon: Icons.girl,
+      backgroundColor: Color(0xFFF8BBD0),
+      iconColor: Color(0xFFE91E63),
+    ),
+    _AvatarOption(
+      id: 'assets/images/avatars/av1.png',
+      assetPath: 'assets/images/avatars/av1.png',
+      icon: Icons.face_2_rounded,
+      backgroundColor: Color(0xFFEDE7F6),
+      iconColor: Color(0xFF7E57C2),
+    ),
+    _AvatarOption(
+      id: 'assets/images/avatars/av2.png',
+      assetPath: 'assets/images/avatars/av2.png',
+      icon: Icons.tag_faces_rounded,
+      backgroundColor: Color(0xFFE8F5E9),
+      iconColor: Color(0xFF2E7D32),
+    ),
+    _AvatarOption(
+      id: 'assets/images/avatars/av3.png',
+      assetPath: 'assets/images/avatars/av3.png',
+      icon: Icons.cruelty_free_rounded,
+      backgroundColor: Color(0xFFFFF3E0),
+      iconColor: Color(0xFFEF6C00),
+    ),
+    _AvatarOption(
+      id: 'assets/images/avatars/av4.png',
+      assetPath: 'assets/images/avatars/av4.png',
+      icon: Icons.auto_awesome_rounded,
+      backgroundColor: Color(0xFFE1F5FE),
+      iconColor: Color(0xFF0277BD),
+    ),
+    _AvatarOption(
+      id: 'assets/images/avatars/av5.png',
+      assetPath: 'assets/images/avatars/av5.png',
+      icon: Icons.pets_rounded,
+      backgroundColor: Color(0xFFFCE4EC),
+      iconColor: Color(0xFFAD1457),
+    ),
+    _AvatarOption(
+      id: 'assets/images/avatars/av6.png',
+      assetPath: 'assets/images/avatars/av6.png',
+      icon: Icons.emoji_emotions_rounded,
+      backgroundColor: Color(0xFFFFF8E1),
+      iconColor: Color(0xFFF9A825),
     ),
   ];
   Future<List<ChildProfile>>? _childrenFuture;
@@ -220,19 +275,24 @@ class _ChildManagementScreenState
 
     final now = DateTime.now();
     final apiName = data['name']?.toString().trim();
-    final resolvedName =
-        (apiName != null && apiName.isNotEmpty) ? apiName : (existing?.name ?? childId);
+    final resolvedName = (apiName != null && apiName.isNotEmpty)
+        ? apiName
+        : (existing?.name ?? childId);
     final age = _resolveAgeFromApi(data, existing);
     final existingLevel = existing?.level ?? 0;
-    final level = existingLevel > 0 ? existingLevel : _parseInt(data['level'], 1);
-    final avatar = existing?.avatar ?? data['avatar']?.toString() ?? _avatarOptions.first.id;
+    final level =
+        existingLevel > 0 ? existingLevel : _parseInt(data['level'], 1);
+    final avatar = existing?.avatar ??
+        data['avatar']?.toString() ??
+        _avatarOptions.first.id;
     final resolvedAvatarPath = existing?.avatarPath.isNotEmpty == true
         ? existing!.avatarPath
         : (avatar.isNotEmpty ? avatar : AppConstants.defaultChildAvatar);
     final picturePassword = (existing?.picturePassword.isNotEmpty ?? false)
         ? existing!.picturePassword
         : _parseStringList(data['picture_password']);
-    final createdAt = existing?.createdAt ?? _parseDate(data['created_at'], now);
+    final createdAt =
+        existing?.createdAt ?? _parseDate(data['created_at'], now);
     final updatedAt = _parseDate(data['updated_at'], now);
     final lastSession =
         existing?.lastSession ?? _parseNullableDate(data['last_session']);
@@ -263,8 +323,8 @@ class _ChildManagementScreenState
       currentMood: existing?.currentMood ?? data['current_mood']?.toString(),
       learningStyle:
           existing?.learningStyle ?? data['learning_style']?.toString(),
-      specialNeeds:
-          existing?.specialNeeds ?? _parseNullableStringList(data['special_needs']),
+      specialNeeds: existing?.specialNeeds ??
+          _parseNullableStringList(data['special_needs']),
       accessibilityNeeds: existing?.accessibilityNeeds ??
           _parseNullableStringList(data['accessibility_needs']),
     );
@@ -304,13 +364,14 @@ class _ChildManagementScreenState
     final resolvedParentEmail = parentEmail;
     try {
       final response = await ref.read(networkServiceProvider).get<dynamic>(
-        '/children',
-      );
+            '/children',
+          );
       final apiChildren = _extractChildrenList(response.data);
       for (final childData in apiChildren) {
         final childId = _parseChildId(childData);
         if (childId == null || childId.isEmpty) continue;
-        final existing = await repo.getChildProfile(childId) ?? childrenById[childId];
+        final existing =
+            await repo.getChildProfile(childId) ?? childrenById[childId];
         final merged = _mergeChildProfileFromApi(
           childData,
           parentId: parentId,
@@ -360,11 +421,16 @@ class _ChildManagementScreenState
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: isError ? ParentColors.alertRed : ParentColors.parentGreenLight,
+                  color: isError
+                      ? ParentColors.alertRed
+                      : ParentColors.parentGreenLight,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.2),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .shadow
+                          .withValues(alpha: 0.2),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -435,8 +501,9 @@ class _ChildManagementScreenState
               content: Text(l10n.deleteChildDescription),
               actions: [
                 TextButton(
-                  onPressed:
-                      isDeleting ? null : () => Navigator.of(dialogContext).pop(),
+                  onPressed: isDeleting
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(),
                   child: Text(l10n.cancel),
                 ),
                 ElevatedButton(
@@ -539,8 +606,8 @@ class _ChildManagementScreenState
     required double size,
   }) {
     final option = _avatarForValue(avatarId ?? avatarPath);
-    final resolvedBackground =
-        option?.backgroundColor ?? ParentColors.parentGreen.withValues(alpha: 0.1);
+    final resolvedBackground = option?.backgroundColor ??
+        ParentColors.parentGreen.withValues(alpha: 0.1);
     final resolvedPath =
         option?.assetPath.isNotEmpty == true ? option!.assetPath : avatarPath;
 
@@ -565,10 +632,12 @@ class _ChildManagementScreenState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return WillPopScope(
-      onWillPop: () async {
-        context.go(Routes.parentSettings);
-        return false;
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          context.go(Routes.parentSettings);
+        }
       },
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -578,8 +647,7 @@ class _ChildManagementScreenState
           elevation: 0,
           leading: IconButton(
             icon: Icon(Icons.arrow_back_ios_new_rounded,
-                size: 20,
-                color: Theme.of(context).colorScheme.onSurface),
+                size: 20, color: Theme.of(context).colorScheme.onSurface),
             onPressed: () => context.go(Routes.parentSettings),
           ),
           title: Text(
@@ -612,7 +680,8 @@ class _ChildManagementScreenState
                     future: ref.read(secureStorageProvider).getParentId(),
                     builder: (context, parentIdSnapshot) {
                       final parentId = parentIdSnapshot.data ?? '';
-                      if (_childrenFuture == null || _cachedParentId != parentId) {
+                      if (_childrenFuture == null ||
+                          _cachedParentId != parentId) {
                         _cachedParentId = parentId;
                         _childrenFuture = _loadChildrenForParent(parentId);
                       }
@@ -622,431 +691,456 @@ class _ChildManagementScreenState
                           final repoChildren = childrenSnapshot.data ?? [];
                           final children = repoChildren;
 
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 20),
-                            Text(
-                              l10n.manageChildProfiles,
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w800,
-                                color: Theme.of(context).colorScheme.onSurface,
-                                letterSpacing: -0.4,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              l10n.addEditManageChildren,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                height: 1.4,
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            const PlanStatusBanner(),
-                            Text(
-                              l10n.yourChildren,
-                              style: TextStyle(
-                                fontSize: AppConstants.fontSize,
-                                fontWeight: FontWeight.w600,
-                                color: Theme.of(context).colorScheme.onSurface,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            if (children.isEmpty)
-                              ParentEmptyState(
-                                icon: Icons.child_care_rounded,
-                                title: l10n.noChildProfilesYet,
-                                subtitle: l10n.tapToAddChild,
-                              )
-                            else
-                              Column(
-                                children:
-                                    children.map(_buildChildCard).toList(),
-                              ),
-                            const SizedBox(height: 24),
-                            Text(
-                              l10n.childProfiles,
-                              style: TextStyle(
-                                fontSize: AppConstants.fontSize,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.onSurface,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            _buildFeatureItem(Icons.person_add, l10n.addChildProfiles),
-                            _buildFeatureItem(Icons.edit, l10n.editProfiles),
-                            _buildFeatureItem(Icons.lock, l10n.picturePasswords),
-                            _buildFeatureItem(Icons.settings, l10n.configurePreferences),
-                            _buildFeatureItem(Icons.delete, l10n.deactivateProfiles),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final l10n = AppLocalizations.of(context)!;
-          try {
-            final plan = await ref.read(planInfoProvider.future);
-            final parentId =
-                await ref.read(secureStorageProvider).getParentId();
-            final repo = ref.read(childRepositoryProvider);
-            final currentChildren = parentId != null && parentId.isNotEmpty
-                ? await repo.getChildProfilesForParent(parentId)
-                : await repo.getAllChildProfiles();
-            if (!plan.canAddChild(currentChildren.length)) {
-              await _showChildLimitDialog(l10n);
-              return;
-            }
-          } catch (_) {
-            // If plan lookup fails, continue without blocking.
-          }
-
-          if (!mounted) return;
-          final parentContext = context;
-          // ignore: use_build_context_synchronously
-          final messenger = ScaffoldMessenger.of(parentContext);
-          String name = '';
-          int? age;
-          String selectedAvatar = _avatarOptions.first.id;
-          final List<String> picturePassword = [];
-          bool passwordTouched = false;
-          bool isSaving = false;
-
-          await showDialog<void>(
-            // ignore: use_build_context_synchronously
-            context: parentContext,
-            builder: (dialogContext) {
-              return StatefulBuilder(
-                builder: (context, setDialogState) {
-                  final trimmedName = name.trim();
-                  final isValidName = trimmedName.isNotEmpty && 
-                                      trimmedName.toLowerCase() != 'child' && 
-                                      trimmedName.length >= 2;
-                  final canSave = isValidName &&
-                      picturePassword.length == 3 &&
-                      !isSaving;
-                  final showPasswordError =
-                      passwordTouched && picturePassword.length != 3;
-                  void togglePicture(String pictureId) {
-                    setDialogState(() {
-                      passwordTouched = true;
-                      if (picturePassword.contains(pictureId)) {
-                        picturePassword.remove(pictureId);
-                      } else if (picturePassword.length < 3) {
-                        picturePassword.add(pictureId);
-                      }
-                    });
-                  }
-                  return AlertDialog(
-                    title: Text(l10n.addChild),
-                    content: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          TextField(
-                            decoration: InputDecoration(
-                              labelText: l10n.childName,
-                              errorText: name.trim().isEmpty
-                                ? null
-                                : (name.trim().toLowerCase() == 'child'
-                                  ? l10n.pleaseEnterRealName
-                                  : (name.trim().length < 2
-                                    ? l10n.nameTooShort
-                                    : null)),
-                            ),
-                            textCapitalization: TextCapitalization.words,
-                            keyboardType: TextInputType.name,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                RegExp(r"[a-zA-Z\u0600-\u06FF\s'-]"),
-                              ),
-                            ],
-                            onChanged: (v) => setDialogState(() {
-                              name = v;
-                            }),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('${l10n.childAge}:'),
-                              const SizedBox(width: 12),
-                              DropdownButton<int>(
-                                value: age,
-                                hint: Text('-'),
-                                items: List.generate(8, (i) => i + 5)
-                                    .map((v) => DropdownMenuItem(
-                                          value: v,
-                                          child: Text('$v'),
-                                        ))
-                                    .toList(),
-                                onChanged: (v) => setDialogState(() {
-                                  age = v;
-                                }),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Text(l10n.avatar),
-                          ),
-                          const SizedBox(height: 8),
-                          SizedBox(
-                            width: 320,
-                            child: Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: _avatarOptions.map((option) {
-                                final isSelected = selectedAvatar == option.id;
-                                return InkWell(
-                                  onTap: () {
-                                    setDialogState(() {
-                                      selectedAvatar = option.id;
-                                    });
-                                  },
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Container(
-                                    width: 64,
-                                    height: 64,
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? ParentColors.parentGreen.withValues(alpha: 0.2)
-                                          : Theme.of(context).colorScheme.surface,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: isSelected
-                                            ? ParentColors.parentGreen
-                                            : Theme.of(context).colorScheme.surfaceContainerHighest,
-                                        width: 2,
-                                      ),
-                                    ),
-                                    child: Center(
-                                      child: _buildAvatarOption(option),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Text(l10n.selectPicturePassword),
-                          ),
-                          const SizedBox(height: 8),
-                          PicturePasswordRow(
-                            picturePassword: picturePassword,
-                            size: 20,
-                            showPlaceholders: true,
-                          ),
-                          if (showPasswordError) ...[
-                            const SizedBox(height: 6),
-                            Text(
-                              l10n.picturePasswordError,
-                              style: TextStyle(
-                                color: ParentColors.alertRed,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                          const SizedBox(height: 10),
-                          SizedBox(
-                            width: 320,
-                            child: Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: picturePasswordOptions.map((option) {
-                                final isSelected =
-                                    picturePassword.contains(option.id);
-                                return InkWell(
-                                  onTap: () => togglePicture(option.id),
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Container(
-                                    width: 64,
-                                    height: 64,
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? option.color.withValues(alpha: 0.2)
-                                          : Theme.of(context).colorScheme.surface,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: isSelected
-                                            ? option.color
-                                            : Theme.of(context).colorScheme.surfaceContainerHighest,
-                                        width: 2,
-                                      ),
-                                    ),
-                                    child: Icon(
-                                      option.icon,
-                                      size: 24,
-                                      color: option.color,
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: Text(l10n.cancel),
-                      ),
-                      ElevatedButton(
-                        onPressed: canSave
-                            ? () async {
-                                setDialogState(() {
-                                  isSaving = true;
-                                  passwordTouched = true;
-                                });
-
-                                final trimmedName = name.trim();
-                                if (trimmedName.isEmpty ||
-                                    trimmedName.toLowerCase() == 'child' ||
-                                    trimmedName.length < 2 ||
-                                    age == null ||
-                                    age! < 5 ||
-                                    age! > 12 ||
-                                    picturePassword.length != 3) {
-                                  setDialogState(() {
-                                    isSaving = false;
-                                  });
-                                  _showTopMessage(l10n.childLoginMissingData);
-                                  return;
-                                }
-
-                                Map<String, dynamic>? responseData;
-                                try {
-                                  final response = await ref
-                                      .read(networkServiceProvider)
-                                      .post<Map<String, dynamic>>(
-                                    '/children',
-                                    data: {
-                                      'name': trimmedName,
-                                      'picture_password':
-                                          List<String>.from(picturePassword),
-                                      'age': age,
-                                      'avatar': selectedAvatar,
-                                    },
-                                  );
-                                  responseData = response.data;
-                                } catch (_) {
-                                  setDialogState(() {
-                                    isSaving = false;
-                                  });
-                                  _showTopMessage(l10n.childProfileAddFailed);
-                                  return;
-                                }
-
-                                final childId =
-                                    _extractChildIdFromResponse(responseData);
-                                if (childId == null || childId.isEmpty) {
-                                  setDialogState(() {
-                                    isSaving = false;
-                                  });
-                                  _showTopMessage(l10n.childProfileAddFailed);
-                                  return;
-                                }
-
-                                final parentId = await ref
-                                    .read(secureStorageProvider)
-                                    .getParentId();
-                                final parentEmail = await ref
-                                    .read(secureStorageProvider)
-                                    .getParentEmail();
-                                final now = DateTime.now();
-                                final repo =
-                                    ref.read(childRepositoryProvider);
-                                final existing =
-                                    await repo.getChildProfile(childId);
-                                final newProfile = ChildProfile(
-                                  id: childId,
-                                  name: trimmedName,
-                                  age: age ?? 0,
-                                  avatar: selectedAvatar,
-                                  avatarPath: selectedAvatar,
-                                  interests: existing?.interests ?? const [],
-                                  level: existing?.level ?? 1,
-                                  xp: existing?.xp ?? 0,
-                                  streak: existing?.streak ?? 0,
-                                  favorites: existing?.favorites ?? const [],
-                                  parentId: parentId ?? 'local',
-                                  parentEmail:
-                                      existing?.parentEmail ?? parentEmail,
-                                  picturePassword:
-                                      List<String>.from(picturePassword),
-                                  createdAt: existing?.createdAt ?? now,
-                                  updatedAt: now,
-                                  totalTimeSpent: existing?.totalTimeSpent ?? 0,
-                                  activitiesCompleted:
-                                      existing?.activitiesCompleted ?? 0,
-                                  currentMood: existing?.currentMood,
-                                  learningStyle: existing?.learningStyle,
-                                  specialNeeds: existing?.specialNeeds,
-                                  accessibilityNeeds: existing?.accessibilityNeeds,
-                                );
-
-                                final saved = existing == null
-                                    ? await repo.createChildProfile(newProfile)
-                                    : await repo.updateChildProfile(newProfile);
-
-                                if (!mounted) return;
-
-                                if (saved != null) {
-                                  messenger.showSnackBar(
-                                    SnackBar(
-                                      content: Text(l10n.childProfileAdded),
-                                    ),
-                                  );
-                                } else {
-                                  _showTopMessage(l10n.childProfileAddFailed);
-                                }
-
-                                if (!mounted) return;
-                                if (mounted) {
-                                  // ignore: use_build_context_synchronously
-                                  Navigator.of(dialogContext).pop();
-                                }
-                                if (_cachedParentId != null) {
-                                  setState(() {
-                                    _childrenFuture =
-                                        _loadChildrenForParent(_cachedParentId!);
-                                  });
-                                }
-                              }
-                            : null,
-                        child: isSaving
-                            ? SizedBox(
-                                height: 16,
-                                width: 16,
-                                child: CircularProgressIndicator(
-                                  color: Theme.of(context).colorScheme.surface,
-                                  strokeWidth: 2,
+                              const SizedBox(height: 20),
+                              Text(
+                                l10n.manageChildProfiles,
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
+                                  letterSpacing: -0.4,
                                 ),
-                              )
-                            : Text(l10n.addChild),
-                      ),
-                    ],
-                  );
-                },
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                l10n.addEditManageChildren,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                  height: 1.4,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              const PlanStatusBanner(),
+                              Text(
+                                l10n.yourChildren,
+                                style: TextStyle(
+                                  fontSize: AppConstants.fontSize,
+                                  fontWeight: FontWeight.w600,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              if (children.isEmpty)
+                                ParentEmptyState(
+                                  icon: Icons.child_care_rounded,
+                                  title: l10n.noChildProfilesYet,
+                                  subtitle: l10n.tapToAddChild,
+                                )
+                              else
+                                Column(
+                                  children:
+                                      children.map(_buildChildCard).toList(),
+                                ),
+                              const SizedBox(height: 24),
+                              Text(
+                                l10n.childProfiles,
+                                style: TextStyle(
+                                  fontSize: AppConstants.fontSize,
+                                  fontWeight: FontWeight.bold,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              _buildFeatureItem(
+                                  Icons.person_add, l10n.addChildProfiles),
+                              _buildFeatureItem(Icons.edit, l10n.editProfiles),
+                              _buildFeatureItem(
+                                  Icons.lock, l10n.picturePasswords),
+                              _buildFeatureItem(
+                                  Icons.settings, l10n.configurePreferences),
+                              _buildFeatureItem(
+                                  Icons.delete, l10n.deactivateProfiles),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
               );
             },
-          );
-        },
-        backgroundColor: ParentColors.parentGreen,
-        child: const Icon(Icons.add),
+          ),
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () async {
+            final l10n = AppLocalizations.of(context)!;
+            try {
+              final plan = await ref.read(planInfoProvider.future);
+              final parentId =
+                  await ref.read(secureStorageProvider).getParentId();
+              final repo = ref.read(childRepositoryProvider);
+              final currentChildren = parentId != null && parentId.isNotEmpty
+                  ? await repo.getChildProfilesForParent(parentId)
+                  : await repo.getAllChildProfiles();
+              if (!plan.canAddChild(currentChildren.length)) {
+                await _showChildLimitDialog(l10n);
+                return;
+              }
+            } catch (_) {
+              // If plan lookup fails, continue without blocking.
+            }
+
+            if (!mounted) return;
+            final parentContext = context;
+            // ignore: use_build_context_synchronously
+            final messenger = ScaffoldMessenger.of(parentContext);
+            String name = '';
+            int? age;
+            String selectedAvatar = _avatarOptions.first.id;
+            final List<String> picturePassword = [];
+            bool passwordTouched = false;
+            bool isSaving = false;
+
+            await showDialog<void>(
+              // ignore: use_build_context_synchronously
+              context: parentContext,
+              builder: (dialogContext) {
+                return StatefulBuilder(
+                  builder: (context, setDialogState) {
+                    final trimmedName = name.trim();
+                    final isValidName = trimmedName.isNotEmpty &&
+                        trimmedName.toLowerCase() != 'child' &&
+                        trimmedName.length >= 2;
+                    final canSave =
+                        isValidName && picturePassword.length == 3 && !isSaving;
+                    final showPasswordError =
+                        passwordTouched && picturePassword.length != 3;
+                    void togglePicture(String pictureId) {
+                      setDialogState(() {
+                        passwordTouched = true;
+                        if (picturePassword.contains(pictureId)) {
+                          picturePassword.remove(pictureId);
+                        } else if (picturePassword.length < 3) {
+                          picturePassword.add(pictureId);
+                        }
+                      });
+                    }
+
+                    return AlertDialog(
+                      title: Text(l10n.addChild),
+                      content: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            TextField(
+                              decoration: InputDecoration(
+                                labelText: l10n.childName,
+                                errorText: name.trim().isEmpty
+                                    ? null
+                                    : (name.trim().toLowerCase() == 'child'
+                                        ? l10n.pleaseEnterRealName
+                                        : (name.trim().length < 2
+                                            ? l10n.nameTooShort
+                                            : null)),
+                              ),
+                              textCapitalization: TextCapitalization.words,
+                              keyboardType: TextInputType.name,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r"[a-zA-Z\u0600-\u06FF\s'-]"),
+                                ),
+                              ],
+                              onChanged: (v) => setDialogState(() {
+                                name = v;
+                              }),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Text('${l10n.childAge}:'),
+                                const SizedBox(width: 12),
+                                DropdownButton<int>(
+                                  value: age,
+                                  hint: Text('-'),
+                                  items: List.generate(8, (i) => i + 5)
+                                      .map((v) => DropdownMenuItem(
+                                            value: v,
+                                            child: Text('$v'),
+                                          ))
+                                      .toList(),
+                                  onChanged: (v) => setDialogState(() {
+                                    age = v;
+                                  }),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Align(
+                              alignment: AlignmentDirectional.centerStart,
+                              child: Text(l10n.avatar),
+                            ),
+                            const SizedBox(height: 8),
+                            SizedBox(
+                              width: 320,
+                              child: Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: _avatarOptions.map((option) {
+                                  final isSelected =
+                                      selectedAvatar == option.id;
+                                  return InkWell(
+                                    onTap: () {
+                                      setDialogState(() {
+                                        selectedAvatar = option.id;
+                                      });
+                                    },
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Container(
+                                      width: 64,
+                                      height: 64,
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? ParentColors.parentGreen
+                                                .withValues(alpha: 0.2)
+                                            : Theme.of(context)
+                                                .colorScheme
+                                                .surface,
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? ParentColors.parentGreen
+                                              : Theme.of(context)
+                                                  .colorScheme
+                                                  .surfaceContainerHighest,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      child: Center(
+                                        child: _buildAvatarOption(option),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Align(
+                              alignment: AlignmentDirectional.centerStart,
+                              child: Text(l10n.selectPicturePassword),
+                            ),
+                            const SizedBox(height: 8),
+                            PicturePasswordRow(
+                              picturePassword: picturePassword,
+                              size: 20,
+                              showPlaceholders: true,
+                            ),
+                            if (showPasswordError) ...[
+                              const SizedBox(height: 6),
+                              Text(
+                                l10n.picturePasswordError,
+                                style: TextStyle(
+                                  color: ParentColors.alertRed,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 10),
+                            SizedBox(
+                              width: 320,
+                              child: Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: picturePasswordOptions.map((option) {
+                                  final isSelected =
+                                      picturePassword.contains(option.id);
+                                  return InkWell(
+                                    onTap: () => togglePicture(option.id),
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Container(
+                                      width: 64,
+                                      height: 64,
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? option.color
+                                                .withValues(alpha: 0.2)
+                                            : Theme.of(context)
+                                                .colorScheme
+                                                .surface,
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? option.color
+                                              : Theme.of(context)
+                                                  .colorScheme
+                                                  .surfaceContainerHighest,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      child: Icon(
+                                        option.icon,
+                                        size: 24,
+                                        color: option.color,
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: Text(l10n.cancel),
+                        ),
+                        ElevatedButton(
+                          onPressed: canSave
+                              ? () async {
+                                  setDialogState(() {
+                                    isSaving = true;
+                                    passwordTouched = true;
+                                  });
+
+                                  final trimmedName = name.trim();
+                                  if (trimmedName.isEmpty ||
+                                      trimmedName.toLowerCase() == 'child' ||
+                                      trimmedName.length < 2 ||
+                                      age == null ||
+                                      age! < 5 ||
+                                      age! > 12 ||
+                                      picturePassword.length != 3) {
+                                    setDialogState(() {
+                                      isSaving = false;
+                                    });
+                                    _showTopMessage(l10n.childLoginMissingData);
+                                    return;
+                                  }
+
+                                  Map<String, dynamic>? responseData;
+                                  try {
+                                    final response = await ref
+                                        .read(networkServiceProvider)
+                                        .post<Map<String, dynamic>>(
+                                      '/children',
+                                      data: {
+                                        'name': trimmedName,
+                                        'picture_password':
+                                            List<String>.from(picturePassword),
+                                        'age': age,
+                                        'avatar': selectedAvatar,
+                                      },
+                                    );
+                                    responseData = response.data;
+                                  } catch (_) {
+                                    setDialogState(() {
+                                      isSaving = false;
+                                    });
+                                    _showTopMessage(l10n.childProfileAddFailed);
+                                    return;
+                                  }
+
+                                  final childId =
+                                      _extractChildIdFromResponse(responseData);
+                                  if (childId == null || childId.isEmpty) {
+                                    setDialogState(() {
+                                      isSaving = false;
+                                    });
+                                    _showTopMessage(l10n.childProfileAddFailed);
+                                    return;
+                                  }
+
+                                  final parentId = await ref
+                                      .read(secureStorageProvider)
+                                      .getParentId();
+                                  final parentEmail = await ref
+                                      .read(secureStorageProvider)
+                                      .getParentEmail();
+                                  final now = DateTime.now();
+                                  final repo =
+                                      ref.read(childRepositoryProvider);
+                                  final existing =
+                                      await repo.getChildProfile(childId);
+                                  final newProfile = ChildProfile(
+                                    id: childId,
+                                    name: trimmedName,
+                                    age: age ?? 0,
+                                    avatar: selectedAvatar,
+                                    avatarPath: selectedAvatar,
+                                    interests: existing?.interests ?? const [],
+                                    level: existing?.level ?? 1,
+                                    xp: existing?.xp ?? 0,
+                                    streak: existing?.streak ?? 0,
+                                    favorites: existing?.favorites ?? const [],
+                                    parentId: parentId ?? 'local',
+                                    parentEmail:
+                                        existing?.parentEmail ?? parentEmail,
+                                    picturePassword:
+                                        List<String>.from(picturePassword),
+                                    createdAt: existing?.createdAt ?? now,
+                                    updatedAt: now,
+                                    totalTimeSpent:
+                                        existing?.totalTimeSpent ?? 0,
+                                    activitiesCompleted:
+                                        existing?.activitiesCompleted ?? 0,
+                                    currentMood: existing?.currentMood,
+                                    learningStyle: existing?.learningStyle,
+                                    specialNeeds: existing?.specialNeeds,
+                                    accessibilityNeeds:
+                                        existing?.accessibilityNeeds,
+                                  );
+
+                                  final saved = existing == null
+                                      ? await repo
+                                          .createChildProfile(newProfile)
+                                      : await repo
+                                          .updateChildProfile(newProfile);
+
+                                  if (!mounted) return;
+
+                                  if (saved != null) {
+                                    messenger.showSnackBar(
+                                      SnackBar(
+                                        content: Text(l10n.childProfileAdded),
+                                      ),
+                                    );
+                                  } else {
+                                    _showTopMessage(l10n.childProfileAddFailed);
+                                  }
+
+                                  if (!mounted) return;
+                                  if (mounted) {
+                                    // ignore: use_build_context_synchronously
+                                    Navigator.of(dialogContext).pop();
+                                  }
+                                  if (_cachedParentId != null) {
+                                    setState(() {
+                                      _childrenFuture = _loadChildrenForParent(
+                                          _cachedParentId!);
+                                    });
+                                  }
+                                }
+                              : null,
+                          child: isSaving
+                              ? SizedBox(
+                                  height: 16,
+                                  width: 16,
+                                  child: CircularProgressIndicator(
+                                    color:
+                                        Theme.of(context).colorScheme.surface,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(l10n.addChild),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+            );
+          },
+          backgroundColor: ParentColors.parentGreen,
+          child: const Icon(Icons.add),
         ),
       ),
     );
@@ -1106,7 +1200,8 @@ class _ChildManagementScreenState
                           '${l10n.childId}: ${child.id}',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ),
@@ -1169,7 +1264,8 @@ class _ChildManagementScreenState
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(

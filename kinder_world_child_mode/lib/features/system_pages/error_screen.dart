@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 
 class ErrorScreen extends ConsumerStatefulWidget {
   final String error;
@@ -51,12 +51,12 @@ class _ErrorScreenState extends ConsumerState<ErrorScreen>
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final errorColor = colors.error;
+    final successColor = context.successColor;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         automaticallyImplyLeading: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -90,13 +90,13 @@ class _ErrorScreenState extends ConsumerState<ErrorScreen>
                   width: 120,
                   height: 120,
                   decoration: BoxDecoration(
-                    color: AppColors.error.withValues(alpha: 0.1),
+                    color: errorColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(30),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.error_outline,
                     size: 60,
-                    color: AppColors.error,
+                    color: errorColor,
                   ),
                 ),
                 const SizedBox(height: 40),
@@ -155,14 +155,6 @@ class _ErrorScreenState extends ConsumerState<ErrorScreen>
                   },
                   icon: const Icon(Icons.arrow_back),
                   label: Text(AppLocalizations.of(context)!.goBack),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: colors.onPrimary,
-                    minimumSize: const Size(double.infinity, 56),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
                 ),
                 const SizedBox(height: 16),
                 
@@ -190,7 +182,7 @@ class _ErrorScreenState extends ConsumerState<ErrorScreen>
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(AppLocalizations.of(context)!.errorReported),
-                        backgroundColor: AppColors.success,
+                        backgroundColor: successColor,
                       ),
                     );
                   },

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 
 class MaintenanceScreen extends ConsumerStatefulWidget {
   const MaintenanceScreen({super.key});
@@ -46,12 +46,12 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen>
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final warningColor = context.warningColor;
+    final successColor = context.successColor;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         automaticallyImplyLeading: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -82,13 +82,13 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen>
                   width: 120,
                   height: 120,
                   decoration: BoxDecoration(
-                    color: AppColors.warning.withValues(alpha: 0.1),
+                    color: warningColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(30),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.build,
                     size: 60,
-                    color: AppColors.warning,
+                    color: warningColor,
                   ),
                 ),
               ),
@@ -140,7 +140,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen>
                       style: textTheme.titleLarge?.copyWith(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.warning,
+                        color: warningColor,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -201,11 +201,11 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen>
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _buildSocialIcon(Icons.facebook, AppColors.primary),
+                  _buildSocialIcon(Icons.facebook, colors.primary),
                   const SizedBox(width: 16),
-                  _buildSocialIcon(Icons.email, AppColors.error),
+                  _buildSocialIcon(Icons.email, colors.error),
                   const SizedBox(width: 16),
-                  _buildSocialIcon(Icons.web, AppColors.success),
+                  _buildSocialIcon(Icons.web, successColor),
                 ],
               ),
               const SizedBox(height: 40),
@@ -219,19 +219,20 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen>
   Widget _buildFeatureItem(IconData icon, String text) {
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final successColor = context.successColor;
     return Row(
       children: [
         Container(
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: AppColors.success.withValues(alpha: 0.1),
+            color: successColor.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
             icon,
             size: 16,
-            color: AppColors.success,
+            color: successColor,
           ),
         ),
         const SizedBox(width: 12),

@@ -293,11 +293,11 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
     return childrenById.values.toList();
   }
 
-  String _dashboardGreeting() {
+  String _dashboardGreeting(AppLocalizations l10n) {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning — here\'s today\'s overview';
-    if (hour < 17) return 'Good afternoon — here\'s what\'s happening';
-    return 'Good evening — here\'s your daily summary';
+    if (hour < 12) return l10n.goodMorningOverview;
+    if (hour < 17) return l10n.goodAfternoonOverview;
+    return l10n.goodEveningOverview;
   }
 
   @override
@@ -356,7 +356,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Parent Dashboard',
+                              l10n.parentDashboard,
                               style: textTheme.titleLarge?.copyWith(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w800,
@@ -364,7 +364,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
                               ),
                             ),
                             Text(
-                              _dashboardGreeting(),
+                              _dashboardGreeting(l10n),
                               style: TextStyle(
                                 fontSize: 12,
                                 color: colors.onSurfaceVariant,
@@ -379,7 +379,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
                               Icons.notifications_outlined,
                               color: colors.onSurface,
                             ),
-                            tooltip: 'Notifications',
+                            tooltip: l10n.notifications,
                             onPressed: () =>
                                 context.go('/parent/notifications'),
                           ),
@@ -388,7 +388,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
                               Icons.settings_outlined,
                               color: colors.onSurface,
                             ),
-                            tooltip: 'Settings',
+                            tooltip: l10n.settings,
                             onPressed: () => context.go('/parent/settings'),
                           ),
                           Consumer(
@@ -465,22 +465,23 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
           },
           backgroundColor: Theme.of(context).colorScheme.primary,
           icon: const Icon(Icons.add),
-          label: const Text('Add Child'),
+          label: Text(l10n.addChild),
         ),
       ),
     );
   }
 
   Widget _buildChildrenOverview(List<ChildProfile> children) {
+    final l10n = AppLocalizations.of(context)!;
     if (children.isEmpty) {
       return ParentEmptyState(
         icon: Icons.child_care_outlined,
-        title: 'No children added yet',
-        subtitle: 'Add your first child to start tracking their learning journey.',
+        title: l10n.noChildrenAddedTitle,
+        subtitle: l10n.noChildrenAddedSubtitleDashboard,
         action: FilledButton.icon(
           onPressed: () => context.go('/parent/child-management'),
           icon: const Icon(Icons.add_rounded, size: 18),
-          label: const Text('Add Child'),
+          label: Text(l10n.addChild),
         ),
       );
     }
@@ -489,9 +490,9 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ParentSectionHeader(
-          title: 'Your Children',
-          subtitle: '${children.length} child${children.length == 1 ? '' : 'ren'} linked',
-          actionLabel: 'Manage',
+          title: l10n.yourChildren,
+          subtitle: l10n.childrenLinkedCount(children.length),
+          actionLabel: l10n.manage,
           onAction: () => context.go('/parent/child-management'),
         ),
         const SizedBox(height: 14),
@@ -599,7 +600,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        '$ageLabel · ${child.activitiesCompleted} activities · ${child.totalTimeSpent} min',
+                        '$ageLabel • ${child.activitiesCompleted} ${l10n.activities} • ${child.totalTimeSpent} ${l10n.minutesLabel}',
                         style: TextStyle(
                           fontSize: 12,
                           color: colors.onSurfaceVariant,
@@ -622,7 +623,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
             Row(
               children: [
                 Text(
-                  'Level ${child.level}',
+                  l10n.levelLabel(child.level),
                   style: TextStyle(
                     fontSize: 11,
                     color: colors.onSurfaceVariant,
@@ -645,7 +646,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  '${child.xp % 1000}/1000 XP',
+                  l10n.xpProgressDisplay(child.xp % 1000, 1000),
                   style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -662,6 +663,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
 
   Widget _buildQuickStats(List<ChildProfile> children) {
     if (children.isEmpty) return const SizedBox();
+    final l10n = AppLocalizations.of(context)!;
 
     final totalTime = children.fold<int>(0, (s, c) => s + c.totalTimeSpent);
     final totalActivities = children.fold<int>(0, (s, c) => s + c.activitiesCompleted);
@@ -671,9 +673,9 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const ParentSectionHeader(
-          title: "Today's Overview",
-          subtitle: 'Aggregated across all children',
+        ParentSectionHeader(
+          title: l10n.todayOverviewTitle,
+          subtitle: l10n.aggregatedAcrossChildren,
         ),
         const SizedBox(height: 14),
         Row(
@@ -681,7 +683,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
             Expanded(
               child: ParentStatCard(
                 value: '$totalTime',
-                label: 'Minutes',
+                label: l10n.minutesLabel,
                 icon: Icons.timer_outlined,
                 color: ParentColors.infoBlue,
                 trend: '+12%',
@@ -691,7 +693,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
             Expanded(
               child: ParentStatCard(
                 value: '$totalActivities',
-                label: 'Activities',
+                label: l10n.activities,
                 icon: Icons.check_circle_outline_rounded,
                 color: ParentColors.parentGreen,
                 trend: '+5',
@@ -701,7 +703,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
             Expanded(
               child: ParentStatCard(
                 value: '$avgXp',
-                label: 'Avg XP',
+                label: l10n.avgXpLabel,
                 icon: Icons.star_outline_rounded,
                 color: ParentColors.xpGold,
               ),
@@ -714,6 +716,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
 
   Widget _buildAiInsights(List<ChildProfile> children) {
     if (children.isEmpty) return const SizedBox();
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
 
     return ParentCard(
@@ -740,12 +743,12 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'AI Insights',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                    Text(
+                      l10n.aiInsights,
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
                     ),
                     Text(
-                      'Premium analysis',
+                      l10n.premiumAnalysis,
                       style: TextStyle(fontSize: 11, color: colors.onSurfaceVariant),
                     ),
                   ],
@@ -769,7 +772,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
             child: FilledButton.icon(
               onPressed: () => context.go('/parent/reports'),
               icon: const Icon(Icons.bar_chart_rounded, size: 18),
-              label: const Text('View Full Report'),
+              label: Text(l10n.viewFullReport),
             ),
           ),
         ],
@@ -779,17 +782,16 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
 
   String _generateInsightMessage(List<ChildProfile> children) {
     if (children.isEmpty) return '';
-    
-    final names = children.map((c) => c.name).join(' and ');
+    final l10n = AppLocalizations.of(context)!;
+    final names = children.map((c) => c.name).join(' و ');
     final totalActivities = children.fold<int>(0, (sum, child) => sum + child.activitiesCompleted);
-    
-    return '$names ${children.length > 1 ? 'are' : 'is'} showing great progress! '
-           'Total of $totalActivities activities completed. '
-           'Keep up the excellent work!';
+
+    return l10n.insightsSummary(names, totalActivities, children.length);
   }
 
   Widget _buildRecentActivities(List<ChildProfile> children) {
     if (children.isEmpty) return const SizedBox();
+    final l10n = AppLocalizations.of(context)!;
 
     return FutureBuilder<List<ProgressRecord>>(
       future: _getRecentActivitiesForAllChildren(children),
@@ -801,8 +803,8 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ParentSectionHeader(
-              title: 'Recent Activities',
-              actionLabel: 'View All',
+              title: l10n.recentActivitiesTitle,
+              actionLabel: l10n.viewAll,
               onAction: () => context.go('/parent/reports'),
             ),
             const SizedBox(height: 14),
@@ -815,7 +817,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
                         color: colors.onSurfaceVariant, size: 22),
                     const SizedBox(width: 12),
                     Text(
-                      'No recent activities yet',
+                      l10n.noRecentActivities,
                       style: TextStyle(
                           fontSize: 14, color: colors.onSurfaceVariant),
                     ),
@@ -863,17 +865,25 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
   }
 
   String _formatTimeAgo(DateTime date) {
+    final l10n = AppLocalizations.of(context)!;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final now = DateTime.now();
     final difference = now.difference(date);
     
     if (difference.inDays > 0) {
-      return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
+      return isArabic
+          ? 'منذ ${difference.inDays} يوم'
+          : '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
     } else if (difference.inHours > 0) {
-      return '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
+      return isArabic
+          ? 'منذ ${difference.inHours} ساعة'
+          : '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
     } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes} minute${difference.inMinutes > 1 ? 's' : ''} ago';
+      return isArabic
+          ? 'منذ ${difference.inMinutes} دقيقة'
+          : '${difference.inMinutes} ${l10n.minutesAgo}';
     }
-    return 'Just now';
+    return l10n.justNow;
   }
 
   Widget _buildActivityRow(String childName, String time,
@@ -896,7 +906,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  '$childName completed an activity',
+                  AppLocalizations.of(context)!.completedAnActivity(childName),
                   style: TextStyle(
                     fontSize: 14,
                     color: colors.onSurface,
@@ -927,18 +937,27 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
   Widget _buildWeeklyProgressChart(List<ChildProfile> children) {
     if (children.isEmpty) return const SizedBox();
 
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     // Placeholder data — replace with real progress records in production
     const weekData = [3, 5, 2, 4, 6, 3, 2];
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final days = [
+      l10n.weekdayMon,
+      l10n.weekdayTue,
+      l10n.weekdayWed,
+      l10n.weekdayThu,
+      l10n.weekdayFri,
+      l10n.weekdaySat,
+      l10n.weekdaySun,
+    ];
 
     return ParentCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const ParentSectionHeader(
-            title: 'Weekly Activity',
-            subtitle: 'Activities completed per day',
+          ParentSectionHeader(
+            title: l10n.weeklyActivity,
+            subtitle: l10n.activitiesCompletedPerDay,
           ),
           const SizedBox(height: 20),
           SizedBox(

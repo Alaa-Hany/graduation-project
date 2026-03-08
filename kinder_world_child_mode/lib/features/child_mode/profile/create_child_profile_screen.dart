@@ -41,9 +41,17 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
     'assets/images/avatars/boy1.png',
     'assets/images/avatars/boy2.png',
     'assets/images/avatars/boy3.png',
+    'assets/images/avatars/boy4.png',
     'assets/images/avatars/girl1.png',
     'assets/images/avatars/girl2.png',
     'assets/images/avatars/girl3.png',
+    'assets/images/avatars/girl4.png',
+    'assets/images/avatars/av1.png',
+    'assets/images/avatars/av2.png',
+    'assets/images/avatars/av3.png',
+    'assets/images/avatars/av4.png',
+    'assets/images/avatars/av5.png',
+    'assets/images/avatars/av6.png',
   ];
   
   // Available interests

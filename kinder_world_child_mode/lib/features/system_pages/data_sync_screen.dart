@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 
 class DataSyncScreen extends ConsumerStatefulWidget {
   const DataSyncScreen({super.key});
@@ -112,6 +112,7 @@ class _DataSyncScreenState extends ConsumerState<DataSyncScreen>
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final successColor = context.successColor;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -151,14 +152,14 @@ class _DataSyncScreenState extends ConsumerState<DataSyncScreen>
                   height: 120,
                   decoration: BoxDecoration(
                     color: _isSyncing 
-                        ? AppColors.primary.withValues(alpha: 0.1)
-                        : AppColors.success.withValues(alpha: 0.1),
+                        ? colors.primary.withValues(alpha: 0.12)
+                        : successColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(60),
                   ),
                   child: Icon(
                     _isSyncing ? Icons.sync : Icons.check_circle,
                     size: 60,
-                    color: _isSyncing ? AppColors.primary : AppColors.success,
+                    color: _isSyncing ? colors.primary : successColor,
                   ),
                 ),
               ),
@@ -182,7 +183,6 @@ class _DataSyncScreenState extends ConsumerState<DataSyncScreen>
                   child: LinearProgressIndicator(
                     value: _syncProgress,
                     backgroundColor: colors.surfaceContainerHighest,
-                    valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
                     minHeight: 8,
                   ),
                 ),
@@ -253,12 +253,6 @@ class _DataSyncScreenState extends ConsumerState<DataSyncScreen>
                 height: 56,
                 child: ElevatedButton(
                   onPressed: _isSyncing ? null : _startSync,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
                   child: _isSyncing
                     ? CircularProgressIndicator(color: colors.onPrimary)
                     : Text(
@@ -302,13 +296,13 @@ class _SyncDetailItem extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.1),
+            color: colors.primary.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Icon(
             icon,
             size: 20,
-            color: AppColors.primary,
+            color: colors.primary,
           ),
         ),
         const SizedBox(width: 16),
@@ -323,16 +317,16 @@ class _SyncDetailItem extends StatelessWidget {
         ),
         
         if (isSynced == true)
-          const Icon(
+          Icon(
             Icons.check_circle,
             size: 20,
-            color: AppColors.success,
+            color: context.successColor,
           )
         else if (isSynced == false)
-          const Icon(
+          Icon(
             Icons.error,
             size: 20,
-            color: AppColors.error,
+            color: colors.error,
           )
         else
           const SizedBox(width: 20),

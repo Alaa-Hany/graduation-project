@@ -62,6 +62,8 @@ class _KinderWorldAppState extends ConsumerState<KinderWorldApp> {
       theme: AppTheme.lightTheme(palette: palette),
       darkTheme: AppTheme.darkTheme(palette: palette),
       themeMode: themeSettings.mode,
+      themeAnimationCurve: Curves.easeInOutCubic,
+      themeAnimationDuration: const Duration(milliseconds: 250),
       localizationsDelegates: const [
         custom_localizations.AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,

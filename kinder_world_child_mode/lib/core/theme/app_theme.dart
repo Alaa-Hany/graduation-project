@@ -6,10 +6,11 @@ import 'package:kinder_world/core/theme/theme_extensions.dart';
 class AppTheme {
   AppTheme._();
 
-  static ThemeData lightTheme({required ThemePalette palette, bool isChildFriendly = true}) {
+  static ThemeData lightTheme(
+      {required ThemePalette palette, bool isChildFriendly = true}) {
     final scheme = palette.colorScheme(Brightness.light).copyWith(
-      surface: palette.lightSurface,
-    );
+          surface: palette.lightSurface,
+        );
     return _themeFromScheme(
       scheme: scheme,
       background: palette.lightBackground,
@@ -17,10 +18,11 @@ class AppTheme {
     );
   }
 
-  static ThemeData darkTheme({required ThemePalette palette, bool isChildFriendly = true}) {
+  static ThemeData darkTheme(
+      {required ThemePalette palette, bool isChildFriendly = true}) {
     final scheme = palette.colorScheme(Brightness.dark).copyWith(
-      surface: palette.darkSurface,
-    );
+          surface: palette.darkSurface,
+        );
     return _themeFromScheme(
       scheme: scheme,
       background: palette.darkBackground,
@@ -102,7 +104,6 @@ class AppTheme {
       fontFamily: 'SFPro',
       textTheme: textTheme,
       canvasColor: scheme.surface,
-      dialogBackgroundColor: scheme.surface,
       appBarTheme: AppBarTheme(
         elevation: 0,
         backgroundColor: scheme.surface,
@@ -115,7 +116,8 @@ class AppTheme {
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
           foregroundColor: textPrimary,
-          backgroundColor: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
+          backgroundColor:
+              scheme.surfaceContainerHighest.withValues(alpha: 0.4),
           hoverColor: scheme.primary.withValues(alpha: 0.08),
           highlightColor: scheme.primary.withValues(alpha: 0.12),
         ),
@@ -164,6 +166,64 @@ class AppTheme {
         unselectedItemColor: textSecondary,
         type: BottomNavigationBarType.fixed,
       ),
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: scheme.primary,
+        linearTrackColor: scheme.surfaceContainerHighest,
+        circularTrackColor: scheme.surfaceContainerHighest,
+      ),
+      textSelectionTheme: TextSelectionThemeData(
+        cursorColor: scheme.primary,
+        selectionColor: scheme.primary.withValues(alpha: 0.22),
+        selectionHandleColor: scheme.primary,
+      ),
+      popupMenuTheme: PopupMenuThemeData(
+        color: scheme.surface,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        textStyle: textTheme.bodyMedium?.copyWith(color: textPrimary),
+      ),
+      searchBarTheme: SearchBarThemeData(
+        backgroundColor: WidgetStatePropertyAll(
+          scheme.surfaceContainerHighest.withValues(alpha: 0.9),
+        ),
+        elevation: const WidgetStatePropertyAll(0),
+        textStyle: WidgetStatePropertyAll(
+          textTheme.bodyMedium?.copyWith(color: textPrimary),
+        ),
+        hintStyle: WidgetStatePropertyAll(
+          textTheme.bodyMedium?.copyWith(color: textSecondary),
+        ),
+        shape: WidgetStatePropertyAll(
+          RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        side: WidgetStatePropertyAll(
+          BorderSide(color: scheme.outlineVariant),
+        ),
+      ),
+      dropdownMenuTheme: DropdownMenuThemeData(
+        textStyle: textTheme.bodyMedium?.copyWith(color: textPrimary),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.9),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: scheme.outlineVariant),
+          ),
+        ),
+        menuStyle: MenuStyle(
+          backgroundColor: WidgetStatePropertyAll(scheme.surface),
+          surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+        ),
+      ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: scheme.surface,
         indicatorColor: scheme.secondaryContainer,
@@ -190,13 +250,15 @@ class AppTheme {
           borderRadius: BorderRadius.circular(999),
         ),
         labelStyle: textTheme.labelLarge?.copyWith(color: scheme.primary),
-        unselectedLabelStyle: textTheme.labelLarge?.copyWith(color: textSecondary),
+        unselectedLabelStyle:
+            textTheme.labelLarge?.copyWith(color: textSecondary),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: scheme.primary,
           foregroundColor: scheme.onPrimary,
-          minimumSize: const Size(AppConstants.minTouchTarget, AppConstants.minTouchTarget),
+          minimumSize: const Size(
+              AppConstants.minTouchTarget, AppConstants.minTouchTarget),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -232,6 +294,30 @@ class AppTheme {
             borderRadius: BorderRadius.circular(12),
           ),
           textStyle: textTheme.labelLarge?.copyWith(color: scheme.primary),
+        ),
+      ),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return scheme.secondaryContainer;
+            }
+            return scheme.surface;
+          }),
+          foregroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return scheme.onSecondaryContainer;
+            }
+            return textPrimary;
+          }),
+          side:
+              WidgetStatePropertyAll(BorderSide(color: scheme.outlineVariant)),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+          textStyle: WidgetStatePropertyAll(textTheme.labelLarge),
         ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
@@ -309,9 +395,11 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: scheme.error, width: 1.5),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         labelStyle: textTheme.bodyMedium?.copyWith(color: textSecondary),
-        floatingLabelStyle: textTheme.bodyMedium?.copyWith(color: scheme.primary),
+        floatingLabelStyle:
+            textTheme.bodyMedium?.copyWith(color: scheme.primary),
         hintStyle: textTheme.bodyMedium?.copyWith(
           color: textSecondary.withValues(alpha: 0.9),
         ),

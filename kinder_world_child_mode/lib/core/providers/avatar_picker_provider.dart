@@ -15,6 +15,12 @@ class AvatarPickerNotifier extends StateNotifier<String> {
     'assets/images/avatars/girl1.png',
     'assets/images/avatars/girl2.png',
     'assets/images/avatars/girl3.png',
+    'assets/images/avatars/av1.png',
+    'assets/images/avatars/av2.png',
+    'assets/images/avatars/av3.png',
+    'assets/images/avatars/av4.png',
+    'assets/images/avatars/av5.png',
+    'assets/images/avatars/av6.png',
   ];
 
   void selectAvatar(String avatarPath) {

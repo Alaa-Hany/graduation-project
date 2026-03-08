@@ -7,6 +7,7 @@ import 'package:kinder_world/core/models/progress_record.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/core/providers/theme_provider.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/features/child_mode/profile/child_profile_screen.dart';
@@ -363,7 +364,10 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
 
   Widget _buildHeroSection(ChildProfile child) {
     final l10n = AppLocalizations.of(context)!;
-    final colors = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final childTheme = context.childTheme;
     final firstName = child.name.split(' ').first;
     final greeting = childTimeGreeting();
     final currentXpInLevel = child.xp % 1000;
@@ -389,19 +393,19 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                   children: [
                     Text(
                       greeting,
-                      style: const TextStyle(
+                      style: textTheme.bodySmall?.copyWith(
                         fontSize: 13,
-                        color: Colors.white70,
+                        color: colors.onPrimary.withValues(alpha: 0.78),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       firstName,
-                      style: const TextStyle(
+                      style: textTheme.headlineMedium?.copyWith(
                         fontSize: 28,
                         fontWeight: FontWeight.w800,
-                        color: Colors.white,
+                        color: colors.onPrimary,
                         letterSpacing: -0.5,
                         height: 1.1,
                       ),
@@ -409,9 +413,9 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                     const SizedBox(height: 4),
                     Text(
                       _motivationalLine(child, l10n),
-                      style: const TextStyle(
+                      style: textTheme.bodySmall?.copyWith(
                         fontSize: 13,
-                        color: Colors.white70,
+                        color: colors.onPrimary.withValues(alpha: 0.78),
                       ),
                     ),
                   ],
@@ -428,10 +432,10 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
             children: [
               Text(
                 l10n.levelBubble(child.level),
-                style: const TextStyle(
+                style: textTheme.labelMedium?.copyWith(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white70,
+                  color: colors.onPrimary.withValues(alpha: 0.78),
                 ),
               ),
               const SizedBox(width: 10),
@@ -440,9 +444,9 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                   borderRadius: BorderRadius.circular(8),
                   child: LinearProgressIndicator(
                     value: child.xpProgress.clamp(0.0, 1.0),
-                    backgroundColor: Colors.white.withValues(alpha: 0.2),
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      ChildColors.xpGold,
+                    backgroundColor: colors.onPrimary.withValues(alpha: 0.2),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      childTheme.xp,
                     ),
                     minHeight: 8,
                   ),
@@ -451,10 +455,10 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
               const SizedBox(width: 10),
               Text(
                 l10n.xpDisplay(currentXpInLevel),
-                style: const TextStyle(
+                style: textTheme.labelMedium?.copyWith(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: ChildColors.xpGold,
+                  color: childTheme.xp,
                 ),
               ),
             ],
@@ -477,6 +481,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
 
   Widget _buildStatsRow(ChildProfile child) {
     final l10n = AppLocalizations.of(context)!;
+    final childTheme = context.childTheme;
     final currentXpInLevel = child.xp % 1000;
     return KinderCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
@@ -487,7 +492,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
             value: l10n.levelBubble(child.level),
             label: l10n.level,
             icon: Icons.star_rounded,
-            color: ChildColors.xpGold,
+            color: childTheme.xp,
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (_) => ChildLevelsScreen(
@@ -501,13 +506,13 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
             value: '${child.streak}',
             label: l10n.streak,
             icon: Icons.local_fire_department_rounded,
-            color: ChildColors.streakFire,
+            color: childTheme.streak,
           ),
           ChildStatBubble(
             value: '${child.activitiesCompleted}',
             label: l10n.done,
             icon: Icons.check_circle_rounded,
-            color: ChildColors.successGreen,
+            color: childTheme.success,
           ),
         ],
       ),
@@ -518,6 +523,9 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
 
   Widget _buildContinueLearning() {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final textTheme = theme.textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -526,8 +534,8 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
         KinderCard(
           onTap: () => context.go('/child/learn'),
           gradientColors: [
-            ChildColors.learningBlue,
-            ChildColors.learningBlue.withValues(alpha: 0.75),
+            colors.primary,
+            colors.secondary,
           ],
           padding: const EdgeInsets.all(18),
           child: Row(
@@ -536,13 +544,13 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: colors.onPrimary.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.auto_stories_rounded,
                   size: 30,
-                  color: Colors.white,
+                  color: colors.onPrimary,
                 ),
               ),
               const SizedBox(width: 16),
@@ -552,18 +560,18 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                   children: [
                     Text(
                       l10n.exploreLessons,
-                      style: const TextStyle(
+                      style: textTheme.titleMedium?.copyWith(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: Colors.white,
+                        color: colors.onPrimary,
                       ),
                     ),
                     const SizedBox(height: 3),
                     Text(
                       l10n.newTopicsAwait,
-                      style: TextStyle(
+                      style: textTheme.bodyMedium?.copyWith(
                         fontSize: 13,
-                        color: Colors.white.withValues(alpha: 0.8),
+                        color: colors.onPrimary.withValues(alpha: 0.8),
                       ),
                     ),
                   ],
@@ -573,15 +581,15 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.25),
+                  color: colors.onPrimary.withValues(alpha: 0.22),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   l10n.goLabel,
-                  style: const TextStyle(
+                  style: textTheme.labelLarge?.copyWith(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
-                    color: Colors.white,
+                    color: colors.onPrimary,
                   ),
                 ),
               ),
@@ -595,6 +603,10 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
   // ── DAILY GOAL ─────────────────────────────────────────────────────────────
 
   Widget _buildDailyGoal(ChildProfile child) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final childTheme = context.childTheme;
     return FutureBuilder<List<ProgressRecord>>(
       future: ref
           .read(progressControllerProvider.notifier)
@@ -618,8 +630,8 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
             KinderCard(
               gradientColors: isComplete
                   ? [
-                      ChildColors.successGreen,
-                      ChildColors.successGreen.withValues(alpha: 0.75),
+                      childTheme.success,
+                      colors.primary,
                     ]
                   : null,
               padding: const EdgeInsets.all(18),
@@ -636,8 +648,8 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                           fontSize: AppConstants.fontSize,
                           fontWeight: FontWeight.w700,
                           color: isComplete
-                              ? Colors.white
-                              : Theme.of(context).colorScheme.onSurface,
+                              ? colors.onPrimary
+                              : colors.onSurface,
                         ),
                       ),
                       Container(
@@ -647,8 +659,8 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                         ),
                         decoration: BoxDecoration(
                           color: isComplete
-                              ? Colors.white.withValues(alpha: 0.25)
-                              : ChildColors.successGreen
+                              ? colors.onPrimary.withValues(alpha: 0.25)
+                              : childTheme.success
                                   .withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -658,8 +670,8 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
                             color: isComplete
-                                ? Colors.white
-                                : ChildColors.successGreen,
+                                ? colors.onPrimary
+                                : childTheme.success,
                           ),
                         ),
                       ),
@@ -671,14 +683,12 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                     child: LinearProgressIndicator(
                       value: progress,
                       backgroundColor: isComplete
-                          ? Colors.white.withValues(alpha: 0.25)
-                          : Theme.of(context)
-                              .colorScheme
-                              .surfaceContainerHighest,
+                          ? colors.onPrimary.withValues(alpha: 0.25)
+                          : colors.surfaceContainerHighest,
                       valueColor: AlwaysStoppedAnimation<Color>(
                         isComplete
-                            ? Colors.white
-                            : ChildColors.successGreen,
+                            ? colors.onPrimary
+                            : childTheme.success,
                       ),
                       minHeight: 10,
                     ),
@@ -687,10 +697,10 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                     const SizedBox(height: 10),
                     Text(
                       l10n.xpBonusEarned,
-                      style: const TextStyle(
+                      style: textTheme.bodyMedium?.copyWith(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: ChildColors.xpGold,
+                        color: childTheme.xp,
                       ),
                     ),
                   ],
@@ -714,10 +724,22 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
         emoji: '💖',
         color: ChildColors.kindnessPink,
         icon: Icons.favorite_rounded,
-        items: const [
-          _HistoryItem(title: 'Sharing Stars', subtitle: 'Today · 8 min', xp: 30),
-          _HistoryItem(title: 'Kind Words', subtitle: 'Yesterday · 6 min', xp: 20),
-          _HistoryItem(title: 'Helping Hands', subtitle: '2 days ago · 10 min', xp: 40),
+        items: [
+          _HistoryItem(
+            title: l10n.historySharingStars,
+            subtitle: _historySubtitle(l10n, dayOffset: 0, minutes: 8),
+            xp: 30,
+          ),
+          _HistoryItem(
+            title: l10n.historyKindWords,
+            subtitle: _historySubtitle(l10n, dayOffset: 1, minutes: 6),
+            xp: 20,
+          ),
+          _HistoryItem(
+            title: l10n.historyHelpingHands,
+            subtitle: _historySubtitle(l10n, dayOffset: 2, minutes: 10),
+            xp: 40,
+          ),
         ],
       ),
       _AxisHistory(
@@ -726,10 +748,22 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
         emoji: '📚',
         color: ChildColors.learningBlue,
         icon: Icons.school_rounded,
-        items: const [
-          _HistoryItem(title: 'Numbers Adventure', subtitle: 'Today · 12 min', xp: 45),
-          _HistoryItem(title: 'Color Quest', subtitle: 'Yesterday · 7 min', xp: 25),
-          _HistoryItem(title: 'Story Time', subtitle: '2 days ago · 9 min', xp: 35),
+        items: [
+          _HistoryItem(
+            title: l10n.historyNumbersAdventure,
+            subtitle: _historySubtitle(l10n, dayOffset: 0, minutes: 12),
+            xp: 45,
+          ),
+          _HistoryItem(
+            title: l10n.historyColorQuest,
+            subtitle: _historySubtitle(l10n, dayOffset: 1, minutes: 7),
+            xp: 25,
+          ),
+          _HistoryItem(
+            title: l10n.historyStoryTime,
+            subtitle: _historySubtitle(l10n, dayOffset: 2, minutes: 9),
+            xp: 35,
+          ),
         ],
       ),
       _AxisHistory(
@@ -738,10 +772,22 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
         emoji: '🧩',
         color: ChildColors.skillPurple,
         icon: Icons.extension_rounded,
-        items: const [
-          _HistoryItem(title: 'Puzzle Builder', subtitle: 'Today · 5 min', xp: 18),
-          _HistoryItem(title: 'Shape Match', subtitle: 'Yesterday · 8 min', xp: 28),
-          _HistoryItem(title: 'Memory Game', subtitle: '2 days ago · 11 min', xp: 38),
+        items: [
+          _HistoryItem(
+            title: l10n.historyPuzzleBuilder,
+            subtitle: _historySubtitle(l10n, dayOffset: 0, minutes: 5),
+            xp: 18,
+          ),
+          _HistoryItem(
+            title: l10n.historyShapeMatch,
+            subtitle: _historySubtitle(l10n, dayOffset: 1, minutes: 8),
+            xp: 28,
+          ),
+          _HistoryItem(
+            title: l10n.historyMemoryGame,
+            subtitle: _historySubtitle(l10n, dayOffset: 2, minutes: 11),
+            xp: 38,
+          ),
         ],
       ),
       _AxisHistory(
@@ -750,10 +796,22 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
         emoji: '🎵',
         color: ChildColors.funCyan,
         icon: Icons.music_note_rounded,
-        items: const [
-          _HistoryItem(title: 'Dance Party', subtitle: 'Today · 6 min', xp: 22),
-          _HistoryItem(title: 'Sing Along', subtitle: 'Yesterday · 5 min', xp: 18),
-          _HistoryItem(title: 'Magic Show', subtitle: '2 days ago · 9 min', xp: 32),
+        items: [
+          _HistoryItem(
+            title: l10n.historyDanceParty,
+            subtitle: _historySubtitle(l10n, dayOffset: 0, minutes: 6),
+            xp: 22,
+          ),
+          _HistoryItem(
+            title: l10n.historySingAlong,
+            subtitle: _historySubtitle(l10n, dayOffset: 1, minutes: 5),
+            xp: 18,
+          ),
+          _HistoryItem(
+            title: l10n.historyMagicShow,
+            subtitle: _historySubtitle(l10n, dayOffset: 2, minutes: 9),
+            xp: 32,
+          ),
         ],
       ),
     ];
@@ -801,6 +859,19 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
         ),
       ],
     );
+  }
+
+  String _historySubtitle(
+    AppLocalizations l10n, {
+    required int dayOffset,
+    required int minutes,
+  }) {
+    final dayLabel = switch (dayOffset) {
+      0 => l10n.todayLabel,
+      1 => l10n.yesterdayLabel,
+      _ => l10n.daysAgoCount(dayOffset),
+    };
+    return '$dayLabel • ${l10n.minutesShort(minutes)}';
   }
 
   Widget _buildHistoryCard(_HistoryItem item, _AxisHistory axis) {
