@@ -1,3190 +1,1383 @@
-import 'app_localizations_en.dart';
+﻿import 'app_localizations_en.dart';
 
 class AppLocalizationsAr extends AppLocalizationsEn {
-  // â”€â”€ Common â”€â”€
-  @override
-  String get appTitle => 'ط¹ط§ظ„ظ… ظƒظٹظ†ط¯ط±';
-  @override
-  String get welcome => 'ظ…ط±ط­ط¨ط§';
-  @override
-  String get next => 'ط§ظ„طھط§ظ„ظٹ';
-  @override
-  String get back => 'ط±ط¬ظˆط¹';
-  @override
-  String get continueText => 'ظ…طھط§ط¨ط¹ط©';
-  @override
-  String get skip => 'طھط®ط·ظٹ';
-  @override
-  String get done => 'طھظ…';
-  @override
-  String get cancel => 'ط¥ظ„ط؛ط§ط،';
-  @override
-  String get save => 'ط­ظپط¸';
-  @override
-  String get delete => 'ط­ط°ظپ';
-  @override
-  String get edit => 'طھط¹ط¯ظٹظ„';
-  @override
-  String get loading => 'ط¬ط§ط±ظٹ ط§ظ„طھط­ظ…ظٹظ„...';
-  @override
-  String get error => 'ط®ط·ط£';
-  @override
-  String get notAvailable => 'ط؛ظٹط± ظ…طھط§ط­';
-  @override
-  String get connectionError =>
-      'ط®ط·ط£ ظپظٹ ط§ظ„ط§طھطµط§ظ„. ط­ط§ظˆظ„ ظ…ط±ط© ط£ط®ط±ظ‰.';
-  @override
-  String get success => 'ظ†ط¬ط§ط­';
-  @override
-  String get retry => 'ط¥ط¹ط§ط¯ط© ط§ظ„ظ…ط­ط§ظˆظ„ط©';
-  @override
-  String get noInternet => 'ظ„ط§ ظٹظˆط¬ط¯ ط§طھطµط§ظ„ ط¨ط§ظ„ط¥ظ†طھط±ظ†طھ';
-  @override
-  String get offlineMode => 'ظˆط¶ط¹ ط¹ط¯ظ… ط§ظ„ط§طھطµط§ظ„';
-  @override
-  String get splashTagline => 'طھط¹ظ„ظ‘ظ…. ط§ظ„ط¹ط¨. ط§ظ†ظ…ظˆ.';
+  // ── Common ──
+  @override String get appTitle => 'عالم كيندر';
+  @override String get welcome => 'مرحبا';
+  @override String get next => 'التالي';
+  @override String get back => 'رجوع';
+  @override String get continueText => 'متابعة';
+  @override String get skip => 'تخطي';
+  @override String get done => 'تم';
+  @override String get cancel => 'إلغاء';
+  @override String get save => 'حفظ';
+  @override String get delete => 'حذف';
+  @override String get edit => 'تعديل';
+  @override String get loading => 'جاري التحميل...';
+  @override String get error => 'خطأ';
+  @override String get connectionError => 'خطأ في الاتصال. حاول مرة أخرى.';
+  @override String get success => 'نجاح';
+  @override String get retry => 'إعادة المحاولة';
+  @override String get noInternet => 'لا يوجد اتصال بالإنترنت';
+  @override String get offlineMode => 'وضع عدم الاتصال';
+  @override String get splashTagline => 'تعلّم. العب. انمو.';
 
-  // â”€â”€ Auth â”€â”€
-  @override
-  String get login => 'طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„';
-  @override
-  String get register => 'ط¥ظ†ط´ط§ط، ط­ط³ط§ط¨';
-  @override
-  String get email => 'ط§ظ„ط¨ط±ظٹط¯ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ';
-  @override
-  String get emailHint => 'ط£ط¯ط®ظ„ ط¨ط±ظٹط¯ظƒ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ';
-  @override
-  String get emailRequired =>
-      'ظٹط±ط¬ظ‰ ط¥ط¯ط®ط§ظ„ ط¨ط±ظٹط¯ظƒ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ';
-  @override
-  String get parentEmail =>
-      'ط§ظ„ط¨ط±ظٹط¯ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ ظ„ظˆظ„ظٹ ط§ظ„ط£ظ…ط±';
-  @override
-  String get parentEmailNotFound =>
-      'ط§ظ„ط¨ط±ظٹط¯ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ ظ„ظˆظ„ظٹ ط§ظ„ط£ظ…ط± ط؛ظٹط± ظ…ظˆط¬ظˆط¯. ظٹط±ط¬ظ‰ طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„ ط¨ظˆظ„ظٹ ط§ظ„ط£ظ…ط± ط£ظˆظ„ط§ظ‹.';
-  @override
-  String get password => 'ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط±';
-  @override
-  String get passwordHint => 'ط£ط¯ط®ظ„ ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط±';
-  @override
-  String get passwordRequired => 'ظٹط±ط¬ظ‰ ط¥ط¯ط®ط§ظ„ ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط±';
-  @override
-  String get confirmPassword => 'طھط£ظƒظٹط¯ ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط±';
-  @override
-  String get forgotPassword => 'ظ†ط³ظٹطھ ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط±طں';
-  @override
-  String get parentLogin => 'ط¯ط®ظˆظ„ ظˆظ„ظٹ ط§ظ„ط£ظ…ط±';
-  @override
-  String get parentLoginSubtitle =>
-      'ظ…ط±ط­ط¨ط§ظ‹ ط¨ط¹ظˆط¯طھظƒ! ظٹط±ط¬ظ‰ طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„ ظ„ظ„ظ…طھط§ط¨ط¹ط©.';
-  @override
-  String get orLabel => 'ط£ظˆ';
-  @override
-  String get createAccount => 'ط¥ظ†ط´ط§ط، ط­ط³ط§ط¨';
-  @override
-  String get childLogin => 'ط¯ط®ظˆظ„ ط§ظ„ط·ظپظ„';
-  @override
-  String get childId => 'ط±ظ‚ظ… ط§ظ„ط·ظپظ„';
-  @override
-  String get picturePassword => 'ظƒظ„ظ…ط© ظ…ط±ظˆط± ط§ظ„طµظˆط±';
-  @override
-  String get selectPicturePassword => 'ط§ط®طھط± ظƒظ„ظ…ط© ظ…ط±ظˆط± ط§ظ„طµظˆط±';
-  @override
-  String get confirmPicturePassword =>
-      'طھط£ظƒظٹط¯ ظƒظ„ظ…ط© ظ…ط±ظˆط± ط§ظ„طµظˆط±';
-  @override
-  String get picturePasswordError =>
-      'ط§ظ„طµظˆط± ط؛ظٹط± ظ…طھط·ط§ط¨ظ‚ط©. ط­ط§ظˆظ„ ظ…ط±ط© ط£ط®ط±ظ‰.';
-  @override
-  String get loginError =>
-      'ظپط´ظ„ طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„. ظٹط±ط¬ظ‰ ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† ط¨ظٹط§ظ†ط§طھظƒ.';
-  @override
-  String get registerError =>
-      'ظپط´ظ„ ط¥ظ†ط´ط§ط، ط§ظ„ط­ط³ط§ط¨. ظٹط±ط¬ظ‰ ط§ظ„ظ…ط­ط§ظˆظ„ط© ظ…ط±ط© ط£ط®ط±ظ‰.';
-  @override
-  String get agreeToTermsError =>
-      'ظٹط±ط¬ظ‰ ط§ظ„ظ…ظˆط§ظپظ‚ط© ط¹ظ„ظ‰ ط§ظ„ط´ط±ظˆط· ظˆط§ظ„ط£ط­ظƒط§ظ…';
-  @override
-  String get registrationSuccess =>
-      'طھظ… ط§ظ„طھط³ط¬ظٹظ„ ط¨ظ†ط¬ط§ط­! ظ…ط±ط­ط¨ط§ظ‹ ط¨ظƒ ظپظٹ ظƒظٹظ†ط¯ط± ظˆظˆط±ظ„ط¯!';
-  @override
-  String get registerSubtitle =>
-      'ط§ظ†ط¶ظ… ط¥ظ„ظ‰ ظƒظٹظ†ط¯ط± ظˆظˆط±ظ„ط¯ ظˆط§ط¨ط¯ط£ ط±ط­ظ„ط© طھط¹ظ„ظ… ط·ظپظ„ظƒ';
-  @override
-  String get fullNameLabel => 'ط§ظ„ط§ط³ظ… ط§ظ„ظƒط§ظ…ظ„';
-  @override
-  String get fullNameHint => 'ط£ط¯ط®ظ„ ط§ط³ظ…ظƒ ط§ظ„ظƒط§ظ…ظ„';
-  @override
-  String get nameRequired => 'ظٹط±ط¬ظ‰ ط¥ط¯ط®ط§ظ„ ط§ط³ظ…ظƒ';
-  @override
-  String get phoneNumberOptional => 'ط±ظ‚ظ… ط§ظ„ظ‡ط§طھظپ (ط§ط®طھظٹط§ط±ظٹ)';
-  @override
-  String get phoneNumberHint => 'ط£ط¯ط®ظ„ ط±ظ‚ظ… ظ‡ط§طھظپظƒ';
-  @override
-  String get passwordCreateHint => 'ط£ظ†ط´ط¦ ظƒظ„ظ…ط© ظ…ط±ظˆط±';
-  @override
-  String get passwordCreateRequired => 'ظٹط±ط¬ظ‰ ط¥ظ†ط´ط§ط، ظƒظ„ظ…ط© ظ…ط±ظˆط±';
-  @override
-  String get passwordUppercaseRequired =>
-      'ظٹط¬ط¨ ط£ظ† طھط­طھظˆظٹ ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط± ط¹ظ„ظ‰ ط­ط±ظپ ظƒط¨ظٹط±';
-  @override
-  String get passwordNumberRequired =>
-      'ظٹط¬ط¨ ط£ظ† طھط­طھظˆظٹ ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط± ط¹ظ„ظ‰ ط±ظ‚ظ…';
-  @override
-  String get passwordSpecialRequired =>
-      'ظٹط¬ط¨ ط£ظ† طھط­طھظˆظٹ ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط± ط¹ظ„ظ‰ ط±ظ…ط² ط®ط§طµ (!@#\$%^&*)';
-  @override
-  String get confirmPasswordHint => 'طھط£ظƒظٹط¯ ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط±';
-  @override
-  String get confirmPasswordRequired =>
-      'ظٹط±ط¬ظ‰ طھط£ظƒظٹط¯ ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط±';
-  @override
-  String get passwordsDoNotMatch =>
-      'ظƒظ„ظ…طھط§ ط§ظ„ظ…ط±ظˆط± ط؛ظٹط± ظ…طھط·ط§ط¨ظ‚طھظٹظ†';
-  @override
-  String get agreeToTermsPrefix => 'ط£ظˆط§ظپظ‚ ط¹ظ„ظ‰ ';
-  @override
-  String get termsOfService => 'ط´ط±ظˆط· ط§ظ„ط®ط¯ظ…ط©';
-  @override
-  String get andLabel => ' ظˆ';
-  @override
-  String get privacyPolicy => 'ط³ظٹط§ط³ط© ط§ظ„ط®طµظˆطµظٹط©';
-  @override
-  String get alreadyHaveAccount => 'ظ„ط¯ظٹظƒ ط­ط³ط§ط¨ ط¨ط§ظ„ظپط¹ظ„طں ';
-  @override
-  String get deleteChildTitle => 'ط­ط°ظپ ظ…ظ„ظپ ط§ظ„ط·ظپظ„';
-  @override
-  String get deleteChildDescription =>
-      'ط³ظٹط¤ط¯ظٹ ظ‡ط°ط§ ط¥ظ„ظ‰ ط­ط°ظپ ظ…ظ„ظپ ط§ظ„ط·ظپظ„ ظˆط¬ظ…ظٹط¹ ط§ظ„ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط±طھط¨ط·ط© ط¨ظ‡ ط¨ط´ظƒظ„ ط¯ط§ط¦ظ…. ظ„ط§ ظٹظ…ظƒظ† ط§ظ„طھط±ط§ط¬ط¹ ط¹ظ† ظ‡ط°ط§ ط§ظ„ط¥ط¬ط±ط§ط،.';
-  @override
-  String get deleteChildSuccess => 'طھظ… ط­ط°ظپ ظ…ظ„ظپ ط§ظ„ط·ظپظ„ ط¨ظ†ط¬ط§ط­';
-  @override
-  String get deleteChildFailed => 'ظپط´ظ„ ط­ط°ظپ ظ…ظ„ظپ ط§ظ„ط·ظپظ„';
-  @override
-  String get activeLabel => 'ظ†ط´ط·';
+  // ── Auth ──
+  @override String get login => 'تسجيل الدخول';
+  @override String get register => 'إنشاء حساب';
+  @override String get email => 'البريد الإلكتروني';
+  @override String get emailHint => 'أدخل بريدك الإلكتروني';
+  @override String get emailRequired => 'يرجى إدخال بريدك الإلكتروني';
+  @override String get parentEmail => 'البريد الإلكتروني لولي الأمر';
+  @override String get parentEmailNotFound => 'البريد الإلكتروني لولي الأمر غير موجود. يرجى تسجيل الدخول بولي الأمر أولاً.';
+  @override String get password => 'كلمة المرور';
+  @override String get passwordHint => 'أدخل كلمة المرور';
+  @override String get passwordRequired => 'يرجى إدخال كلمة المرور';
+  @override String get confirmPassword => 'تأكيد كلمة المرور';
+  @override String get forgotPassword => 'نسيت كلمة المرور؟';
+  @override String get parentLogin => 'دخول ولي الأمر';
+  @override String get parentLoginSubtitle => 'مرحباً بعودتك! يرجى تسجيل الدخول للمتابعة.';
+  @override String get orLabel => 'أو';
+  @override String get createAccount => 'إنشاء حساب';
+  @override String get childLogin => 'دخول الطفل';
+  @override String get childId => 'رقم الطفل';
+  @override String get picturePassword => 'كلمة مرور الصور';
+  @override String get selectPicturePassword => 'اختر كلمة مرور الصور';
+  @override String get confirmPicturePassword => 'تأكيد كلمة مرور الصور';
+  @override String get picturePasswordError => 'الصور غير متطابقة. حاول مرة أخرى.';
+  @override String get loginError => 'فشل تسجيل الدخول. يرجى التحقق من بياناتك.';
+  @override String get registerError => 'فشل إنشاء الحساب. يرجى المحاولة مرة أخرى.';
+  @override String get agreeToTermsError => 'يرجى الموافقة على الشروط والأحكام';
+  @override String get registrationSuccess => 'تم التسجيل بنجاح! مرحباً بك في كيندر وورلد!';
+  @override String get registerSubtitle => 'انضم إلى كيندر وورلد وابدأ رحلة تعلم طفلك';
+  @override String get fullNameLabel => 'الاسم الكامل';
+  @override String get fullNameHint => 'أدخل اسمك الكامل';
+  @override String get nameRequired => 'يرجى إدخال اسمك';
+  @override String get phoneNumberOptional => 'رقم الهاتف (اختياري)';
+  @override String get phoneNumberHint => 'أدخل رقم هاتفك';
+  @override String get passwordCreateHint => 'أنشئ كلمة مرور';
+  @override String get passwordCreateRequired => 'يرجى إنشاء كلمة مرور';
+  @override String get passwordUppercaseRequired => 'يجب أن تحتوي كلمة المرور على حرف كبير';
+  @override String get passwordNumberRequired => 'يجب أن تحتوي كلمة المرور على رقم';
+  @override String get passwordSpecialRequired => 'يجب أن تحتوي كلمة المرور على رمز خاص (!@#\$%^&*)';
+  @override String get confirmPasswordHint => 'تأكيد كلمة المرور';
+  @override String get confirmPasswordRequired => 'يرجى تأكيد كلمة المرور';
+  @override String get passwordsDoNotMatch => 'كلمتا المرور غير متطابقتين';
+  @override String get agreeToTermsPrefix => 'أوافق على ';
+  @override String get termsOfService => 'شروط الخدمة';
+  @override String get andLabel => ' و';
+  @override String get privacyPolicy => 'سياسة الخصوصية';
+  @override String get alreadyHaveAccount => 'لديك حساب بالفعل؟ ';
+  @override String get deleteChildTitle => 'حذف ملف الطفل';
+  @override String get deleteChildDescription => 'سيؤدي هذا إلى حذف ملف الطفل وجميع البيانات المرتبطة به بشكل دائم. لا يمكن التراجع عن هذا الإجراء.';
+  @override String get deleteChildSuccess => 'تم حذف ملف الطفل بنجاح';
+  @override String get deleteChildFailed => 'فشل حذف ملف الطفل';
+  @override String get activeLabel => 'نشط';
 
-  // â”€â”€ User Type Selection â”€â”€
-  @override
-  String get selectUserType => 'ط§ط®طھط± ظ†ظˆط¹ ط§ظ„ظ…ط³طھط®ط¯ظ…';
-  @override
-  String get selectUserTypeSubtitle =>
-      'ط§ط®طھط± ظƒظٹظپ طھط±ظٹط¯ ط§ط³طھط®ط¯ط§ظ… ظƒظٹظ†ط¯ط± ظˆظˆط±ظ„ط¯';
-  @override
-  String get childMode => 'ظˆط¶ط¹ ط§ظ„ط·ظپظ„';
-  @override
-  String get parentMode => 'ظˆط¶ط¹ ظˆظ„ظٹ ط§ظ„ط£ظ…ط±';
-  @override
-  String get teacherMode => 'ظˆط¶ط¹ ط§ظ„ظ…ط¹ظ„ظ…';
-  @override
-  String get parentModeDescription =>
-      'طھطھط¨ط¹ ط§ظ„طھظ‚ط¯ظ…طŒ ط¶ط¨ط· ط§ظ„ط¥ط¹ط¯ط§ط¯ط§طھطŒ ط¥ط¯ط§ط±ط© ط§ظ„ط¹ط§ط¦ظ„ط©';
-  @override
-  String get childModeDescription =>
-      'طھط¹ظ„ظ…طŒ ط§ظ„ط¹ط¨طŒ ظˆط§ط³طھظƒط´ظپ ط¨ط£ظ…ط§ظ†';
+  // ── User Type Selection ──
+  @override String get selectUserType => 'اختر نوع المستخدم';
+  @override String get selectUserTypeSubtitle => 'اختر كيف تريد استخدام كيندر وورلد';
+  @override String get childMode => 'وضع الطفل';
+  @override String get parentMode => 'وضع ولي الأمر';
+  @override String get teacherMode => 'وضع المعلم';
+  @override String get parentModeDescription => 'تتبع التقدم، ضبط الإعدادات، إدارة العائلة';
+  @override String get childModeDescription => 'تعلم، العب، واستكشف بأمان';
 
-  // â”€â”€ Navigation â”€â”€
-  @override
-  String get home => 'ط§ظ„ط±ط¦ظٹط³ظٹط©';
-  @override
-  String get learn => 'طھط¹ظ„ظ…';
-  @override
-  String get play => 'ط§ظ„ط¹ط¨';
-  @override
-  String get aiBuddy => 'ط±ظپظٹظ‚ ط§ظ„ط°ظƒط§ط، ط§ظ„ط§طµط·ظ†ط§ط¹ظٹ';
-  @override
-  String get profile => 'ط§ظ„ظ…ظ„ظپ ط§ظ„ط´ط®طµظٹ';
+  // ── Navigation ──
+  @override String get home => 'الرئيسية';
+  @override String get learn => 'تعلم';
+  @override String get play => 'العب';
+  @override String get aiBuddy => 'رفيق الذكاء الاصطناعي';
+  @override String get profile => 'الملف الشخصي';
 
-  // â”€â”€ Child Home â”€â”€
-  @override
-  String get hello => 'ظ…ط±ط­ط¨ط§ظ‹';
-  @override
-  String get dailyGoal => 'ط§ظ„ظ‡ط¯ظپ ط§ظ„ظٹظˆظ…ظٹ';
-  @override
-  String get continueLearning => 'ظ…طھط§ط¨ط¹ط© ط§ظ„طھط¹ظ„ظ…';
-  @override
-  String get recommendedForYou => 'ظ…ظˆطµظ‰ ط¨ظ‡ ظ„ظƒ';
-  @override
-  String get activityOfTheDay => 'ظ†ط´ط§ط· ط§ظ„ظٹظˆظ…';
-  @override
-  String get moodIndicator => 'ظƒظٹظپ طھط´ط¹ط±طں';
-  @override
-  String get happy => 'ط³ط¹ظٹط¯';
-  @override
-  String get sad => 'ط­ط²ظٹظ†';
-  @override
-  String get excited => 'ظ…طھط­ظ…ط³';
-  @override
-  String get tired => 'ظ…طھط¹ط¨';
-  @override
-  String get angry => 'ط؛ط§ط¶ط¨';
-  @override
-  String get calm => 'ظ‡ط§ط¯ط¦';
+  // ── Child Home ──
+  @override String get hello => 'مرحباً';
+  @override String get dailyGoal => 'الهدف اليومي';
+  @override String get continueLearning => 'متابعة التعلم';
+  @override String get recommendedForYou => 'موصى به لك';
+  @override String get activityOfTheDay => 'نشاط اليوم';
+  @override String get moodIndicator => 'كيف تشعر؟';
+  @override String get happy => 'سعيد';
+  @override String get sad => 'حزين';
+  @override String get excited => 'متحمس';
+  @override String get tired => 'متعب';
+  @override String get angry => 'غاضب';
+  @override String get calm => 'هادئ';
 
-  // â”€â”€ Content Categories â”€â”€
-  @override
-  String get educationalContent => 'ط§ظ„ظ…ط­طھظˆظ‰ ط§ظ„طھط¹ظ„ظٹظ…ظٹ';
-  @override
-  String get behavioralSkills => 'ط§ظ„ظ…ظ‡ط§ط±ط§طھ ط§ظ„ط³ظ„ظˆظƒظٹط©';
-  @override
-  String get skillfulActivities => 'ط§ظ„ط£ظ†ط´ط·ط© ط§ظ„ظ…ظ‡ط§ط±ظٹط©';
-  @override
-  String get subjects => 'ط§ظ„ظ…ظˆط§ط¯';
-  @override
-  String get mathematics => 'ط§ظ„ط±ظٹط§ط¶ظٹط§طھ';
-  @override
-  String get science => 'ط§ظ„ط¹ظ„ظˆظ…';
-  @override
-  String get reading => 'ط§ظ„ظ‚ط±ط§ط،ط©';
-  @override
-  String get history => 'ط§ظ„طھط§ط±ظٹط®';
-  @override
-  String get geography => 'ط§ظ„ط¬ط؛ط±ط§ظپظٹط§';
-  @override
-  String get languages => 'ط§ظ„ظ„ط؛ط§طھ';
-  @override
-  String get socialStories => 'ط§ظ„ظ‚طµطµ ط§ظ„ط§ط¬طھظ…ط§ط¹ظٹط©';
-  @override
-  String get emotionCards => 'ط¨ط·ط§ظ‚ط§طھ ط§ظ„ظ…ط´ط§ط¹ط±';
-  @override
-  String get problemSolving => 'ط­ظ„ ط§ظ„ظ…ط´ظƒظ„ط§طھ';
-  @override
-  String get drawing => 'ط§ظ„ط±ط³ظ…';
-  @override
-  String get music => 'ط§ظ„ظ…ظˆط³ظٹظ‚ظ‰';
-  @override
-  String get crafts => 'ط§ظ„ط­ط±ظپ ط§ظ„ظٹط¯ظˆظٹط©';
-  @override
-  String get cooking => 'ط§ظ„ط·ط¨ط®';
-  @override
-  String get quiz => 'ط§ط®طھط¨ط§ط±';
-  @override
-  String get lesson => 'ط¯ط±ط³';
-  @override
-  String get game => 'ظ„ط¹ط¨ط©';
-  @override
-  String get story => 'ظ‚طµط©';
-  @override
-  String get video => 'ظپظٹط¯ظٹظˆ';
-  @override
-  String get complete => 'ظ…ظƒطھظ…ظ„';
-  @override
-  String get start => 'ط§ط¨ط¯ط£';
-  @override
-  String get entertainment => 'ط§ظ„طھط±ظپظٹظ‡';
-  @override
-  String get educationalGames => 'ط§ظ„ط£ظ„ط¹ط§ط¨ ط§ظ„طھط¹ظ„ظٹظ…ظٹط©';
-  @override
-  String get puppetShows => 'ط¹ط±ظˆط¶ ط§ظ„ط¯ظ…ظ‰';
-  @override
-  String get interactiveStories => 'ط§ظ„ظ‚طµطµ ط§ظ„طھظپط§ط¹ظ„ظٹط©';
-  @override
-  String get miniChallenges => 'ط§ظ„طھط­ط¯ظٹط§طھ ط§ظ„طµط؛ظٹط±ط©';
-  @override
-  String get natureVideos => 'ظپظٹط¯ظٹظˆظ‡ط§طھ ط§ظ„ط·ط¨ظٹط¹ط©';
-  @override
-  String get brainTeasers => 'ط£ظ„ط؛ط§ط² ط§ظ„ط¯ظ…ط§ط؛';
-  @override
-  String get cartoonMovies => 'ط£ظپظ„ط§ظ… ط§ظ„ظƒط±طھظˆظ†';
-  @override
-  String get songs => 'ط§ظ„ط£ط؛ط§ظ†ظٹ';
-  @override
-  String get funnyClips => 'ظ…ظ‚ط§ط·ط¹ ظ…ط¶ط­ظƒط©';
+  // ── Content Categories ──
+  @override String get educationalContent => 'المحتوى التعليمي';
+  @override String get behavioralSkills => 'المهارات السلوكية';
+  @override String get skillfulActivities => 'الأنشطة المهارية';
+  @override String get subjects => 'المواد';
+  @override String get mathematics => 'الرياضيات';
+  @override String get science => 'العلوم';
+  @override String get reading => 'القراءة';
+  @override String get history => 'التاريخ';
+  @override String get geography => 'الجغرافيا';
+  @override String get languages => 'اللغات';
+  @override String get socialStories => 'القصص الاجتماعية';
+  @override String get emotionCards => 'بطاقات المشاعر';
+  @override String get problemSolving => 'حل المشكلات';
+  @override String get drawing => 'الرسم';
+  @override String get music => 'الموسيقى';
+  @override String get crafts => 'الحرف اليدوية';
+  @override String get cooking => 'الطبخ';
+  @override String get quiz => 'اختبار';
+  @override String get lesson => 'درس';
+  @override String get game => 'لعبة';
+  @override String get story => 'قصة';
+  @override String get video => 'فيديو';
+  @override String get complete => 'مكتمل';
+  @override String get start => 'ابدأ';
+  @override String get entertainment => 'الترفيه';
+  @override String get educationalGames => 'الألعاب التعليمية';
+  @override String get puppetShows => 'عروض الدمى';
+  @override String get interactiveStories => 'القصص التفاعلية';
+  @override String get miniChallenges => 'التحديات الصغيرة';
+  @override String get natureVideos => 'فيديوهات الطبيعة';
+  @override String get brainTeasers => 'ألغاز الدماغ';
+  @override String get cartoonMovies => 'أفلام الكرتون';
+  @override String get songs => 'الأغاني';
+  @override String get funnyClips => 'مقاطع مضحكة';
 
-  // â”€â”€ AI Buddy â”€â”€
-  @override
-  String get askMeAnything => 'ط§ط³ط£ظ„ظ†ظٹ ط£ظٹ ط´ظٹط،!';
-  @override
-  String get quickActions => 'ط¥ط¬ط±ط§ط،ط§طھ ط³ط±ظٹط¹ط©';
-  @override
-  String get recommendLesson => 'ط§ظ‚طھط±ط­\nط¯ط±ط³ط§ظ‹';
-  @override
-  String get suggestGame => 'ط§ظ‚طھط±ط­\nظ„ط¹ط¨ط©';
-  @override
-  String get tellStory => 'ط§ط­ظƒظگ ظ„ظٹ\nظ‚طµط©';
-  @override
-  String get funFact => 'ظ…ط¹ظ„ظˆظ…ط©\nظ…ظ…طھط¹ط©';
-  @override
-  String get motivation => 'ط­ظپظ‘ط²ظ†ظٹ';
-  @override
-  String typeMessage(String name) => 'ط§ظƒطھط¨ ط±ط³ط§ظ„طھظƒ ط¥ظ„ظ‰ $name...';
-  @override
-  String get voiceChat => 'ظ…ط­ط§ط¯ط«ط© طµظˆطھظٹط©';
-  @override
-  String get textChat => 'ظ…ط­ط§ط¯ط«ط© ظ†طµظٹط©';
-  @override
-  String get aiThinking => 'ط§ظ„ط°ظƒط§ط، ط§ظ„ط§طµط·ظ†ط§ط¹ظٹ ظٹظپظƒط±...';
-  @override
-  String get aiError =>
-      'ط¹ط°ط±ط§ظ‹طŒ ظ„ظ… ط£ظپظ‡ظ… ط°ظ„ظƒ. ظٹط±ط¬ظ‰ ط§ظ„ظ…ط­ط§ظˆظ„ط© ظ…ط±ط© ط£ط®ط±ظ‰.';
-  @override
-  String get aiBuddyName => 'ظƒظٹظ†ط¯ط±';
-  @override
-  String get aiBuddyOnline => 'ظ…طھطµظ„';
-  @override
-  String get aiCompanionSubtitle =>
-      'ط±ظپظٹظ‚ظƒ ط§ظ„ط°ظƒظٹ ظپظٹ ط§ظ„طھط¹ظ„ظ… âœ¨';
-  @override
-  String get tapMicToSpeak => 'ط§ط¶ط؛ط· ط¹ظ„ظ‰ ط§ظ„ظ…ط§ظٹظƒ ظ„ظ„طھط­ط¯ط«...';
-  @override
-  String get askKinderAnything => 'ط§ط³ط£ظ„ ظƒظٹظ†ط¯ط± ط£ظٹ ط´ظٹط،...';
+  // ── AI Buddy ──
+  @override String get askMeAnything => 'اسألني أي شيء!';
+  @override String get quickActions => 'إجراءات سريعة';
+  @override String get recommendLesson => 'اقترح\nدرساً';
+  @override String get suggestGame => 'اقترح\nلعبة';
+  @override String get tellStory => 'احكِ لي\nقصة';
+  @override String get funFact => 'معلومة\nممتعة';
+  @override String get motivation => 'حفّزني';
+  @override String typeMessage(String name) => 'اكتب رسالتك إلى $name...';
+  @override String get voiceChat => 'محادثة صوتية';
+  @override String get textChat => 'محادثة نصية';
+  @override String get aiThinking => 'الذكاء الاصطناعي يفكر...';
+  @override String get aiError => 'عذراً، لم أفهم ذلك. يرجى المحاولة مرة أخرى.';
+  @override String get aiBuddyName => 'كيندر';
+  @override String get aiBuddyOnline => 'متصل';
+  @override String get aiCompanionSubtitle => 'رفيقك الذكي في التعلم ✨';
+  @override String get tapMicToSpeak => 'اضغط على المايك للتحدث...';
+  @override String get askKinderAnything => 'اسأل كيندر أي شيء...';
+  @override String get aiInitialGreeting => 'مرحباً! 👋 أنا كيندر، رفيقك في التعلم! كيف يمكنني مساعدتك اليوم؟';
 
-  @override
-  String get aiWelcomeGreeting =>
-      'ظ…ط±ط­ط¨ظ‹ط§! ط£ظ†ط§ ظƒظٹظ†ط¯ط±طŒ ط±ظپظٹظ‚ظƒ ظپظٹ ط§ظ„طھط¹ظ„ظ‘ظ…. ظƒظٹظپ ظٹظ…ظƒظ†ظ†ظٹ ظ…ط³ط§ط¹ط¯طھظƒ ط§ظ„ظٹظˆظ…طں';
+  // ── Progress / Profile ──
+  @override String get progress => 'التقدم';
+  @override String get xp => 'نقاط الخبرة';
+  @override String get level => 'المستوى';
+  @override String get streak => 'السلسلة';
+  @override String get achievements => 'الإنجازات';
+  @override String get badges => 'الشارات';
+  @override String get dailyStreak => 'سلسلة يومية';
+  @override String get weeklyProgress => 'التقدم الأسبوعي';
+  @override String get monthlyProgress => 'التقدم الشهري';
+  @override String get yourProgress => 'تقدمك';
+  @override String get yourInterests => 'اهتماماتك';
+  @override String get weeklyChallenge => 'تحدي الأسبوع';
+  @override String get activities => 'الأنشطة';
+  @override String levelExplorer(int level) => 'مستكشف المستوى $level';
+  @override String xpToLevel(int level) => 'نقاط للمستوى $level';
+  @override String helloName(String name) => 'مرحباً، $name';
+  @override String get levelsTitle => 'المستويات';
+  @override String get levelJourneySubtitle => 'تتبع رحلة مستوياتك';
 
-  @override
-  String get aiMathResponse =>
-      'ط£ظ†ط§ ط£ط­ط¨ ط§ظ„ط±ظٹط§ط¶ظٹط§طھ ط£ظٹط¶ظ‹ط§! ًں”¢ ط¬ط±ظ‘ط¨ ظ‡ط°ط§: 3 + 5 = طں ظ…ط§ ط±ط£ظٹظƒ ظپظٹ ظ„ط¹ط¨ط© ط£ط±ظ‚ط§ظ… ط³ط±ظٹط¹ط©طں';
+  // ── Achievements ──
+  @override String get achievementFirstQuizTitle => 'أول اختبار';
+  @override String get achievementFirstQuizDescription => 'أكملت أول اختبار';
+  @override String get achievementFirstQuizSubtitle => 'أكملت أول اختبار';
+  @override String get achievementFiveDayStreakTitle => 'سلسلة 5 أيام';
+  @override String get achievementFiveDayStreakDescription => 'استمر!';
+  @override String get achievementStreakTitle => 'سلسلة 5 أيام';
+  @override String get achievementStreakSubtitle => 'استمر!';
+  @override String get achievementMathMasterTitle => 'بطل الرياضيات';
+  @override String get achievementMathMasterDescription => 'دقة 100%';
+  @override String get achievementMathMasterSubtitle => 'دقة 100%';
 
-  @override
-  String get aiStoryResponse =>
-      'ظƒط§ظ† ظٹط§ ظ…ط§ ظƒط§ظ† ظپظٹ ط¹ط§ظ„ظ… ظƒظٹظ†ط¯ط±طŒ ظ…ط³طھظƒط´ظپ طµط؛ظٹط± ط´ط¬ط§ط¹ ط§ظƒطھط´ظپ ط£ظ† ط§ظ„طھط¹ظ„ظ‘ظ… ظ‡ظˆ ط£ط¹ط¸ظ… ظ…ط؛ط§ظ…ط±ط© ط¹ظ„ظ‰ ط§ظ„ط¥ط·ظ„ط§ظ‚. âœ¨';
+  // ── Levels ──
+  @override String get levels => 'المستويات';
+  @override String get levelsSubtitle => 'أكمل كل مستوى لفتح المستوى التالي.';
+  @override String get open => 'افتح';
+  @override String get currentLabel => 'الحالي';
+  @override String get newLabel => 'جديد';
+  @override String get finishPreviousLevel => 'أكمل المستوى السابق للفتح!';
+  @override String levelNumber(int level) => 'المستوى $level';
+  @override String startLevel(int level) => 'ابدأ المستوى $level';
+  @override String playLevel(int level) => 'العب المستوى $level';
+  @override String levelKeepGoing(int level) => 'المستوى $level - استمر!';
+  @override String get levelLockedMessage => 'عذراً! أكمل المستوى السابق أولاً.';
+  @override String levelStartMessage(int level) => 'عمل رائع! ابدأ المستوى $level!';
 
-  @override
-  String get aiGameResponse =>
-      'ط§ظ„ط£ظ„ط¹ط§ط¨ ظ…ظ…طھط¹ط©! ًںژ® ط¬ط±ظ‘ط¨ ظ„ط¹ط¨ط© ط¨ظ†ط§ط، ط§ظ„ط£ظ„ط؛ط§ط² ظپظٹ ظ‚ط³ظ… ط§ظ„ظ…ظ‡ط§ط±ط§طھ. ط¥ظ†ظ‡ط§ ظ…ظ…طھط¹ط© ظˆطھط³ط§ط¹ط¯ ط¹ظ‚ظ„ظƒ ط¹ظ„ظ‰ ط§ظ„ظ†ظ…ظˆ!';
+  // ── Parent Dashboard ──
+  @override String get parentDashboard => 'لوحة تحكم ولي الأمر';
+  @override String get overview => 'نظرة عامة';
+  @override String get parentDashboardSubtitle => 'مرحباً بعودتك';
+  @override String get noChildrenAddedTitle => 'لم تتم إضافة أطفال بعد';
+  @override String get noChildrenAddedSubtitle => 'أضف ملف طفل للبدء';
+  @override String get todayOverviewTitle => 'نظرة عامة على اليوم';
+  @override String get totalTimeLabel => 'الوقت الإجمالي';
+  @override String get avgXpLabel => 'متوسط الخبرة';
+  @override String get viewDetailedReport => 'عرض التقرير المفصل';
+  @override String get recentActivitiesTitle => 'الأنشطة الأخيرة';
+  @override String get viewAll => 'عرض الكل';
+  @override String get noRecentActivities => 'لا توجد أنشطة حديثة';
+  @override String completedActivity(String childName) => '$childName أكمل نشاطاً';
+  @override String minutesToday(int minutes) => '$minutes دقيقة اليوم';
+  @override String dayStreak(int days) => 'سلسلة $days يوم';
+  @override String insightsSummary(String names, int totalActivities, int childCount) =>
+      '$names أكملوا $totalActivities نشاطاً';
+  @override String get weeklyProgressTitle => 'التقدم الأسبوعي';
+  @override String get timeLabel => 'الوقت';
+  @override String get avgScoreLabel => 'متوسط الدرجات';
+  @override String get achievementPerfectScoreTitle => 'درجة كاملة';
+  @override String get achievementPerfectScoreSubtitle => 'حصلت على 100% في اختبار';
+  @override String get achievementMathMasterReportSubtitle => 'أكملت جميع دروس الرياضيات';
+  @override String get achievementFiveDayStreakSubtitle => 'تعلمت لمدة 5 أيام متتالية';
+  @override String get minutesAgo => 'دقائق مضت';
+  @override String get weekdayMon => 'اثن';
+  @override String get weekdayTue => 'ثلا';
+  @override String get weekdayWed => 'أرب';
+  @override String get weekdayThu => 'خمي';
+  @override String get weekdayFri => 'جمع';
+  @override String get weekdaySat => 'سبت';
+  @override String get weekdaySun => 'أحد';
+  @override String get goodMorningOverview => 'صباح الخير — إليك نظرة عامة على اليوم';
+  @override String get goodAfternoonOverview => 'مساء الخير — إليك ما يحدث';
+  @override String get goodEveningOverview => 'مساء الخير — إليك ملخصك اليومي';
+  @override String get noChildrenAddedSubtitleDashboard =>
+      'أضف طفلك الأول لبدء تتبع رحلة تعلمه.';
+  @override String childrenLinkedCount(int n) => '$n مرتبط';
+  @override String get manage => 'إدارة';
+  @override String xpProgressDisplay(int current, int max) => '$current/$max نقطة';
+  @override String get aggregatedAcrossChildren => 'مجمّع عبر جميع الأطفال';
+  @override String get minutesLabel => 'دقائق';
+  @override String get premiumAnalysis => 'تحليل مميز';
+  @override String get viewFullReport => 'عرض التقرير الكامل';
+  @override String completedAnActivity(String name) => '$name أكمل نشاطاً';
+  @override String get weeklyActivity => 'النشاط الأسبوعي';
+  @override String get activitiesCompletedPerDay => 'الأنشطة المكتملة يومياً';
 
-  @override
-  String get aiSadResponse =>
-      'ط£ظ†ط§ ط¢ط³ظپ ظ„ط£ظ†ظƒ طھط´ط¹ط± ط¨ظ‡ط°ط§ ًں’™. ظ…ظ† ط§ظ„ط·ط¨ظٹط¹ظٹ ط£ظ† طھظƒظˆظ† ظ„ط¯ظٹظ†ط§ ظ…ط´ط§ط¹ط± ظƒط¨ظٹط±ط©. ظ‡ظ„ طھط±ظٹط¯ ط´ظٹط¦ظ‹ط§ ظٹط¨ظ‡ط¬ظƒطں';
+  // ── Child Management ──
+  @override String get childManagement => 'إدارة الأطفال';
+  @override String get childProfiles => 'ملفات الأطفال';
+  @override String get addChild => 'إضافة طفل';
+  @override String get editChild => 'تعديل ملف الطفل';
+  @override String get childName => 'اسم الطفل';
+  @override String get childAge => 'العمر';
+  @override String get childInterests => 'الاهتمامات';
+  @override String get avatar => 'الصورة الرمزية';
+  @override String get saveChanges => 'حفظ التغييرات';
+  @override String get yourChildren => 'أطفالك';
+  @override String get noChildProfilesYet => 'لا توجد ملفات أطفال بعد';
+  @override String get tapToAddChild => 'اضغط + لإضافة ملف طفل.';
+  @override String get addChildProfiles => 'إضافة ملفات أطفال جديدة';
+  @override String get editProfiles => 'تعديل الملفات الموجودة';
+  @override String get picturePasswords => 'تعيين كلمات مرور الصور';
+  @override String get configurePreferences => 'تكوين التفضيلات';
+  @override String get deactivateProfiles => 'تعطيل الملفات';
+  @override String get childProfileAdded => 'تمت إضافة ملف الطفل';
+  @override String get childProfileAddFailed => 'فشل إضافة الطفل';
+  @override String get manageChildProfiles => 'إدارة ملفات الأطفال';
+  @override String get addEditManageChildren => 'إضافة أو تعديل أو إدارة ملفات أطفالك';
 
-  @override
-  String get aiTiredResponse =>
-      'ط§ظ„ط±ط§ط­ط© ظ…ظ‡ظ…ط© ط£ظٹط¶ظ‹ط§ ًںک´. ط±ط¨ظ…ط§ طھط¬ط±ظ‘ط¨ ظ†ط´ط§ط·ظ‹ط§ ظ‡ط§ط¯ط¦ظ‹ط§ ظˆظ‚طµظٹط±ظ‹ط§ ظ…ط«ظ„ ط§ظ„طھظ„ظˆظٹظ† ط§ظ„ظٹظˆظ….';
+  // ── Reports ──
+  @override String get reports => 'التقارير';
+  @override String get reportsAndAnalytics => 'التقارير والتحليلات';
+  @override String get activityReports => 'تقارير الأنشطة';
+  @override String get learningProgress => 'تقدم التعلم';
+  @override String get learningProgressReports => 'تقارير تقدم التعلم';
+  @override String get trackChildDevelopment => 'تتبع تطور طفلك وإنجازاته';
+  @override String get skillDevelopment => 'تطوير المهارات';
+  @override String get behavioralProgress => 'التقدم السلوكي';
+  @override String get screenTimeReport => 'تقرير وقت الشاشة';
+  @override String get aiInsights => 'رؤى الذكاء الاصطناعي';
+  @override String get recentActivities => 'الأنشطة الأخيرة';
+  @override String get timeSpent => 'الوقت المستغرق';
+  @override String get completedActivities => 'الأنشطة المكتملة';
+  @override String get averageScore => 'متوسط الدرجات';
+  @override String get strengths => 'نقاط القوة';
+  @override String get areasForImprovement => 'مجالات التحسين';
+  @override String get screenTime => 'وقت الشاشة';
+  @override String get week => 'أسبوع';
+  @override String get month => 'شهر';
+  @override String get year => 'سنة';
+  @override String get yearlyProgress => 'التقدم السنوي';
+  @override String get activityBreakdown => 'تفصيل الأنشطة';
+  @override String get recentAchievements => 'الإنجازات الأخيرة';
+  @override String get noChildSelected => 'لم يتم اختيار طفل';
+  @override String get addChildToViewReports => 'أضف طفلاً لعرض التقارير';
+  @override String ageLabel(int age) => 'العمر $age';
 
-  @override
-  String get aiDefaultResponse =>
-      'ظ‡ط°ط§ ظ…ط«ظٹط± ظ„ظ„ط§ظ‡طھظ…ط§ظ…! ط£ط®ط¨ط±ظ†ظٹ ط§ظ„ظ…ط²ظٹط¯. ط£ظ†ط§ ظ‡ظ†ط§ ظ„ط£ط³ط§ط¹ط¯ظƒ ط¹ظ„ظ‰ ط§ظ„طھط¹ظ„ظ‘ظ… ظˆط§ظ„ط§ط³طھظ…طھط§ط¹ ظƒظ„ ظٹظˆظ…!';
+  // ── Parental Controls ──
+  @override String get parentalControls => 'الرقابة الأبوية';
+  @override String get contentRestrictions => 'قيود المحتوى';
+  @override String get contentRestrictionsAndScreenTime => 'قيود المحتوى ووقت الشاشة';
+  @override String get manageChildAccess => 'إدارة ما يمكن لطفلك الوصول إليه ولكم من الوقت';
+  @override String get screenTimeLimits => 'حدود وقت الشاشة';
+  @override String get timeRestrictions => 'قيود الوقت';
+  @override String get emergencyControls => 'التحكم الطارئ';
+  @override String get lockAppNow => 'قفل التطبيق الآن';
+  @override String get dailyLimit => 'الحد اليومي';
+  @override String get allowedHours => 'الساعات المسموح بها';
+  @override String get hoursPerDay => 'ساعات في اليوم';
+  @override String get requireApproval => 'طلب الموافقة';
+  @override String get bedtime => 'وقت النوم';
+  @override String get wakeTime => 'وقت الاستيقاظ';
+  @override String get sleepMode => 'وضع النوم';
+  @override String get emergencyLock => 'القفل الطارئ';
+  @override String get contentFiltering => 'تصفية المحتوى';
+  @override String get ageAppropriate => 'مناسب للعمر';
+  @override String get blockContent => 'حظر المحتوى';
+  @override String get allowContent => 'السماح بالمحتوى';
+  @override String get timeLimits => 'حدود الوقت';
+  @override String get breakReminders => 'تذكيرات الاستراحة';
+  @override String get smartControl => 'التحكم الذكي';
+  @override String get aiRecommendations => 'توصيات الذكاء الاصطناعي';
 
-  @override
-  String get aiQuickActionLessonResponse =>
-      'ًں“ڑ ط£ظ‚طھط±ط­ ط¹ظ„ظٹظƒ "ظ…ط؛ط§ظ…ط±ط© ط§ظ„ط£ط±ظ‚ط§ظ…". ط¥ظ†ظ‡ ظ…ظ†ط§ط³ط¨ ظ„ظ…ط³طھظˆط§ظƒ ظˆظ…ظ…طھط¹ ط¬ط¯ظ‹ط§!';
+  // ── Settings ──
+  @override String get settings => 'الإعدادات';
+  @override String get notifications => 'الإشعارات';
+  @override String get privacySettings => 'إعدادات الخصوصية';
+  @override String get dataSharing => 'مشاركة البيانات';
+  @override String get parentalConsent => 'موافقة ولي الأمر';
+  @override String get accessibility => 'إمكانية الوصول';
+  @override String get fontSize => 'حجم الخط';
+  @override String get contrast => 'التباين';
+  @override String get language => 'اللغة';
+  @override String get english => 'English';
+  @override String get arabic => 'العربية';
+  @override String get theme => 'المظهر';
+  @override String get mode => 'الوضع';
+  @override String get systemMode => 'وضع النظام';
+  @override String get themePalette => 'لوحة الألوان';
+  @override String get themePaletteHint => 'اختر لوحة ووضعاً يناسب عائلتك.';
+  @override String get lightMode => 'الوضع الفاتح';
+  @override String get darkMode => 'الوضع الداكن';
+  @override String get eyeFriendlyMode => 'الوضع المريح للعين';
+  @override String get auto => 'تلقائي';
+  @override String get sound => 'الصوت';
+  @override String get soundEffects => 'المؤثرات الصوتية';
+  @override String get backgroundMusic => 'الموسيقى الخلفية';
+  @override String get voiceGuidance => 'التوجيه الصوتي';
+  @override String get appSettings => 'إعدادات التطبيق';
+  @override String get editProfile => 'تعديل الملف الشخصي';
+  @override String get changeAvatar => 'تغيير الصورة الرمزية';
+  @override String get resetProgress => 'إعادة تعيين التقدم';  @override String get resetProgressTitle => 'إعادة تعيين التقدم؟';
+  @override String get resetProgressMessage => 'سيؤدي هذا إلى حذف جميع نقاط الخبرة والمستويات والإنجازات. لا يمكن التراجع عن هذا الإجراء.';
+  @override String get reset => 'إعادة تعيين';
+  @override String get progressReset => 'تمت إعادة تعيين التقدم';
+  @override String get profileLabel => 'الملف الشخصي';
+  @override String get searchSettingsHint => 'ابحث في الإعدادات...';
+  @override String get appSettingsSection => 'إعدادات التطبيق';
+  @override String get themes => 'المظاهر';
+  @override String get lightAndCalm => 'فاتح وهادئ';
+  @override String get aboutUs => 'من نحن';
+  @override String get noSettingsFound => 'لا توجد إعدادات';
+  @override String get selectLanguage => 'اختر اللغة';
+  @override String languageChanged(String languageName) => 'تم تغيير اللغة إلى $languageName';
+  @override String get englishUs => 'الإنجليزية (الولايات المتحدة)';
+  @override String get chooseAvatar => 'اختر صورة رمزية';
+  @override String get avatarSaved => 'تم حفظ الصورة الرمزية';
+  @override String get pleaseSelectThreePictures => 'يرجى اختيار 3 صور';
+  @override String get failedToUpdatePicturePassword => 'فشل تحديث كلمة مرور الصور';
+  @override String get profileUpdated => 'تم تحديث الملف الشخصي';
+  @override String get changeAvatarFromProfile => 'غيّر صورتك الرمزية من شاشة الملف الشخصي';
+  @override String get nameLabel => 'الاسم';
+  @override String get enterYourName => 'أدخل اسمك';
+  @override String get pleaseEnterName => 'يرجى إدخال اسم';
+  @override String get chooseExactlyThreePictures => 'اختر 3 صور بالضبط';
+  @override String get darkLight => 'داكن / فاتح';
+  @override String get chooseCalmColor => 'اختر لوناً هادئاً';
+  @override String get increaseFontSize => 'تكبير الخط';
+  @override String get decreaseFontSize => 'تصغير الخط';
+  @override String get highContrast => 'تباين عالٍ';
+  @override String get screenReader => 'دعم قارئ الشاشة';
+  @override String get voiceCommands => 'الأوامر الصوتية';
+  @override String get switchAccess => 'وصول التبديل';
+  @override String get clearSelection => 'مسح الاختيار';
 
-  @override
-  String get aiQuickActionGameResponse =>
-      'ًںژ® ط¬ط±ظ‘ط¨ "طھط­ط¯ظٹ ط§ظ„ط£ظ„ط؛ط§ط²" ط§ظ„ط¢ظ†. ط¥ظ†ظ‡ ظٹظ‚ظˆظ‘ظٹ ظ…ظ‡ط§ط±ط§طھ ط­ظ„ ط§ظ„ظ…ط´ظƒظ„ط§طھ ظ„ط¯ظٹظƒ!';
+  // ── Subscription / Paywall ──
+  @override String get subscription => 'الاشتراك';
+  @override String get freeTrial => 'تجربة مجانية';
+  @override String get familyPlan => 'الخطة العائلية';
+  @override String get manageSubscription => 'إدارة الاشتراك';
+  @override String get paymentMethod => 'طريقة الدفع';
+  @override String get billingInfo => 'معلومات الفوترة';
+  @override String get trialEnds => 'تنتهي التجربة';
+  @override String get subscriptionActive => 'الاشتراك نشط';
+  @override String get subscriptionExpired => 'انتهى الاشتراك';
+  @override String get upgradeNow => 'ترقية الآن';
+  @override String get premiumFeatures => 'الميزات المميزة';
+  @override String get planAiInsightsPro => 'رؤى التعلم بالذكاء الاصطناعي';
+  @override String get planAdvancedReports => 'تقارير التعلم المتقدمة';
+  @override String get planOfflineDownloads => 'الوصول دون اتصال';
+  @override String get planSmartControls => 'الرقابة الأبوية الذكية';
+  @override String get planExclusiveContent => 'محتوى مميز حصري';
+  @override String get planFeatureInPremium => 'متاح في الخطة المميزة';
+  @override String get planFree => 'مجاني';
+  @override String get planBasicReports => 'تقارير التقدم الأساسية';
+  @override String planChildLimit(int count) => 'إدارة حتى $count أطفال';
+  @override String get currentPlan => 'الخطة الحالية';
+  @override String get choosePlan => 'اختر خطتك';
+  @override String get freePlanChildLimit => 'الخطة المجانية تسمح بطفل واحد';
+  @override String get planFamilyPlus => 'عائلي بلس';
+  @override String get planPremium => 'مميز';
+  @override String get planUnlimitedChildren => 'أطفال غير محدودين';
+  @override String get planFamilyDashboard => 'لوحة تحكم العائلة';
+  @override String get paywallTitle => 'الترقية إلى المميز';
+  @override String get paywallPrice => '10\$ / شهر';
+  @override String get paywallSubscribe => 'ترقية الآن';
+  @override String get paywallManagePaymentMethods => 'إدارة طرق الدفع';
+  @override String get paymentMethodsTitle => 'طرق الدفع';
+  @override String get paymentMethodsEmpty => 'لم تتم إضافة طرق دفع بعد.';
+  @override String get addPaymentMethod => 'إضافة طريقة دفع';
+  @override String get removePaymentMethod => 'إزالة';
+  @override String get openPaymentPortal => 'فتح بوابة الدفع';
+  @override String yearsOld(int age) => '$age سنوات';
+  @override String levelXp(int level, int xp) => 'المستوى $level - $xp نقطة';
+  @override String get coppaCompliance => 'الامتثال لـ COPPA';
+  @override String comingSoon(String title) => '$title قادم قريباً';
 
-  @override
-  String get aiQuickActionStoryResponse =>
-      'ًں“– ط¥ظ„ظٹظƒ ظ‚طµط© ط³ط±ظٹط¹ط©: ظˆط¬ط¯ ط³ط§ظ…ظٹ ظ…ط³طھظƒط´ظپ ط§ظ„ط¹ظ„ظˆظ… ط¬ط±ط¹ط© ط³ط­ط±ظٹط©... ظ„ظƒظ†ظ‡ط§ ظƒط§ظ†طھ ظ…ط¬ط±ط¯ ط¹طµظٹط± ط¨ط±طھظ‚ط§ظ„! ًںک„';
+  // ── Notifications ──
+  @override String get noNotifications => 'لا توجد إشعارات بعد.';
+  @override String get markAllRead => 'تحديد الكل كمقروء';
+  @override String notificationDailyGoal(String name, int activities) =>
+      '$name أكمل $activities أنشطة اليوم!';
+  @override String notificationScreenTime(String name, int hours) =>
+      '$name وصل إلى الحد اليومي البالغ $hours ساعات.';
+  @override String notificationAchievement(String name, String badge) =>
+      '$name فتح شارة "$badge"!';
+  @override String get notificationWeeklyReport => 'تقرير تقدم طفلك لهذا الأسبوع متاح.';
+  @override String notificationMilestone(String name, int count) =>
+      '$name أكمل $count نشاطاً!';
+  @override String notificationRecommendation(String name) =>
+      'محتوى تعليمي جديد متاح لـ $name بناءً على اهتماماته.';
+  @override String get hoursAgo => 'ساعات مضت';
+  @override String get daysAgo => 'أيام مضت';
+  @override String get justNow => 'الآن';
 
-  @override
-  String get aiQuickActionFactResponse =>
-      'ًں§  ظ‡ظ„ طھط¹ظ„ظ… ط£ظ† ظ„ظ„ط£ط®ط·ط¨ظˆط· ط«ظ„ط§ط«ط© ظ‚ظ„ظˆط¨ ظˆط¯ظ…ظ‹ط§ ط£ط²ط±ظ‚طں ط§ظ„ط·ط¨ظٹط¹ط© ظ…ط¯ظ‡ط´ط©!';
+  // ── Safety / Privacy ──
+  @override String get safety => 'الأمان';
+  @override String get privacy => 'الخصوصية';
+  @override String get childProtection => 'حماية الطفل';
+  @override String get dataSecurity => 'أمان البيانات';
+  @override String get parentalConsentRequired => 'موافقة ولي الأمر مطلوبة';
+  @override String get minimalDataCollection => 'جمع بيانات محدود';
+  @override String get encryptedStorage => 'تخزين مشفر';
 
-  @override
-  String get aiQuickActionMotivationResponse =>
-      'â­گ ط£ظ†طھ طھظ‚ظˆظ… ط¨ط¹ظ…ظ„ ط±ط§ط¦ط¹! ظƒظ„ ط´ظٹط، ط¬ط¯ظٹط¯ طھطھط¹ظ„ظ…ظ‡ ظٹط¬ط¹ظ„ ط¹ظ‚ظ„ظƒ ط£ظ‚ظˆظ‰. ط§ط³طھظ…ط±!';
+  // ── Help / Support ──
+  @override String get help => 'المساعدة';
+  @override String get support => 'الدعم';
+  @override String get faq => 'الأسئلة الشائعة';
+  @override String get tutorial => 'الدليل التعليمي';
+  @override String get walkthrough => 'الجولة التعريفية';
+  @override String get feedback => 'التغذية الراجعة';
+  @override String get helpFaq => 'المساعدة والأسئلة الشائعة';
+  @override String get contactUs => 'اتصل بنا';
+  @override String get about => 'حول';
+  @override String get logout => 'تسجيل الخروج';
+  @override String get accountSection => 'الحساب';
+  @override String get familySection => 'العائلة';
+  @override String get preferencesSection => 'التفضيلات';
+  @override String get supportSection => 'الدعم';
+  @override String get legalSection => 'قانوني';
+  @override String get searchFaqsHint => 'ابحث في الأسئلة الشائعة...';
+  @override String get noFaqFound => 'لا توجد أسئلة شائعة';
+  @override String get contactUsSubtitle => 'نحن هنا للمساعدة';
+  @override String get contactEmailLabel => 'البريد الإلكتروني';
+  @override String get contactEmailValue => 'support@kinderworld.app';
+  @override String get contactPhoneLabel => 'الهاتف';
+  @override String get contactPhoneValue => '+1 (800) 123-4567';
+  @override String get contactHoursLabel => 'ساعات العمل';
+  @override String get contactHoursValue => 'الاثنين - الجمعة، 9 ص - 6 م';
+  @override String get sendMessageTitle => 'أرسل رسالة';
+  @override String get messageHint => 'اكتب رسالتك هنا...';
+  @override String get sendMessage => 'إرسال الرسالة';
+  @override String get messageSent => 'تم إرسال رسالتك بنجاح!';
 
-  @override
-  String get aiQuickActionFallbackResponse => 'ظ„ط¯ظٹ ط´ظٹط، ظ…ظ…طھط¹ ظ„ظƒ!';
-  @override
-  String get aiInitialGreeting =>
-      'ظ…ط±ط­ط¨ط§ظ‹! ًں‘‹ ط£ظ†ط§ ظƒظٹظ†ط¯ط±طŒ ط±ظپظٹظ‚ظƒ ظپظٹ ط§ظ„طھط¹ظ„ظ…! ظƒظٹظپ ظٹظ…ظƒظ†ظ†ظٹ ظ…ط³ط§ط¹ط¯طھظƒ ط§ظ„ظٹظˆظ…طں';
+  // ── System / Maintenance ──
+  @override String get maintenanceMode => 'التطبيق تحت الصيانة';
+  @override String get updateRequired => 'تحديث مطلوب';
+  @override String get syncData => 'جاري مزامنة البيانات...';
+  @override String get dataSyncComplete => 'اكتملت مزامنة البيانات';
+  @override String get sessionExpired => 'انتهت الجلسة';
+  @override String get logoutConfirm => 'هل أنت متأكد من تسجيل الخروج؟';
+  @override String get exitConfirm => 'هل أنت متأكد من الخروج؟';
+  @override String get deleteConfirm => 'هل أنت متأكد من الحذف؟';
 
-  // â”€â”€ Progress / Profile â”€â”€
-  @override
-  String get progress => 'ط§ظ„طھظ‚ط¯ظ…';
-  @override
-  String get xp => 'ظ†ظ‚ط§ط· ط§ظ„ط®ط¨ط±ط©';
-  @override
-  String get level => 'ط§ظ„ظ…ط³طھظˆظ‰';
-  @override
-  String get streak => 'ط§ظ„ط³ظ„ط³ظ„ط©';
-  @override
-  String get achievements => 'ط§ظ„ط¥ظ†ط¬ط§ط²ط§طھ';
-  @override
-  String get badges => 'ط§ظ„ط´ط§ط±ط§طھ';
-  @override
-  String get dailyStreak => 'ط³ظ„ط³ظ„ط© ظٹظˆظ…ظٹط©';
-  @override
-  String get weeklyProgress => 'ط§ظ„طھظ‚ط¯ظ… ط§ظ„ط£ط³ط¨ظˆط¹ظٹ';
-  @override
-  String get monthlyProgress => 'ط§ظ„طھظ‚ط¯ظ… ط§ظ„ط´ظ‡ط±ظٹ';
-  @override
-  String get yourProgress => 'طھظ‚ط¯ظ…ظƒ';
-  @override
-  String get yourInterests => 'ط§ظ‡طھظ…ط§ظ…ط§طھظƒ';
-  @override
-  String get weeklyChallenge => 'طھط­ط¯ظٹ ط§ظ„ط£ط³ط¨ظˆط¹';
-  @override
-  String get activities => 'ط§ظ„ط£ظ†ط´ط·ط©';
-  @override
-  String levelExplorer(int level) => 'ظ…ط³طھظƒط´ظپ ط§ظ„ظ…ط³طھظˆظ‰ $level';
-  @override
-  String xpToLevel(int level) => 'ظ†ظ‚ط§ط· ظ„ظ„ظ…ط³طھظˆظ‰ $level';
-  @override
-  String helloName(String name) => 'ظ…ط±ط­ط¨ط§ظ‹طŒ $name';
-  @override
-  String get levelsTitle => 'ط§ظ„ظ…ط³طھظˆظٹط§طھ';
-  @override
-  String get levelJourneySubtitle => 'طھطھط¨ط¹ ط±ط­ظ„ط© ظ…ط³طھظˆظٹط§طھظƒ';
+  // ── Validation ──
+  @override String get passwordTooShort => 'يجب أن تكون كلمة المرور 6 أحرف على الأقل';
+  @override String get passwordsDontMatch => 'كلمتا المرور غير متطابقتين';
+  @override String get invalidAge => 'يرجى إدخال عمر صحيح (5-12)';
+  @override String get selectAvatar => 'يرجى اختيار صورة رمزية';
+  @override String get incorrectPicturePassword => 'كلمة مرور الصور غير صحيحة. يرجى المحاولة مرة أخرى.';
+  @override String get nameTooShort => 'يجب أن يكون الاسم حرفين على الأقل';
+  @override String get pleaseEnterRealName => 'يرجى إدخال اسم حقيقي';
 
-  // â”€â”€ Achievements â”€â”€
-  @override
-  String get achievementFirstQuizTitle => 'ط£ظˆظ„ ط§ط®طھط¨ط§ط±';
-  @override
-  String get achievementFirstQuizDescription =>
-      'ط£ظƒظ…ظ„طھ ط£ظˆظ„ ط§ط®طھط¨ط§ط±';
-  @override
-  String get achievementFirstQuizSubtitle => 'ط£ظƒظ…ظ„طھ ط£ظˆظ„ ط§ط®طھط¨ط§ط±';
-  @override
-  String get achievementFiveDayStreakTitle => 'ط³ظ„ط³ظ„ط© 5 ط£ظٹط§ظ…';
-  @override
-  String get achievementFiveDayStreakDescription => 'ط§ط³طھظ…ط±!';
-  @override
-  String get achievementStreakTitle => 'ط³ظ„ط³ظ„ط© 5 ط£ظٹط§ظ…';
-  @override
-  String get achievementStreakSubtitle => 'ط§ط³طھظ…ط±!';
-  @override
-  String get achievementMathMasterTitle => 'ط¨ط·ظ„ ط§ظ„ط±ظٹط§ط¶ظٹط§طھ';
-  @override
-  String get achievementMathMasterDescription => 'ط¯ظ‚ط© 100%';
-  @override
-  String get achievementMathMasterSubtitle => 'ط¯ظ‚ط© 100%';
+  // ── Welcome / Onboarding ──
+  @override String get welcomeTitle => 'مرحباً بك في كيندر وورلد!';
+  @override String get welcomeSubtitle => 'بيئة تعلم آمنة وممتعة للأطفال';
+  @override String get chooseLanguageTitle => 'اختر لغتك';
+  @override String get chooseLanguageSubtitle => 'اختر لغتك المفضلة';
+  @override String get languageEnglishShort => 'EN';
+  @override String get languageArabicShort => 'AR';
+  @override String get educational => 'تعليمي';
+  @override String get funGames => 'ألعاب ممتعة';
+  @override String get aiPowered => 'مدعوم بالذكاء الاصطناعي';
+  @override String get safe => 'آمن';
+  @override String get getStarted => 'ابدأ الآن';
+  @override String get coppaGdprNote => 'متوافق مع COPPA و GDPR - آمن للأطفال';
+  @override String get onboardingLearn => 'تعلّم';
+  @override String get onboardingPlay => 'العب';
+  @override String get onboardingGrow => 'انمو';
+  @override String get onboardingLearnSubtitle => 'محتوى تعليمي مخصص لطفلك';
+  @override String get onboardingLearnDescription =>
+      'اكتشف دروساً تفاعلية في الرياضيات والعلوم والقراءة والمزيد. كل نشاط مصمم لجعل التعلم ممتعاً وجذاباً.';
+  @override String get onboardingPlaySubtitle => 'ألعاب ممتعة تطور المهارات';
+  @override String get onboardingPlayDescription =>
+      'استمتع بالألعاب التعليمية والألغاز والأنشطة الإبداعية التي تساعد طفلك على النمو مع الاستمتاع.';
+  @override String get onboardingGrowSubtitle => 'تعلم مخصص بالذكاء الاصطناعي';
+  @override String get onboardingGrowDescription =>
+      'يتكيف مساعدنا الذكي مع أسلوب تعلم طفلك ويقدم توصيات مخصصة للنمو الأمثل.';
+  @override String get interactiveLessons => 'دروس تفاعلية';
+  @override String get interactiveLessonsDesc => 'محتوى تعليمي جذاب ومخصص';
+  @override String get learnThroughPlay => 'التعلم من خلال اللعب';
+  @override String get learnThroughPlayDesc => 'ألعاب ممتعة تطور المهارات';
+  @override String get personalizedForChild => 'مخصص لطفلك';
+  @override String get personalizedForChildDesc => 'تجربة تعلم مكيّفة مع احتياجات طفلك';
+  @override String get coppaGdprCompliant => 'متوافق مع COPPA و GDPR';
+  @override String get coppaGdprCompliantDesc => 'آمن وخاضع للرقابة الأبوية';
 
-  // â”€â”€ Levels â”€â”€
-  @override
-  String get levels => 'ط§ظ„ظ…ط³طھظˆظٹط§طھ';
-  @override
-  String get levelsSubtitle =>
-      'ط£ظƒظ…ظ„ ظƒظ„ ظ…ط³طھظˆظ‰ ظ„ظپطھط­ ط§ظ„ظ…ط³طھظˆظ‰ ط§ظ„طھط§ظ„ظٹ.';
-  @override
-  String get open => 'ط§ظپطھط­';
-  @override
-  String get currentLabel => 'ط§ظ„ط­ط§ظ„ظٹ';
-  @override
-  String get newLabel => 'ط¬ط¯ظٹط¯';
-  @override
-  String get finishPreviousLevel =>
-      'ط£ظƒظ…ظ„ ط§ظ„ظ…ط³طھظˆظ‰ ط§ظ„ط³ط§ط¨ظ‚ ظ„ظ„ظپطھط­!';
-  @override
-  String levelNumber(int level) => 'ط§ظ„ظ…ط³طھظˆظ‰ $level';
-  @override
-  String startLevel(int level) => 'ط§ط¨ط¯ط£ ط§ظ„ظ…ط³طھظˆظ‰ $level';
-  @override
-  String playLevel(int level) => 'ط§ظ„ط¹ط¨ ط§ظ„ظ…ط³طھظˆظ‰ $level';
-  @override
-  String levelKeepGoing(int level) => 'ط§ظ„ظ…ط³طھظˆظ‰ $level - ط§ط³طھظ…ط±!';
-  @override
-  String get levelLockedMessage =>
-      'ط¹ط°ط±ط§ظ‹! ط£ظƒظ…ظ„ ط§ظ„ظ…ط³طھظˆظ‰ ط§ظ„ط³ط§ط¨ظ‚ ط£ظˆظ„ط§ظ‹.';
-  @override
-  String levelStartMessage(int level) =>
-      'ط¹ظ…ظ„ ط±ط§ط¦ط¹! ط§ط¨ط¯ط£ ط§ظ„ظ…ط³طھظˆظ‰ $level!';
+  // ── About ──
+  @override String get kinderWorldAppTitle => 'تطبيق كيندر وورلد';
+  @override String get aboutAppName => 'كيندر وورلد';
+  @override String appVersionLabel(String version) => 'الإصدار $version';
+  @override String get aboutAppDescription =>
+      'كيندر وورلد هو تطبيق ممتع وتعليمي مصمم لمساعدة الأطفال على التعلم من خلال اللعب. نركز على الأنشطة السلوكية والتعليمية والمهارية لتوفير تجربة تعلم شاملة.';
+  @override String get aboutDescription =>
+      'كيندر وورلد هو تطبيق ممتع وتعليمي مصمم لمساعدة الأطفال على التعلم من خلال اللعب.';
+  @override String lastUpdated(String date) => 'آخر تحديث: $date';
 
-  // â”€â”€ Parent Dashboard â”€â”€
-  @override
-  String get parentDashboard => 'ظ„ظˆط­ط© طھط­ظƒظ… ظˆظ„ظٹ ط§ظ„ط£ظ…ط±';
-  @override
-  String get overview => 'ظ†ط¸ط±ط© ط¹ط§ظ…ط©';
-  @override
-  String get parentDashboardSubtitle => 'ظ…ط±ط­ط¨ط§ظ‹ ط¨ط¹ظˆط¯طھظƒ';
-  @override
-  String get noChildrenAddedTitle => 'ظ„ظ… طھطھظ… ط¥ط¶ط§ظپط© ط£ط·ظپط§ظ„ ط¨ط¹ط¯';
-  @override
-  String get noChildrenAddedSubtitle => 'ط£ط¶ظپ ظ…ظ„ظپ ط·ظپظ„ ظ„ظ„ط¨ط¯ط،';
-  @override
-  String get todayOverviewTitle => 'ظ†ط¸ط±ط© ط¹ط§ظ…ط© ط¹ظ„ظ‰ ط§ظ„ظٹظˆظ…';
-  @override
-  String get totalTimeLabel => 'ط§ظ„ظˆظ‚طھ ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹ';
-  @override
-  String get avgXpLabel => 'ظ…طھظˆط³ط· ط§ظ„ط®ط¨ط±ط©';
-  @override
-  String get viewDetailedReport => 'ط¹ط±ط¶ ط§ظ„طھظ‚ط±ظٹط± ط§ظ„ظ…ظپطµظ„';
-  @override
-  String get recentActivitiesTitle => 'ط§ظ„ط£ظ†ط´ط·ط© ط§ظ„ط£ط®ظٹط±ط©';
-  @override
-  String get viewAll => 'ط¹ط±ط¶ ط§ظ„ظƒظ„';
-  @override
-  String get noRecentActivities => 'ظ„ط§ طھظˆط¬ط¯ ط£ظ†ط´ط·ط© ط­ط¯ظٹط«ط©';
-  @override
-  String completedActivity(String childName) =>
-      '$childName ط£ظƒظ…ظ„ ظ†ط´ط§ط·ط§ظ‹';
-  @override
-  String minutesToday(int minutes) => '$minutes ط¯ظ‚ظٹظ‚ط© ط§ظ„ظٹظˆظ…';
-  @override
-  String dayStreak(int days) => 'ط³ظ„ط³ظ„ط© $days ظٹظˆظ…';
-  @override
-  String insightsSummary(String names, int totalActivities, int childCount) =>
-      '$names ط£ظƒظ…ظ„ظˆط§ $totalActivities ظ†ط´ط§ط·ط§ظ‹';
-  @override
-  String get weeklyProgressTitle => 'ط§ظ„طھظ‚ط¯ظ… ط§ظ„ط£ط³ط¨ظˆط¹ظٹ';
-  @override
-  String get timeLabel => 'ط§ظ„ظˆظ‚طھ';
-  @override
-  String get avgScoreLabel => 'ظ…طھظˆط³ط· ط§ظ„ط¯ط±ط¬ط§طھ';
-  @override
-  String get achievementPerfectScoreTitle => 'ط¯ط±ط¬ط© ظƒط§ظ…ظ„ط©';
-  @override
-  String get achievementPerfectScoreSubtitle =>
-      'ط­طµظ„طھ ط¹ظ„ظ‰ 100% ظپظٹ ط§ط®طھط¨ط§ط±';
-  @override
-  String get achievementMathMasterReportSubtitle =>
-      'ط£ظƒظ…ظ„طھ ط¬ظ…ظٹط¹ ط¯ط±ظˆط³ ط§ظ„ط±ظٹط§ط¶ظٹط§طھ';
-  @override
-  String get achievementFiveDayStreakSubtitle =>
-      'طھط¹ظ„ظ…طھ ظ„ظ…ط¯ط© 5 ط£ظٹط§ظ… ظ…طھطھط§ظ„ظٹط©';
-  @override
-  String get minutesAgo => 'ط¯ظ‚ط§ط¦ظ‚ ظ…ط¶طھ';
-  @override
-  String get weekdayMon => 'ط§ط«ظ†';
-  @override
-  String get weekdayTue => 'ط«ظ„ط§';
-  @override
-  String get weekdayWed => 'ط£ط±ط¨';
-  @override
-  String get weekdayThu => 'ط®ظ…ظٹ';
-  @override
-  String get weekdayFri => 'ط¬ظ…ط¹';
-  @override
-  String get weekdaySat => 'ط³ط¨طھ';
-  @override
-  String get weekdaySun => 'ط£ط­ط¯';
-  @override
-  String get goodMorningOverview =>
-      'طµط¨ط§ط­ ط§ظ„ط®ظٹط± â€” ط¥ظ„ظٹظƒ ظ†ط¸ط±ط© ط¹ط§ظ…ط© ط¹ظ„ظ‰ ط§ظ„ظٹظˆظ…';
-  @override
-  String get goodAfternoonOverview =>
-      'ظ…ط³ط§ط، ط§ظ„ط®ظٹط± â€” ط¥ظ„ظٹظƒ ظ…ط§ ظٹط­ط¯ط«';
-  @override
-  String get goodEveningOverview =>
-      'ظ…ط³ط§ط، ط§ظ„ط®ظٹط± â€” ط¥ظ„ظٹظƒ ظ…ظ„ط®طµظƒ ط§ظ„ظٹظˆظ…ظٹ';
-  @override
-  String get noChildrenAddedSubtitleDashboard =>
-      'ط£ط¶ظپ ط·ظپظ„ظƒ ط§ظ„ط£ظˆظ„ ظ„ط¨ط¯ط، طھطھط¨ط¹ ط±ط­ظ„ط© طھط¹ظ„ظ…ظ‡.';
-  @override
-  String childrenLinkedCount(int n) => '$n ظ…ط±طھط¨ط·';
-  @override
-  String get manage => 'ط¥ط¯ط§ط±ط©';
-  @override
-  String xpProgressDisplay(int current, int max) => '$current/$max ظ†ظ‚ط·ط©';
-  @override
-  String get aggregatedAcrossChildren =>
-      'ظ…ط¬ظ…ظ‘ط¹ ط¹ط¨ط± ط¬ظ…ظٹط¹ ط§ظ„ط£ط·ظپط§ظ„';
-  @override
-  String get minutesLabel => 'ط¯ظ‚ط§ط¦ظ‚';
-  @override
-  String get premiumAnalysis => 'طھط­ظ„ظٹظ„ ظ…ظ…ظٹط²';
-  @override
-  String get viewFullReport => 'ط¹ط±ط¶ ط§ظ„طھظ‚ط±ظٹط± ط§ظ„ظƒط§ظ…ظ„';
-  @override
-  String completedAnActivity(String name) => '$name ط£ظƒظ…ظ„ ظ†ط´ط§ط·ط§ظ‹';
-  @override
-  String get weeklyActivity => 'ط§ظ„ظ†ط´ط§ط· ط§ظ„ط£ط³ط¨ظˆط¹ظٹ';
-  @override
-  String get activitiesCompletedPerDay =>
-      'ط§ظ„ط£ظ†ط´ط·ط© ط§ظ„ظ…ظƒطھظ…ظ„ط© ظٹظˆظ…ظٹط§ظ‹';
+  // ── Privacy ──
+  @override String privacyLastUpdated(String date) => 'آخر تحديث: $date';
+  @override String get privacyIntroTitle => '1. المقدمة';
+  @override String get privacyIntroBody =>
+      'نحترم خصوصيتك ونلتزم بحمايتها من خلال امتثالنا لهذه السياسة.';
+  @override String get privacyDataCollectionTitle => '2. جمع البيانات';
+  @override String get privacyDataCollectionBody =>
+      'نجمع المعلومات لتقديم خدمات أفضل لجميع مستخدمينا. يشمل ذلك التفاصيل الشخصية مثل الاسم والصورة الرمزية، وبيانات الاستخدام لتتبع التقدم.';
+  @override String get privacySecurityTitle => '3. الأمان';
+  @override String get privacySecurityBody =>
+      'نطبق مجموعة متنوعة من التدابير الأمنية للحفاظ على سلامة معلوماتك الشخصية.';
 
-  // â”€â”€ Child Management â”€â”€
-  @override
-  String get childManagement => 'ط¥ط¯ط§ط±ط© ط§ظ„ط£ط·ظپط§ظ„';
-  @override
-  String get childProfiles => 'ظ…ظ„ظپط§طھ ط§ظ„ط£ط·ظپط§ظ„';
-  @override
-  String get addChild => 'ط¥ط¶ط§ظپط© ط·ظپظ„';
-  @override
-  String get editChild => 'طھط¹ط¯ظٹظ„ ظ…ظ„ظپ ط§ظ„ط·ظپظ„';
-  @override
-  String get childName => 'ط§ط³ظ… ط§ظ„ط·ظپظ„';
-  @override
-  String get childAge => 'ط§ظ„ط¹ظ…ط±';
-  @override
-  String get childInterests => 'ط§ظ„ط§ظ‡طھظ…ط§ظ…ط§طھ';
-  @override
-  String get avatar => 'ط§ظ„طµظˆط±ط© ط§ظ„ط±ظ…ط²ظٹط©';
-  @override
-  String get saveChanges => 'ط­ظپط¸ ط§ظ„طھط؛ظٹظٹط±ط§طھ';
-  @override
-  String get yourChildren => 'ط£ط·ظپط§ظ„ظƒ';
-  @override
-  String get noChildProfilesYet => 'ظ„ط§ طھظˆط¬ط¯ ظ…ظ„ظپط§طھ ط£ط·ظپط§ظ„ ط¨ط¹ط¯';
-  @override
-  String get tapToAddChild => 'ط§ط¶ط؛ط· + ظ„ط¥ط¶ط§ظپط© ظ…ظ„ظپ ط·ظپظ„.';
-  @override
-  String get addChildProfiles => 'ط¥ط¶ط§ظپط© ظ…ظ„ظپط§طھ ط£ط·ظپط§ظ„ ط¬ط¯ظٹط¯ط©';
-  @override
-  String get editProfiles => 'طھط¹ط¯ظٹظ„ ط§ظ„ظ…ظ„ظپط§طھ ط§ظ„ظ…ظˆط¬ظˆط¯ط©';
-  @override
-  String get picturePasswords => 'طھط¹ظٹظٹظ† ظƒظ„ظ…ط§طھ ظ…ط±ظˆط± ط§ظ„طµظˆط±';
-  @override
-  String get configurePreferences => 'طھظƒظˆظٹظ† ط§ظ„طھظپط¶ظٹظ„ط§طھ';
-  @override
-  String get deactivateProfiles => 'طھط¹ط·ظٹظ„ ط§ظ„ظ…ظ„ظپط§طھ';
-  @override
-  String get childProfileAdded => 'طھظ…طھ ط¥ط¶ط§ظپط© ظ…ظ„ظپ ط§ظ„ط·ظپظ„';
-  @override
-  String get childProfileAddFailed => 'ظپط´ظ„ ط¥ط¶ط§ظپط© ط§ظ„ط·ظپظ„';
-  @override
-  String get manageChildProfiles => 'ط¥ط¯ط§ط±ط© ظ…ظ„ظپط§طھ ط§ظ„ط£ط·ظپط§ظ„';
-  @override
-  String get addEditManageChildren =>
-      'ط¥ط¶ط§ظپط© ط£ظˆ طھط¹ط¯ظٹظ„ ط£ظˆ ط¥ط¯ط§ط±ط© ظ…ظ„ظپط§طھ ط£ط·ظپط§ظ„ظƒ';
+  // ── Parent Profile / Settings ──
+  @override String get parentProfile => 'الملف الشخصي';
+  @override String get parentChangePassword => 'تغيير كلمة المرور';
+  @override String get parentTheme => 'المظهر';
+  @override String get changePassword => 'تغيير كلمة المرور';
+  @override String get currentPassword => 'كلمة المرور الحالية';
+  @override String get newPassword => 'كلمة المرور الجديدة';
+  @override String get confirmNewPassword => 'تأكيد كلمة المرور الجديدة';
+  @override String get passwordChanged => 'تم تغيير كلمة المرور بنجاح';
+  @override String get passwordChangeFailed => 'فشل تغيير كلمة المرور';
+  @override String get currentPasswordRequired => 'يرجى إدخال كلمة المرور الحالية';
+  @override String get newPasswordRequired => 'يرجى إدخال كلمة المرور الجديدة';
+  @override String get confirmNewPasswordRequired => 'يرجى تأكيد كلمة المرور الجديدة';
 
-  // â”€â”€ Reports â”€â”€
-  @override
-  String get reports => 'ط§ظ„طھظ‚ط§ط±ظٹط±';
-  @override
-  String get reportsAndAnalytics => 'ط§ظ„طھظ‚ط§ط±ظٹط± ظˆط§ظ„طھط­ظ„ظٹظ„ط§طھ';
-  @override
-  String get activityReports => 'طھظ‚ط§ط±ظٹط± ط§ظ„ط£ظ†ط´ط·ط©';
-  @override
-  String get learningProgress => 'طھظ‚ط¯ظ… ط§ظ„طھط¹ظ„ظ…';
-  @override
-  String get learningProgressReports => 'طھظ‚ط§ط±ظٹط± طھظ‚ط¯ظ… ط§ظ„طھط¹ظ„ظ…';
-  @override
-  String get trackChildDevelopment =>
-      'طھطھط¨ط¹ طھط·ظˆط± ط·ظپظ„ظƒ ظˆط¥ظ†ط¬ط§ط²ط§طھظ‡';
-  @override
-  String get skillDevelopment => 'طھط·ظˆظٹط± ط§ظ„ظ…ظ‡ط§ط±ط§طھ';
-  @override
-  String get behavioralProgress => 'ط§ظ„طھظ‚ط¯ظ… ط§ظ„ط³ظ„ظˆظƒظٹ';
-  @override
-  String get screenTimeReport => 'طھظ‚ط±ظٹط± ظˆظ‚طھ ط§ظ„ط´ط§ط´ط©';
-  @override
-  String get aiInsights => 'ط±ط¤ظ‰ ط§ظ„ط°ظƒط§ط، ط§ظ„ط§طµط·ظ†ط§ط¹ظٹ';
-  @override
-  String get recentActivities => 'ط§ظ„ط£ظ†ط´ط·ط© ط§ظ„ط£ط®ظٹط±ط©';
-  @override
-  String get timeSpent => 'ط§ظ„ظˆظ‚طھ ط§ظ„ظ…ط³طھط؛ط±ظ‚';
-  @override
-  String get completedActivities => 'ط§ظ„ط£ظ†ط´ط·ط© ط§ظ„ظ…ظƒطھظ…ظ„ط©';
-  @override
-  String get averageScore => 'ظ…طھظˆط³ط· ط§ظ„ط¯ط±ط¬ط§طھ';
-  @override
-  String get strengths => 'ظ†ظ‚ط§ط· ط§ظ„ظ‚ظˆط©';
-  @override
-  String get areasForImprovement => 'ظ…ط¬ط§ظ„ط§طھ ط§ظ„طھط­ط³ظٹظ†';
-  @override
-  String get screenTime => 'ظˆظ‚طھ ط§ظ„ط´ط§ط´ط©';
-  @override
-  String get week => 'ط£ط³ط¨ظˆط¹';
-  @override
-  String get month => 'ط´ظ‡ط±';
-  @override
-  String get year => 'ط³ظ†ط©';
-  @override
-  String get yearlyProgress => 'ط§ظ„طھظ‚ط¯ظ… ط§ظ„ط³ظ†ظˆظٹ';
-  @override
-  String get activityBreakdown => 'طھظپطµظٹظ„ ط§ظ„ط£ظ†ط´ط·ط©';
-  @override
-  String get recentAchievements => 'ط§ظ„ط¥ظ†ط¬ط§ط²ط§طھ ط§ظ„ط£ط®ظٹط±ط©';
-  @override
-  String get noChildSelected => 'ظ„ظ… ظٹطھظ… ط§ط®طھظٹط§ط± ط·ظپظ„';
-  @override
-  String get addChildToViewReports =>
-      'ط£ط¶ظپ ط·ظپظ„ط§ظ‹ ظ„ط¹ط±ط¶ ط§ظ„طھظ‚ط§ط±ظٹط±';
-  @override
-  String ageLabel(int age) => 'ط§ظ„ط¹ظ…ط± $age';
+  // ── Forgot Password ──
+  @override String get forgotPasswordTitle => 'نسيت كلمة المرور';
+  @override String get forgotPasswordSubtitle =>
+      'أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة التعيين';
+  @override String get sendResetLink => 'إرسال رابط الإعادة';
+  @override String get resetLinkSent => 'تم إرسال رابط إعادة التعيين إلى بريدك الإلكتروني';
+  @override String get backToLogin => 'العودة إلى تسجيل الدخول';
+  @override String get childForgotPasswordTitle => 'نسيت كلمة المرور';
+  @override String get childForgotPasswordSubtitle =>
+      'اطلب من والديك مساعدتك في إعادة تعيين كلمة المرور';
+  @override String get askParentForHelp => 'اطلب المساعدة من ولي الأمر';
 
-  // â”€â”€ Parental Controls â”€â”€
-  @override
-  String get parentalControls => 'ط§ظ„ط±ظ‚ط§ط¨ط© ط§ظ„ط£ط¨ظˆظٹط©';
-  @override
-  String get contentRestrictions => 'ظ‚ظٹظˆط¯ ط§ظ„ظ…ط­طھظˆظ‰';
-  @override
-  String get contentRestrictionsAndScreenTime =>
-      'ظ‚ظٹظˆط¯ ط§ظ„ظ…ط­طھظˆظ‰ ظˆظˆظ‚طھ ط§ظ„ط´ط§ط´ط©';
-  @override
-  String get manageChildAccess =>
-      'ط¥ط¯ط§ط±ط© ظ…ط§ ظٹظ…ظƒظ† ظ„ط·ظپظ„ظƒ ط§ظ„ظˆطµظˆظ„ ط¥ظ„ظٹظ‡ ظˆظ„ظƒظ… ظ…ظ† ط§ظ„ظˆظ‚طھ';
-  @override
-  String get screenTimeLimits => 'ط­ط¯ظˆط¯ ظˆظ‚طھ ط§ظ„ط´ط§ط´ط©';
-  @override
-  String get timeRestrictions => 'ظ‚ظٹظˆط¯ ط§ظ„ظˆظ‚طھ';
-  @override
-  String get emergencyControls => 'ط§ظ„طھط­ظƒظ… ط§ظ„ط·ط§ط±ط¦';
-  @override
-  String get lockAppNow => 'ظ‚ظپظ„ ط§ظ„طھط·ط¨ظٹظ‚ ط§ظ„ط¢ظ†';
-  @override
-  String get dailyLimit => 'ط§ظ„ط­ط¯ ط§ظ„ظٹظˆظ…ظٹ';
-  @override
-  String get allowedHours => 'ط§ظ„ط³ط§ط¹ط§طھ ط§ظ„ظ…ط³ظ…ظˆط­ ط¨ظ‡ط§';
-  @override
-  String get hoursPerDay => 'ط³ط§ط¹ط§طھ ظپظٹ ط§ظ„ظٹظˆظ…';
-  @override
-  String get requireApproval => 'ط·ظ„ط¨ ط§ظ„ظ…ظˆط§ظپظ‚ط©';
-  @override
-  String get bedtime => 'ظˆظ‚طھ ط§ظ„ظ†ظˆظ…';
-  @override
-  String get wakeTime => 'ظˆظ‚طھ ط§ظ„ط§ط³طھظٹظ‚ط§ط¸';
-  @override
-  String get sleepMode => 'ظˆط¶ط¹ ط§ظ„ظ†ظˆظ…';
-  @override
-  String get emergencyLock => 'ط§ظ„ظ‚ظپظ„ ط§ظ„ط·ط§ط±ط¦';
-  @override
-  String get contentFiltering => 'طھطµظپظٹط© ط§ظ„ظ…ط­طھظˆظ‰';
-  @override
-  String get ageAppropriate => 'ظ…ظ†ط§ط³ط¨ ظ„ظ„ط¹ظ…ط±';
-  @override
-  String get blockContent => 'ط­ط¸ط± ط§ظ„ظ…ط­طھظˆظ‰';
-  @override
-  String get allowContent => 'ط§ظ„ط³ظ…ط§ط­ ط¨ط§ظ„ظ…ط­طھظˆظ‰';
-  @override
-  String get timeLimits => 'ط­ط¯ظˆط¯ ط§ظ„ظˆظ‚طھ';
-  @override
-  String get breakReminders => 'طھط°ظƒظٹط±ط§طھ ط§ظ„ط§ط³طھط±ط§ط­ط©';
-  @override
-  String get smartControl => 'ط§ظ„طھط­ظƒظ… ط§ظ„ط°ظƒظٹ';
-  @override
-  String get aiRecommendations =>
-      'طھظˆطµظٹط§طھ ط§ظ„ط°ظƒط§ط، ط§ظ„ط§طµط·ظ†ط§ط¹ظٹ';
+  // ── Create Child Profile ──
+  @override String get createChildProfile => 'إنشاء ملف الطفل';
+  @override String get childNameLabel => 'اسم الطفل';
+  @override String get childNameHint => 'أدخل اسم طفلك';
+  @override String get childNameRequired => 'يرجى إدخال اسم الطفل';
+  @override String get childAgeLabel => 'عمر الطفل';
+  @override String get childAgeHint => 'أدخل عمر طفلك (5-12)';
+  @override String get childAgeRequired => 'يرجى إدخال عمر الطفل';
+  @override String get selectAvatarLabel => 'اختر صورة رمزية';
+  @override String get setPicturePassword => 'تعيين كلمة مرور الصور';
+  @override String get createProfile => 'إنشاء الملف';
 
-  // â”€â”€ Settings â”€â”€
-  @override
-  String get settings => 'ط§ظ„ط¥ط¹ط¯ط§ط¯ط§طھ';
-  @override
-  String get notifications => 'ط§ظ„ط¥ط´ط¹ط§ط±ط§طھ';
-  @override
-  String get privacySettings => 'ط¥ط¹ط¯ط§ط¯ط§طھ ط§ظ„ط®طµظˆطµظٹط©';
-  @override
-  String get dataSharing => 'ظ…ط´ط§ط±ظƒط© ط§ظ„ط¨ظٹط§ظ†ط§طھ';
-  @override
-  String get parentalConsent => 'ظ…ظˆط§ظپظ‚ط© ظˆظ„ظٹ ط§ظ„ط£ظ…ط±';
-  @override
-  String get accessibility => 'ط¥ظ…ظƒط§ظ†ظٹط© ط§ظ„ظˆطµظˆظ„';
-  @override
-  String get fontSize => 'ط­ط¬ظ… ط§ظ„ط®ط·';
-  @override
-  String get contrast => 'ط§ظ„طھط¨ط§ظٹظ†';
-  @override
-  String get language => 'ط§ظ„ظ„ط؛ط©';
-  @override
-  String get english => 'ط§ظ„ط¥ظ†ط¬ظ„ظٹط²ظٹط©';
-  @override
-  String get arabic => 'ط§ظ„ط¹ط±ط¨ظٹط©';
-  @override
-  String get theme => 'ط§ظ„ظ…ط¸ظ‡ط±';
-  @override
-  String get mode => 'ط§ظ„ظˆط¶ط¹';
-  @override
-  String get systemMode => 'ظˆط¶ط¹ ط§ظ„ظ†ط¸ط§ظ…';
-  @override
-  String get themePalette => 'ظ„ظˆط­ط© ط§ظ„ط£ظ„ظˆط§ظ†';
-  @override
-  String get themePaletteHint =>
-      'ط§ط®طھط± ظ„ظˆط­ط© ظˆظˆط¶ط¹ط§ظ‹ ظٹظ†ط§ط³ط¨ ط¹ط§ط¦ظ„طھظƒ.';
-  @override
-  String get lightMode => 'ط§ظ„ظˆط¶ط¹ ط§ظ„ظپط§طھط­';
-  @override
-  String get darkMode => 'ط§ظ„ظˆط¶ط¹ ط§ظ„ط¯ط§ظƒظ†';
-  @override
-  String get eyeFriendlyMode => 'ط§ظ„ظˆط¶ط¹ ط§ظ„ظ…ط±ظٹط­ ظ„ظ„ط¹ظٹظ†';
-  @override
-  String get auto => 'طھظ„ظ‚ط§ط¦ظٹ';
-  @override
-  String get sound => 'ط§ظ„طµظˆطھ';
-  @override
-  String get soundEffects => 'ط§ظ„ظ…ط¤ط«ط±ط§طھ ط§ظ„طµظˆطھظٹط©';
-  @override
-  String get backgroundMusic => 'ط§ظ„ظ…ظˆط³ظٹظ‚ظ‰ ط§ظ„ط®ظ„ظپظٹط©';
-  @override
-  String get voiceGuidance => 'ط§ظ„طھظˆط¬ظٹظ‡ ط§ظ„طµظˆطھظٹ';
-  @override
-  String get appSettings => 'ط¥ط¹ط¯ط§ط¯ط§طھ ط§ظ„طھط·ط¨ظٹظ‚';
-  @override
-  String get editProfile => 'طھط¹ط¯ظٹظ„ ط§ظ„ظ…ظ„ظپ ط§ظ„ط´ط®طµظٹ';
-  @override
-  String get changeAvatar => 'طھط؛ظٹظٹط± ط§ظ„طµظˆط±ط© ط§ظ„ط±ظ…ط²ظٹط©';
-  @override
-  String get resetProgress => 'ط¥ط¹ط§ط¯ط© طھط¹ظٹظٹظ† ط§ظ„طھظ‚ط¯ظ…';
-  @override
-  String get resetProgressTitle => 'ط¥ط¹ط§ط¯ط© طھط¹ظٹظٹظ† ط§ظ„طھظ‚ط¯ظ…طں';
-  @override
-  String get resetProgressMessage =>
-      'ط³ظٹط¤ط¯ظٹ ظ‡ط°ط§ ط¥ظ„ظ‰ ط­ط°ظپ ط¬ظ…ظٹط¹ ظ†ظ‚ط§ط· ط§ظ„ط®ط¨ط±ط© ظˆط§ظ„ظ…ط³طھظˆظٹط§طھ ظˆط§ظ„ط¥ظ†ط¬ط§ط²ط§طھ. ظ„ط§ ظٹظ…ظƒظ† ط§ظ„طھط±ط§ط¬ط¹ ط¹ظ† ظ‡ط°ط§ ط§ظ„ط¥ط¬ط±ط§ط،.';
-  @override
-  String get reset => 'ط¥ط¹ط§ط¯ط© طھط¹ظٹظٹظ†';
-  @override
-  String get progressReset => 'طھظ…طھ ط¥ط¹ط§ط¯ط© طھط¹ظٹظٹظ† ط§ظ„طھظ‚ط¯ظ…';
-  @override
-  String get profileLabel => 'ط§ظ„ظ…ظ„ظپ ط§ظ„ط´ط®طµظٹ';
-  @override
-  String get searchSettingsHint => 'ط§ط¨ط­ط« ظپظٹ ط§ظ„ط¥ط¹ط¯ط§ط¯ط§طھ...';
-  @override
-  String get appSettingsSection => 'ط¥ط¹ط¯ط§ط¯ط§طھ ط§ظ„طھط·ط¨ظٹظ‚';
-  @override
-  String get themes => 'ط§ظ„ظ…ط¸ط§ظ‡ط±';
-  @override
-  String get lightAndCalm => 'ظپط§طھط­ ظˆظ‡ط§ط¯ط¦';
-  @override
-  String get aboutUs => 'ظ…ظ† ظ†ط­ظ†';
-  @override
-  String get noSettingsFound => 'ظ„ط§ طھظˆط¬ط¯ ط¥ط¹ط¯ط§ط¯ط§طھ';
-  @override
-  String get selectLanguage => 'ط§ط®طھط± ط§ظ„ظ„ط؛ط©';
-  @override
-  String languageChanged(String languageName) =>
-      'طھظ… طھط؛ظٹظٹط± ط§ظ„ظ„ط؛ط© ط¥ظ„ظ‰ $languageName';
-  @override
-  String get englishUs =>
-      'ط§ظ„ط¥ظ†ط¬ظ„ظٹط²ظٹط© (ط§ظ„ظˆظ„ط§ظٹط§طھ ط§ظ„ظ…طھط­ط¯ط©)';
-  @override
-  String get chooseAvatar => 'ط§ط®طھط± طµظˆط±ط© ط±ظ…ط²ظٹط©';
-  @override
-  String get avatarSaved => 'طھظ… ط­ظپط¸ ط§ظ„طµظˆط±ط© ط§ظ„ط±ظ…ط²ظٹط©';
-  @override
-  String get pleaseSelectThreePictures => 'ظٹط±ط¬ظ‰ ط§ط®طھظٹط§ط± 3 طµظˆط±';
-  @override
-  String get failedToUpdatePicturePassword =>
-      'ظپط´ظ„ طھط­ط¯ظٹط« ظƒظ„ظ…ط© ظ…ط±ظˆط± ط§ظ„طµظˆط±';
-  @override
-  String get profileUpdated => 'طھظ… طھط­ط¯ظٹط« ط§ظ„ظ…ظ„ظپ ط§ظ„ط´ط®طµظٹ';
-  @override
-  String get changeAvatarFromProfile =>
-      'ط؛ظٹظ‘ط± طµظˆط±طھظƒ ط§ظ„ط±ظ…ط²ظٹط© ظ…ظ† ط´ط§ط´ط© ط§ظ„ظ…ظ„ظپ ط§ظ„ط´ط®طµظٹ';
-  @override
-  String get nameLabel => 'ط§ظ„ط§ط³ظ…';
-  @override
-  String get enterYourName => 'ط£ط¯ط®ظ„ ط§ط³ظ…ظƒ';
-  @override
-  String get pleaseEnterName => 'ظٹط±ط¬ظ‰ ط¥ط¯ط®ط§ظ„ ط§ط³ظ…';
-  @override
-  String get chooseExactlyThreePictures => 'ط§ط®طھط± 3 طµظˆط± ط¨ط§ظ„ط¶ط¨ط·';
-  @override
-  String get darkLight => 'ط¯ط§ظƒظ† / ظپط§طھط­';
-  @override
-  String get chooseCalmColor => 'ط§ط®طھط± ظ„ظˆظ†ط§ظ‹ ظ‡ط§ط¯ط¦ط§ظ‹';
-  @override
-  String get increaseFontSize => 'طھظƒط¨ظٹط± ط§ظ„ط®ط·';
-  @override
-  String get decreaseFontSize => 'طھطµط؛ظٹط± ط§ظ„ط®ط·';
-  @override
-  String get highContrast => 'طھط¨ط§ظٹظ† ط¹ط§ظ„ظچ';
-  @override
-  String get screenReader => 'ط¯ط¹ظ… ظ‚ط§ط±ط¦ ط§ظ„ط´ط§ط´ط©';
-  @override
-  String get voiceCommands => 'ط§ظ„ط£ظˆط§ظ…ط± ط§ظ„طµظˆطھظٹط©';
-  @override
-  String get switchAccess => 'ظˆطµظˆظ„ ط§ظ„طھط¨ط¯ظٹظ„';
-  @override
-  String get clearSelection => 'ظ…ط³ط­ ط§ظ„ط§ط®طھظٹط§ط±';
+  // ── No Internet ──
+  @override String get noInternetDescription => 'يبدو أنك غير متصل بالإنترنت. تحقق من اتصالك وحاول مرة أخرى.';
+  @override String get availableOffline => 'متاح بدون إنترنت';
+  @override String get offlineDownloadedLessons => 'الدروس المحملة';
+  @override String get offlineSavedGames => 'الألعاب المحفوظة';
+  @override String get offlineStories => 'القصص';
+  @override String get offlineProgressTracking => 'تتبع التقدم';
+  @override String get checkingConnection => 'جاري التحقق من الاتصال...';
+  @override String get stillNoConnection => 'لا يزال لا يوجد اتصال';
+  @override String get tryAgain => 'حاول مرة أخرى';
+  @override String get continueOffline => 'المتابعة بدون إنترنت';
 
-  // â”€â”€ Subscription / Paywall â”€â”€
-  @override
-  String get subscription => 'ط§ظ„ط§ط´طھط±ط§ظƒ';
-  @override
-  String get freeTrial => 'طھط¬ط±ط¨ط© ظ…ط¬ط§ظ†ظٹط©';
-  @override
-  String get familyPlan => 'ط§ظ„ط®ط·ط© ط§ظ„ط¹ط§ط¦ظ„ظٹط©';
-  @override
-  String get manageSubscription => 'ط¥ط¯ط§ط±ط© ط§ظ„ط§ط´طھط±ط§ظƒ';
-  @override
-  String get paymentMethod => 'ط·ط±ظٹظ‚ط© ط§ظ„ط¯ظپط¹';
-  @override
-  String get billingInfo => 'ظ…ط¹ظ„ظˆظ…ط§طھ ط§ظ„ظپظˆطھط±ط©';
-  @override
-  String get trialEnds => 'طھظ†طھظ‡ظٹ ط§ظ„طھط¬ط±ط¨ط©';
-  @override
-  String get subscriptionActive => 'ط§ظ„ط§ط´طھط±ط§ظƒ ظ†ط´ط·';
-  @override
-  String get subscriptionExpired => 'ط§ظ†طھظ‡ظ‰ ط§ظ„ط§ط´طھط±ط§ظƒ';
-  @override
-  String get upgradeNow => 'طھط±ظ‚ظٹط© ط§ظ„ط¢ظ†';
-  @override
-  String get premiumFeatures => 'ط§ظ„ظ…ظٹط²ط§طھ ط§ظ„ظ…ظ…ظٹط²ط©';
-  @override
-  String get planAiInsightsPro =>
-      'ط±ط¤ظ‰ ط§ظ„طھط¹ظ„ظ… ط¨ط§ظ„ط°ظƒط§ط، ط§ظ„ط§طµط·ظ†ط§ط¹ظٹ';
-  @override
-  String get planAdvancedReports =>
-      'طھظ‚ط§ط±ظٹط± ط§ظ„طھط¹ظ„ظ… ط§ظ„ظ…طھظ‚ط¯ظ…ط©';
-  @override
-  String get planOfflineDownloads => 'ط§ظ„ظˆطµظˆظ„ ط¯ظˆظ† ط§طھطµط§ظ„';
-  @override
-  String get planSmartControls => 'ط§ظ„ط±ظ‚ط§ط¨ط© ط§ظ„ط£ط¨ظˆظٹط© ط§ظ„ط°ظƒظٹط©';
-  @override
-  String get planExclusiveContent => 'ظ…ط­طھظˆظ‰ ظ…ظ…ظٹط² ط­طµط±ظٹ';
-  @override
-  String get planFeatureInPremium => 'ظ…طھط§ط­ ظپظٹ ط§ظ„ط®ط·ط© ط§ظ„ظ…ظ…ظٹط²ط©';
-  @override
-  String get planFree => 'ظ…ط¬ط§ظ†ظٹ';
-  @override
-  String get planBasicReports => 'طھظ‚ط§ط±ظٹط± ط§ظ„طھظ‚ط¯ظ… ط§ظ„ط£ط³ط§ط³ظٹط©';
-  @override
-  String planChildLimit(int count) => 'ط¥ط¯ط§ط±ط© ط­طھظ‰ $count ط£ط·ظپط§ظ„';
-  @override
-  String get currentPlan => 'ط§ظ„ط®ط·ط© ط§ظ„ط­ط§ظ„ظٹط©';
-  @override
-  String get choosePlan => 'ط§ط®طھط± ط®ط·طھظƒ';
-  @override
-  String get freePlanChildLimit =>
-      'ط§ظ„ط®ط·ط© ط§ظ„ظ…ط¬ط§ظ†ظٹط© طھط³ظ…ط­ ط¨ط·ظپظ„ ظˆط§ط­ط¯';
-  @override
-  String get planFamilyPlus => 'ط¹ط§ط¦ظ„ظٹ ط¨ظ„ط³';
-  @override
-  String get planPremium => 'ظ…ظ…ظٹط²';
-  @override
-  String get planUnlimitedChildren => 'ط£ط·ظپط§ظ„ ط؛ظٹط± ظ…ط­ط¯ظˆط¯ظٹظ†';
-  @override
-  String get planFamilyDashboard => 'ظ„ظˆط­ط© طھط­ظƒظ… ط§ظ„ط¹ط§ط¦ظ„ط©';
-  @override
-  String get paywallTitle => 'ط§ظ„طھط±ظ‚ظٹط© ط¥ظ„ظ‰ ط§ظ„ظ…ظ…ظٹط²';
-  @override
-  String get paywallPrice => '10\$ / ط´ظ‡ط±';
-  @override
-  String get paywallSubscribe => 'طھط±ظ‚ظٹط© ط§ظ„ط¢ظ†';
-  @override
-  String get paywallManagePaymentMethods => 'ط¥ط¯ط§ط±ط© ط·ط±ظ‚ ط§ظ„ط¯ظپط¹';
-  @override
-  String get paymentMethodsTitle => 'ط·ط±ظ‚ ط§ظ„ط¯ظپط¹';
-  @override
-  String get paymentMethodsEmpty =>
-      'ظ„ظ… طھطھظ… ط¥ط¶ط§ظپط© ط·ط±ظ‚ ط¯ظپط¹ ط¨ط¹ط¯.';
-  @override
-  String get addPaymentMethod => 'ط¥ط¶ط§ظپط© ط·ط±ظٹظ‚ط© ط¯ظپط¹';
-  @override
-  String get removePaymentMethod => 'ط¥ط²ط§ظ„ط©';
-  @override
-  String get openPaymentPortal => 'ظپطھط­ ط¨ظˆط§ط¨ط© ط§ظ„ط¯ظپط¹';
-  @override
-  String yearsOld(int age) => '$age ط³ظ†ظˆط§طھ';
-  @override
-  String levelXp(int level, int xp) => 'ط§ظ„ظ…ط³طھظˆظ‰ $level - $xp ظ†ظ‚ط·ط©';
-  @override
-  String get coppaCompliance => 'ط§ظ„ط§ظ…طھط«ط§ظ„ ظ„ظ€ COPPA';
-  @override
-  String comingSoon(String title) => '$title ظ‚ط§ط¯ظ… ظ‚ط±ظٹط¨ط§ظ‹';
+  // ── Data Sync ──
+  @override String get dataSyncTitle => 'مزامنة البيانات';
+  @override String get syncReady => 'جاهز للمزامنة';
+  @override String get syncStarting => 'جاري بدء المزامنة...';
+  @override String get syncingChildProfiles => 'جاري مزامنة ملفات الأطفال...';
+  @override String get syncingProgressData => 'جاري مزامنة بيانات التقدم...';
+  @override String get syncingActivities => 'جاري مزامنة الأنشطة...';
+  @override String get syncFinalizing => 'جاري الانتهاء من المزامنة...';
+  @override String get syncCompleted => 'اكتملت المزامنة';
+  @override String get syncNow => 'مزامنة الآن';
+  @override String get syncChildProfilesLabel => 'ملفات الأطفال';
+  @override String get syncProgressDataLabel => 'بيانات التقدم';
+  @override String get syncSettingsLabel => 'الإعدادات';
+  @override String get syncLastSyncLabel => 'آخر مزامنة';
+  @override String get syncedLabel => 'تمت المزامنة';
+  @override String syncedCount(int count) => 'تمت مزامنة $count عنصر';
+  @override String activitiesCount(int count) => '$count نشاط';
 
-  // â”€â”€ Notifications â”€â”€
-  @override
-  String get noNotifications => 'ظ„ط§ طھظˆط¬ط¯ ط¥ط´ط¹ط§ط±ط§طھ ط¨ط¹ط¯.';
-  @override
-  String get markAllRead => 'طھط­ط¯ظٹط¯ ط§ظ„ظƒظ„ ظƒظ…ظ‚ط±ظˆط،';
-  @override
-  String notificationDailyGoal(String name, int activities) =>
-      '$name ط£ظƒظ…ظ„ $activities ط£ظ†ط´ط·ط© ط§ظ„ظٹظˆظ…!';
-  @override
-  String notificationScreenTime(String name, int hours) =>
-      '$name ظˆطµظ„ ط¥ظ„ظ‰ ط§ظ„ط­ط¯ ط§ظ„ظٹظˆظ…ظٹ ط§ظ„ط¨ط§ظ„ط؛ $hours ط³ط§ط¹ط§طھ.';
-  @override
-  String notificationAchievement(String name, String badge) =>
-      '$name ظپطھط­ ط´ط§ط±ط© "$badge"!';
-  @override
-  String get notificationWeeklyReport =>
-      'طھظ‚ط±ظٹط± طھظ‚ط¯ظ… ط·ظپظ„ظƒ ظ„ظ‡ط°ط§ ط§ظ„ط£ط³ط¨ظˆط¹ ظ…طھط§ط­.';
-  @override
-  String notificationMilestone(String name, int count) =>
-      '$name ط£ظƒظ…ظ„ $count ظ†ط´ط§ط·ط§ظ‹!';
-  @override
-  String notificationRecommendation(String name) =>
-      'ظ…ط­طھظˆظ‰ طھط¹ظ„ظٹظ…ظٹ ط¬ط¯ظٹط¯ ظ…طھط§ط­ ظ„ظ€ $name ط¨ظ†ط§ط،ظ‹ ط¹ظ„ظ‰ ط§ظ‡طھظ…ط§ظ…ط§طھظ‡.';
-  @override
-  String get hoursAgo => 'ط³ط§ط¹ط§طھ ظ…ط¶طھ';
-  @override
-  String get daysAgo => 'ط£ظٹط§ظ… ظ…ط¶طھ';
-  @override
-  String get justNow => 'ط§ظ„ط¢ظ†';
+  // ── Error Screen ──
+  @override String get errorTitle => 'حدث خطأ';
+  @override String get errorDetailsLabel => 'تفاصيل الخطأ';
+  @override String get goBack => 'العودة';
+  @override String get reportIssue => 'الإبلاغ عن مشكلة';
+  @override String get errorReported => 'تم الإبلاغ عن الخطأ';
 
-  // â”€â”€ Safety / Privacy â”€â”€
-  @override
-  String get safety => 'ط§ظ„ط£ظ…ط§ظ†';
-  @override
-  String get privacy => 'ط§ظ„ط®طµظˆطµظٹط©';
-  @override
-  String get childProtection => 'ط­ظ…ط§ظٹط© ط§ظ„ط·ظپظ„';
-  @override
-  String get dataSecurity => 'ط£ظ…ط§ظ† ط§ظ„ط¨ظٹط§ظ†ط§طھ';
-  @override
-  String get parentalConsentRequired =>
-      'ظ…ظˆط§ظپظ‚ط© ظˆظ„ظٹ ط§ظ„ط£ظ…ط± ظ…ط·ظ„ظˆط¨ط©';
-  @override
-  String get minimalDataCollection => 'ط¬ظ…ط¹ ط¨ظٹط§ظ†ط§طھ ظ…ط­ط¯ظˆط¯';
-  @override
-  String get encryptedStorage => 'طھط®ط²ظٹظ† ظ…ط´ظپط±';
+  // ── Legal ──
+  @override String get legalTitle => 'قانوني';
+  @override String get legalTermsTitle => 'شروط الخدمة';
+  @override String get legalPrivacyTitle => 'سياسة الخصوصية';
+  @override String get legalCoppaTitle => 'امتثال COPPA';
+  @override String get legalNoContent => 'لا يوجد محتوى';
+  @override String get legalTermsPlaceholder => 'محتوى شروط الخدمة سيظهر هنا.';
+  @override String get legalPrivacyPlaceholder => 'محتوى سياسة الخصوصية سيظهر هنا.';
+  @override String get legalCoppaPlaceholder => 'محتوى امتثال COPPA سيظهر هنا.';
+  @override String get legalPlaceholder => 'المحتوى القانوني سيظهر هنا.';
 
-  // â”€â”€ Help / Support â”€â”€
-  @override
-  String get help => 'ط§ظ„ظ…ط³ط§ط¹ط¯ط©';
-  @override
-  String get support => 'ط§ظ„ط¯ط¹ظ…';
-  @override
-  String get faq => 'ط§ظ„ط£ط³ط¦ظ„ط© ط§ظ„ط´ط§ط¦ط¹ط©';
-  @override
-  String get tutorial => 'ط§ظ„ط¯ظ„ظٹظ„ ط§ظ„طھط¹ظ„ظٹظ…ظٹ';
-  @override
-  String get walkthrough => 'ط§ظ„ط¬ظˆظ„ط© ط§ظ„طھط¹ط±ظٹظپظٹط©';
-  @override
-  String get feedback => 'ط§ظ„طھط؛ط°ظٹط© ط§ظ„ط±ط§ط¬ط¹ط©';
-  @override
-  String get helpFaq => 'ط§ظ„ظ…ط³ط§ط¹ط¯ط© ظˆط§ظ„ط£ط³ط¦ظ„ط© ط§ظ„ط´ط§ط¦ط¹ط©';
-  @override
-  String get contactUs => 'ط§طھطµظ„ ط¨ظ†ط§';
-  @override
-  String get about => 'ط­ظˆظ„';
-  @override
-  String get logout => 'طھط³ط¬ظٹظ„ ط§ظ„ط®ط±ظˆط¬';
-  @override
-  String get accountSection => 'ط§ظ„ط­ط³ط§ط¨';
-  @override
-  String get familySection => 'ط§ظ„ط¹ط§ط¦ظ„ط©';
-  @override
-  String get preferencesSection => 'ط§ظ„طھظپط¶ظٹظ„ط§طھ';
-  @override
-  String get supportSection => 'ط§ظ„ط¯ط¹ظ…';
-  @override
-  String get legalSection => 'ظ‚ط§ظ†ظˆظ†ظٹ';
-  @override
-  String get searchFaqsHint => 'ط§ط¨ط­ط« ظپظٹ ط§ظ„ط£ط³ط¦ظ„ط© ط§ظ„ط´ط§ط¦ط¹ط©...';
-  @override
-  String get noFaqFound => 'ظ„ط§ طھظˆط¬ط¯ ط£ط³ط¦ظ„ط© ط´ط§ط¦ط¹ط©';
-  @override
-  String get contactUsSubtitle => 'ظ†ط­ظ† ظ‡ظ†ط§ ظ„ظ„ظ…ط³ط§ط¹ط¯ط©';
-  @override
-  String get contactEmailLabel => 'ط§ظ„ط¨ط±ظٹط¯ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ';
-  @override
-  String get contactEmailValue => 'support@kinderworld.app';
-  @override
-  String get contactPhoneLabel => 'ط§ظ„ظ‡ط§طھظپ';
-  @override
-  String get contactPhoneValue => '+1 (800) 123-4567';
-  @override
-  String get contactHoursLabel => 'ط³ط§ط¹ط§طھ ط§ظ„ط¹ظ…ظ„';
-  @override
-  String get contactHoursValue => 'ط§ظ„ط§ط«ظ†ظٹظ† - ط§ظ„ط¬ظ…ط¹ط©طŒ 9 طµ - 6 ظ…';
-  @override
-  String get sendMessageTitle => 'ط£ط±ط³ظ„ ط±ط³ط§ظ„ط©';
-  @override
-  String get messageHint => 'ط§ظƒطھط¨ ط±ط³ط§ظ„طھظƒ ظ‡ظ†ط§...';
-  @override
-  String get sendMessage => 'ط¥ط±ط³ط§ظ„ ط§ظ„ط±ط³ط§ظ„ط©';
-  @override
-  String get messageSent => 'طھظ… ط¥ط±ط³ط§ظ„ ط±ط³ط§ظ„طھظƒ ط¨ظ†ط¬ط§ط­!';
+  // ── Maintenance ──
+  @override String get maintenanceTitle => 'نحن نُحسّن الأمور!';
+  @override String get maintenanceDescription =>
+      'كيندر وورلد يخضع حالياً للصيانة المجدولة. سنعود قريباً بتجربة أفضل!';
+  @override String get maintenanceEtaTitle => 'الوقت المتوقع للعودة';
+  @override String get maintenanceEtaDuration => 'حوالي 2 ساعة';
+  @override String get maintenanceEtaWindow => '10:00 ص - 12:00 م بتوقيت UTC';
+  @override String get maintenanceWhatsComing => 'ما الجديد القادم';
+  @override String get maintenanceFeatureAi => 'ميزات الذكاء الاصطناعي المحسّنة';
+  @override String get maintenanceFeatureGames => 'ألعاب تعليمية جديدة';
+  @override String get maintenanceFeatureSafety => 'أدوات أمان محسّنة';
+  @override String get maintenanceFeaturePerformance => 'تحسينات الأداء';
+  @override String get maintenanceFollowUs => 'تابعنا للحصول على التحديثات';
 
-  // â”€â”€ System / Maintenance â”€â”€
-  @override
-  String get maintenanceMode => 'ط§ظ„طھط·ط¨ظٹظ‚ طھط­طھ ط§ظ„طµظٹط§ظ†ط©';
-  @override
-  String get updateRequired => 'طھط­ط¯ظٹط« ظ…ط·ظ„ظˆط¨';
-  @override
-  String get syncData => 'ط¬ط§ط±ظٹ ظ…ط²ط§ظ…ظ†ط© ط§ظ„ط¨ظٹط§ظ†ط§طھ...';
-  @override
-  String get dataSyncComplete => 'ط§ظƒطھظ…ظ„طھ ظ…ط²ط§ظ…ظ†ط© ط§ظ„ط¨ظٹط§ظ†ط§طھ';
-  @override
-  String get sessionExpired => 'ط§ظ†طھظ‡طھ ط§ظ„ط¬ظ„ط³ط©';
-  @override
-  String get logoutConfirm =>
-      'ظ‡ظ„ ط£ظ†طھ ظ…طھط£ظƒط¯ ظ…ظ† طھط³ط¬ظٹظ„ ط§ظ„ط®ط±ظˆط¬طں';
-  @override
-  String get exitConfirm => 'ظ‡ظ„ ط£ظ†طھ ظ…طھط£ظƒط¯ ظ…ظ† ط§ظ„ط®ط±ظˆط¬طں';
-  @override
-  String get deleteConfirm => 'ظ‡ظ„ ط£ظ†طھ ظ…طھط£ظƒط¯ ظ…ظ† ط§ظ„ط­ط°ظپطں';
+  // ── Help Support ──
+  @override String get helpSupportTitle => 'المساعدة والدعم';
+  @override String openingLink(String target) => 'جاري فتح $target...';
 
-  // â”€â”€ Validation â”€â”€
-  @override
-  String get passwordTooShort =>
-      'ظٹط¬ط¨ ط£ظ† طھظƒظˆظ† ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط± 6 ط£ط­ط±ظپ ط¹ظ„ظ‰ ط§ظ„ط£ظ‚ظ„';
-  @override
-  String get passwordsDontMatch =>
-      'ظƒظ„ظ…طھط§ ط§ظ„ظ…ط±ظˆط± ط؛ظٹط± ظ…طھط·ط§ط¨ظ‚طھظٹظ†';
-  @override
-  String get invalidAge => 'ظٹط±ط¬ظ‰ ط¥ط¯ط®ط§ظ„ ط¹ظ…ط± طµط­ظٹط­ (5-12)';
-  @override
-  String get selectAvatar => 'ظٹط±ط¬ظ‰ ط§ط®طھظٹط§ط± طµظˆط±ط© ط±ظ…ط²ظٹط©';
-  @override
-  String get incorrectPicturePassword =>
-      'ظƒظ„ظ…ط© ظ…ط±ظˆط± ط§ظ„طµظˆط± ط؛ظٹط± طµط­ظٹط­ط©. ظٹط±ط¬ظ‰ ط§ظ„ظ…ط­ط§ظˆظ„ط© ظ…ط±ط© ط£ط®ط±ظ‰.';
-  @override
-  String get nameTooShort =>
-      'ظٹط¬ط¨ ط£ظ† ظٹظƒظˆظ† ط§ظ„ط§ط³ظ… ط­ط±ظپظٹظ† ط¹ظ„ظ‰ ط§ظ„ط£ظ‚ظ„';
-  @override
-  String get pleaseEnterRealName => 'ظٹط±ط¬ظ‰ ط¥ط¯ط®ط§ظ„ ط§ط³ظ… ط­ظ‚ظٹظ‚ظٹ';
+  // ── Parent PIN ──
+  @override String get parentPinTitle => 'منطقة ولي الأمر';
+  @override String get parentPinSubtitle => 'أدخل رمز PIN للوصول إلى إعدادات ولي الأمر';
+  @override String get parentPinHint => 'أدخل رمز PIN المكون من 4 أرقام';
+  @override String get parentPinError => 'رمز PIN غير صحيح. يرجى المحاولة مرة أخرى.';
+  @override String get parentPinSuccess => 'تم التحقق بنجاح';
+  @override String get parentPinVerify => 'تحقق';
+  @override String get parentPinForgot => 'نسيت رمز PIN؟';
 
-  // â”€â”€ Welcome / Onboarding â”€â”€
-  @override
-  String get welcomeTitle => 'ظ…ط±ط­ط¨ط§ظ‹ ط¨ظƒ ظپظٹ ظƒظٹظ†ط¯ط± ظˆظˆط±ظ„ط¯!';
-  @override
-  String get welcomeSubtitle =>
-      'ط¨ظٹط¦ط© طھط¹ظ„ظ… ط¢ظ…ظ†ط© ظˆظ…ظ…طھط¹ط© ظ„ظ„ط£ط·ظپط§ظ„';
-  @override
-  String get chooseLanguageTitle => 'ط§ط®طھط± ظ„ط؛طھظƒ';
-  @override
-  String get chooseLanguageSubtitle => 'ط§ط®طھط± ظ„ط؛طھظƒ ط§ظ„ظ…ظپط¶ظ„ط©';
-  @override
-  String get languageEnglishShort => 'EN';
-  @override
-  String get languageArabicShort => 'AR';
-  @override
-  String get educational => 'طھط¹ظ„ظٹظ…ظٹ';
-  @override
-  String get funGames => 'ط£ظ„ط¹ط§ط¨ ظ…ظ…طھط¹ط©';
-  @override
-  String get aiPowered => 'ظ…ط¯ط¹ظˆظ… ط¨ط§ظ„ط°ظƒط§ط، ط§ظ„ط§طµط·ظ†ط§ط¹ظٹ';
-  @override
-  String get safe => 'ط¢ظ…ظ†';
-  @override
-  String get getStarted => 'ط§ط¨ط¯ط£ ط§ظ„ط¢ظ†';
-  @override
-  String get coppaGdprNote =>
-      'ظ…طھظˆط§ظپظ‚ ظ…ط¹ COPPA ظˆ GDPR - ط¢ظ…ظ† ظ„ظ„ط£ط·ظپط§ظ„';
-  @override
-  String get onboardingLearn => 'طھط¹ظ„ظ‘ظ…';
-  @override
-  String get onboardingPlay => 'ط§ظ„ط¹ط¨';
-  @override
-  String get onboardingGrow => 'ط§ظ†ظ…ظˆ';
-  @override
-  String get onboardingLearnSubtitle =>
-      'ظ…ط­طھظˆظ‰ طھط¹ظ„ظٹظ…ظٹ ظ…ط®طµطµ ظ„ط·ظپظ„ظƒ';
-  @override
-  String get onboardingLearnDescription =>
-      'ط§ظƒطھط´ظپ ط¯ط±ظˆط³ط§ظ‹ طھظپط§ط¹ظ„ظٹط© ظپظٹ ط§ظ„ط±ظٹط§ط¶ظٹط§طھ ظˆط§ظ„ط¹ظ„ظˆظ… ظˆط§ظ„ظ‚ط±ط§ط،ط© ظˆط§ظ„ظ…ط²ظٹط¯. ظƒظ„ ظ†ط´ط§ط· ظ…طµظ…ظ… ظ„ط¬ط¹ظ„ ط§ظ„طھط¹ظ„ظ… ظ…ظ…طھط¹ط§ظ‹ ظˆط¬ط°ط§ط¨ط§ظ‹.';
-  @override
-  String get onboardingPlaySubtitle =>
-      'ط£ظ„ط¹ط§ط¨ ظ…ظ…طھط¹ط© طھط·ظˆط± ط§ظ„ظ…ظ‡ط§ط±ط§طھ';
-  @override
-  String get onboardingPlayDescription =>
-      'ط§ط³طھظ…طھط¹ ط¨ط§ظ„ط£ظ„ط¹ط§ط¨ ط§ظ„طھط¹ظ„ظٹظ…ظٹط© ظˆط§ظ„ط£ظ„ط؛ط§ط² ظˆط§ظ„ط£ظ†ط´ط·ط© ط§ظ„ط¥ط¨ط¯ط§ط¹ظٹط© ط§ظ„طھظٹ طھط³ط§ط¹ط¯ ط·ظپظ„ظƒ ط¹ظ„ظ‰ ط§ظ„ظ†ظ…ظˆ ظ…ط¹ ط§ظ„ط§ط³طھظ…طھط§ط¹.';
-  @override
-  String get onboardingGrowSubtitle =>
-      'طھط¹ظ„ظ… ظ…ط®طµطµ ط¨ط§ظ„ط°ظƒط§ط، ط§ظ„ط§طµط·ظ†ط§ط¹ظٹ';
-  @override
-  String get onboardingGrowDescription =>
-      'ظٹطھظƒظٹظپ ظ…ط³ط§ط¹ط¯ظ†ط§ ط§ظ„ط°ظƒظٹ ظ…ط¹ ط£ط³ظ„ظˆط¨ طھط¹ظ„ظ… ط·ظپظ„ظƒ ظˆظٹظ‚ط¯ظ… طھظˆطµظٹط§طھ ظ…ط®طµطµط© ظ„ظ„ظ†ظ…ظˆ ط§ظ„ط£ظ…ط«ظ„.';
-  @override
-  String get interactiveLessons => 'ط¯ط±ظˆط³ طھظپط§ط¹ظ„ظٹط©';
-  @override
-  String get interactiveLessonsDesc =>
-      'ظ…ط­طھظˆظ‰ طھط¹ظ„ظٹظ…ظٹ ط¬ط°ط§ط¨ ظˆظ…ط®طµطµ';
-  @override
-  String get learnThroughPlay => 'ط§ظ„طھط¹ظ„ظ… ظ…ظ† ط®ظ„ط§ظ„ ط§ظ„ظ„ط¹ط¨';
-  @override
-  String get learnThroughPlayDesc =>
-      'ط£ظ„ط¹ط§ط¨ ظ…ظ…طھط¹ط© طھط·ظˆط± ط§ظ„ظ…ظ‡ط§ط±ط§طھ';
-  @override
-  String get personalizedForChild => 'ظ…ط®طµطµ ظ„ط·ظپظ„ظƒ';
-  @override
-  String get personalizedForChildDesc =>
-      'طھط¬ط±ط¨ط© طھط¹ظ„ظ… ظ…ظƒظٹظ‘ظپط© ظ…ط¹ ط§ط­طھظٹط§ط¬ط§طھ ط·ظپظ„ظƒ';
-  @override
-  String get coppaGdprCompliant => 'ظ…طھظˆط§ظپظ‚ ظ…ط¹ COPPA ظˆ GDPR';
-  @override
-  String get coppaGdprCompliantDesc =>
-      'ط¢ظ…ظ† ظˆط®ط§ط¶ط¹ ظ„ظ„ط±ظ‚ط§ط¨ط© ط§ظ„ط£ط¨ظˆظٹط©';
+  // ── Child Header ──
+  @override String get childHeaderGreeting => 'مرحباً';
+  @override String get childHeaderSubtitle => 'ماذا تريد أن تتعلم اليوم؟';
+  @override String levelLabel(int level) => 'المستوى $level';
 
-  // â”€â”€ About â”€â”€
-  @override
-  String get kinderWorldAppTitle => 'طھط·ط¨ظٹظ‚ ظƒظٹظ†ط¯ط± ظˆظˆط±ظ„ط¯';
-  @override
-  String get aboutAppName => 'ظƒظٹظ†ط¯ط± ظˆظˆط±ظ„ط¯';
-  @override
-  String appVersionLabel(String version) => 'ط§ظ„ط¥طµط¯ط§ط± $version';
-  @override
-  String get aboutAppDescription =>
-      'ظƒظٹظ†ط¯ط± ظˆظˆط±ظ„ط¯ ظ‡ظˆ طھط·ط¨ظٹظ‚ ظ…ظ…طھط¹ ظˆطھط¹ظ„ظٹظ…ظٹ ظ…طµظ…ظ… ظ„ظ…ط³ط§ط¹ط¯ط© ط§ظ„ط£ط·ظپط§ظ„ ط¹ظ„ظ‰ ط§ظ„طھط¹ظ„ظ… ظ…ظ† ط®ظ„ط§ظ„ ط§ظ„ظ„ط¹ط¨. ظ†ط±ظƒط² ط¹ظ„ظ‰ ط§ظ„ط£ظ†ط´ط·ط© ط§ظ„ط³ظ„ظˆظƒظٹط© ظˆط§ظ„طھط¹ظ„ظٹظ…ظٹط© ظˆط§ظ„ظ…ظ‡ط§ط±ظٹط© ظ„طھظˆظپظٹط± طھط¬ط±ط¨ط© طھط¹ظ„ظ… ط´ط§ظ…ظ„ط©.';
-  @override
-  String get aboutDescription =>
-      'ظƒظٹظ†ط¯ط± ظˆظˆط±ظ„ط¯ ظ‡ظˆ طھط·ط¨ظٹظ‚ ظ…ظ…طھط¹ ظˆطھط¹ظ„ظٹظ…ظٹ ظ…طµظ…ظ… ظ„ظ…ط³ط§ط¹ط¯ط© ط§ظ„ط£ط·ظپط§ظ„ ط¹ظ„ظ‰ ط§ظ„طھط¹ظ„ظ… ظ…ظ† ط®ظ„ط§ظ„ ط§ظ„ظ„ط¹ط¨.';
-  @override
-  String lastUpdated(String date) => 'ط¢ط®ط± طھط­ط¯ظٹط«: $date';
+  // ── Learn Screen ──
+  @override String get searchPages => 'ابحث عن الصفحات...';
+  @override String get letsExploreAndLearn => 'هيا نستكشف ونتعلم!';
+  @override String get noPagesFound => 'لا توجد صفحات';
+  @override String get categoryBehavioral => 'السلوكي';
+  @override String get categoryEducational => 'التعليمي';
+  @override String get categorySkillful => 'المهاري';
+  @override String get categoryEntertaining => 'الترفيهي';
+  @override String get foundSomethingFun => 'وجدنا شيئاً ممتعاً لك!';
+  @override String get letsPracticeKindness => 'لنتمرّن على اللطف!';
+  @override String get letsTryNewSkill => 'لنجرّب مهارة جديدة!';
+  @override String get letsCreateSomethingFun => 'لنصنع شيئاً ممتعاً!';
+  @override String get searchActivities => 'ابحث عن الأنشطة...';
+  @override String get noActivitiesFound => 'لا توجد أنشطة';
+  @override String get watchNow => 'شاهد الآن';
+  @override String get letsCreate => 'لنبدع!';
+  @override String followStepsInVideo(String title) => 'اتبع الخطوات في فيديو $title';
+  @override String get imDone => 'أنهيت!';
+  @override String get letsLearnSomethingNew => 'لنتعلم شيئاً جديداً!';
+  @override String get searchLessons => 'ابحث عن الدروس...';
+  @override String get noLessonsFound => 'لا توجد دروس';
+  @override String get readyForFunQuiz => 'مستعد لاختبار ممتع؟';
+  @override String get playQuizToEarnStars => 'العب الاختبار لتحصل على النجوم!';
+  @override String get startQuiz => 'ابدأ الاختبار';
+  @override String get quizTime => 'وقت الاختبار';
+  @override String get youCompletedQuiz => 'أكملت الاختبار!';
+  @override String get awesome => 'رائع!';
+  @override String get nextQuestion => 'السؤال التالي';
+  @override String get lessonFinish => 'إنهاء الدرس';
+  @override String questionOf(int current, int total) => 'السؤال $current من $total';
 
-  // â”€â”€ Privacy â”€â”€
-  @override
-  String privacyLastUpdated(String date) => 'ط¢ط®ط± طھط­ط¯ظٹط«: $date';
-  @override
-  String get privacyIntroTitle => '1. ط§ظ„ظ…ظ‚ط¯ظ…ط©';
-  @override
-  String get privacyIntroBody =>
-      'ظ†ط­طھط±ظ… ط®طµظˆطµظٹطھظƒ ظˆظ†ظ„طھط²ظ… ط¨ط­ظ…ط§ظٹطھظ‡ط§ ظ…ظ† ط®ظ„ط§ظ„ ط§ظ…طھط«ط§ظ„ظ†ط§ ظ„ظ‡ط°ظ‡ ط§ظ„ط³ظٹط§ط³ط©.';
-  @override
-  String get privacyDataCollectionTitle => '2. ط¬ظ…ط¹ ط§ظ„ط¨ظٹط§ظ†ط§طھ';
-  @override
-  String get privacyDataCollectionBody =>
-      'ظ†ط¬ظ…ط¹ ط§ظ„ظ…ط¹ظ„ظˆظ…ط§طھ ظ„طھظ‚ط¯ظٹظ… ط®ط¯ظ…ط§طھ ط£ظپط¶ظ„ ظ„ط¬ظ…ظٹط¹ ظ…ط³طھط®ط¯ظ…ظٹظ†ط§. ظٹط´ظ…ظ„ ط°ظ„ظƒ ط§ظ„طھظپط§طµظٹظ„ ط§ظ„ط´ط®طµظٹط© ظ…ط«ظ„ ط§ظ„ط§ط³ظ… ظˆط§ظ„طµظˆط±ط© ط§ظ„ط±ظ…ط²ظٹط©طŒ ظˆط¨ظٹط§ظ†ط§طھ ط§ظ„ط§ط³طھط®ط¯ط§ظ… ظ„طھطھط¨ط¹ ط§ظ„طھظ‚ط¯ظ….';
-  @override
-  String get privacySecurityTitle => '3. ط§ظ„ط£ظ…ط§ظ†';
-  @override
-  String get privacySecurityBody =>
-      'ظ†ط·ط¨ظ‚ ظ…ط¬ظ…ظˆط¹ط© ظ…طھظ†ظˆط¹ط© ظ…ظ† ط§ظ„طھط¯ط§ط¨ظٹط± ط§ظ„ط£ظ…ظ†ظٹط© ظ„ظ„ط­ظپط§ط¸ ط¹ظ„ظ‰ ط³ظ„ط§ظ…ط© ظ…ط¹ظ„ظˆظ…ط§طھظƒ ط§ظ„ط´ط®طµظٹط©.';
+  // ── Coloring ──
+  @override String get coloringTitle => 'التلوين';
+  @override String get all => 'الكل';
+  @override String get noColoringPages => 'لا توجد صفحات تلوين';
+  @override String get tapToColor => 'اضغط للتلوين';
+  @override String coloringPageN(int n) => 'صفحة التلوين $n';
 
-  // â”€â”€ Parent Profile / Settings â”€â”€
-  @override
-  String get parentProfile => 'ط§ظ„ظ…ظ„ظپ ط§ظ„ط´ط®طµظٹ';
-  @override
-  String get parentChangePassword => 'طھط؛ظٹظٹط± ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط±';
-  @override
-  String get parentTheme => 'ط§ظ„ظ…ط¸ظ‡ط±';
-  @override
-  String get changePassword => 'طھط؛ظٹظٹط± ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط±';
-  @override
-  String get currentPassword => 'ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط± ط§ظ„ط­ط§ظ„ظٹط©';
-  @override
-  String get newPassword => 'ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط± ط§ظ„ط¬ط¯ظٹط¯ط©';
-  @override
-  String get confirmNewPassword =>
-      'طھط£ظƒظٹط¯ ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط± ط§ظ„ط¬ط¯ظٹط¯ط©';
-  @override
-  String get passwordChanged =>
-      'طھظ… طھط؛ظٹظٹط± ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط± ط¨ظ†ط¬ط§ط­';
-  @override
-  String get passwordChangeFailed => 'ظپط´ظ„ طھط؛ظٹظٹط± ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط±';
-  @override
-  String get currentPasswordRequired =>
-      'ظٹط±ط¬ظ‰ ط¥ط¯ط®ط§ظ„ ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط± ط§ظ„ط­ط§ظ„ظٹط©';
-  @override
-  String get newPasswordRequired =>
-      'ظٹط±ط¬ظ‰ ط¥ط¯ط®ط§ظ„ ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط± ط§ظ„ط¬ط¯ظٹط¯ط©';
-  @override
-  String get confirmNewPasswordRequired =>
-      'ظٹط±ط¬ظ‰ طھط£ظƒظٹط¯ ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط± ط§ظ„ط¬ط¯ظٹط¯ط©';
+  // ── Subject ──
+  @override String get availableLessons => 'الدروس المتاحة';
+  @override String lessonDurationMin(int minutes) => '$minutes دقيقة';
 
-  // â”€â”€ Forgot Password â”€â”€
-  @override
-  String get forgotPasswordTitle => 'ظ†ط³ظٹطھ ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط±';
-  @override
-  String get forgotPasswordSubtitle =>
-      'ط£ط¯ط®ظ„ ط¨ط±ظٹط¯ظƒ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ ظˆط³ظ†ط±ط³ظ„ ظ„ظƒ ط±ط§ط¨ط· ط¥ط¹ط§ط¯ط© ط§ظ„طھط¹ظٹظٹظ†';
-  @override
-  String get sendResetLink => 'ط¥ط±ط³ط§ظ„ ط±ط§ط¨ط· ط§ظ„ط¥ط¹ط§ط¯ط©';
-  @override
-  String get resetLinkSent =>
-      'طھظ… ط¥ط±ط³ط§ظ„ ط±ط§ط¨ط· ط¥ط¹ط§ط¯ط© ط§ظ„طھط¹ظٹظٹظ† ط¥ظ„ظ‰ ط¨ط±ظٹط¯ظƒ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ';
-  @override
-  String get backToLogin => 'ط§ظ„ط¹ظˆط¯ط© ط¥ظ„ظ‰ طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„';
-  @override
-  String get childForgotPasswordTitle => 'ظ†ط³ظٹطھ ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط±';
-  @override
-  String get childForgotPasswordSubtitle =>
-      'ط§ط·ظ„ط¨ ظ…ظ† ظˆط§ظ„ط¯ظٹظƒ ظ…ط³ط§ط¹ط¯طھظƒ ظپظٹ ط¥ط¹ط§ط¯ط© طھط¹ظٹظٹظ† ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط±';
-  @override
-  String get askParentForHelp =>
-      'ط§ط·ظ„ط¨ ط§ظ„ظ…ط³ط§ط¹ط¯ط© ظ…ظ† ظˆظ„ظٹ ط§ظ„ط£ظ…ط±';
+  // ── Theme Mode Toggle ──
+  @override String get darkLabel => 'داكن';
+  @override String get lightLabel => 'فاتح';
 
-  // â”€â”€ Create Child Profile â”€â”€
-  @override
-  String get createChildProfile => 'ط¥ظ†ط´ط§ط، ظ…ظ„ظپ ط§ظ„ط·ظپظ„';
-  @override
-  String get childNameLabel => 'ط§ط³ظ… ط§ظ„ط·ظپظ„';
-  @override
-  String get childNameHint => 'ط£ط¯ط®ظ„ ط§ط³ظ… ط·ظپظ„ظƒ';
-  @override
-  String get childNameRequired => 'ظٹط±ط¬ظ‰ ط¥ط¯ط®ط§ظ„ ط§ط³ظ… ط§ظ„ط·ظپظ„';
-  @override
-  String get childAgeLabel => 'ط¹ظ…ط± ط§ظ„ط·ظپظ„';
-  @override
-  String get childAgeHint => 'ط£ط¯ط®ظ„ ط¹ظ…ط± ط·ظپظ„ظƒ (5-12)';
-  @override
-  String get childAgeRequired => 'ظٹط±ط¬ظ‰ ط¥ط¯ط®ط§ظ„ ط¹ظ…ط± ط§ظ„ط·ظپظ„';
-  @override
-  String get selectAvatarLabel => 'ط§ط®طھط± طµظˆط±ط© ط±ظ…ط²ظٹط©';
-  @override
-  String get setPicturePassword => 'طھط¹ظٹظٹظ† ظƒظ„ظ…ط© ظ…ط±ظˆط± ط§ظ„طµظˆط±';
-  @override
-  String get createProfile => 'ط¥ظ†ط´ط§ط، ط§ظ„ظ…ظ„ظپ';
-
-  // â”€â”€ No Internet â”€â”€
-  @override
-  String get noInternetDescription =>
-      'ظٹط¨ط¯ظˆ ط£ظ†ظƒ ط؛ظٹط± ظ…طھطµظ„ ط¨ط§ظ„ط¥ظ†طھط±ظ†طھ. طھط­ظ‚ظ‚ ظ…ظ† ط§طھطµط§ظ„ظƒ ظˆط­ط§ظˆظ„ ظ…ط±ط© ط£ط®ط±ظ‰.';
-  @override
-  String get availableOffline => 'ظ…طھط§ط­ ط¨ط¯ظˆظ† ط¥ظ†طھط±ظ†طھ';
-  @override
-  String get offlineDownloadedLessons => 'ط§ظ„ط¯ط±ظˆط³ ط§ظ„ظ…ط­ظ…ظ„ط©';
-  @override
-  String get offlineSavedGames => 'ط§ظ„ط£ظ„ط¹ط§ط¨ ط§ظ„ظ…ط­ظپظˆط¸ط©';
-  @override
-  String get offlineStories => 'ط§ظ„ظ‚طµطµ';
-  @override
-  String get offlineProgressTracking => 'طھطھط¨ط¹ ط§ظ„طھظ‚ط¯ظ…';
-  @override
-  String get checkingConnection =>
-      'ط¬ط§ط±ظٹ ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† ط§ظ„ط§طھطµط§ظ„...';
-  @override
-  String get stillNoConnection => 'ظ„ط§ ظٹط²ط§ظ„ ظ„ط§ ظٹظˆط¬ط¯ ط§طھطµط§ظ„';
-  @override
-  String get tryAgain => 'ط­ط§ظˆظ„ ظ…ط±ط© ط£ط®ط±ظ‰';
-  @override
-  String get continueOffline => 'ط§ظ„ظ…طھط§ط¨ط¹ط© ط¨ط¯ظˆظ† ط¥ظ†طھط±ظ†طھ';
-
-  // â”€â”€ Data Sync â”€â”€
-  @override
-  String get dataSyncTitle => 'ظ…ط²ط§ظ…ظ†ط© ط§ظ„ط¨ظٹط§ظ†ط§طھ';
-  @override
-  String get syncReady => 'ط¬ط§ظ‡ط² ظ„ظ„ظ…ط²ط§ظ…ظ†ط©';
-  @override
-  String get syncStarting => 'ط¬ط§ط±ظٹ ط¨ط¯ط، ط§ظ„ظ…ط²ط§ظ…ظ†ط©...';
-  @override
-  String get syncingChildProfiles =>
-      'ط¬ط§ط±ظٹ ظ…ط²ط§ظ…ظ†ط© ظ…ظ„ظپط§طھ ط§ظ„ط£ط·ظپط§ظ„...';
-  @override
-  String get syncingProgressData =>
-      'ط¬ط§ط±ظٹ ظ…ط²ط§ظ…ظ†ط© ط¨ظٹط§ظ†ط§طھ ط§ظ„طھظ‚ط¯ظ…...';
-  @override
-  String get syncingActivities => 'ط¬ط§ط±ظٹ ظ…ط²ط§ظ…ظ†ط© ط§ظ„ط£ظ†ط´ط·ط©...';
-  @override
-  String get syncFinalizing =>
-      'ط¬ط§ط±ظٹ ط§ظ„ط§ظ†طھظ‡ط§ط، ظ…ظ† ط§ظ„ظ…ط²ط§ظ…ظ†ط©...';
-  @override
-  String get syncCompleted => 'ط§ظƒطھظ…ظ„طھ ط§ظ„ظ…ط²ط§ظ…ظ†ط©';
-  @override
-  String get syncNow => 'ظ…ط²ط§ظ…ظ†ط© ط§ظ„ط¢ظ†';
-  @override
-  String get syncChildProfilesLabel => 'ظ…ظ„ظپط§طھ ط§ظ„ط£ط·ظپط§ظ„';
-  @override
-  String get syncProgressDataLabel => 'ط¨ظٹط§ظ†ط§طھ ط§ظ„طھظ‚ط¯ظ…';
-  @override
-  String get syncSettingsLabel => 'ط§ظ„ط¥ط¹ط¯ط§ط¯ط§طھ';
-  @override
-  String get syncLastSyncLabel => 'ط¢ط®ط± ظ…ط²ط§ظ…ظ†ط©';
-  @override
-  String get syncedLabel => 'طھظ…طھ ط§ظ„ظ…ط²ط§ظ…ظ†ط©';
-  @override
-  String syncedCount(int count) => 'طھظ…طھ ظ…ط²ط§ظ…ظ†ط© $count ط¹ظ†طµط±';
-  @override
-  String activitiesCount(int count) => '$count ظ†ط´ط§ط·';
-
-  // â”€â”€ Error Screen â”€â”€
-  @override
-  String get errorTitle => 'ط­ط¯ط« ط®ط·ط£';
-  @override
-  String get errorDetailsLabel => 'طھظپط§طµظٹظ„ ط§ظ„ط®ط·ط£';
-  @override
-  String get goBack => 'ط§ظ„ط¹ظˆط¯ط©';
-  @override
-  String get reportIssue => 'ط§ظ„ط¥ط¨ظ„ط§ط؛ ط¹ظ† ظ…ط´ظƒظ„ط©';
-  @override
-  String get errorReported => 'طھظ… ط§ظ„ط¥ط¨ظ„ط§ط؛ ط¹ظ† ط§ظ„ط®ط·ط£';
-
-  // â”€â”€ Legal â”€â”€
-  @override
-  String get legalTitle => 'ظ‚ط§ظ†ظˆظ†ظٹ';
-  @override
-  String get legalTermsTitle => 'ط´ط±ظˆط· ط§ظ„ط®ط¯ظ…ط©';
-  @override
-  String get legalPrivacyTitle => 'ط³ظٹط§ط³ط© ط§ظ„ط®طµظˆطµظٹط©';
-  @override
-  String get legalCoppaTitle => 'ط§ظ…طھط«ط§ظ„ COPPA';
-  @override
-  String get legalNoContent => 'ظ„ط§ ظٹظˆط¬ط¯ ظ…ط­طھظˆظ‰';
-  @override
-  String get legalTermsPlaceholder =>
-      'ظ…ط­طھظˆظ‰ ط´ط±ظˆط· ط§ظ„ط®ط¯ظ…ط© ط³ظٹط¸ظ‡ط± ظ‡ظ†ط§.';
-  @override
-  String get legalPrivacyPlaceholder =>
-      'ظ…ط­طھظˆظ‰ ط³ظٹط§ط³ط© ط§ظ„ط®طµظˆطµظٹط© ط³ظٹط¸ظ‡ط± ظ‡ظ†ط§.';
-  @override
-  String get legalCoppaPlaceholder =>
-      'ظ…ط­طھظˆظ‰ ط§ظ…طھط«ط§ظ„ COPPA ط³ظٹط¸ظ‡ط± ظ‡ظ†ط§.';
-  @override
-  String get legalPlaceholder =>
-      'ط§ظ„ظ…ط­طھظˆظ‰ ط§ظ„ظ‚ط§ظ†ظˆظ†ظٹ ط³ظٹط¸ظ‡ط± ظ‡ظ†ط§.';
-
-  // â”€â”€ Maintenance â”€â”€
-  @override
-  String get maintenanceTitle => 'ظ†ط­ظ† ظ†ظڈط­ط³ظ‘ظ† ط§ظ„ط£ظ…ظˆط±!';
-  @override
-  String get maintenanceDescription =>
-      'ظƒظٹظ†ط¯ط± ظˆظˆط±ظ„ط¯ ظٹط®ط¶ط¹ ط­ط§ظ„ظٹط§ظ‹ ظ„ظ„طµظٹط§ظ†ط© ط§ظ„ظ…ط¬ط¯ظˆظ„ط©. ط³ظ†ط¹ظˆط¯ ظ‚ط±ظٹط¨ط§ظ‹ ط¨طھط¬ط±ط¨ط© ط£ظپط¶ظ„!';
-  @override
-  String get maintenanceEtaTitle => 'ط§ظ„ظˆظ‚طھ ط§ظ„ظ…طھظˆظ‚ط¹ ظ„ظ„ط¹ظˆط¯ط©';
-  @override
-  String get maintenanceEtaDuration => 'ط­ظˆط§ظ„ظٹ 2 ط³ط§ط¹ط©';
-  @override
-  String get maintenanceEtaWindow => '10:00 طµ - 12:00 ظ… ط¨طھظˆظ‚ظٹطھ UTC';
-  @override
-  String get maintenanceWhatsComing => 'ظ…ط§ ط§ظ„ط¬ط¯ظٹط¯ ط§ظ„ظ‚ط§ط¯ظ…';
-  @override
-  String get maintenanceFeatureAi =>
-      'ظ…ظٹط²ط§طھ ط§ظ„ط°ظƒط§ط، ط§ظ„ط§طµط·ظ†ط§ط¹ظٹ ط§ظ„ظ…ط­ط³ظ‘ظ†ط©';
-  @override
-  String get maintenanceFeatureGames => 'ط£ظ„ط¹ط§ط¨ طھط¹ظ„ظٹظ…ظٹط© ط¬ط¯ظٹط¯ط©';
-  @override
-  String get maintenanceFeatureSafety => 'ط£ط¯ظˆط§طھ ط£ظ…ط§ظ† ظ…ط­ط³ظ‘ظ†ط©';
-  @override
-  String get maintenanceFeaturePerformance => 'طھط­ط³ظٹظ†ط§طھ ط§ظ„ط£ط¯ط§ط،';
-  @override
-  String get maintenanceFollowUs =>
-      'طھط§ط¨ط¹ظ†ط§ ظ„ظ„ط­طµظˆظ„ ط¹ظ„ظ‰ ط§ظ„طھط­ط¯ظٹط«ط§طھ';
-
-  // â”€â”€ Help Support â”€â”€
-  @override
-  String get helpSupportTitle => 'ط§ظ„ظ…ط³ط§ط¹ط¯ط© ظˆط§ظ„ط¯ط¹ظ…';
-  @override
-  String openingLink(String target) => 'ط¬ط§ط±ظٹ ظپطھط­ $target...';
-
-  // â”€â”€ Parent PIN â”€â”€
-  @override
-  String get parentPinTitle => 'ظ…ظ†ط·ظ‚ط© ظˆظ„ظٹ ط§ظ„ط£ظ…ط±';
-  @override
-  String get parentPinSubtitle =>
-      'ط£ط¯ط®ظ„ ط±ظ…ط² PIN ظ„ظ„ظˆطµظˆظ„ ط¥ظ„ظ‰ ط¥ط¹ط¯ط§ط¯ط§طھ ظˆظ„ظٹ ط§ظ„ط£ظ…ط±';
-  @override
-  String get parentPinHint =>
-      'ط£ط¯ط®ظ„ ط±ظ…ط² PIN ط§ظ„ظ…ظƒظˆظ† ظ…ظ† 4 ط£ط±ظ‚ط§ظ…';
-  @override
-  String get parentPinError =>
-      'ط±ظ…ط² PIN ط؛ظٹط± طµط­ظٹط­. ظٹط±ط¬ظ‰ ط§ظ„ظ…ط­ط§ظˆظ„ط© ظ…ط±ط© ط£ط®ط±ظ‰.';
-  @override
-  String get parentPinSuccess => 'طھظ… ط§ظ„طھط­ظ‚ظ‚ ط¨ظ†ط¬ط§ط­';
-  @override
-  String get parentPinVerify => 'طھط­ظ‚ظ‚';
-  @override
-  String get parentPinForgot => 'ظ†ط³ظٹطھ ط±ظ…ط² PINطں';
-
-  // â”€â”€ Child Header â”€â”€
-  @override
-  String get childHeaderGreeting => 'ظ…ط±ط­ط¨ط§ظ‹';
-  @override
-  String get childHeaderSubtitle =>
-      'ظ…ط§ط°ط§ طھط±ظٹط¯ ط£ظ† طھطھط¹ظ„ظ… ط§ظ„ظٹظˆظ…طں';
-  @override
-  String levelLabel(int level) => 'ط§ظ„ظ…ط³طھظˆظ‰ $level';
-
-  // â”€â”€ Learn Screen â”€â”€
-  @override
-  String get searchPages => 'ط§ط¨ط­ط« ط¹ظ† ط§ظ„طµظپط­ط§طھ...';
-  @override
-  String get letsExploreAndLearn => 'ظ‡ظٹط§ ظ†ط³طھظƒط´ظپ ظˆظ†طھط¹ظ„ظ…!';
-  @override
-  String get noPagesFound => 'ظ„ط§ طھظˆط¬ط¯ طµظپط­ط§طھ';
-  @override
-  String get categoryBehavioral => 'ط§ظ„ط³ظ„ظˆظƒظٹ';
-  @override
-  String get categoryEducational => 'ط§ظ„طھط¹ظ„ظٹظ…ظٹ';
-  @override
-  String get categorySkillful => 'ط§ظ„ظ…ظ‡ط§ط±ظٹ';
-  @override
-  String get categoryEntertaining => 'ط§ظ„طھط±ظپظٹظ‡ظٹ';
-  @override
-  String get foundSomethingFun => 'ظˆط¬ط¯ظ†ط§ ط´ظٹط¦ط§ظ‹ ظ…ظ…طھط¹ط§ظ‹ ظ„ظƒ!';
-  @override
-  String get letsPracticeKindness => 'ظ„ظ†طھظ…ط±ظ‘ظ† ط¹ظ„ظ‰ ط§ظ„ظ„ط·ظپ!';
-  @override
-  String get letsTryNewSkill => 'ظ„ظ†ط¬ط±ظ‘ط¨ ظ…ظ‡ط§ط±ط© ط¬ط¯ظٹط¯ط©!';
-  @override
-  String get letsCreateSomethingFun => 'ظ„ظ†طµظ†ط¹ ط´ظٹط¦ط§ظ‹ ظ…ظ…طھط¹ط§ظ‹!';
-  @override
-  String get searchActivities => 'ط§ط¨ط­ط« ط¹ظ† ط§ظ„ط£ظ†ط´ط·ط©...';
-  @override
-  String get noActivitiesFound => 'ظ„ط§ طھظˆط¬ط¯ ط£ظ†ط´ط·ط©';
-  @override
-  String get watchNow => 'ط´ط§ظ‡ط¯ ط§ظ„ط¢ظ†';
-  @override
-  String get letsCreate => 'ظ„ظ†ط¨ط¯ط¹!';
-  @override
-  String followStepsInVideo(String title) =>
-      'ط§طھط¨ط¹ ط§ظ„ط®ط·ظˆط§طھ ظپظٹ ظپظٹط¯ظٹظˆ $title';
-  @override
-  String get imDone => 'ط£ظ†ظ‡ظٹطھ!';
-  @override
-  String get letsLearnSomethingNew => 'ظ„ظ†طھط¹ظ„ظ… ط´ظٹط¦ط§ظ‹ ط¬ط¯ظٹط¯ط§ظ‹!';
-  @override
-  String get searchLessons => 'ط§ط¨ط­ط« ط¹ظ† ط§ظ„ط¯ط±ظˆط³...';
-  @override
-  String get noLessonsFound => 'ظ„ط§ طھظˆط¬ط¯ ط¯ط±ظˆط³';
-  @override
-  String get readyForFunQuiz => 'ظ…ط³طھط¹ط¯ ظ„ط§ط®طھط¨ط§ط± ظ…ظ…طھط¹طں';
-  @override
-  String get playQuizToEarnStars =>
-      'ط§ظ„ط¹ط¨ ط§ظ„ط§ط®طھط¨ط§ط± ظ„طھط­طµظ„ ط¹ظ„ظ‰ ط§ظ„ظ†ط¬ظˆظ…!';
-  @override
-  String get startQuiz => 'ط§ط¨ط¯ط£ ط§ظ„ط§ط®طھط¨ط§ط±';
-  @override
-  String get quizTime => 'ظˆظ‚طھ ط§ظ„ط§ط®طھط¨ط§ط±';
-  @override
-  String get youCompletedQuiz => 'ط£ظƒظ…ظ„طھ ط§ظ„ط§ط®طھط¨ط§ط±!';
-  @override
-  String get awesome => 'ط±ط§ط¦ط¹!';
-  @override
-  String get nextQuestion => 'ط§ظ„ط³ط¤ط§ظ„ ط§ظ„طھط§ظ„ظٹ';
-  @override
-  String get lessonFinish => 'ط¥ظ†ظ‡ط§ط، ط§ظ„ط¯ط±ط³';
-  @override
-  String questionOf(int current, int total) =>
-      'ط§ظ„ط³ط¤ط§ظ„ $current ظ…ظ† $total';
-
-  // â”€â”€ Coloring â”€â”€
-  @override
-  String get coloringTitle => 'ط§ظ„طھظ„ظˆظٹظ†';
-  @override
-  String get all => 'ط§ظ„ظƒظ„';
-  @override
-  String get noColoringPages => 'ظ„ط§ طھظˆط¬ط¯ طµظپط­ط§طھ طھظ„ظˆظٹظ†';
-  @override
-  String get tapToColor => 'ط§ط¶ط؛ط· ظ„ظ„طھظ„ظˆظٹظ†';
-  @override
-  String coloringPageN(int n) => 'طµظپط­ط© ط§ظ„طھظ„ظˆظٹظ† $n';
-
-  // â”€â”€ Subject â”€â”€
-  @override
-  String get availableLessons => 'ط§ظ„ط¯ط±ظˆط³ ط§ظ„ظ…طھط§ط­ط©';
-  @override
-  String lessonDurationMin(int minutes) => '$minutes ط¯ظ‚ظٹظ‚ط©';
-
-  // â”€â”€ Theme Mode Toggle â”€â”€
-  @override
-  String get darkLabel => 'ط¯ط§ظƒظ†';
-  @override
-  String get lightLabel => 'ظپط§طھط­';
-
-  // â”€â”€ Extra â”€â”€
-  @override
-  String get freePlan => 'ظ…ط¬ط§ظ†ظٹ';
-  @override
-  String get freePlanPrice => '0\$ / ط´ظ‡ط±';
-  @override
-  String get familyPlanLabel => 'ط§ظ„ط¹ط§ط¦ظ„ط©';
-  @override
-  String get familyPlanPrice => '10\$ / ط´ظ‡ط±';
-  @override
-  String get parentAccount => 'ط­ط³ط§ط¨ ظˆظ„ظٹ ط§ظ„ط£ظ…ط±';
-  @override
-  String get personalInformation => 'ط§ظ„ظ…ط¹ظ„ظˆظ…ط§طھ ط§ظ„ط´ط®طµظٹط©';
-  @override
-  String get securitySection => 'ط§ظ„ط£ظ…ط§ظ†';
-  @override
-  String get joinKinderWorld => 'ط§ظ†ط¶ظ… ط¥ظ„ظ‰ ظƒظٹظ†ط¯ط± ظˆظˆط±ظ„ط¯';
-  @override
-  String get passwordVeryStrong => 'ظ‚ظˆظٹط© ط¬ط¯ظ‹ط§';
-  @override
-  String get accountCreatedWelcome =>
-      'طھظ… ط¥ظ†ط´ط§ط، ط§ظ„ط­ط³ط§ط¨! ط£ظ‡ظ„ط§ظ‹ ط¨ظƒ ظپظٹ ظƒظٹظ†ط¯ط± ظˆظˆط±ظ„ط¯.';
-  @override
-  String get aboutFallbackText =>
-      'ظٹط³ط§ط¹ط¯ ظƒظٹظ†ط¯ط± ظˆظˆط±ظ„ط¯ ط£ظˆظ„ظٹط§ط، ط§ظ„ط£ظ…ظˆط± ط¹ظ„ظ‰ طھظˆط¬ظٹظ‡ ط§ظ„طھط¹ظ„ظ‘ظ… ظپظٹ ط¨ظٹط¦ط© ط¢ظ…ظ†ط©.';
-  @override
-  String get aboutSubtitle =>
-      'ط§ظ„ط¥طµط¯ط§ط± ظˆط§ظ„طھط±ط§ط®ظٹطµ ظˆط­ظ‚ظˆظ‚ ط§ظ„ظ†ط´ط±';
-  @override
-  String get activityGame1Desc => 'طھط­ط¯ظٹط§طھ ط±ظٹط§ط¶ظٹط§طھ ظ…ظ…طھط¹ط©';
-  @override
-  String get activityGame1Title => 'ط£ظ„ط؛ط§ط² ط§ظ„ط±ظٹط§ط¶ظٹط§طھ';
-  @override
-  String get activityGame2Desc => 'ط§ط®طھط¨ط± ط°ط§ظƒط±طھظƒ';
-  @override
-  String get activityGame2Title => 'ظ„ط¹ط¨ط© ظ…ط·ط§ط¨ظ‚ط© ط§ظ„ط°ط§ظƒط±ط©';
-  @override
-  String get activityGame3Desc => 'ظƒظˆظ‘ظ† ظƒظ„ظ…ط§طھ ظ…ظ† ط§ظ„ط­ط±ظˆظپ';
-  @override
-  String get activityGame3Title => 'ط¨ظ†ط§ط، ط§ظ„ظƒظ„ظ…ط§طھ';
-  @override
-  String get activityGame4Desc => 'ط·ط§ط¨ظ‚ ط§ظ„ط£ظ„ظˆط§ظ† ظˆط§ظ„ط£ط´ظƒط§ظ„';
-  @override
-  String get activityGame4Title => 'ظ…ط·ط§ط¨ظ‚ط© ط§ظ„ط£ظ„ظˆط§ظ†';
-  @override
-  String get activityMusic1Desc => 'ط£ط؛ط§ظ†ظٹ ط£ط·ظپط§ظ„ ظ…ظ…طھط¹ط©';
-  @override
-  String get activityMusic1Title => 'ط؛ظ†ظ‘ظگ ظ…ط¹ظ†ط§';
-  @override
-  String get activityMusic2Desc =>
-      'طھط¹ط±ظ‘ظپ ط¹ظ„ظ‰ ط§ظ„ط¢ظ„ط§طھ ط§ظ„ظ…ظˆط³ظٹظ‚ظٹط©';
-  @override
-  String get activityMusic2Title => 'ط£طµظˆط§طھ ط§ظ„ط¢ظ„ط§طھ';
-  @override
-  String get activityMusic3Desc => 'طµظپظ‘ظ‚ ط¹ظ„ظ‰ ط§ظ„ط¥ظٹظ‚ط§ط¹';
-  @override
-  String get activityMusic3Title => 'ظˆظ‚طھ ط§ظ„ط¥ظٹظ‚ط§ط¹';
-  @override
-  String get activityMusic4Desc => 'طھط­ط±ظ‘ظƒ ظˆط§ط±ظ‚طµ';
-  @override
-  String get activityMusic4Title => 'ط­ظپظ„ط© ط§ظ„ط±ظ‚طµ';
-  @override
-  String get activityRespectSharing => 'ط§ظ„ط§ط­طھط±ط§ظ… ظˆط§ظ„ظ…ط´ط§ط±ظƒط©';
-  @override
-  String get activityStory1Desc => 'ظ‚طµط© ط¹ظ† ط§ظ„ط´ط¬ط§ط¹ط©';
-  @override
-  String get activityStory1Title =>
-      'ط§ظ„ظ†ظ…ظ„ط© ط§ظ„طµط؛ظٹط±ط© ط§ظ„ط´ط¬ط§ط¹ط©';
-  @override
-  String get activityStory2Desc => 'ط§ظ„ط£ظ„ظˆط§ظ† طھظ†ط¨ط¶ ط¨ط§ظ„ط­ظٹط§ط©';
-  @override
-  String get activityStory2Title => 'ظ…ط؛ط§ظ…ط±ط© ظ‚ظˆط³ ظ‚ط²ط­';
-  @override
-  String get activityStory3Desc => 'ط­ظƒط§ظٹط© ط¹ظ† ط§ظ„طµط¯ط§ظ‚ط©';
-  @override
-  String get activityStory3Title => 'ط§ظ„ط´ط¬ط±ط© ط§ظ„ط³ط­ط±ظٹط©';
-  @override
-  String get activityStory4Desc => 'ظ…ط؛ط§ظ…ط±ط© طھط­طھ ط§ظ„ظ…ط§ط،';
-  @override
-  String get activityStory4Title => 'ط£ط­ظ„ط§ظ… ط§ظ„ظ…ط­ظٹط·';
-  @override
-  String get activityVideo1Desc => 'ط§ظƒطھط´ظپ ط§ظ„ط¹ط§ظ„ظ… ط§ظ„ط·ط¨ظٹط¹ظٹ';
-  @override
-  String get activityVideo1Title => 'ظ…ط³طھظƒط´ظپ ط§ظ„ط·ط¨ظٹط¹ط©';
-  @override
-  String get activityVideo2Desc => 'ط­ظ‚ط§ط¦ظ‚ ط¹ظ„ظ…ظٹط© ظ…ط°ظ‡ظ„ط©';
-  @override
-  String get activityVideo2Title => 'ط±ظˆط§ط¦ط¹ ط§ظ„ط¹ظ„ظˆظ…';
-  @override
-  String get activityVideo3Desc =>
-      'طھط¹ط±ظ‘ظپ ط¹ظ„ظ‰ ط­ظٹظˆط§ظ†ط§طھ ظ…ط®طھظ„ظپط©';
-  @override
-  String get activityVideo3Title => 'ط£طµط¯ظ‚ط§ط، ط§ظ„ط­ظٹظˆط§ظ†ط§طھ';
-  @override
-  String get activityVideo4Desc => 'ط±ط­ظ„ط© ط¥ظ„ظ‰ ط§ظ„ظ†ط¬ظˆظ…';
-  @override
-  String get activityVideo4Title => 'ظ…ط؛ط§ظ…ط±ط© ط§ظ„ظپط¶ط§ط،';
-  @override
-  String get activityOfDayTreasureHuntTitle => 'ظ…ط·ط§ط±ط¯ط© ط§ظ„ظƒظ†ط²';
-  @override
-  String get activityOfDayTreasureHuntSubtitle =>
-      'ط§ط¨ط­ط« ط¹ظ† ط§ظ„ط£ظ„ظˆط§ظ† ظˆط§ظ„ط£ط´ظƒط§ظ„ ظ…ظ† ط­ظˆظ„ظƒ';
-  @override
-  String get activityOfDayMissionTitle => 'ظ…ظ‡ظ…طھظƒ';
-  @override
-  String get activityOfDayFindColorsTitle => 'ط§ط¹ط«ط± ط¹ظ„ظ‰ 3 ط£ظ„ظˆط§ظ†';
-  @override
-  String get activityOfDayFindColorsSubtitle =>
-      'ط£ط´ط± ط¥ظ„ظ‰ ط´ظٹط، ط£ط­ظ…ط± ظˆط£ط²ط±ظ‚ ظˆط£ط®ط¶ط±.';
-  @override
-  String get activityOfDaySpotShapesTitle => 'ط§ظƒطھط´ظپ ط´ظƒظ„ظٹظ†';
-  @override
-  String get activityOfDaySpotShapesSubtitle =>
-      'ط§ط¹ط«ط± ط¹ظ„ظ‰ ط¯ط§ط¦ط±ط© ظˆظ…ط±ط¨ط¹ ط­ظˆظ„ظƒ.';
-  @override
-  String get activityOfDayShareSmileTitle => 'ط´ط§ط±ظƒ ط§ط¨طھط³ط§ظ…ط©';
-  @override
-  String get activityOfDayShareSmileSubtitle =>
-      'ظ‚ط¯ظ‘ظ… طھطµظپظٹظ‚ط© ط£ظˆ ظ‚ظ„ ط´ظٹط¦ط§ظ‹ ظ„ط·ظٹظپط§ظ‹.';
-  @override
-  String get activityOfDayTimeHint =>
-      'ط§ط³طھظ…طھط¹ ط¨ط­ظˆط§ظ„ظٹ 5 ط¯ظ‚ط§ط¦ظ‚ ظ…ظ† ط§ظ„ظ…ط±ط­!';
-  @override
-  String get activityOfDayCompletedCta => 'ط§ظƒطھظ…ظ„! +50 ظ†ظ‚ط·ط© ط®ط¨ط±ط©';
-  @override
-  String get activityOfDayFinishCta => 'ط¥ظ†ظ‡ط§ط، ط§ظ„ظ†ط´ط§ط·';
-  @override
-  String get activityOfDayStartCta => 'ط§ط¨ط¯ط£ ط§ظ„ظ†ط´ط§ط·';
-  @override
-  String get additionalResources => 'ظ…ظˆط§ط±ط¯ ط¥ط¶ط§ظپظٹط©';
-  @override
-  String get adminAccessDenied => 'طھظ… ط±ظپط¶ ط§ظ„ظˆطµظˆظ„';
-  @override
-  String get adminAdminsAssignRoleAction => 'طھط¹ظٹظٹظ† ط¯ظˆط±';
-  @override
-  String get adminAdminsAssignRoleTitle => 'طھط¹ظٹظٹظ† ط¯ظˆط±';
-  @override
-  String get adminAdminsCreateAction => 'ط¥ظ†ط´ط§ط، ظ…ط³ط¤ظˆظ„';
-  @override
-  String get adminAdminsCreateRoleAction => 'ط¥ظ†ط´ط§ط، ط¯ظˆط±';
-  @override
-  String get adminAdminsCreateRoleTitle => 'ط¥ظ†ط´ط§ط، ط¯ظˆط±';
-  @override
-  String get adminAdminsCreateTitle => 'ط¥ظ†ط´ط§ط، ظ…ط³ط¤ظˆظ„';
-  @override
-  String get adminAdminsCreatedMessage =>
-      'طھظ… ط¥ظ†ط´ط§ط، ط­ط³ط§ط¨ ط§ظ„ظ…ط³ط¤ظˆظ„ ط¨ظ†ط¬ط§ط­';
-  @override
-  String get adminAdminsCurrentAdminHint =>
-      'ط­ط³ط§ط¨ ط§ظ„ظ…ط³ط¤ظˆظ„ ط§ظ„ط®ط§طµ ط¨ظƒ ظ…ط­ظ…ظٹ ظ…ظ† ط§ظ„طھط¹ط·ظٹظ„ ط§ظ„ط°ط§طھظٹ ظˆط¥ط²ط§ظ„ط© ط§ظ„ط£ط¯ظˆط§ط± ظ…ظ† ظ†ظپط³ظƒ.';
-  @override
-  String get adminAdminsDisableAction => 'طھط¹ط·ظٹظ„';
-  @override
-  String get adminAdminsDisableConfirm =>
-      'ظ‡ظ„ طھط±ظٹط¯ طھط¹ط·ظٹظ„ ط­ط³ط§ط¨ ظ‡ط°ط§ ط§ظ„ظ…ط³ط¤ظˆظ„طں';
-  @override
-  String get adminAdminsDisableTitle => 'طھط¹ط·ظٹظ„ ط§ظ„ظ…ط³ط¤ظˆظ„';
-  @override
-  String get adminAdminsDisabledMessage =>
-      'طھظ… طھط¹ط·ظٹظ„ ط­ط³ط§ط¨ ط§ظ„ظ…ط³ط¤ظˆظ„ ط¨ظ†ط¬ط§ط­';
-  @override
-  String get adminAdminsEditAction => 'طھط¹ط¯ظٹظ„ ط§ظ„ظ…ط³ط¤ظˆظ„';
-  @override
-  String get adminAdminsEditRoleAction => 'طھط¹ط¯ظٹظ„ ط§ظ„ط¯ظˆط±';
-  @override
-  String get adminAdminsEditRoleTitle => 'طھط¹ط¯ظٹظ„ ط§ظ„ط¯ظˆط±';
-  @override
-  String get adminAdminsEditTitle => 'طھط¹ط¯ظٹظ„ ط§ظ„ظ…ط³ط¤ظˆظ„';
-  @override
-  String get adminAdminsEmailField => 'ط§ظ„ط¨ط±ظٹط¯ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ';
-  @override
-  String get adminAdminsEnableAction => 'طھظپط¹ظٹظ„';
-  @override
-  String get adminAdminsEnableConfirm =>
-      'ظ‡ظ„ طھط±ظٹط¯ طھظپط¹ظٹظ„ ط­ط³ط§ط¨ ظ‡ط°ط§ ط§ظ„ظ…ط³ط¤ظˆظ„طں';
-  @override
-  String get adminAdminsEnableTitle => 'طھظپط¹ظٹظ„ ط§ظ„ظ…ط³ط¤ظˆظ„';
-  @override
-  String get adminAdminsEnabledMessage =>
-      'طھظ… طھظپط¹ظٹظ„ ط­ط³ط§ط¨ ط§ظ„ظ…ط³ط¤ظˆظ„ ط¨ظ†ط¬ط§ط­';
-  @override
-  String get adminAdminsIdLabel => 'ط§ظ„ظ…ط¹ط±ظ‘ظپ';
-  @override
-  String get adminAdminsInitialRolesLabel => 'ط§ظ„ط£ط¯ظˆط§ط± ط§ظ„ظ…ط¨ط¯ط¦ظٹط©';
-  @override
-  String get adminAdminsNameField => 'ط§ظ„ط§ط³ظ…';
-  @override
-  String get adminAdminsNoRoleSelection =>
-      'ط§ط®طھط± ط¯ظˆط±ظ‹ط§ ظ„طھط¹ط¯ظٹظ„ ط§ظ„طµظ„ط§ط­ظٹط§طھ';
-  @override
-  String get adminAdminsNoSelection =>
-      'ط§ط®طھط± ط­ط³ط§ط¨ ظ…ط³ط¤ظˆظ„ ظ„ط¹ط±ط¶ ط§ظ„طھظپط§طµظٹظ„';
-  @override
-  String get adminAdminsPasswordField => 'ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط±';
-  @override
-  String get adminAdminsPasswordHelper =>
-      'ط§طھط±ظƒظ‡ ظپط§ط±ط؛ظ‹ط§ ظ„ظ„ط¥ط¨ظ‚ط§ط، ط¹ظ„ظ‰ ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط± ط§ظ„ط­ط§ظ„ظٹط©';
-  @override
-  String get adminAdminsPermissionsSection => 'ط§ظ„طµظ„ط§ط­ظٹط§طھ';
-  @override
-  String get adminAdminsPermissionsUpdatedMessage =>
-      'طھظ… طھط­ط¯ظٹط« طµظ„ط§ط­ظٹط§طھ ط§ظ„ط¯ظˆط± ط¨ظ†ط¬ط§ط­';
-  @override
-  String get adminAdminsRemoveRoleAction => 'ط¥ط²ط§ظ„ط© ط§ظ„ط¯ظˆط±';
-  @override
-  String get adminAdminsRemoveRoleTitle => 'ط¥ط²ط§ظ„ط© ط§ظ„ط¯ظˆط±';
-  @override
-  String get adminAdminsRoleAssignedMessage =>
-      'طھظ… طھط¹ظٹظٹظ† ط§ظ„ط¯ظˆط± ط¨ظ†ط¬ط§ط­';
-  @override
-  String get adminAdminsRoleCreatedMessage =>
-      'طھظ… ط¥ظ†ط´ط§ط، ط§ظ„ط¯ظˆط± ط¨ظ†ط¬ط§ط­';
-  @override
-  String get adminAdminsRoleDescriptionField => 'ظˆطµظپ ط§ظ„ط¯ظˆط±';
-  @override
-  String adminRoleStats(int permissionCount, int adminCount) =>
-      '$permissionCount طµظ„ط§ط­ظٹط© â€¢ $adminCount ظ…ط³ط¤ظˆظ„';
-  @override
-  String get adminAdminsRoleNameField => 'ط§ط³ظ… ط§ظ„ط¯ظˆط±';
-  @override
-  String get adminAdminsRoleRemovedMessage =>
-      'طھظ…طھ ط¥ط²ط§ظ„ط© ط§ظ„ط¯ظˆط± ط¨ظ†ط¬ط§ط­';
-  @override
-  String get adminAdminsRoleUpdatedMessage =>
-      'طھظ… طھط­ط¯ظٹط« ط§ظ„ط¯ظˆط± ط¨ظ†ط¬ط§ط­';
-  @override
-  String get adminAdminsRolesSection => 'ط§ظ„ط£ط¯ظˆط§ط± ط§ظ„ظ…ط¹ظٹظ‘ظ†ط©';
-  @override
-  String get adminAdminsRolesTab => 'ط§ظ„ط£ط¯ظˆط§ط± ظˆط§ظ„طµظ„ط§ط­ظٹط§طھ';
-  @override
-  String get adminAdminsSavePermissionsAction => 'ط­ظپط¸ ط§ظ„طµظ„ط§ط­ظٹط§طھ';
-  @override
-  String get adminAdminsSearchLabel => 'ط§ظ„ط¨ط­ط« ط¹ظ† ط§ظ„ظ…ط³ط¤ظˆظ„ظٹظ†';
-  @override
-  String get adminAdminsStatusFilter => 'ط§ظ„ط­ط§ظ„ط©';
-  @override
-  String get adminAdminsSubtitle =>
-      'ط¥ط¯ط§ط±ط© ط­ط³ط§ط¨ط§طھ ط§ظ„ظ…ط³ط¤ظˆظ„ظٹظ† ظˆطھط¹ظٹظٹظ† ط§ظ„ط£ط¯ظˆط§ط± ظˆط±ط¨ط· ط§ظ„طµظ„ط§ط­ظٹط§طھ.';
-  @override
-  String get adminAdminsTitle => 'ط¥ط¯ط§ط±ط© ط§ظ„ظ…ط³ط¤ظˆظ„ظٹظ†';
-  @override
-  String get adminAdminsUpdatedMessage =>
-      'طھظ… طھط­ط¯ظٹط« ط­ط³ط§ط¨ ط§ظ„ظ…ط³ط¤ظˆظ„ ط¨ظ†ط¬ط§ط­';
-  @override
-  String get adminAdminsUsersTab => 'ط§ظ„ظ…ط³ط¤ظˆظ„ظˆظ†';
-  @override
-  String get adminAnalyticsActiveChildren => 'ط§ظ„ط£ط·ظپط§ظ„ ط§ظ„ظ†ط´ط·ظˆظ†';
-  @override
-  String get adminAnalyticsActivities => 'ط§ظ„ط£ظ†ط´ط·ط©';
-  @override
-  String get adminAnalyticsActivitiesToday => 'ط£ظ†ط´ط·ط© ط§ظ„ظٹظˆظ…';
-  @override
-  String get adminAnalyticsFreeSubscriptions =>
-      'ط§ظ„ط§ط´طھط±ط§ظƒط§طھ ط§ظ„ظ…ط¬ط§ظ†ظٹط©';
-  @override
-  String get adminAnalyticsNewChildren => 'ط§ظ„ط£ط·ظپط§ظ„';
-  @override
-  String get adminAnalyticsNewUsers => 'ط§ظ„ظ…ط³طھط®ط¯ظ…ظˆظ†';
-  @override
-  String get adminAnalyticsNoData => 'ظ„ط§ طھظˆط¬ط¯ ط¨ظٹط§ظ†ط§طھ ظ…طھط§ط­ط©';
-  @override
-  String get adminAnalyticsOpenTickets => 'ط§ظ„طھط°ط§ظƒط± ط§ظ„ظ…ظپطھظˆط­ط©';
-  @override
-  String get adminAnalyticsPaidSubscriptions =>
-      'ط§ظ„ط§ط´طھط±ط§ظƒط§طھ ط§ظ„ظ…ط¯ظپظˆط¹ط©';
-  @override
-  String get adminAnalyticsRangeMonth => 'ط´ظ‡ط±';
-  @override
-  String get adminAnalyticsRangeWeek => 'ط£ط³ط¨ظˆط¹';
-  @override
-  String get adminAnalyticsRecentTickets =>
-      'ظ…ظ„ط®طµ ط§ظ„طھط°ط§ظƒط± ط§ظ„ط£ط®ظٹط±ط©';
-  @override
-  String get adminAnalyticsSubscriptionsTitle =>
-      'ظ…ظ„ط®طµ ط§ظ„ط§ط´طھط±ط§ظƒط§طھ';
-  @override
-  String get adminAnalyticsSubtitle =>
-      'ط±ط§ظ‚ط¨ ظ†ظ…ظˆ ط§ظ„ظ…ظ†طµط© ظˆط§طھط¬ط§ظ‡ط§طھ ط§ظ„ظ†ط´ط§ط· ظˆط­ط§ظ„ط© ط§ظ„ط¯ط¹ظ….';
-  @override
-  String get adminAnalyticsTickets => 'ط§ظ„طھط°ط§ظƒط±';
-  @override
-  String get adminAnalyticsTitle =>
-      'ظ†ط¸ط±ط© ط¹ط§ظ…ط© ط¹ظ„ظ‰ ط§ظ„طھط­ظ„ظٹظ„ط§طھ';
-  @override
-  String get adminAnalyticsTotalUsers => 'ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ظ…ط³طھط®ط¯ظ…ظٹظ†';
-  @override
-  String get adminAnalyticsUsageTitle => 'ط§طھط¬ط§ظ‡ ط§ظ„ط§ط³طھط®ط¯ط§ظ…';
-  @override
-  String get adminAuditActionColumn => 'ط§ظ„ط¥ط¬ط±ط§ط،';
-  @override
-  String get adminAuditActionFilter => 'ط§ظ„ط¥ط¬ط±ط§ط،';
-  @override
-  String get adminAuditAdminColumn => 'ط§ظ„ظ…ط³ط¤ظˆظ„';
-  @override
-  String get adminAuditAdminFilter => 'ظ…ط¹ط±ظ‘ظپ ط§ظ„ظ…ط³ط¤ظˆظ„';
-  @override
-  String get adminAuditApplyFilters => 'طھط·ط¨ظٹظ‚ ط§ظ„ظپظ„ط§طھط±';
-  @override
-  String get adminAuditDateFromFilter => 'ظ…ظ† طھط§ط±ظٹط®';
-  @override
-  String get adminAuditDateToFilter => 'ط¥ظ„ظ‰ طھط§ط±ظٹط®';
-  @override
-  String get adminAuditEntityColumn => 'ط§ظ„ظƒظٹط§ظ†';
-  @override
-  String get adminAuditNetworkColumn => 'IP / ط§ظ„ط¬ظ‡ط§ط²';
-  @override
-  String get adminAuditSubtitle =>
-      'ط±ط§ط¬ط¹ ط¥ط¬ط±ط§ط،ط§طھ ط§ظ„ظ…ط³ط¤ظˆظ„ظٹظ† ط§ظ„ط­ط³ط§ط³ط© ظˆطھطھط¨ط¹ طھط؛ظٹظٹط±ط§طھ ط§ظ„ظ†ط¸ط§ظ….';
-  @override
-  String get adminAuditTimeColumn => 'ط§ظ„ظˆظ‚طھ';
-  @override
-  String get adminAuditTitle => 'ط³ط¬ظ„ط§طھ ط§ظ„طھط¯ظ‚ظٹظ‚';
-  @override
-  String get adminChildrenActionsColumn => 'ط§ظ„ط¥ط¬ط±ط§ط،ط§طھ';
-  @override
-  String get adminChildrenActivitySection => 'ط³ط¬ظ„ ط§ظ„ظ†ط´ط§ط·';
-  @override
-  String get adminChildrenAgeColumn => 'ط§ظ„ط¹ظ…ط±';
-  @override
-  String get adminChildrenAgeField => 'ط§ظ„ط¹ظ…ط±';
-  @override
-  String get adminChildrenAgeFilter => 'ط§ظ„ط¹ظ…ط±';
-  @override
-  String get adminChildrenAvatarField => 'ط§ظ„طµظˆط±ط© ط§ظ„ط±ظ…ط²ظٹط©';
-  @override
-  String get adminChildrenDeactivateAction => 'طھط¹ط·ظٹظ„';
-  @override
-  String get adminChildrenDeactivateConfirm =>
-      'ظ‡ظ„ طھط±ظٹط¯ طھط¹ط·ظٹظ„ ظ…ظ„ظپ ظ‡ط°ط§ ط§ظ„ط·ظپظ„طں';
-  @override
-  String get adminChildrenDeactivateTitle => 'طھط¹ط·ظٹظ„ ط§ظ„ط·ظپظ„';
-  @override
-  String get adminChildrenDeactivatedMessage =>
-      'طھظ… طھط¹ط·ظٹظ„ ط§ظ„ط·ظپظ„ ط¨ظ†ط¬ط§ط­';
-  @override
-  String get adminChildrenEditTitle => 'طھط¹ط¯ظٹظ„ ط§ظ„ط·ظپظ„';
-  @override
-  String get adminChildrenMilestonesSection =>
-      'ط§ظ„ط¥ظ†ط¬ط§ط²ط§طھ ط§ظ„ظ…ط±ط­ظ„ظٹط©';
-  @override
-  String get adminChildrenNameColumn => 'ط§ظ„ط§ط³ظ…';
-  @override
-  String get adminChildrenNameField => 'ط§ظ„ط§ط³ظ…';
-  @override
-  String get adminChildrenOverviewCard => 'ظ†ط¸ط±ط© ط¹ط§ظ…ط©';
-  @override
-  String get adminChildrenParentColumn => 'ظˆظ„ظٹ ط§ظ„ط£ظ…ط±';
-  @override
-  String get adminChildrenParentFilter => 'ظ…ط¹ط±ظ‘ظپ ظˆظ„ظٹ ط§ظ„ط£ظ…ط±';
-  @override
-  String get adminChildrenProgressCard => 'ط§ظ„طھظ‚ط¯ظ…';
-  @override
-  String get adminChildrenProgressDaysMetric =>
-      'ط£ظٹط§ظ… ظ…ظ†ط° ط§ظ„ط¥ظ†ط´ط§ط،';
-  @override
-  String get adminChildrenProgressEventsMetric => 'ط£ط­ط¯ط§ط« ط§ظ„طھط¯ظ‚ظٹظ‚';
-  @override
-  String get adminChildrenStatusColumn => 'ط§ظ„ط­ط§ظ„ط©';
-  @override
-  String get adminChildrenStatusFilter => 'ط§ظ„ط­ط§ظ„ط©';
-  @override
-  String get adminChildrenSubtitle =>
-      'ظپط­طµ ظ…ظ„ظپط§طھ ط§ظ„ط£ط·ظپط§ظ„ ظˆطµظٹط§ظ†طھظ‡ط§.';
-  @override
-  String get adminChildrenTitle => 'ط¥ط¯ط§ط±ط© ط§ظ„ط£ط·ظپط§ظ„';
-  @override
-  String get adminChildrenUpdatedMessage =>
-      'طھظ… طھط­ط¯ظٹط« ط§ظ„ط·ظپظ„ ط¨ظ†ط¬ط§ط­';
-  @override
-  String get adminCmsAddCategory => 'ط¥ط¶ط§ظپط© ظپط¦ط©';
-  @override
-  String get adminCmsAddContent => 'ط¥ط¶ط§ظپط© ظ…ط­طھظˆظ‰';
-  @override
-  String get adminCmsAddQuiz => 'ط¥ط¶ط§ظپط© ط§ط®طھط¨ط§ط±';
-  @override
-  String get adminCmsAgeGroupLabel => 'ط§ظ„ظپط¦ط© ط§ظ„ط¹ظ…ط±ظٹط©';
-  @override
-  String get adminCmsAllCategories => 'ظƒظ„ ط§ظ„ظپط¦ط§طھ';
-  @override
-  String get adminCmsBodyArLabel => 'ط§ظ„ظ…ط­طھظˆظ‰ ط§ظ„ط¹ط±ط¨ظٹ';
-  @override
-  String get adminCmsBodyEnLabel => 'ط§ظ„ظ…ط­طھظˆظ‰ ط§ظ„ط¥ظ†ط¬ظ„ظٹط²ظٹ';
-  @override
-  String get adminCmsCategoriesTab => 'ط§ظ„ظپط¦ط§طھ';
-  @override
-  String get adminCmsCategoryCreateTitle => 'ط¥ظ†ط´ط§ط، ظپط¦ط©';
-  @override
-  String get adminCmsCategoryEditTitle => 'طھط¹ط¯ظٹظ„ ط§ظ„ظپط¦ط©';
-  @override
-  String get adminCmsCategoryLabel => 'ط§ظ„ظپط¦ط©';
-  @override
-  String get adminCmsCategorySaved => 'طھظ… ط­ظپط¸ ط§ظ„ظپط¦ط©';
-  @override
-  String get adminCmsCategorySlug => 'ط§ظ„ظ…ط¹ط±ظ‘ظپ ط§ظ„ظ†طµظٹ';
-  @override
-  String get adminCmsCategoryUsage => 'ط§ظ„ظ…ط­طھظˆظ‰ / ط§ظ„ط§ط®طھط¨ط§ط±ط§طھ';
-  @override
-  String get adminCmsContentsTab => 'ط§ظ„ظ…ط­طھظˆظٹط§طھ';
-  @override
-  String get adminCmsCreateContentTitle => 'ط¥ظ†ط´ط§ط، ظ…ط­طھظˆظ‰';
-  @override
-  String get adminCmsCreateQuizTitle => 'ط¥ظ†ط´ط§ط، ط§ط®طھط¨ط§ط±';
-  @override
-  String get adminCmsDeleteCategoryConfirm =>
-      'ظ‡ظ„ طھط±ظٹط¯ ط­ط°ظپ ظ‡ط°ظ‡ ط§ظ„ظپط¦ط©طں';
-  @override
-  String get adminCmsDeleteCategoryTitle => 'ط­ط°ظپ ط§ظ„ظپط¦ط©';
-  @override
-  String get adminCmsDeleteContentConfirm =>
-      'ظ‡ظ„ طھط±ظٹط¯ ط­ط°ظپ ط¹ظ†طµط± ط§ظ„ظ…ط­طھظˆظ‰ ظ‡ط°ط§طں';
-  @override
-  String get adminCmsDeleteContentTitle => 'ط­ط°ظپ ط§ظ„ظ…ط­طھظˆظ‰';
-  @override
-  String get adminCmsDeleteQuizConfirm =>
-      'ظ‡ظ„ طھط±ظٹط¯ ط­ط°ظپ ظ‡ط°ط§ ط§ظ„ط§ط®طھط¨ط§ط±طں';
-  @override
-  String get adminCmsDeleteQuizTitle => 'ط­ط°ظپ ط§ظ„ط§ط®طھط¨ط§ط±';
-  @override
-  String get adminCmsDescriptionArLabel => 'ط§ظ„ظˆطµظپ ط§ظ„ط¹ط±ط¨ظٹ';
-  @override
-  String get adminCmsDescriptionEnLabel => 'ط§ظ„ظˆطµظپ ط§ظ„ط¥ظ†ط¬ظ„ظٹط²ظٹ';
-  @override
-  String get adminCmsEditContentTitle => 'طھط¹ط¯ظٹظ„ ط§ظ„ظ…ط­طھظˆظ‰';
-  @override
-  String get adminCmsEditQuizTitle => 'طھط¹ط¯ظٹظ„ ط§ظ„ط§ط®طھط¨ط§ط±';
-  @override
-  String get adminCmsLinkedContentLabel => 'ط§ظ„ظ…ط­طھظˆظ‰ ط§ظ„ظ…ط±طھط¨ط·';
-  @override
-  String get adminCmsLinkedQuizzes => 'ط§ظ„ط§ط®طھط¨ط§ط±ط§طھ ط§ظ„ظ…ط±طھط¨ط·ط©';
-  @override
-  String get adminCmsMetadataLabel => 'ط¨ظٹط§ظ†ط§طھ ظˆطµظپظٹط© JSON';
-  @override
-  String get adminCmsNoCategory => 'ظ„ط§ طھظˆط¬ط¯ ظپط¦ط©';
-  @override
-  String get adminCmsNoLinkedContent => 'ظ„ط§ ظٹظˆط¬ط¯ ظ…ط­طھظˆظ‰ ظ…ط±طھط¨ط·';
-  @override
-  String get adminCmsPreviewAction => 'ظ…ط¹ط§ظٹظ†ط©';
-  @override
-  String get adminCmsPreviewTitle => 'ظ…ط¹ط§ظٹظ†ط©';
-  @override
-  String get adminCmsPublishAction => 'ظ†ط´ط±';
-  @override
-  String get adminCmsQuestionsJsonLabel => 'ط£ط³ط¦ظ„ط© JSON';
-  @override
-  String get adminCmsQuestionsLabel => 'ط§ظ„ط£ط³ط¦ظ„ط©';
-  @override
-  String get adminCmsQuizSaved => 'طھظ… ط­ظپط¸ ط§ظ„ط§ط®طھط¨ط§ط±';
-  @override
-  String get adminCmsContentSaved => 'طھظ… ط­ظپط¸ ط§ظ„ظ…ط­طھظˆظ‰';
-  @override
-  String get adminCmsStructuredMetadataTitle =>
-      'ط§ظ„ط¨ظٹط§ظ†ط§طھ ط§ظ„ظˆطµظپظٹط© ط§ظ„ظ…ظ†ط¸ظ…ط©';
-  @override
-  String get adminCmsAdvancedJsonTitle => 'JSON ظ…طھظ‚ط¯ظ…';
-  @override
-  String get adminCmsAdvancedJsonHelp =>
-      'ط§ط³طھط®ط¯ظ… ظ‡ط°ط§ ظپظ‚ط· ظ„ظ„ط­ظ‚ظˆظ„ ط§ظ„ط¥ط¶ط§ظپظٹط© ط؛ظٹط± ط§ظ„ظ…طھط§ط­ط© ظپظٹ ط§ظ„ظ†ظ…ظˆط°ط¬ ط§ظ„ظ…ظ†ط¸ظ….';
-  @override
-  String get adminCmsMetadataDurationLabel => 'ط§ظ„ظ…ط¯ط© (ط¨ط§ظ„ط¯ظ‚ط§ط¦ظ‚)';
-  @override
-  String get adminCmsMetadataDifficultyLabel => 'مستوى الصعوبة';
-  @override
-  String get adminCmsMetadataFeaturedLabel => 'مميز';
-  @override
-  String get adminCmsMetadataTagsLabel => 'ط§ظ„ظˆط³ظˆظ…';
-  @override
-  String get adminCmsPreviewEnglishSection =>
-      'ظ…ط¹ط§ظٹظ†ط© ط§ظ„ط¥ظ†ط¬ظ„ظٹط²ظٹط©';
-  @override
-  String get adminCmsPreviewArabicSection => 'ظ…ط¹ط§ظٹظ†ط© ط§ظ„ط¹ط±ط¨ظٹط©';
-  @override
-  String get adminCmsPreviewMetadataSection =>
-      'ط§ظ„ط¨ظٹط§ظ†ط§طھ ط§ظ„ظˆطµظپظٹط©';
-  @override
-  String get adminCmsPreviewQuestionsSection => 'ط§ظ„ط£ط³ط¦ظ„ط©';
-  @override
-  String get adminCmsPreviewEmpty =>
-      'ظ„ط§ ظٹظˆط¬ط¯ ظ…ط§ ظٹظ…ظƒظ† ظ…ط¹ط§ظٹظ†طھظ‡ ط¨ط¹ط¯';
-  @override
-  String get adminCmsQuizPreviewAction => 'ظ…ط¹ط§ظٹظ†ط© ط§ظ„ط§ط®طھط¨ط§ط±';
-  @override
-  String get adminCmsPublishConfirmTitle => 'ظ†ط´ط± ط§ظ„ظ…ط­طھظˆظ‰';
-  @override
-  String get adminCmsPublishConfirmMessage =>
-      'ط³ظٹطµط¨ط­ ظ‡ط°ط§ ط§ظ„ط¹ظ†طµط± ط¸ط§ظ‡ط±ظ‹ط§ ط¯ط§ط®ظ„ ط§ظ„طھط·ط¨ظٹظ‚. ظ‡ظ„ طھط±ظٹط¯ ط§ظ„ظ…طھط§ط¨ط¹ط©طں';
-  @override
-  String get adminCmsUnpublishConfirmTitle =>
-      'ط¥ظ„ط؛ط§ط، ظ†ط´ط± ط§ظ„ظ…ط­طھظˆظ‰';
-  @override
-  String get adminCmsUnpublishConfirmMessage =>
-      'ط³ظٹط¹ظˆط¯ ظ‡ط°ط§ ط§ظ„ط¹ظ†طµط± ط¥ظ„ظ‰ ط­ط§ظ„ط© ط§ظ„ظ…ط³ظˆط¯ط©. ظ‡ظ„ طھط±ظٹط¯ ط§ظ„ظ…طھط§ط¨ط¹ط©طں';
-  @override
-  String get adminCmsPublishSuccess => 'طھظ… ظ†ط´ط± ط§ظ„ظ…ط­طھظˆظ‰';
-  @override
-  String get adminCmsUnpublishSuccess =>
-      'طھظ…طھ ط¥ط¹ط§ط¯ط© ط§ظ„ظ…ط­طھظˆظ‰ ط¥ظ„ظ‰ ط§ظ„ظ…ط³ظˆط¯ط©';
-  @override
-  String get adminCmsQuestionAdd => 'ط¥ط¶ط§ظپط© ط³ط¤ط§ظ„';
-  @override
-  String adminCmsQuestionLabel(int number) => 'ط§ظ„ط³ط¤ط§ظ„ $number';
-  @override
-  String get adminCmsQuestionPromptEnLabel => 'ط§ظ„ظ†طµ ط§ظ„ط¥ظ†ط¬ظ„ظٹط²ظٹ';
-  @override
-  String get adminCmsQuestionPromptArLabel => 'ط§ظ„ظ†طµ ط§ظ„ط¹ط±ط¨ظٹ';
-  @override
-  String get adminCmsQuestionOptionsLabel => 'ط®ظٹط§ط±ط§طھ ط§ظ„ط¥ط¬ط§ط¨ط©';
-  @override
-  String adminCmsQuestionOptionLabel(int number) => 'ط§ظ„ط®ظٹط§ط± $number';
-  @override
-  String get adminCmsQuestionCorrectAnswerLabel =>
-      'ط§ظ„ط¥ط¬ط§ط¨ط© ط§ظ„طµط­ظٹط­ط©';
-  @override
-  String get adminCmsQuestionExplanationEnLabel =>
-      'ط§ظ„ط´ط±ط­ ط§ظ„ط¥ظ†ط¬ظ„ظٹط²ظٹ';
-  @override
-  String get adminCmsQuestionExplanationArLabel => 'ط§ظ„ط´ط±ط­ ط§ظ„ط¹ط±ط¨ظٹ';
-  @override
-  String get adminCmsQuestionRemove => 'ط­ط°ظپ ط§ظ„ط³ط¤ط§ظ„';
-  @override
-  String get adminCmsOptionAdd => 'ط¥ط¶ط§ظپط© ط®ظٹط§ط±';
-  @override
-  String get adminCmsOptionRemove => 'ط­ط°ظپ ط§ظ„ط®ظٹط§ط±';
-  @override
-  String get adminCmsValidationTitleEnRequired =>
-      'ط§ظ„ط¹ظ†ظˆط§ظ† ط§ظ„ط¥ظ†ط¬ظ„ظٹط²ظٹ ظ…ط·ظ„ظˆط¨';
-  @override
-  String get adminCmsValidationTitleArRequired =>
-      'ط§ظ„ط¹ظ†ظˆط§ظ† ط§ظ„ط¹ط±ط¨ظٹ ظ…ط·ظ„ظˆط¨';
-  @override
-  String get adminCmsValidationBodyEnRequired =>
-      'ط§ظ„ظ…ط­طھظˆظ‰ ط§ظ„ط¥ظ†ط¬ظ„ظٹط²ظٹ ظ…ط·ظ„ظˆط¨ ظ‚ط¨ظ„ ط§ظ„ظ†ط´ط±';
-  @override
-  String get adminCmsValidationBodyArRequired =>
-      'ط§ظ„ظ…ط­طھظˆظ‰ ط§ظ„ط¹ط±ط¨ظٹ ظ…ط·ظ„ظˆط¨ ظ‚ط¨ظ„ ط§ظ„ظ†ط´ط±';
-  @override
-  String get adminCmsValidationInvalidUrl =>
-      'ط£ط¯ط®ظ„ ط±ط§ط¨ط· http ط£ظˆ https طµط­ظٹط­ظ‹ط§';
-  @override
-  String get adminCmsValidationInvalidAgeGroup =>
-      'ط§ط³طھط®ط¯ظ… ظپط¦ط© ط¹ظ…ط±ظٹط© ظ…ط«ظ„ 5-7 ط£ظˆ 8+';
-  @override
-  String get adminCmsValidationInvalidJsonObject =>
-      'ظٹط¬ط¨ ط£ظ† طھظƒظˆظ† ط§ظ„ط¨ظٹط§ظ†ط§طھ ط§ظ„ظˆطµظپظٹط© ط§ظ„ظ…طھظ‚ط¯ظ…ط© ظƒط§ط¦ظ† JSON';
-  @override
-  String get adminCmsValidationInvalidJsonList =>
-      'ظٹط¬ط¨ ط£ظ† ظٹظƒظˆظ† JSON ط§ظ„ظ…طھظ‚ط¯ظ… ظ„ظ„ط§ط®طھط¨ط§ط± ظ‚ط§ط¦ظ…ط© JSON';
-  @override
-  String get adminCmsValidationQuestionRequired =>
-      'ط£ط¶ظپ ط³ط¤ط§ظ„ظ‹ط§ ظˆط§ط­ط¯ظ‹ط§ ط¹ظ„ظ‰ ط§ظ„ط£ظ‚ظ„ ظ‚ط¨ظ„ ط§ظ„ظ†ط´ط±';
-  @override
-  String get adminCmsValidationQuestionPromptRequired =>
-      'ظƒظ„ ط³ط¤ط§ظ„ ظٹط­طھط§ط¬ ط¥ظ„ظ‰ ظ†طµ ط¥ظ†ط¬ظ„ظٹط²ظٹ ط£ظˆ ط¹ط±ط¨ظٹ';
-  @override
-  String get adminCmsValidationQuestionOptionsRequired =>
-      'ظƒظ„ ط³ط¤ط§ظ„ ظٹط­طھط§ط¬ ط¥ظ„ظ‰ ط®ظٹط§ط±ظٹظ† ط¹ظ„ظ‰ ط§ظ„ط£ظ‚ظ„';
-  @override
-  String get adminCmsValidationQuestionCorrectAnswerRequired =>
-      'ط§ط®طھط± ط¥ط¬ط§ط¨ط© طµط­ظٹط­ط© طµط§ظ„ط­ط© ظ„ظƒظ„ ط³ط¤ط§ظ„';
-  @override
-  String get adminCmsValidationInvalidJsonSyntax =>
-      'أدخل JSON صالحًا قبل الحفظ';
-  @override
-  String get adminCmsValidationQuestionOptionTextRequired =>
-      'كل خيار إجابة يحتاج إلى نص';
-  @override
-  String get adminCmsQuizzesTab => 'ط§ظ„ط§ط®طھط¨ط§ط±ط§طھ';
-  @override
-  String get adminCmsSearchLabel => 'ط¨ط­ط«';
-  @override
-  String get adminCmsStatusAll => 'ظƒظ„ ط§ظ„ط­ط§ظ„ط§طھ';
-  @override
-  String get adminCmsStatusDraft => 'ظ…ط³ظˆط¯ط©';
-  @override
-  String get adminCmsStatusLabel => 'ط§ظ„ط­ط§ظ„ط©';
-  @override
-  String get adminCmsStatusPublished => 'ظ…ظ†ط´ظˆط±';
-  @override
-  String get adminCmsStatusReview => 'ظ‚ظٹط¯ ط§ظ„ظ…ط±ط§ط¬ط¹ط©';
-  @override
-  String get adminCmsSubtitle =>
-      'ط¥ط¯ط§ط±ط© ط§ظ„ظپط¦ط§طھ ظˆط§ظ„ظ…ط­طھظˆظ‰ ط§ظ„طھط¹ظ„ظٹظ…ظٹ ظˆط§ظ„ط§ط®طھط¨ط§ط±ط§طھ.';
-  @override
-  String get adminCmsThumbnailLabel => 'ط±ط§ط¨ط· ط§ظ„طµظˆط±ط© ط§ظ„ظ…طµط؛ط±ط©';
-  @override
-  String get adminCmsTitle => 'ط¥ط¯ط§ط±ط© ط§ظ„ظ…ط­طھظˆظ‰';
-  @override
-  String get adminCmsTitleArLabel => 'ط§ظ„ط¹ظ†ظˆط§ظ† ط§ظ„ط¹ط±ط¨ظٹ';
-  @override
-  String get adminCmsTitleEnLabel => 'ط§ظ„ط¹ظ†ظˆط§ظ† ط§ظ„ط¥ظ†ط¬ظ„ظٹط²ظٹ';
-  @override
-  String get adminCmsTypeActivity => 'ظ†ط´ط§ط·';
-  @override
-  String get adminCmsTypeLabel => 'ط§ظ„ظ†ظˆط¹';
-  @override
-  String get adminCmsTypeLesson => 'ط¯ط±ط³';
-  @override
-  String get adminCmsTypeStory => 'ظ‚طµط©';
-  @override
-  String get adminCmsTypeVideo => 'ظپظٹط¯ظٹظˆ';
-  @override
-  String get adminCmsUnpublishAction => 'ط¥ظ„ط؛ط§ط، ط§ظ„ظ†ط´ط±';
-  @override
-  String get adminDashboard => 'ظ„ظˆط­ط© طھط­ظƒظ… ط§ظ„ظ…ط³ط¤ظˆظ„';
-  @override
-  String get adminDashboardPermissionsTitle => 'طµظ„ط§ط­ظٹط§طھظƒ';
-  @override
-  String get adminDashboardSubtitle =>
-      'ط¥ظ„ظٹظƒ ظ…ط§ ظٹط­ط¯ط« ظپظٹ ظƒظٹظ†ط¯ط± ظˆظˆط±ظ„ط¯';
-  @override
-  String get adminDashboardWelcome => 'ظ…ط±ط­ط¨ظ‹ط§ ط¨ط¹ظˆط¯طھظƒ';
-  @override
-  String get adminDisabledAccount =>
-      'طھظ… طھط¹ط·ظٹظ„ ط­ط³ط§ط¨ ط§ظ„ظ…ط³ط¤ظˆظ„ ط§ظ„ط®ط§طµ ط¨ظƒ. ظٹط±ط¬ظ‰ ط§ظ„طھظˆط§طµظ„ ظ…ط¹ ظ…ط³ط¤ظˆظ„ ط§ظ„ظ†ط¸ط§ظ….';
-  @override
-  String get adminEmail => 'ط¨ط±ظٹط¯ ط§ظ„ظ…ط³ط¤ظˆظ„ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ';
-  @override
-  String get adminEmailInvalid =>
-      'ط£ط¯ط®ظ„ ط¨ط±ظٹط¯ظ‹ط§ ط¥ظ„ظƒطھط±ظˆظ†ظٹظ‹ط§ طµط­ظٹط­ظ‹ط§';
-  @override
-  String get adminEmailRequired =>
-      'ط§ظ„ط¨ط±ظٹط¯ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ ظ…ط·ظ„ظˆط¨';
-  @override
-  String get adminLoginFooter =>
-      'ط¨ظˆط§ط¨ط© ط¥ط¯ط§ط±ط© ظƒظٹظ†ط¯ط± ظˆظˆط±ظ„ط¯ â€” ط¯ط®ظˆظ„ ظ„ظ„ظ…طµط±ط­ ظ„ظ‡ظ… ظپظ‚ط·';
-  @override
-  String get adminLoginSubtitle =>
-      'ط³ط¬ظ‘ظ„ ط§ظ„ط¯ط®ظˆظ„ ظ„ط¥ط¯ط§ط±ط© ظƒظٹظ†ط¯ط± ظˆظˆط±ظ„ط¯';
-  @override
-  String get adminLogout => 'طھط³ط¬ظٹظ„ ط§ظ„ط®ط±ظˆط¬';
-  @override
-  String get adminLogoutConfirm =>
-      'ظ‡ظ„ ط£ظ†طھ ظ…طھط£ظƒط¯ ظ…ظ† طھط³ط¬ظٹظ„ ط§ظ„ط®ط±ظˆط¬ ظ…ظ† ط¨ظˆط§ط¨ط© ط§ظ„ط¥ط¯ط§ط±ط©طں';
-  @override
-  String get adminMenuTooltip => 'ط§ظ„ظ‚ط§ط¦ظ…ط©';
-  @override
-  String get adminPaginationNext => 'ط§ظ„طھط§ظ„ظٹ';
-  @override
-  String get adminPaginationPrevious => 'ط§ظ„ط³ط§ط¨ظ‚';
-  @override
-  String get adminPassword => 'ظƒظ„ظ…ط© ظ…ط±ظˆط± ط§ظ„ظ…ط³ط¤ظˆظ„';
-  @override
-  String get adminPasswordRequired => 'ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط± ظ…ط·ظ„ظˆط¨ط©';
-  @override
-  String get adminPermissionDenied => 'طھظ… ط±ظپط¶ ط§ظ„طµظ„ط§ط­ظٹط©';
-  @override
-  String get adminPermissionDeniedMessage =>
-      'ظ„ظٹط³طھ ظ„ط¯ظٹظƒ طµظ„ط§ط­ظٹط© ظ„ظ„ظˆطµظˆظ„ ط¥ظ„ظ‰ ظ‡ط°ط§ ط§ظ„ظ‚ط³ظ…. طھظˆط§طµظ„ ظ…ط¹ ظ…ط³ط¤ظˆظ„ ط§ظ„ظ†ط¸ط§ظ….';
-  @override
-  String get adminPlanFamilyPlus => 'ط¹ط§ط¦ظ„ظٹ ط¨ظ„ط³';
-  @override
-  String get adminPlanFree => 'ظ…ط¬ط§ظ†ظٹ';
-  @override
-  String get adminPlanPremium => 'ظ…ظ…ظٹط²';
-  @override
-  String get adminRefreshTooltip => 'طھط­ط¯ظٹط«';
-  @override
-  String get adminRoleAnalyticsAdmin => 'ظ…ط³ط¤ظˆظ„ ط§ظ„طھط­ظ„ظٹظ„ط§طھ';
-  @override
-  String get adminRoleContentAdmin => 'ظ…ط³ط¤ظˆظ„ ط§ظ„ظ…ط­طھظˆظ‰';
-  @override
-  String get adminRoleFinanceAdmin => 'ظ…ط³ط¤ظˆظ„ ط§ظ„ظ…ط§ظ„ظٹط©';
-  @override
-  String get adminRoleSuperAdmin => 'ط§ظ„ظ…ط³ط¤ظˆظ„ ط§ظ„ط¹ط§ظ…';
-  @override
-  String get adminRoleSupportAdmin => 'ظ…ط³ط¤ظˆظ„ ط§ظ„ط¯ط¹ظ…';
-  @override
-  String get adminSessionExpired =>
-      'ط§ظ†طھظ‡طھ ط¬ظ„ط³ط© ط§ظ„ظ…ط³ط¤ظˆظ„. ظٹط±ط¬ظ‰ طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„ ظ…ط±ط© ط£ط®ط±ظ‰.';
-  @override
-  String get adminSettingsAiBuddyEnabled =>
-      'طھظپط¹ظٹظ„ ط±ظپظٹظ‚ ط§ظ„ط°ظƒط§ط، ط§ظ„ط§طµط·ظ†ط§ط¹ظٹ';
-  @override
-  String get adminSettingsAiBuddyEnabledHint =>
-      'ظپط¹ظ‘ظ„ ط±ظپظٹظ‚ ط§ظ„ط°ظƒط§ط، ط§ظ„ط§طµط·ظ†ط§ط¹ظٹ ظپظٹ ط¬ظ…ظٹط¹ ط£ظ†ط­ط§ط، ط§ظ„طھط·ط¨ظٹظ‚.';
-  @override
-  String get adminSettingsDefaultChildLimitLabel =>
-      'ط§ظ„ط­ط¯ ط§ظ„ط§ظپطھط±ط§ط¶ظٹ ظ„ظ„ط£ط·ظپط§ظ„';
-  @override
-  String get adminSettingsDefaultPlanLabel => 'ط§ظ„ط®ط·ط© ط§ظ„ط§ظپطھط±ط§ط¶ظٹط©';
-  @override
-  String get adminSettingsDefaultsTitle =>
-      'ط§ظ„ط¥ط¹ط¯ط§ط¯ط§طھ ط§ظ„ط§ظپطھط±ط§ط¶ظٹط©';
-  @override
-  String get adminSettingsFeatureFlagsTitle => 'ظ…ظٹط²ط§طھ ط§ظ„طھظپط¹ظٹظ„';
-  @override
-  String get adminSettingsMaintenanceMode => 'ظˆط¶ط¹ ط§ظ„طµظٹط§ظ†ط©';
-  @override
-  String get adminSettingsMaintenanceModeHint =>
-      'طھط¹ط·ظٹظ„ ط§ظ„ظˆطµظˆظ„ ط§ظ„ط·ط¨ظٹط¹ظٹ ظ„ظ„طھط·ط¨ظٹظ‚ ظ…ط¤ظ‚طھظ‹ط§.';
-  @override
-  String get adminSettingsRegistrationEnabled =>
-      'ط§ظ„ط³ظ…ط§ط­ ط¨ط§ظ„طھط³ط¬ظٹظ„';
-  @override
-  String get adminSettingsRegistrationEnabledHint =>
-      'ط§ظ„ط³ظ…ط§ط­ ط¨طھط³ط¬ظٹظ„ ط£ظˆظ„ظٹط§ط، ط§ظ„ط£ظ…ظˆط± ط§ظ„ط¬ط¯ط¯.';
-  @override
-  String get adminSidebarAdmins => 'ط§ظ„ظ…ط³ط¤ظˆظ„ظˆظ†';
-  @override
-  String get adminSidebarAudit => 'ط³ط¬ظ„ ط§ظ„طھط¯ظ‚ظٹظ‚';
-  @override
-  String get adminSidebarChildren => 'ط§ظ„ط£ط·ظپط§ظ„';
-  @override
-  String get adminSidebarContent => 'ط§ظ„ظ…ط­طھظˆظ‰';
-  @override
-  String get adminSidebarOverview => 'ظ†ط¸ط±ط© ط¹ط§ظ…ط©';
-  @override
-  String get adminSidebarReports => 'ط§ظ„طھظ‚ط§ط±ظٹط±';
-  @override
-  String get adminSidebarSettings => 'ط§ظ„ط¥ط¹ط¯ط§ط¯ط§طھ';
-  @override
-  String get adminSidebarSubscriptions => 'ط§ظ„ط§ط´طھط±ط§ظƒط§طھ';
-  @override
-  String get adminSidebarSupport => 'ط§ظ„ط¯ط¹ظ…';
-  @override
-  String get adminSidebarUsers => 'ط§ظ„ظ…ط³طھط®ط¯ظ…ظˆظ†';
-  @override
-  String get adminSignIn => 'طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„';
-  @override
-  String get adminSubscriptionsCancelAction => 'ط¥ظ„ط؛ط§ط،';
-  @override
-  String get adminSubscriptionsCancelConfirm =>
-      'ظ‡ظ„ طھط±ظٹط¯ ط¥ط¹ط§ط¯ط© ظ‡ط°ط§ ط§ظ„ظ…ط³طھط®ط¯ظ… ط¥ظ„ظ‰ ط§ظ„ط®ط·ط© ط§ظ„ظ…ط¬ط§ظ†ظٹط©طں';
-  @override
-  String get adminSubscriptionsCancelTitle => 'ط¥ظ„ط؛ط§ط، ط§ظ„ط§ط´طھط±ط§ظƒ';
-  @override
-  String get adminSubscriptionsChildrenMetric => 'ط§ظ„ط£ط·ظپط§ظ„';
-  @override
-  String get adminSubscriptionsFeaturesTitle => 'ط§ظ„ظ…ظٹط²ط§طھ ط§ظ„ظ…ظپط¹ظ„ط©';
-  @override
-  String get adminSubscriptionsNoSelection =>
-      'ط§ط®طھط± ط§ط´طھط±ط§ظƒظ‹ط§ ظ„ط¹ط±ط¶ ط§ظ„طھظپط§طµظٹظ„';
-  @override
-  String get adminSubscriptionsOverrideAction => 'طھط¹ط¯ظٹظ„ ط§ظ„ط®ط·ط©';
-  @override
-  String get adminSubscriptionsOverrideTitle => 'طھط¹ط¯ظٹظ„ ط§ظ„ط®ط·ط©';
-  @override
-  String get adminSubscriptionsPaymentMethodsMetric => 'ط·ط±ظ‚ ط§ظ„ط¯ظپط¹';
-  @override
-  String get adminSubscriptionsPlanAll => 'ظƒظ„ ط§ظ„ط®ط·ط·';
-  @override
-  String get adminSubscriptionsPlanFilter => 'ط§ظ„ط®ط·ط©';
-  @override
-  String get adminSubscriptionsRefundAction => 'ط§ط³طھط±ط¯ط§ط¯';
-  @override
-  String get adminSubscriptionsRefundNotSupported =>
-      'ط§ظ„ط§ط³طھط±ط¯ط§ط¯ ط؛ظٹط± ظ…ط¯ط¹ظˆظ… ظپظٹ ظ†ظ…ظˆط°ط¬ ط§ظ„ط¯ظپط¹ ط§ظ„ط­ط§ظ„ظٹ';
-  @override
-  String get adminSubscriptionsSearchLabel => 'ط¨ط­ط«';
-  @override
-  String get adminSubscriptionsStatusActive => 'ظ†ط´ط·';
-  @override
-  String get adminSubscriptionsStatusAll => 'ظƒظ„ ط§ظ„ط­ط§ظ„ط§طھ';
-  @override
-  String get adminSubscriptionsStatusDisabled => 'ظ…ط¹ط·ظ„';
-  @override
-  String get adminSubscriptionsStatusFilter => 'ط§ظ„ط­ط§ظ„ط©';
-  @override
-  String get adminSubscriptionsStatusFree => 'ظ…ط¬ط§ظ†ظٹ';
-  @override
-  String get adminSubscriptionsStatusLabel => 'ط§ظ„ط­ط§ظ„ط©';
-  @override
-  String get adminSubscriptionsSubtitle =>
-      'ط±ط§ط¬ط¹ ط§ظ„ط®ط·ط· ظˆط§ظ„ط¥ط¬ط±ط§ط،ط§طھ ط§ظ„ظ…ط§ظ„ظٹط© ظˆطھط¹ط¯ظٹظ„ط§طھ ط§ظ„ط§ط´طھط±ط§ظƒ.';
-  @override
-  String get adminSubscriptionsTitle => 'ط§ظ„ط§ط´طھط±ط§ظƒط§طھ';
-  @override
-  String get adminSubscriptionsUserName => 'ط§ظ„ط§ط³ظ…';
-  @override
-  String get adminSupportAssign => 'طھط¹ظٹظٹظ†';
-  @override
-  String get adminSupportAssignSuccess =>
-      'طھظ… طھط¹ظٹظٹظ† ط§ظ„طھط°ظƒط±ط© ط¨ظ†ط¬ط§ط­';
-  @override
-  String get adminSupportAssignedToMe => 'طھط¹ظٹظٹظ† ظ„ظٹ';
-  @override
-  String get adminSupportAssignee => 'ط§ظ„ظ…ظƒظ„ظ‘ظپ';
-  @override
-  String get adminSupportClose => 'ط¥ط؛ظ„ط§ظ‚ ط§ظ„طھط°ظƒط±ط©';
-  @override
-  String get adminSupportCloseConfirm =>
-      'ظ‡ظ„ ط£ظ†طھ ظ…طھط£ظƒط¯ ظ…ظ† ط¥ط؛ظ„ط§ظ‚ ظ‡ط°ظ‡ ط§ظ„طھط°ظƒط±ط©طں';
-  @override
-  String get adminSupportCloseSuccess =>
-      'طھظ… ط¥ط؛ظ„ط§ظ‚ ط§ظ„طھط°ظƒط±ط© ط¨ظ†ط¬ط§ط­';
-  @override
-  String get adminSupportNoTicketSelected =>
-      'ط§ط®طھط± طھط°ظƒط±ط© ظ„ط¹ط±ط¶ ط§ظ„طھظپط§طµظٹظ„';
-  @override
-  String get adminSupportNoTickets => 'ظ„ط§ طھظˆط¬ط¯ طھط°ط§ظƒط±';
-  @override
-  String get adminSupportReply => 'ط±ط¯';
-  @override
-  String get adminSupportReplyHint => 'ط§ظƒطھط¨ ط±ط¯ظƒ';
-  @override
-  String get adminSupportReplySuccess => 'طھظ… ط¥ط±ط³ط§ظ„ ط§ظ„ط±ط¯ ط¨ظ†ط¬ط§ط­';
-  @override
-  String get adminSupportRequester => 'ظ…ظ‚ط¯ظ… ط§ظ„ط·ظ„ط¨';
-  @override
-  String get adminSupportStatusAll => 'ظƒظ„ ط§ظ„ط­ط§ظ„ط§طھ';
-  @override
-  String get adminSupportStatusClosed => 'ظ…ط؛ظ„ظ‚ط©';
-  @override
-  String get adminSupportStatusFilter => 'ط§ظ„ط­ط§ظ„ط©';
-  @override
-  String get adminSupportStatusInProgress => 'ظ‚ظٹط¯ ط§ظ„ظ…ط¹ط§ظ„ط¬ط©';
-  @override
-  String get adminSupportStatusOpen => 'ظ…ظپطھظˆط­ط©';
-  @override
-  String get adminSupportThread => 'ط§ظ„ظ…ط­ط§ط¯ط«ط©';
-  @override
-  String get adminSupportTicketsSubtitle =>
-      'ط±ط§ط¬ط¹ ظˆط¹ظٹظ‘ظ† ظˆط±ط¯ظ‘ ظˆط£ط؛ظ„ظ‚ ط·ظ„ط¨ط§طھ ط§ظ„ط¯ط¹ظ….';
-  @override
-  String get adminSupportTicketsTitle => 'طھط°ط§ظƒط± ط§ظ„ط¯ط¹ظ…';
-  @override
-  String get adminSystemSettingsSubtitle =>
-      'طھط­ظƒظ… ظپظٹ ظˆط¶ط¹ ط§ظ„طµظٹط§ظ†ط© ط§ظ„ط¹ط§ظ… ظˆظ…ظٹط²ط§طھ ط§ظ„طھظپط¹ظٹظ„ ظˆط§ظ„ط¥ط¹ط¯ط§ط¯ط§طھ ط§ظ„ط§ظپطھط±ط§ط¶ظٹط©.';
-  @override
-  String get adminSystemSettingsTitle => 'ط¥ط¹ط¯ط§ط¯ط§طھ ط§ظ„ظ†ط¸ط§ظ…';
-  @override
-  String get adminUsersActionsColumn => 'ط§ظ„ط¥ط¬ط±ط§ط،ط§طھ';
-  @override
-  String get adminUsersActivityCard => 'ظ…ظ„ط®طµ ط§ظ„ظ†ط´ط§ط·';
-  @override
-  String get adminUsersChildrenColumn => 'ط§ظ„ط£ط·ظپط§ظ„';
-  @override
-  String get adminUsersChildrenSection => 'ط§ظ„ط£ط·ظپط§ظ„';
-  @override
-  String get adminUsersDisableAction => 'طھط¹ط·ظٹظ„';
-  @override
-  String get adminUsersDisableConfirm =>
-      'ظ‡ظ„ طھط±ظٹط¯ طھط¹ط·ظٹظ„ ط­ط³ط§ط¨ ظ‡ط°ط§ ط§ظ„ظ…ط³طھط®ط¯ظ…طں';
-  @override
-  String get adminUsersDisableTitle => 'طھط¹ط·ظٹظ„ ط§ظ„ظ…ط³طھط®ط¯ظ…';
-  @override
-  String get adminUsersDisabledMessage =>
-      'طھظ… طھط¹ط·ظٹظ„ ط§ظ„ظ…ط³طھط®ط¯ظ… ط¨ظ†ط¬ط§ط­';
-  @override
-  String get adminUsersEditTitle => 'طھط¹ط¯ظٹظ„ ط§ظ„ظ…ط³طھط®ط¯ظ…';
-  @override
-  String get adminUsersEmailColumn => 'ط§ظ„ط¨ط±ظٹط¯ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ';
-  @override
-  String get adminUsersEmailField => 'ط§ظ„ط¨ط±ظٹط¯ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ';
-  @override
-  String get adminUsersEnableAction => 'طھظپط¹ظٹظ„';
-  @override
-  String get adminUsersEnableConfirm =>
-      'ظ‡ظ„ طھط±ظٹط¯ طھظپط¹ظٹظ„ ط­ط³ط§ط¨ ظ‡ط°ط§ ط§ظ„ظ…ط³طھط®ط¯ظ…طں';
-  @override
-  String get adminUsersEnableTitle => 'طھظپط¹ظٹظ„ ط§ظ„ظ…ط³طھط®ط¯ظ…';
-  @override
-  String get adminUsersEnabledMessage =>
-      'طھظ… طھظپط¹ظٹظ„ ط§ظ„ظ…ط³طھط®ط¯ظ… ط¨ظ†ط¬ط§ط­';
-  @override
-  String get adminUsersLastUpdatedMetric => 'ط¢ط®ط± طھط­ط¯ظٹط«';
-  @override
-  String get adminUsersNameColumn => 'ط§ظ„ط§ط³ظ…';
-  @override
-  String get adminUsersNameField => 'ط§ظ„ط§ط³ظ…';
-  @override
-  String get adminUsersNotificationsMetric => 'ط§ظ„ط¥ط´ط¹ط§ط±ط§طھ';
-  @override
-  String get adminUsersNotificationsSection =>
-      'ط§ظ„ط¥ط´ط¹ط§ط±ط§طھ ط§ظ„ط£ط®ظٹط±ط©';
-  @override
-  String get adminUsersOverviewCard => 'ظ†ط¸ط±ط© ط¹ط§ظ…ط©';
-  @override
-  String get adminUsersPlanColumn => 'ط§ظ„ط®ط·ط©';
-  @override
-  String get adminUsersPlanField => 'ط§ظ„ط®ط·ط©';
-  @override
-  String get adminUsersSearchLabel => 'ط§ظ„ط¨ط­ط« ط¹ظ† ط§ظ„ظ…ط³طھط®ط¯ظ…ظٹظ†';
-  @override
-  String get adminUsersStatusActive => 'ظ†ط´ط·';
-  @override
-  String get adminUsersStatusAll => 'ط§ظ„ظƒظ„';
-  @override
-  String get adminUsersStatusColumn => 'ط§ظ„ط­ط§ظ„ط©';
-  @override
-  String get adminUsersStatusDisabled => 'ظ…ط¹ط·ظ„';
-  @override
-  String get adminUsersStatusFilter => 'ط§ظ„ط­ط§ظ„ط©';
-  @override
-  String get adminUsersSubtitle =>
-      'ط§ط¨ط­ط« ظˆط±ط§ط¬ط¹ ظˆط£ط¯ط± ط­ط³ط§ط¨ط§طھ ط£ظˆظ„ظٹط§ط، ط§ظ„ط£ظ…ظˆط±.';
-  @override
-  String get adminUsersSupportMetric => 'طھط°ط§ظƒط± ط§ظ„ط¯ط¹ظ…';
-  @override
-  String get adminUsersSupportSection => 'طھط°ط§ظƒط± ط§ظ„ط¯ط¹ظ…';
-  @override
-  String get adminUsersTitle => 'ط¥ط¯ط§ط±ط© ط§ظ„ظ…ط³طھط®ط¯ظ…ظٹظ†';
-  @override
-  String get adminUsersUpdatedMessage =>
-      'طھظ… طھط­ط¯ظٹط« ط§ظ„ظ…ط³طھط®ط¯ظ… ط¨ظ†ط¬ط§ط­';
-  @override
-  String get adminUsersViewAction => 'ط¹ط±ط¶';
-  @override
-  String get adminWelcome => 'ط¨ظˆط§ط¨ط© ط§ظ„ط¥ط¯ط§ط±ط©';
-  @override
-  String get advanced => 'ظ…طھظ‚ط¯ظ…';
-  @override
-  String get advancedReportsLabel => 'طھظ‚ط§ط±ظٹط± ظ…طھظ‚ط¯ظ…ط©';
-  @override
-  String get allCaughtUp =>
-      'ط£ظ†طھ ظ…ط·ظ‘ظ„ط¹ ط¹ظ„ظ‰ ظƒظ„ ط´ظٹط،! ط³طھط¸ظ‡ط± ظ‡ظ†ط§ ط§ظ„طھظ†ط¨ظٹظ‡ط§طھ ط§ظ„ط¬ط¯ظٹط¯ط© ظˆظ…ظ„ط®طµط§طھ ط§ظ„ظ†ط´ط§ط·.';
-  @override
-  String get allVideos => 'ظƒظ„ ط§ظ„ظپظٹط¯ظٹظˆظ‡ط§طھ';
-  @override
-  String get amountLabel => 'ط§ظ„ظ…ط¨ظ„ط؛';
-  @override
-  String get analyticsSubtitle =>
-      'ط³ط§ط¹ط¯ ظپظٹ طھط­ط³ظٹظ† ظƒظٹظ†ط¯ط± ظˆظˆط±ظ„ط¯ ظ…ظ† ط®ظ„ط§ظ„ ط¨ظٹط§ظ†ط§طھ ط§ظ„ط§ط³طھط®ط¯ط§ظ…';
-  @override
-  String get analyticsTitle => 'ط§ظ„طھط­ظ„ظٹظ„ط§طھ';
-  @override
-  String get available247 => 'ظ…طھط§ط­ 24/7';
-  @override
-  String get availablePlans => 'ط§ظ„ط®ط·ط· ط§ظ„ظ…طھط§ط­ط©';
-  @override
-  String get awesomeColoring => 'طھظ„ظˆظٹظ† ط±ط§ط¦ط¹!';
-  @override
-  String get backToChildLogin => 'ط§ظ„ط¹ظˆط¯ط© ط¥ظ„ظ‰ ط¯ط®ظˆظ„ ط§ظ„ط·ظپظ„';
-  @override
-  String get basicFeaturesOnly => 'ظ…ظٹط²ط§طھ ط£ط³ط§ط³ظٹط© ظپظ‚ط·';
-  @override
-  String get beginner => 'ظ…ط¨طھط¯ط¦';
-  @override
-  String get bestForFamilies => 'ط§ظ„ط£ظپط¶ظ„ ظ„ظ„ط¹ط§ط¦ظ„ط§طھ';
-  @override
-  String get billingComingSoon =>
-      'ط¥ط¯ط§ط±ط© ط§ظ„ظپظˆط§طھظٹط± ظ‚ط±ظٹط¨ظ‹ط§. ط³طھطھظ…ظƒظ† ظ…ظ† طھط­ط¯ظٹط« ط·ط±ظ‚ ط§ظ„ط¯ظپط¹ ظˆط§ظ„ظپظˆط§طھظٹط± ظ‡ظ†ط§ ط¹ظ†ط¯ظ…ط§ ظٹطµط¨ط­ ط§ظ„ط¨ط§ظƒ ط¥ظ†ط¯ ط¬ط§ظ‡ط²ظ‹ط§.';
-  @override
-  String get billingInformation => 'ظ…ط¹ظ„ظˆظ…ط§طھ ط§ظ„ظپظˆطھط±ط©';
-  @override
-  String get billingTitle => 'ط§ظ„ظپظˆط§طھظٹط±';
-  @override
-  String get categoryGames => 'ط£ظ„ط¹ط§ط¨ ظ…ظ…طھط¹ط©';
-  @override
-  String get categoryMusic => 'ط§ظ„ظ…ظˆط³ظٹظ‚ظ‰ ظˆط§ظ„ط£ط؛ط§ظ†ظٹ';
-  @override
-  String get categoryStories => 'ط§ظ„ظ‚طµطµ';
-  @override
-  String get categoryVideos => 'ظپظٹط¯ظٹظˆظ‡ط§طھ طھط¹ظ„ظٹظ…ظٹط©';
-  @override
-  String get changePasswordSubtitle =>
-      'ط­ط¯ظ‘ط« ط¨ظٹط§ظ†ط§طھ طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„ ط§ظ„ط®ط§طµط© ط¨ظƒ';
-  @override
-  String get checkYourInbox => 'طھط­ظ‚ظ‚ ظ…ظ† ط¨ط±ظٹط¯ظƒ ط§ظ„ظˆط§ط±ط¯!';
-  @override
-  String get childIdHint => 'ظ…ط«ط§ظ„: Ava123';
-  @override
-  String get childIdRequired => 'ظٹط±ط¬ظ‰ ط¥ط¯ط®ط§ظ„ ظ…ط¹ط±ظ‘ظپ ط§ظ„ط·ظپظ„';
-  @override
-  String get childLoginIncorrectPictures =>
-      'طµظˆط± طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„ ط؛ظٹط± طµط­ظٹط­ط©';
-  @override
-  String get childLoginMissingData =>
-      'ط£ظƒظ…ظ„ ط§ظ„ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط·ظ„ظˆط¨ط©';
-  @override
-  String get childLoginNotFound => 'ط§ظ„ط·ظپظ„ ط؛ظٹط± ظ…ظˆط¬ظˆط¯';
-  @override
-  String get childProfileNotFound =>
-      'ظ„ظ… ظٹطھظ… ط§ظ„ط¹ط«ظˆط± ط¹ظ„ظ‰ ظ…ظ„ظپ ط§ظ„ط·ظپظ„.';
-  @override
-  String get childProfilesSubtitle => 'ط¥ط¯ط§ط±ط© ط­ط³ط§ط¨ط§طھ ط£ط·ظپط§ظ„ظƒ';
-  @override
-  String get childRegisterForbidden => 'ط؛ظٹط± ظ…ط³ظ…ظˆط­';
-  @override
-  String get childRegisterLimitReached =>
-      'ظ„ظ‚ط¯ ظˆطµظ„طھ ط¥ظ„ظ‰ ط§ظ„ط­ط¯ ط§ظ„ط£ظ‚طµظ‰ ظ„ط¹ط¯ط¯ ط§ظ„ط£ط·ظپط§ظ„. ظ‚ظ… ط¨ط§ظ„طھط±ظ‚ظٹط© ط§ظ„ط¢ظ† ظ…ظ‚ط§ط¨ظ„ 10 ط¯ظˆظ„ط§ط±ط§طھ ط´ظ‡ط±ظٹظ‹ط§.';
-  @override
-  String get childRegisterParentNotFound =>
-      'ظ„ظ… ظٹطھظ… ط§ظ„ط¹ط«ظˆط± ط¹ظ„ظ‰ ط¨ط±ظٹط¯ ظˆظ„ظٹ ط§ظ„ط£ظ…ط±';
-  @override
-  String get childStep1 =>
-      'ط³ظٹطھظ„ظ‚ظ‰ ظˆظ„ظٹ ط£ظ…ط±ظƒ ط±ط³ط§ظ„ط© ط¨ط±ظٹط¯ ط¥ظ„ظƒطھط±ظˆظ†ظٹ ظ…ظ†ط§';
-  @override
-  String get childStep2 =>
-      'ظˆط³ظٹط³ط§ط¹ط¯ظƒ ظپظٹ طھط¹ظٹظٹظ† ظƒظ„ظ…ط§طھ ظ…ط±ظˆط± طµظˆط± ط¬ط¯ظٹط¯ط©';
-  @override
-  String get childStep3 => 'ظˆط³طھط¹ظˆط¯ ظ„ظ„ط¹ط¨ ظپظٹ ط£ط³ط±ط¹ ظˆظ‚طھ!';
-  @override
-  String get chooseActivity => 'ط§ط®طھط± ظ†ط´ط§ط·ظ‹ط§';
-  @override
-  String get choosePlanLabel => 'ط§ط®طھط± ط§ظ„ط®ط·ط©';
-  @override
-  String get chooseProfileToContinue =>
-      'ط§ط®طھط± ظ…ظ„ظپظƒ ط§ظ„ط´ط®طµظٹ ظ„ظ„ظ…طھط§ط¨ط¹ط©.';
-  @override
-  String get chooseYourProfile => 'ط§ط®طھط± ظ…ظ„ظپظƒ ط§ظ„ط´ط®طµظٹ:';
-  @override
-  String get confirmPasswordHintAlt =>
-      'ط£ط¹ط¯ ط¥ط¯ط®ط§ظ„ ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط± ط§ظ„ط¬ط¯ظٹط¯ط©';
-  @override
-  String get confirmPasswordLabel => 'طھط£ظƒظٹط¯ ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط±';
-  @override
-  String get contactSupportToResetPin =>
-      'ظٹط±ط¬ظ‰ ط§ظ„طھظˆط§طµظ„ ظ…ط¹ ط§ظ„ط¯ط¹ظ… ظ„ط¥ط¹ط§ط¯ط© طھط¹ظٹظٹظ† ط±ظ…ط² PIN';
-  @override
-  String get contactUsAction => 'طھظˆط§طµظ„ ظ…ط¹ظ†ط§';
-  @override
-  String get contactUsIntro =>
-      'ظٹط³ط¹ط¯ظ†ط§ ط§ظ„ط§ط³طھظ…ط§ط¹ ط¥ظ„ظٹظƒ. ط£ط±ط³ظ„ ط±ط³ط§ظ„طھظƒ ظˆط³ظ†ط¹ظˆط¯ ط¥ظ„ظٹظƒ ظ‚ط±ظٹط¨ظ‹ط§.';
-  @override
-  String get contentAbcSong => 'ط£ط؛ظ†ظٹط© ط§ظ„ط­ط±ظˆظپ';
-  @override
-  String get contentAdventureTime => 'ظˆظ‚طھ ط§ظ„ظ…ط؛ط§ظ…ط±ط©';
-  @override
-  String get contentBabyShark => 'ط¨ظٹط¨ظٹ ط´ط§ط±ظƒ';
-  @override
-  String get contentFunnyAnimals => 'ط­ظٹظˆط§ظ†ط§طھ ظ…ط¶ط­ظƒط©';
-  @override
-  String get contentMagicWorld => 'ط§ظ„ط¹ط§ظ„ظ… ط§ظ„ط³ط­ط±ظٹ';
-  @override
-  String get contentPuzzleGame => 'ظ„ط¹ط¨ط© ط§ظ„ط£ظ„ط؛ط§ط²';
-  @override
-  String get contentRacingCars => 'ط³ظٹط§ط±ط§طھ ط§ظ„ط³ط¨ط§ظ‚';
-  @override
-  String get contentSpaceHeroes => 'ط£ط¨ط·ط§ظ„ ط§ظ„ظپط¶ط§ط،';
-  @override
-  String get contentTwinkleStar => 'ط§ظ„ظ†ط¬ظ…ط© ط§ظ„ظ…طھظ„ط£ظ„ط¦ط©';
-  @override
-  String get correct => 'طµط­ظٹط­';
-  @override
-  String get countingNumbers => 'ط¹ط¯ظ‘ ط§ظ„ط£ط±ظ‚ط§ظ… ظ…ظ† 1 ط¥ظ„ظ‰ 10';
-  @override
-  String get countingNumbersDesc => 'طھط¹ظ„ظ‘ظ… ط§ظ„ط¹ط¯ ظ…ظ† 1 ط¥ظ„ظ‰ 10';
-  @override
-  String get currentPasswordHint =>
-      'ط£ط¯ط®ظ„ ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط± ط§ظ„ط­ط§ظ„ظٹط©';
-  @override
-  String get currentPasswordLabel => 'ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط± ط§ظ„ط­ط§ظ„ظٹط©';
-  @override
-  String get currentPlanLabel => 'ط§ظ„ط®ط·ط© ط§ظ„ط­ط§ظ„ظٹط©';
-  @override
-  String get dataCollectionOptOutSubtitle =>
-      'ط¹ط¯ظ… ط¬ظ…ط¹ ط£ظٹ ط¨ظٹط§ظ†ط§طھ ط§ط³طھط®ط¯ط§ظ…';
-  @override
-  String get dataCollectionOptOutTitle => 'ط¥ظ„ط؛ط§ط، ط¬ظ…ط¹ ط§ظ„ط¨ظٹط§ظ†ط§طھ';
-  @override
-  String get daysLabel => 'ط£ظٹط§ظ…';
-  @override
-  String get didntReceiveIt => 'ظ„ظ… طھط³طھظ„ظ…ظ‡طں ط­ط§ظˆظ„ ظ…ط±ط© ط£ط®ط±ظ‰';
-  @override
-  String get difficulty => 'ط§ظ„طµط¹ظˆط¨ط©';
-  @override
-  String get discoverSomethingAmazing =>
-      'ط§ظƒطھط´ظپ ط´ظٹط¦ظ‹ط§ ظ…ط°ظ‡ظ„ظ‹ط§ ط§ظ„ظٹظˆظ…!';
-  @override
-  String get emailAddress => 'ط¹ظ†ظˆط§ظ† ط§ظ„ط¨ط±ظٹط¯ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ';
-  @override
-  String get emailPlaceholder => 'parent@email.com';
-  @override
-  String get emailSupport =>
-      'ط§ظ„ط¯ط¹ظ… ط¹ط¨ط± ط§ظ„ط¨ط±ظٹط¯ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ';
-  @override
-  String get emailValidationEmpty =>
-      'ظٹط±ط¬ظ‰ ط¥ط¯ط®ط§ظ„ ط¹ظ†ظˆط§ظ† ط¨ط±ظٹط¯ظƒ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ';
-  @override
-  String get emailValidationInvalid =>
-      'ظٹط±ط¬ظ‰ ط¥ط¯ط®ط§ظ„ ط¨ط±ظٹط¯ ط¥ظ„ظƒطھط±ظˆظ†ظٹ طµط­ظٹط­ (Gmail ط£ظˆ Outlook ظˆط؛ظٹط±ظ‡ظ…ط§)';
-  @override
-  String get enterPinToContinue => 'ط£ط¯ط®ظ„ ط±ظ…ط² PIN ظ„ظ„ظ…طھط§ط¨ط¹ط©';
-  @override
-  String get entertainmentBrainTeasers => 'ط£ظ„ط؛ط§ط² ط°ظ‡ظ†ظٹط©';
-  @override
-  String get entertainmentCartoons => 'ط±ط³ظˆظ… ظ…طھط­ط±ظƒط©';
-  @override
-  String get entertainmentGames => 'ط£ظ„ط¹ط§ط¨';
-  @override
-  String get eraser => 'ظ…ظ…ط­ط§ط©';
-  @override
-  String get estimatedCompletion => 'ط§ظ„ظˆظ‚طھ ط§ظ„ظ…طھظˆظ‚ط¹ ظ„ظ„ط¥ظ†ظ‡ط§ط،';
-  @override
-  String get exploreLessons => 'ط§ط³طھظƒط´ظپ ط§ظ„ط¯ط±ظˆط³';
-  @override
-  String get exploreNewActivities => 'ط§ط³طھظƒط´ظپ ط£ظ†ط´ط·ط© ط¬ط¯ظٹط¯ط©';
-  @override
-  String get failedToStartSession =>
-      'ظپط´ظ„ ط¨ط¯ط، ط§ظ„ط¬ظ„ط³ط©. ظٹط±ط¬ظ‰ ط§ظ„ظ…ط­ط§ظˆظ„ط© ظ…ط±ط© ط£ط®ط±ظ‰.';
-  @override
-  String get fanFavourite => 'ط§ظ„ظ…ظپط¶ظ„ ظ„ط¯ظ‰ ط§ظ„ط¬ظ…ظٹط¹';
-  @override
-  String get featured => 'ظ…ظ…ظٹط²';
-  @override
-  String get fieldRequired => 'ظ‡ط°ط§ ط§ظ„ط­ظ‚ظ„ ظ…ط·ظ„ظˆط¨';
-  @override
-  String get followUsForUpdates =>
-      'طھط§ط¨ط¹ظ†ط§ ظ„ظ„ط­طµظˆظ„ ط¹ظ„ظ‰ ط§ظ„طھط­ط¯ظٹط«ط§طھ:';
-  @override
-  String get foreverLabel => 'ط¥ظ„ظ‰ ط§ظ„ط£ط¨ط¯';
-  @override
-  String get forgotPasswordDescription =>
-      'ظ„ط§ طھظ‚ظ„ظ‚! ط£ط¯ط®ظ„ ط¨ط±ظٹط¯ظƒ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ ظˆط³ظ†ط±ط³ظ„ ظ„ظƒ ط±ط§ط¨ط·ظ‹ط§ ظ„ط¥ط¹ط§ط¯ط© طھط¹ظٹظٹظ† ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط±.';
-  @override
-  String get forgotPicturesDescription =>
-      'ظ„ط§ ظ…ط´ظƒظ„ط©! ط£ط®ط¨ط±ظ†ط§ ط¨ظ…ط¹ط±ظ‘ظپ ط§ظ„ط·ظپظ„ ظˆط¨ط±ظٹط¯ ظˆظ„ظٹ ط£ظ…ط±ظƒطŒ ظˆط³ظ†ط±ط³ظ„ ظ„ظ‡ ط±ط³ط§ظ„ط© ظ„ظ…ط³ط§ط¹ط¯طھظƒ ط¹ظ„ظ‰ ط§ظ„ط¹ظˆط¯ط©.';
-  @override
-  String get forgotPin => 'ظ†ط³ظٹطھ ط±ظ…ط² PINطں';
-  @override
-  String get forgotYourPassword => 'ظ‡ظ„ ظ†ط³ظٹطھ ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط±طں';
-  @override
-  String get forgotYourPictures => 'ظ‡ظ„ ظ†ط³ظٹطھ طµظˆط±ظƒطں';
-  @override
-  String get friendFallback => 'طµط¯ظٹظ‚ظٹ';
-  @override
-  String get funAndPlayful => 'ظ…ط±ط­ ظˆظ…ظ…طھط¹';
-  @override
-  String get funTab => 'ظ…ط±ط­';
-  @override
-  String get goLabel => 'ظ‡ظٹط§!';
-  @override
-  String get goToLogin => 'ط§ط°ظ‡ط¨ ط¥ظ„ظ‰ طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„';
-  @override
-  String get goalComplete => 'ًںژ‰ طھظ… ط¥ظ†ط¬ط§ط² ط§ظ„ظ‡ط¯ظپ!';
-  @override
-  String get greatJob => 'ط¹ظ…ظ„ ط±ط§ط¦ط¹!';
-  @override
-  String get helpAppUpdates => 'طھط­ط¯ظٹط«ط§طھ ط§ظ„طھط·ط¨ظٹظ‚';
-  @override
-  String get helpContactSupportTitle => 'ط§ظ„طھظˆط§طµظ„ ظ…ط¹ ط§ظ„ط¯ط¹ظ…';
-  @override
-  String get helpEmailSupportTitle =>
-      'ط§ظ„ط¯ط¹ظ… ط¹ط¨ط± ط§ظ„ط¨ط±ظٹط¯ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ';
-  @override
-  String get helpFaqA1 =>
-      'ط§ط°ظ‡ط¨ ط¥ظ„ظ‰ ظˆط¶ط¹ ظˆظ„ظٹ ط§ظ„ط£ظ…ط± â†گ ط¥ط¯ط§ط±ط© ط§ظ„ط£ط·ظپط§ظ„ ظˆط§ط¶ط؛ط· ط¹ظ„ظ‰ "ط¥ط¶ط§ظپط© ظ…ظ„ظپ ط¬ط¯ظٹط¯". ط§طھط¨ط¹ ط§ظ„ط¯ظ„ظٹظ„ ط®ط·ظˆط© ط¨ط®ط·ظˆط© ظ„ط¥ظ†ط´ط§ط، ظ…ظ„ظپ ط´ط®طµظٹ ظ…ظ†ط§ط³ط¨ ظ„ط·ظپظ„ظƒ.';
-  @override
-  String get helpFaqA2 =>
-      'ظ†ط¹ظ…! ظپظٹ ظˆط¶ط¹ ظˆظ„ظٹ ط§ظ„ط£ظ…ط±طŒ ط§ط°ظ‡ط¨ ط¥ظ„ظ‰ ط§ظ„ط±ظ‚ط§ط¨ط© ط§ظ„ط£ط¨ظˆظٹط© â†گ ظˆظ‚طھ ط§ظ„ط´ط§ط´ط© ظ„طھط­ط¯ظٹط¯ ط§ظ„ط­ط¯ظˆط¯ ط§ظ„ظٹظˆظ…ظٹط© ظˆظپطھط±ط§طھ ط§ظ„ط§ط³طھط±ط§ط­ط© ظˆط§ظ„ط³ط§ط¹ط§طھ ط§ظ„ظ…ط³ظ…ظˆط­ ط¨ظ‡ط§.';
-  @override
-  String get helpFaqA3 =>
-      'ظٹط³طھط®ط¯ظ… ط§ظ„ظ…ط³ط§ط¹ط¯ ط§ظ„ط°ظƒظٹ ط¹ظ…ط± ط·ظپظ„ظƒ ظˆط§ظ‡طھظ…ط§ظ…ط§طھظ‡ ظˆطھظ‚ط¯ظ…ظ‡ ط§ظ„طھط¹ظ„ظٹظ…ظٹ ظ„طھظ‚ط¯ظٹظ… طھظˆطµظٹط§طھ ظˆط¥ط±ط´ط§ط¯ط§طھ ظ…ط®طµطµط©.';
-  @override
-  String get helpFaqA4 =>
-      'ط¨ط§ظ„طھط£ظƒظٹط¯! ظ†ط­ظ† ظ†طھط¨ط¹ ط³ظٹط§ط³ط§طھ ط®طµظˆطµظٹط© طµط§ط±ظ…ط© ظˆظ†ظ„طھط²ظ… ط¨ظ„ظˆط§ط¦ط­ COPPA ظˆGDPR ظ„ط­ظ…ط§ظٹط© ظ…ط¹ظ„ظˆظ…ط§طھ ط·ظپظ„ظƒ.';
-  @override
-  String get helpFaqA5 =>
-      'ظ†ط¹ظ…طŒ ظƒط«ظٹط± ظ…ظ† ط§ظ„ط£ظ†ط´ط·ط© ظ…طھط§ط­ط© ط¯ظˆظ† ط¥ظ†طھط±ظ†طھ. ظ‚ظ… ط¨طھظ†ط²ظٹظ„ ط§ظ„ظ…ط­طھظˆظ‰ ظ…ط³ط¨ظ‚ظ‹ط§ ظ„طھط¬ط±ط¨ط© طھط¹ظ„ظ… ظ…ط³طھظ…ط±ط©.';
-  @override
-  String get helpFaqQ1 => 'ظƒظٹظپ ظٹظ…ظƒظ†ظ†ظٹ ط¥ط¹ط¯ط§ط¯ ظ…ظ„ظپ ظ„ط·ظپظ„ظٹطں';
-  @override
-  String get helpFaqQ2 =>
-      'ظ‡ظ„ ظٹظ…ظƒظ†ظ†ظٹ طھط­ط¯ظٹط¯ ظˆظ‚طھ ط§ظ„ط´ط§ط´ط© ظ„ط·ظپظ„ظٹطں';
-  @override
-  String get helpFaqQ3 => 'ظƒظٹظپ ظٹط¹ظ…ظ„ ط§ظ„ظ…ط³ط§ط¹ط¯ ط§ظ„ط°ظƒظٹطں';
-  @override
-  String get helpFaqQ4 => 'ظ‡ظ„ ط¨ظٹط§ظ†ط§طھ ط·ظپظ„ظٹ ط¢ظ…ظ†ط©طں';
-  @override
-  String get helpFaqQ5 =>
-      'ظ‡ظ„ ظٹظ…ظƒظ† ظ„ط·ظپظ„ظٹ ط§ط³طھط®ط¯ط§ظ… ط§ظ„طھط·ط¨ظٹظ‚ ط¯ظˆظ† ط¥ظ†طھط±ظ†طھطں';
-  @override
-  String get helpFaqSubtitle =>
-      'ط£ط¯ظ„ط© ط§ظ„ط§ط³طھط®ط¯ط§ظ… ظˆط§ظ„ط£ط³ط¦ظ„ط© ط§ظ„ط´ط§ط¦ط¹ط©';
-  @override
-  String get helpFaqTitle => 'ط§ظ„ط£ط³ط¦ظ„ط© ط§ظ„ط´ط§ط¦ط¹ط©';
-  @override
-  String get helpLiveChatSubtitle => 'ظ…طھط§ط­ 24/7';
-  @override
-  String get helpLiveChatTitle => 'ط§ظ„ط¯ط±ط¯ط´ط© ط§ظ„ظ…ط¨ط§ط´ط±ط©';
-  @override
-  String get helpNeedHelpSubtitle => 'ظ†ط­ظ† ظ‡ظ†ط§ ظ„ط¯ط¹ظ…ظƒ';
-  @override
-  String get helpNeedHelpTitle => 'ظ‡ظ„ طھط­طھط§ط¬ ط¥ظ„ظ‰ ظ…ط³ط§ط¹ط¯ط©طں';
-  @override
-  String get helpPhoneSupportSubtitle => '1-800-KINDER';
-  @override
-  String get helpPhoneSupportTitle => 'ط§ظ„ط¯ط¹ظ… ط§ظ„ظ‡ط§طھظپظٹ';
-  @override
-  String get helpPreparingArticles =>
-      'ظ†ط­ظ† ظ†ط¬ظ‡ظ‘ط² ظ„ظƒ ظ…ظ‚ط§ظ„ط§طھ ظ…ظپظٹط¯ط©.';
-  @override
-  String get helpResourcesTitle => 'ظ…ظˆط§ط±ط¯ ط¥ط¶ط§ظپظٹط©';
-  @override
-  String get helpUserGuide => 'ط¯ظ„ظٹظ„ ط§ظ„ظ…ط³طھط®ط¯ظ…';
-  @override
-  String get historyColorQuest => 'ظ…ط؛ط§ظ…ط±ط© ط§ظ„ط£ظ„ظˆط§ظ†';
-  @override
-  String get historyDanceParty => 'ط­ظپظ„ط© ط§ظ„ط±ظ‚طµ';
-  @override
-  String get historyHelpingHands => 'ط§ظ„ط£ظٹط§ط¯ظٹ ط§ظ„ظ…ط³ط§ط¹ط¯ط©';
-  @override
-  String get historyKindWords => 'ظƒظ„ظ…ط§طھ ط·ظٹط¨ط©';
-  @override
-  String get historyMagicShow => 'ط§ظ„ط¹ط±ط¶ ط§ظ„ط³ط­ط±ظٹ';
-  @override
-  String get historyMemoryGame => 'ظ„ط¹ط¨ط© ط§ظ„ط°ط§ظƒط±ط©';
-  @override
-  String get historyNumbersAdventure => 'ظ…ط؛ط§ظ…ط±ط© ط§ظ„ط£ط±ظ‚ط§ظ…';
-  @override
-  String get historyPuzzleBuilder => 'ط¨ظ†ط§ط، ط§ظ„ط£ظ„ط؛ط§ط²';
-  @override
-  String get historyShapeMatch => 'ظ…ط·ط§ط¨ظ‚ط© ط§ظ„ط£ط´ظƒط§ظ„';
-  @override
-  String get historySharingStars => 'ظ†ط¬ظˆظ… ط§ظ„ظ…ط´ط§ط±ظƒط©';
-  @override
-  String get historySingAlong => 'ط؛ظ†ظ‘ظگ ظ…ط¹ظ†ط§';
-  @override
-  String get historyStoryTime => 'ظˆظ‚طھ ط§ظ„ظ‚طµط©';
-  @override
-  String get hoursAgoSync => 'ظ…ظ†ط° ط³ط§ط¹طھظٹظ†';
-  @override
-  String get interactiveActivity => 'ظ†ط´ط§ط· طھظپط§ط¹ظ„ظٹ';
-  @override
-  String get intermediate => 'ظ…طھظˆط³ط·';
-  @override
-  String get invalidEmail =>
-      'ظٹط±ط¬ظ‰ ط¥ط¯ط®ط§ظ„ ط¨ط±ظٹط¯ ط¥ظ„ظƒطھط±ظˆظ†ظٹ طµط­ظٹط­';
-  @override
-  String get kindnessTab => 'ط§ظ„ظ„ط·ظپ';
-  @override
-  String get languageSubtitle => 'ط§ظ„ط¥ظ†ط¬ظ„ظٹط²ظٹط© / ط§ظ„ط¹ط±ط¨ظٹط©';
-  @override
-  String get learningContent => 'ط§ظ„ظ…ط­طھظˆظ‰ ط§ظ„طھط¹ظ„ظٹظ…ظٹ';
-  @override
-  String get learningTab => 'ط§ظ„طھط¹ظ„ظ…';
-  @override
-  String get lessonAdvancedConcepts => 'ظ…ظپط§ظ‡ظٹظ… ظ…طھظ‚ط¯ظ…ط©';
-  @override
-  String get lessonDeepDive => 'طھط¹ظ…ظ‘ظ‚';
-  @override
-  String get lessonFunWithMath => 'ظ…ط±ط­ ظ…ط¹ ط§ظ„ط±ظٹط§ط¶ظٹط§طھ';
-  @override
-  String get lessonIntermediatePractice => 'طھط¯ط±ظٹط¨ ظ…طھظˆط³ط·';
-  @override
-  String get lessonIntroductionToBasics =>
-      'ظ…ظ‚ط¯ظ…ط© ط¥ظ„ظ‰ ط§ظ„ط£ط³ط§ط³ظٹط§طھ';
-  @override
-  String get lessonTime => 'ط§ظ„ظˆظ‚طھ';
-  @override
-  String get letsPractice => 'ظ‡ظٹط§ ظ†طھط¯ط±ظ‘ط¨!';
-  @override
-  String get limitedActivities => 'ط£ظ†ط´ط·ط© ظ…ط­ط¯ظˆط¯ط©';
-  @override
-  String get liveChat => 'ط§ظ„ط¯ط±ط¯ط´ط© ط§ظ„ظ…ط¨ط§ط´ط±ط©';
-  @override
-  String get loadingVersion => 'ط¬ط§ط±ظچ طھط­ظ…ظٹظ„ ط§ظ„ط¥طµط¯ط§ط±...';
-  @override
-  String get loginFailed =>
-      'ظپط´ظ„ طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„. ظٹط±ط¬ظ‰ ط§ظ„ظ…ط­ط§ظˆظ„ط© ظ…ط±ط© ط£ط®ط±ظ‰.';
-  @override
-  String get logoutMessage =>
-      'ط³طھط­طھط§ط¬ ط¥ظ„ظ‰ طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„ ظ…ط±ط© ط£ط®ط±ظ‰ ظ„ظ„ظˆطµظˆظ„ ط¥ظ„ظ‰ ظ„ظˆط­ط© طھط­ظƒظ… ظˆظ„ظٹ ط§ظ„ط£ظ…ط±.';
-  @override
-  String get logoutTitle => 'طھط³ط¬ظٹظ„ ط§ظ„ط®ط±ظˆط¬طں';
-  @override
-  String get manageBilling => 'ط¥ط¯ط§ط±ط© ط§ظ„ظپظˆط§طھظٹط±';
-  @override
-  String get messageLabel => 'ط§ظ„ط±ط³ط§ظ„ط© *';
-  @override
-  String get messageRequiredError => 'ظٹط±ط¬ظ‰ ط¥ط¯ط®ط§ظ„ ط±ط³ط§ظ„ط©';
-  @override
-  String get messageSentSuccess =>
-      'طھظ… ط¥ط±ط³ط§ظ„ ط§ظ„ط±ط³ط§ظ„ط© ط¨ظ†ط¬ط§ط­. ط³ظ†ط¹ظˆط¯ ط¥ظ„ظٹظƒ ظ‚ط±ظٹط¨ظ‹ط§.';
-  @override
-  String get messageSentTitle => 'طھظ… ط¥ط±ط³ط§ظ„ ط§ظ„ط±ط³ط§ظ„ط©!';
-  @override
-  String get myActivities => 'ط£ظ†ط´ط·طھظٹ';
-  @override
-  String get needHelp => 'ظ‡ظ„ طھط­طھط§ط¬ ط¥ظ„ظ‰ ظ…ط³ط§ط¹ط¯ط©طں';
-  @override
-  String get newPasswordHint =>
-      'ط£ط¯ط®ظ„ ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط± ط§ظ„ط¬ط¯ظٹط¯ط© (6 ط£ط­ط±ظپ ط¹ظ„ظ‰ ط§ظ„ط£ظ‚ظ„)';
-  @override
-  String get newPasswordLabel => 'ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط± ط§ظ„ط¬ط¯ظٹط¯ط©';
-  @override
-  String get newTopicsAwait =>
-      'ظ…ظˆط§ط¶ظٹط¹ ظˆط£ظ†ط´ط·ط© ط¬ط¯ظٹط¯ط© ط¨ط§ظ†طھط¸ط§ط±ظƒ!';
-  @override
-  String get nextPayment => 'ط§ظ„ط¯ظپط¹ط© ط§ظ„ظ‚ط§ط¯ظ…ط©';
-  @override
-  String get nextPaymentSampleDate => '31 ط¯ظٹط³ظ…ط¨ط± 2024';
-  @override
-  String get noActiveChildSession => 'ظ„ط§ طھظˆط¬ط¯ ط¬ظ„ط³ط© ط·ظپظ„ ظ†ط´ط·ط©';
-  @override
-  String get noChildProfilesFound =>
-      'ظ„ظ… ظٹطھظ… ط§ظ„ط¹ط«ظˆط± ط¹ظ„ظ‰ ظ…ظ„ظپط§طھ ط£ط·ظپط§ظ„.';
-  @override
-  String get noFaqsYet => 'ظ„ط§ طھظˆط¬ط¯ ط£ط³ط¦ظ„ط© ط´ط§ط¦ط¹ط© ط¨ط¹ط¯';
-  @override
-  String get noInternetConnection =>
-      'ظ„ط§ ظٹظˆط¬ط¯ ط§طھطµط§ظ„ ط¨ط§ظ„ط¥ظ†طھط±ظ†طھ';
-  @override
-  String get noResultsFound => 'ظ„ط§ طھظˆط¬ط¯ ظ†طھط§ط¦ط¬';
-  @override
-  String get nothingFound => 'ظ„ظ… ظٹطھظ… ط§ظ„ط¹ط«ظˆط± ط¹ظ„ظ‰ ط´ظٹط،';
-  @override
-  String get notificationFallback => 'ط¥ط´ط¹ط§ط±';
-  @override
-  String get notificationsSubtitle =>
-      'طھظ†ط¨ظٹظ‡ط§طھ ظˆطھط°ظƒظٹط±ط§طھ ظˆظ…ظ„ط®طµط§طھ';
-  @override
-  String get offlineDownloadsLabel => 'ط§ظ„طھظ†ط²ظٹظ„ط§طھ ط¯ظˆظ† ط¥ظ†طھط±ظ†طھ';
-  @override
-  String get oneChildProfile => 'ظ…ظ„ظپ ط·ظپظ„ ظˆط§ط­ط¯';
-  @override
-  String get oopsSomethingWentWrong => 'ط¹ط°ط±ظ‹ط§! ط­ط¯ط« ط®ط·ط£ ظ…ط§';
-  @override
-  String get pageNotFound => 'ط§ظ„طµظپط­ط© ط؛ظٹط± ظ…ظˆط¬ظˆط¯ط©';
-  @override
-  String get paletteDefault => 'ط§ظ„ط§ظپطھط±ط§ط¶ظٹ';
-  @override
-  String get paletteForestGreen => 'ط§ظ„ط£ط®ط¶ط± ط§ظ„ط؛ط§ط¨ظٹ';
-  @override
-  String get paletteOceanBlue => 'ط§ظ„ط£ط²ط±ظ‚ ط§ظ„ط¨ط­ط±ظٹ';
-  @override
-  String get palettePurpleNight => 'ط§ظ„ط¨ظ†ظپط³ط¬ظٹ ط§ظ„ظ„ظٹظ„ظٹ';
-  @override
-  String get paletteSunsetOrange => 'ط¨ط±طھظ‚ط§ظ„ظٹ ط§ظ„ط؛ط±ظˆط¨';
-  @override
-  String get parentAbout => 'ط­ظˆظ„';
-  @override
-  String get parentAccess => 'ظˆطµظˆظ„ ظˆظ„ظٹ ط§ظ„ط£ظ…ط±';
-  @override
-  String get parentContactUs => 'طھظˆط§طµظ„ ظ…ط¹ظ†ط§';
-  @override
-  String get parentEmailHint => 'parent@email.com';
-  @override
-  String get parentEmailInvalid =>
-      'ظٹط±ط¬ظ‰ ط¥ط¯ط®ط§ظ„ ط¨ط±ظٹط¯ ط¥ظ„ظƒطھط±ظˆظ†ظٹ طµط­ظٹط­';
-  @override
-  String get parentEmailRequired =>
-      'ظٹط±ط¬ظ‰ ط¥ط¯ط®ط§ظ„ ط¨ط±ظٹط¯ ظˆظ„ظٹ ط£ظ…ط±ظƒ';
-  @override
-  String get parentFallback => 'ظˆظ„ظٹ ط§ظ„ط£ظ…ط±';
-  @override
-  String get parentHelp => 'ط§ظ„ظ…ط³ط§ط¹ط¯ط© ظˆط§ظ„ط£ط³ط¦ظ„ط© ط§ظ„ط´ط§ط¦ط¹ط©';
-  @override
-  String get parentPortal => 'ط¨ظˆط§ط¨ط© ظˆظ„ظٹ ط§ظ„ط£ظ…ط±';
-  @override
-  String get parentPrivacySettings => 'ط¥ط¹ط¯ط§ط¯ط§طھ ط§ظ„ط®طµظˆطµظٹط©';
-  @override
-  String get parentWillGetEmail =>
-      'ط³ظٹطھظ„ظ‚ظ‰ ظˆظ„ظٹ ط£ظ…ط±ظƒ ط±ط³ط§ظ„ط© ط¨ط±ظٹط¯ ط¥ظ„ظƒطھط±ظˆظ†ظٹ ظˆظٹظ…ظƒظ†ظ‡ ظ…ط³ط§ط¹ط¯طھظƒ ظپظٹ طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„ ظ…ط¬ط¯ط¯ظ‹ط§!';
-  @override
-  String get parentalControlsSubtitle =>
-      'ظˆظ‚طھ ط§ظ„ط´ط§ط´ط© ظˆظ…ط±ط´ط­ط§طھ ط§ظ„ظ…ط­طھظˆظ‰ ظˆط§ظ„ط­ط¯ظˆط¯';
-  @override
-  String get parentsEmail => 'ط¨ط±ظٹط¯ ظˆظ„ظٹ ط§ظ„ط£ظ…ط±';
-  @override
-  String get passwordFair => 'ظ…طھظˆط³ط·ط©';
-  @override
-  String get passwordStrong => 'ظ‚ظˆظٹط©';
-  @override
-  String get passwordTooShortRegister =>
-      'ظٹط¬ط¨ ط£ظ† طھظƒظˆظ† ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط± 8 ط£ط­ط±ظپ ط¹ظ„ظ‰ ط§ظ„ط£ظ‚ظ„';
-  @override
-  String get passwordUpdatedSuccess =>
-      'طھظ… طھط­ط¯ظٹط« ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط± ط¨ظ†ط¬ط§ط­.';
-  @override
-  String get passwordWeak => 'ط¶ط¹ظٹظپط©';
-  @override
-  String get paymentMethodLabel => 'ط·ط±ظٹظ‚ط© ط§ظ„ط¯ظپط¹';
-  @override
-  String get perMonthLabel => '/ ط´ظ‡ط±ظٹظ‹ط§';
-  @override
-  String get personalizedRecommendationsSubtitle =>
-      'ط§ط­طµظ„ ط¹ظ„ظ‰ ط§ظ‚طھط±ط§ط­ط§طھ ظ…ط­طھظˆظ‰ ظ…ط®طµطµط©';
-  @override
-  String get personalizedRecommendationsTitle => 'طھظˆطµظٹط§طھ ظ…ط®طµطµط©';
-  @override
-  String get phoneNumber => '1-800-KINDER';
-  @override
-  String get phoneSupport => 'ط§ظ„ط¯ط¹ظ… ط§ظ„ظ‡ط§طھظپظٹ';
-  @override
-  String get playEducationalGames => 'ط£ظ„ط¹ط§ط¨ طھط¹ظ„ظٹظ…ظٹط©';
-  @override
-  String get playEducationalGamesSubtitle =>
-      'ط£ظ„ط¹ط§ط¨ ظ…ظ…طھط¹ط© ظ„ظ„طھط¹ظ„ظ‘ظ…';
-  @override
-  String get playEducationalVideos => 'ظپظٹط¯ظٹظˆظ‡ط§طھ طھط¹ظ„ظٹظ…ظٹط©';
-  @override
-  String get playEducationalVideosSubtitle => 'ط´ط§ظ‡ط¯ ظˆطھط¹ظ„ظ‘ظ…';
-  @override
-  String get playInteractiveStories => 'ظ‚طµطµ طھظپط§ط¹ظ„ظٹط©';
-  @override
-  String get playInteractiveStoriesSubtitle => 'ط§ط®طھط± ظ…ط؛ط§ظ…ط±طھظƒ';
-  @override
-  String get playMusicSongs => 'ط§ظ„ظ…ظˆط³ظٹظ‚ظ‰ ظˆط§ظ„ط£ط؛ط§ظ†ظٹ';
-  @override
-  String get playMusicSongsSubtitle => 'ط؛ظ†ظ‘ظگ ظˆط§ط±ظ‚طµ';
-  @override
-  String get playSubtitle =>
-      'ط§ط³طھظ…طھط¹ ط¨ط§ظ„ط£ظ„ط¹ط§ط¨ ظˆط§ظ„ظ‚طµطµ ظˆط§ظ„طھط±ظپظٹظ‡!';
-  @override
-  String get playTime => 'ظˆظ‚طھ ط§ظ„ظ„ط¹ط¨';
-  @override
-  String get playTitle => 'ط§ظ„ظ„ط¹ط¨ ظˆط§ظ„ظ…ط±ط­';
-  @override
-  String get pleaseTryAgain => 'ظٹط±ط¬ظ‰ ط§ظ„ظ…ط­ط§ظˆظ„ط© ظ…ط±ط© ط£ط®ط±ظ‰';
-  @override
-  String get premiumActive => 'ظ…ظ…ظٹط² â€” ظ†ط´ط·';
-  @override
-  String get prioritySupportLabel => 'ط¯ط¹ظ… ط£ظˆظ„ظˆظٹط©';
-  @override
-  String get privacyInfoBody =>
-      'ط®طµظˆطµظٹطھظƒ ظ…ظ‡ظ…ط© ط¨ط§ظ„ظ†ط³ط¨ط© ظ„ظ†ط§. طھطھط­ظƒظ… ظ‡ط°ظ‡ ط§ظ„ط¥ط¹ط¯ط§ط¯ط§طھ ظپظٹ ط§ظ„ط¨ظٹط§ظ†ط§طھ ط§ظ„طھظٹ ظ†ط¬ظ…ط¹ظ‡ط§ ظˆظƒظٹظپظٹط© ط§ط³طھط®ط¯ط§ظ…ظ‡ط§ ظ„طھط­ط³ظٹظ† طھط¬ط±ط¨طھظƒ.';
-  @override
-  String get privacyInfoTitle => 'ظ…ط¹ظ„ظˆظ…ط§طھ ط§ظ„ط®طµظˆطµظٹط©';
-  @override
-  String get privacyPolicyResource => 'ط³ظٹط§ط³ط© ط§ظ„ط®طµظˆطµظٹط©';
-  @override
-  String get privacySettingsError =>
-      'ط®ط·ط£ ظپظٹ طھط­ظ…ظٹظ„ ط¥ط¹ط¯ط§ط¯ط§طھ ط§ظ„ط®طµظˆطµظٹط©';
-  @override
-  String get privacySettingsSubtitle =>
-      'ظ…ط´ط§ط±ظƒط© ط§ظ„ط¨ظٹط§ظ†ط§طھ ظˆط§ظ„طµظ„ط§ط­ظٹط§طھ';
-  @override
-  String get processingLabel => 'ط¬ط§ط±ظچ ط§ظ„ظ…ط¹ط§ظ„ط¬ط©...';
-  @override
-  String get quickQuiz => 'ط§ط®طھط¨ط§ط± ط³ط±ظٹط¹';
-  @override
-  String get readyForAdventure =>
-      'ًںڑ€ ظ‡ظ„ ط£ظ†طھ ظ…ط³طھط¹ط¯ ظ„ظ…ط؛ط§ظ…ط±ط© ط§ظ„ظٹظˆظ…طں';
-  @override
-  String get recommendedLabel => 'ظ…ظˆطµظ‰ ط¨ظ‡';
-  @override
-  String get redo => 'ط¥ط¹ط§ط¯ط©';
-  @override
-  String get registrationFailed =>
-      'ظپط´ظ„ ط§ظ„طھط³ط¬ظٹظ„. ظٹط±ط¬ظ‰ ط§ظ„ظ…ط­ط§ظˆظ„ط© ظ…ط±ط© ط£ط®ط±ظ‰.';
-  @override
-  String get resetPassword => 'ط¥ط¹ط§ط¯ط© طھط¹ظٹظٹظ† ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط±';
-  @override
-  String get retryAction => 'ط¥ط¹ط§ط¯ط© ط§ظ„ظ…ط­ط§ظˆظ„ط©';
-  @override
-  String get safeAndFunVideos => 'ظپظٹط¯ظٹظˆظ‡ط§طھ ط¢ظ…ظ†ط© ظˆظ…ظ…طھط¹ط© ظ„ظƒ';
-  @override
-  String get safeMode => 'ط§ظ„ظˆط¶ط¹ ط§ظ„ط¢ظ…ظ†';
-  @override
-  String get sampleAmountPerMonth => '9.99\$ / ط´ظ‡ط±';
-  @override
-  String get samplePaymentMethod => '**** **** **** 1234';
-  @override
-  String get searchVideos => 'ط§ط¨ط­ط« ط¹ظ† ط§ظ„ظپظٹط¯ظٹظˆظ‡ط§طھ...';
-  @override
-  String get secureAndStructured => 'ط¢ظ…ظ† ظˆظ…ظ†ط¸ظ…';
-  @override
-  String get signIn => 'طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„';
-  @override
-  String get signInToContinue =>
-      'ظٹط±ط¬ظ‰ طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„ ظ„ظ…طھط§ط¨ط¹ط© ظ…ط؛ط§ظ…ط±طھظƒ!';
-  @override
-  String get skillColoringDesc => 'ط§ط³طھط®ط¯ظ… ط§ظ„ط£ظ„ظˆط§ظ†';
-  @override
-  String get skillCooking => 'ط§ظ„ط·ط¨ط®';
-  @override
-  String get skillCookingDesc => 'ط·ط¹ط§ظ… ط´ظ‡ظٹ';
-  @override
-  String get skillDrawing => 'ط§ظ„ط±ط³ظ…';
-  @override
-  String get skillDrawingDesc => 'ط¹ط¨ظ‘ط± ط¨ط§ظ„ظپظ†';
-  @override
-  String get skillHandcrafts => 'ط§ظ„ط£ط¹ظ…ط§ظ„ ط§ظ„ظٹط¯ظˆظٹط©';
-  @override
-  String get skillHandcraftsDesc => 'ظ‚طµظ‘ ظˆظ„طµظ‚';
-  @override
-  String get skillMusicDesc => 'ط§ط¹ط²ظپ ط§ظ„ط¢ظ„ط§طھ';
-  @override
-  String get skillSinging => 'ط§ظ„ط؛ظ†ط§ط،';
-  @override
-  String get skillSingingDesc => 'طھط¹ظ„ظ‘ظ… ط§ظ„ط£ط؛ط§ظ†ظٹ';
-  @override
-  String get skillSports => 'ط§ظ„ط±ظٹط§ط¶ط©';
-  @override
-  String get skillSportsDesc => 'ط­ط§ظپط¸ ط¹ظ„ظ‰ ظ„ظٹط§ظ‚طھظƒ';
-  @override
-  String get skillsTab => 'ط§ظ„ظ…ظ‡ط§ط±ط§طھ';
-  @override
-  String get songsAndMusic => 'ط§ظ„ط£ط؛ط§ظ†ظٹ ظˆط§ظ„ظ…ظˆط³ظٹظ‚ظ‰';
-  @override
-  String get spamFolderNote =>
-      'طھط­ظ‚ظ‚ ظ…ظ† ظ…ط¬ظ„ط¯ ط§ظ„ط±ط³ط§ط¦ظ„ ط§ظ„ظ…ط²ط¹ط¬ط© ط¥ط°ط§ ظ„ظ… طھط¬ط¯ ط§ظ„ط¨ط±ظٹط¯ ط®ظ„ط§ظ„ ط¨ط¶ط¹ ط¯ظ‚ط§ط¦ظ‚.';
-  @override
-  String get startLearning => 'ط§ط¨ط¯ط£ ط§ظ„طھط¹ظ„ظ‘ظ…!';
-  @override
-  String get step1OpenEmail =>
-      'ط§ظپطھط­ ط§ظ„ط¨ط±ظٹط¯ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ ظ…ظ† ظƒظٹظ†ط¯ط± ظˆظˆط±ظ„ط¯';
-  @override
-  String get step2ClickLink =>
-      'ط§ط¶ط؛ط· ط¹ظ„ظ‰ ط±ط§ط¨ط· "ط¥ط¹ط§ط¯ط© طھط¹ظٹظٹظ† ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط±"';
-  @override
-  String get step3CreatePassword =>
-      'ط£ظ†ط´ط¦ ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط± ط§ظ„ط¬ط¯ظٹط¯ط©';
-  @override
-  String get subjectHint => 'ظ…ط§ ظ…ظˆط¶ظˆط¹ ط§ط³طھظپط³ط§ط±ظƒطں';
-  @override
-  String get subjectLabel => 'ط§ظ„ظ…ظˆط¶ظˆط¹ *';
-  @override
-  String get subjectRequiredError => 'ظٹط±ط¬ظ‰ ط¥ط¯ط®ط§ظ„ ظ…ظˆط¶ظˆط¹';
-  @override
-  String get subscriptionActivationFailed =>
-      'ظپط´ظ„ طھظپط¹ظٹظ„ ط§ظ„ط§ط´طھط±ط§ظƒ.';
-  @override
-  String get subscriptionActiveLabel => 'ط§ظ„ط§ط´طھط±ط§ظƒ ظ†ط´ط·';
-  @override
-  String get subscriptionTitle => 'ط§ظ„ط§ط´طھط±ط§ظƒ';
-  @override
-  String get tapCorrectAnswer =>
-      'ط§ط¶ط؛ط· ط¹ظ„ظ‰ ط§ظ„ط¥ط¬ط§ط¨ط© ط§ظ„طµط­ظٹط­ط©!';
-  @override
-  String get tapShapeToFill =>
-      'ط§ط¶ط؛ط· ط¹ظ„ظ‰ ط£ظٹ ط´ظƒظ„ ط£ط¨ظٹط¶ ظ„ظ…ظ„ط¦ظ‡!';
-  @override
-  String get termsOfServiceResource => 'ط´ط±ظˆط· ط§ظ„ط®ط¯ظ…ط©';
-  @override
-  String get themeSubtitle =>
-      'ظپط§طھط­ ط£ظˆ ط¯ط§ظƒظ† ط£ظˆ ط§ظپطھط±ط§ط¶ظٹ ط§ظ„ظ†ط¸ط§ظ…';
-  @override
-  String get todayLabel => 'ط§ظ„ظٹظˆظ…';
-  @override
-  String get todayWeWillLearn => 'ط§ظ„ظٹظˆظ… ط³ظ†طھط¹ظ„ظ‘ظ… ط¹ظ†:';
-
-  @override
-  String get lessonContentFallback =>
-      'ظ‡ظ†ط§ ظٹط¸ظ‡ط± ط§ظ„ظ…ط­طھظˆظ‰ ط§ظ„طھط¹ظ„ظٹظ…ظٹ ط§ظ„ط±ط¦ظٹط³ظٹ. ظٹظ…ظƒظ† ط£ظ† ظٹطھط¶ظ…ظ† ظ†طµظˆطµظ‹ط§ ط£ظˆ طµظˆط±ظ‹ط§ ط£ظˆ ظپظٹط¯ظٹظˆظ‡ط§طھ ط£ظˆ ط£ظ†ط´ط·ط© طھظپط§ط¹ظ„ظٹط©.';
-
-  @override
-  String get lessonContentPlaceholder => 'ظ…ط­طھظˆظ‰ طھط¹ظ„ظٹظ…ظٹ';
-  @override
-  String get todaysPick => 'ط§ط®طھظٹط§ط± ط§ظ„ظٹظˆظ…';
-  @override
-  String get topRated => 'ط§ظ„ط£ط¹ظ„ظ‰ طھظ‚ظٹظٹظ…ظ‹ط§';
-  @override
-  String get tryAgainDifferentInfo =>
-      'ط­ط§ظˆظ„ ظ…ط±ط© ط£ط®ط±ظ‰ ط¨ظ…ط¹ظ„ظˆظ…ط§طھ ظ…ط®طھظ„ظپط©';
-  @override
-  String get tryDifferentSearch =>
-      'ط¬ط±ظ‘ط¨ ط¨ط­ط«ظ‹ط§ ط£ظˆ ظپط¦ط© ظ…ط®طھظ„ظپط©!';
-  @override
-  String get undo => 'طھط±ط§ط¬ط¹';
-  @override
-  String get unexpectedError => 'ط­ط¯ط« ط®ط·ط£ ط؛ظٹط± ظ…طھظˆظ‚ط¹';
-  @override
-  String get unlimitedActivities => 'ط£ظ†ط´ط·ط© ط؛ظٹط± ظ…ط­ط¯ظˆط¯ط©';
-  @override
-  String get upToThreeChildren => 'ط­طھظ‰ 3 ط£ط·ظپط§ظ„';
-  @override
-  String get updatePassword => 'طھط­ط¯ظٹط« ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط±';
-  @override
-  String get upgradePlan => 'ظ‚ظ… ط¨طھط±ظ‚ظٹط© ط®ط·طھظƒ';
-  @override
-  String get useAllowedEmail =>
-      'ط§ط³طھط®ط¯ظ… ط¨ط±ظٹط¯ Gmail ط£ظˆ Outlook ط£ظˆ Hotmail ط£ظˆ Live';
-  @override
-  String get useGmailOrMicrosoftEmail =>
-      'ط§ط³طھط®ط¯ظ… ط¨ط±ظٹط¯ Gmail ط£ظˆ Microsoft';
-  @override
-  String get videoAlphabetSong => 'ط£ط؛ظ†ظٹط© ط§ظ„ط­ط±ظˆظپ';
-  @override
-  String get videoAnimalFriends => 'ط£طµط¯ظ‚ط§ط، ط§ظ„ط­ظٹظˆط§ظ†ط§طھ';
-  @override
-  String get videoBuildAndCreate => 'ط§ط¨ظ†ظگ ظˆط§ط¨طھظƒط±';
-  @override
-  String get videoColoringFun => 'ظ…ط±ط­ ط§ظ„طھظ„ظˆظٹظ†';
-  @override
-  String get videoKindnessChallenge => 'طھط­ط¯ظٹ ط§ظ„ظ„ط·ظپ';
-  @override
-  String get videoMathBasicsFun => 'ط£ط³ط§ط³ظٹط§طھ ط§ظ„ط±ظٹط§ط¶ظٹط§طھ | ظ…ط±ط­';
-  @override
-  String get videoMomoAndMimiArabic => 'ظ…ظˆظ…ظˆ ظˆظ…ظٹظ…ظٹ | ط¹ط±ط¨ظٹ';
-  @override
-  String get videoPuzzlePlay => 'ظ„ط¹ط¨ ط§ظ„ط£ظ„ط؛ط§ط²';
-  @override
-  String get videoScienceWonders => 'ط±ظˆط§ط¦ط¹ ط§ظ„ط¹ظ„ظˆظ…';
-  @override
-  String get videoSharingTime => 'ظˆظ‚طھ ط§ظ„ظ…ط´ط§ط±ظƒط©';
-  @override
-  String get videoTomAndJerryKeepCalm =>
-      'طھظˆظ… ظˆط¬ظٹط±ظٹ | ط§ط¨ظ‚ ظ‡ط§ط¯ط¦ظ‹ط§';
-  @override
-  String get weAreHereToSupportYou => 'ظ†ط­ظ† ظ‡ظ†ط§ ظ„ط¯ط¹ظ…ظƒ';
-  @override
-  String get wellAskYourParent => 'ط³ظ†ط·ظ„ط¨ ظ…ظ† ظˆظ„ظٹ ط£ظ…ط±ظƒ!';
-  @override
-  String get whatDidYouLearn =>
-      'ظ…ط§ط°ط§ طھط¹ظ„ظ‘ظ…طھ ظپظٹ ظ‡ط°ط§ ط§ظ„ط¯ط±ط³طں';
-
-  @override
-  String get lessonAnswerOptionA => 'ط§ظ„ط¥ط¬ط§ط¨ط© ط£';
-
-  @override
-  String get lessonAnswerOptionB => 'ط§ظ„ط¥ط¬ط§ط¨ط© ط¨';
-
-  @override
-  String get lessonAnswerOptionC => 'ط§ظ„ط¥ط¬ط§ط¨ط© ط¬';
-  @override
-  String get whatHappensNext => 'ظ…ط§ط°ط§ ظٹط­ط¯ط« ط¨ط¹ط¯ ط°ظ„ظƒطں';
-  @override
-  String get whoIsUsingKinderWorld =>
-      'ظ…ظ† ظٹط³طھط®ط¯ظ…\nظƒظٹظ†ط¯ط± ظˆظˆط±ظ„ط¯طں';
-  @override
-  String get xpBonusEarned => '+ 50 ظ†ظ‚ط·ط© ط®ط¨ط±ط© ط¥ط¶ط§ظپظٹط©!';
-  @override
-  String get xpBonusLabel => 'â­گ +50 ظ†ظ‚ط·ط© ط®ط¨ط±ط© ط¥ط¶ط§ظپظٹط©';
-  @override
-  String get xpEarned => 'ظ†ظ‚ط§ط· ط§ظ„ط®ط¨ط±ط© ط§ظ„ظ…ظƒطھط³ط¨ط©';
-  @override
-  String get xpProgress => 'طھظ‚ط¯ظ… ظ†ظ‚ط§ط· ط§ظ„ط®ط¨ط±ط©';
-  @override
-  String get xpReward => 'ظ…ظƒط§ظپط£ط© ط§ظ„ط®ط¨ط±ط©';
-  @override
-  String get yesterdayLabel => 'ط£ظ…ط³';
-  @override
-  String get youCompletedLesson => 'ظ„ظ‚ط¯ ط£ظƒظ…ظ„طھ ط§ظ„ط¯ط±ط³!';
-  @override
-  String get yourChildId => 'ظ…ط¹ط±ظ‘ظپ ط·ظپظ„ظƒ';
-  @override
-  String get yourPlanIncludes => 'طھط´ظ…ظ„ ط®ط·طھظƒ:';
-  @override
-  String get inactiveLabel => 'ط؛ظٹط± ظ†ط´ط·';
-  @override
-  String get alertLabel => 'طھظ†ط¨ظٹظ‡';
-  @override
-  String get childProfileBasicInfoTitle => 'ط£ط®ط¨ط±ظ†ط§ ط¹ظ† ط·ظپظ„ظƒ';
-  @override
-  String get childProfileBasicInfoSubtitle =>
-      'ظ‡ط°ط§ ظٹط³ط§ط¹ط¯ظ†ط§ ط¹ظ„ظ‰ طھط®طµظٹطµ طھط¬ط±ط¨ط© ط§ظ„طھط¹ظ„ظ… ظ„ظ‡';
-  @override
-  String get childProfileAvatarTitle => 'ط§ط®طھط± طµظˆط±ط© ط±ظ…ط²ظٹط©';
-
-  // Generic labels
-  @override
-  String get labelId => 'ط§ظ„ط±ظ‚ظ…';
-  @override
-  String get childProfileAvatarSubtitle =>
-      'ط§ط®طھط± ط´ط®طµظٹط© ظ…ظ…طھط¹ط© طھظ…ط«ظ„ ط·ظپظ„ظƒ';
-  @override
-  String get childProfileInterestsTitle => 'ظ…ط§ ط§ظ‡طھظ…ط§ظ…ط§طھ ط·ظپظ„ظƒطں';
-  @override
-  String get childProfileInterestsSubtitle =>
-      'ط§ط®طھط± ط­طھظ‰ 5 ط§ظ‡طھظ…ط§ظ…ط§طھ (ط§ط®طھظٹط§ط±ظٹ)';
-  @override
-  String get childProfilePicturePasswordTitle =>
-      'ط£ظ†ط´ط¦ ظƒظ„ظ…ط© ظ…ط±ظˆط± ط¨ط§ظ„طµظˆط±';
-  @override
-  String get childProfilePicturePasswordSubtitle =>
-      'ط§ط®طھط± 3 طµظˆط± ط³ظٹطھط°ظƒط±ظ‡ط§ ط·ظپظ„ظƒ';
-  @override
-  String get pleaseEnterChildName => 'ظٹط±ط¬ظ‰ ط¥ط¯ط®ط§ظ„ ط§ط³ظ… ط·ظپظ„ظƒ';
-  @override
-  String get legalTermsHeroTitle => 'ظ‚ظˆط§ط¹ط¯ ظˆط§ط¶ط­ط© ظˆط¨ط³ظٹط·ط©';
-  @override
-  String get legalTermsHeroSubtitle =>
-      'ظ‡ظƒط°ط§ ظ†ط­ط§ظپط¸ ط¹ظ„ظ‰ ظƒظٹظ†ط¯ط± ظˆظˆط±ظ„ط¯ ط¢ظ…ظ†ط§ظ‹ ظˆظˆط¯ظˆط¯ط§ظ‹.';
-  @override
-  String get legalTermsSectionTitle => 'ط§طھظپط§ظ‚ظٹطھظƒ';
-  @override
-  String get legalTermsFooterText =>
-      'ظ†ط­ظ…ظٹ ط¹ط§ط¦ظ„طھظƒ ظˆظ†ط´ط±ط­ ط§ظ„ط£ظ…ظˆط± ط¨ظˆط¶ظˆط­.';
-  @override
-  String get legalPrivacyHeroTitle => 'ط¨ظٹط§ظ†ط§طھظƒ طھط­طھ ط³ظٹط·ط±طھظƒ';
-  @override
-  String get legalPrivacyHeroSubtitle =>
-      'ظ†ط¬ظ…ط¹ ظپظ‚ط· ظ…ط§ ظ†ط­طھط§ط¬ظ‡ ظ„ظ…ط³ط§ط¹ط¯ط© ط·ظپظ„ظƒ ط¹ظ„ظ‰ ط§ظ„ظ†ظ…ظˆ.';
-  @override
-  String get legalPrivacySectionTitle => 'طھظپط§طµظٹظ„ ط§ظ„ط®طµظˆطµظٹط©';
-  @override
-  String get legalPrivacyFooterText =>
-      'ط§ط³طھط®ط¯ط§ظ… ط´ظپط§ظپ ظ„ظ„ط¨ظٹط§ظ†ط§طھ ط¯ط§ط¦ظ…ط§ظ‹.';
-  @override
-  String get legalCoppaHeroTitle => 'ط§ظ„ط£ط·ظپط§ظ„ ط£ظˆظ„ط§ظ‹';
-  @override
-  String get legalCoppaHeroSubtitle =>
-      'ظ…طµظ…ظ… ظ„ظ„ط£ط·ظپط§ظ„ ط¨ط¹ظ†ط§ظٹط© ظˆط­ظ…ط§ظٹط© ط¥ط¶ط§ظپظٹط©.';
-  @override
-  String get legalCoppaSectionTitle => 'ط§ظ…طھط«ط§ظ„ COPPA';
-  @override
-  String get legalCoppaFooterText =>
-      'ظٹط¨ظ‚ظ‰ ظˆظ„ظٹ ط§ظ„ط£ظ…ط± ظ…ط³ظٹط·ط±ط§ظ‹ ظˆظٹط¨ظ‚ظ‰ ط§ظ„ط£ط·ظپط§ظ„ ط¨ط£ظ…ط§ظ†.';
-}
+  // ── Extra ──
+  @override String get freePlan => 'مجاني';
+  @override String get freePlanPrice => '0\$ / شهر';
+  @override String get familyPlanLabel => 'العائلة';
+  @override String get familyPlanPrice => '10\$ / شهر';
+  @override String get parentAccount => 'حساب ولي الأمر';
+  @override String get personalInformation => 'المعلومات الشخصية';
+  @override String get securitySection => 'الأمان';
+ @override String get joinKinderWorld => 'انضم إلى كيندر وورلد';
+  @override String get passwordVeryStrong => 'قوية جدًا';
+  @override String get accountCreatedWelcome => 'تم إنشاء الحساب! أهلاً بك في كيندر وورلد.';
+  @override String get aboutFallbackText => 'يساعد كيندر وورلد أولياء الأمور على توجيه التعلّم في بيئة آمنة.';
+  @override String get aboutSubtitle => 'الإصدار والتراخيص وحقوق النشر';
+  @override String get activityGame1Desc => 'تحديات رياضيات ممتعة';
+  @override String get activityGame1Title => 'ألغاز الرياضيات';
+  @override String get activityGame2Desc => 'اختبر ذاكرتك';
+  @override String get activityGame2Title => 'لعبة مطابقة الذاكرة';
+  @override String get activityGame3Desc => 'كوّن كلمات من الحروف';
+  @override String get activityGame3Title => 'بناء الكلمات';
+  @override String get activityGame4Desc => 'طابق الألوان والأشكال';
+  @override String get activityGame4Title => 'مطابقة الألوان';
+  @override String get activityMusic1Desc => 'أغاني أطفال ممتعة';
+  @override String get activityMusic1Title => 'غنِّ معنا';
+  @override String get activityMusic2Desc => 'تعرّف على الآلات الموسيقية';
+  @override String get activityMusic2Title => 'أصوات الآلات';
+  @override String get activityMusic3Desc => 'صفّق على الإيقاع';
+  @override String get activityMusic3Title => 'وقت الإيقاع';
+  @override String get activityMusic4Desc => 'تحرّك وارقص';
+  @override String get activityMusic4Title => 'حفلة الرقص';
+  @override String get activityRespectSharing => 'الاحترام والمشاركة';
+  @override String get activityStory1Desc => 'قصة عن الشجاعة';
+  @override String get activityStory1Title => 'النملة الصغيرة الشجاعة';
+  @override String get activityStory2Desc => 'الألوان تنبض بالحياة';
+  @override String get activityStory2Title => 'مغامرة قوس قزح';
+  @override String get activityStory3Desc => 'حكاية عن الصداقة';
+  @override String get activityStory3Title => 'الشجرة السحرية';
+  @override String get activityStory4Desc => 'مغامرة تحت الماء';
+  @override String get activityStory4Title => 'أحلام المحيط';
+  @override String get activityVideo1Desc => 'اكتشف العالم الطبيعي';
+  @override String get activityVideo1Title => 'مستكشف الطبيعة';
+  @override String get activityVideo2Desc => 'حقائق علمية مذهلة';
+  @override String get activityVideo2Title => 'روائع العلوم';
+  @override String get activityVideo3Desc => 'تعرّف على حيوانات مختلفة';
+  @override String get activityVideo3Title => 'أصدقاء الحيوانات';
+  @override String get activityVideo4Desc => 'رحلة إلى النجوم';
+  @override String get activityVideo4Title => 'مغامرة الفضاء';
+  @override String get additionalResources => 'موارد إضافية';
+  @override String get adminAccessDenied => 'تم رفض الوصول';
+  @override String get adminAdminsAssignRoleAction => 'تعيين دور';
+  @override String get adminAdminsAssignRoleTitle => 'تعيين دور';
+  @override String get adminAdminsCreateAction => 'إنشاء مسؤول';
+  @override String get adminAdminsCreateRoleAction => 'إنشاء دور';
+  @override String get adminAdminsCreateRoleTitle => 'إنشاء دور';
+  @override String get adminAdminsCreateTitle => 'إنشاء مسؤول';
+  @override String get adminAdminsCreatedMessage => 'تم إنشاء حساب المسؤول بنجاح';
+  @override String get adminAdminsCurrentAdminHint => 'حساب المسؤول الخاص بك محمي من التعطيل الذاتي وإزالة الأدوار من نفسك.';
+  @override String get adminAdminsDisableAction => 'تعطيل';
+  @override String get adminAdminsDisableConfirm => 'هل تريد تعطيل حساب هذا المسؤول؟';
+  @override String get adminAdminsDisableTitle => 'تعطيل المسؤول';
+  @override String get adminAdminsDisabledMessage => 'تم تعطيل حساب المسؤول بنجاح';
+  @override String get adminAdminsEditAction => 'تعديل المسؤول';
+  @override String get adminAdminsEditRoleAction => 'تعديل الدور';
+  @override String get adminAdminsEditRoleTitle => 'تعديل الدور';
+  @override String get adminAdminsEditTitle => 'تعديل المسؤول';
+  @override String get adminAdminsEmailField => 'البريد الإلكتروني';
+  @override String get adminAdminsEnableAction => 'تفعيل';
+  @override String get adminAdminsEnableConfirm => 'هل تريد تفعيل حساب هذا المسؤول؟';
+  @override String get adminAdminsEnableTitle => 'تفعيل المسؤول';
+  @override String get adminAdminsEnabledMessage => 'تم تفعيل حساب المسؤول بنجاح';
+  @override String get adminAdminsIdLabel => 'المعرّف';
+  @override String get adminAdminsInitialRolesLabel => 'الأدوار المبدئية';
+  @override String get adminAdminsNameField => 'الاسم';
+  @override String get adminAdminsNoRoleSelection => 'اختر دورًا لتعديل الصلاحيات';
+  @override String get adminAdminsNoSelection => 'اختر حساب مسؤول لعرض التفاصيل';
+  @override String get adminAdminsPasswordField => 'كلمة المرور';
+  @override String get adminAdminsPasswordHelper => 'اتركه فارغًا للإبقاء على كلمة المرور الحالية';
+  @override String get adminAdminsPermissionsSection => 'الصلاحيات';
+  @override String get adminAdminsPermissionsUpdatedMessage => 'تم تحديث صلاحيات الدور بنجاح';
+  @override String get adminAdminsRemoveRoleAction => 'إزالة الدور';
+  @override String get adminAdminsRemoveRoleTitle => 'إزالة الدور';
+  @override String get adminAdminsRoleAssignedMessage => 'تم تعيين الدور بنجاح';
+  @override String get adminAdminsRoleCreatedMessage => 'تم إنشاء الدور بنجاح';
+  @override String get adminAdminsRoleDescriptionField => 'وصف الدور';
+  @override String get adminAdminsRoleNameField => 'اسم الدور';
+  @override String get adminAdminsRoleRemovedMessage => 'تمت إزالة الدور بنجاح';
+  @override String get adminAdminsRoleUpdatedMessage => 'تم تحديث الدور بنجاح';
+  @override String get adminAdminsRolesSection => 'الأدوار المعيّنة';
+  @override String get adminAdminsRolesTab => 'الأدوار والصلاحيات';
+  @override String get adminAdminsSavePermissionsAction => 'حفظ الصلاحيات';
+  @override String get adminAdminsSearchLabel => 'البحث عن المسؤولين';
+  @override String get adminAdminsStatusFilter => 'الحالة';
+  @override String get adminAdminsSubtitle => 'إدارة حسابات المسؤولين وتعيين الأدوار وربط الصلاحيات.';
+  @override String get adminAdminsTitle => 'إدارة المسؤولين';
+  @override String get adminAdminsUpdatedMessage => 'تم تحديث حساب المسؤول بنجاح';
+  @override String get adminAdminsUsersTab => 'المسؤولون';
+  @override String get adminAnalyticsActiveChildren => 'الأطفال النشطون';
+  @override String get adminAnalyticsActivities => 'الأنشطة';
+  @override String get adminAnalyticsActivitiesToday => 'أنشطة اليوم';
+  @override String get adminAnalyticsFreeSubscriptions => 'الاشتراكات المجانية';
+  @override String get adminAnalyticsNewChildren => 'الأطفال';
+  @override String get adminAnalyticsNewUsers => 'المستخدمون';
+  @override String get adminAnalyticsNoData => 'لا توجد بيانات متاحة';
+  @override String get adminAnalyticsOpenTickets => 'التذاكر المفتوحة';
+  @override String get adminAnalyticsPaidSubscriptions => 'الاشتراكات المدفوعة';
+  @override String get adminAnalyticsRangeMonth => 'شهر';
+  @override String get adminAnalyticsRangeWeek => 'أسبوع';
+  @override String get adminAnalyticsRecentTickets => 'ملخص التذاكر الأخيرة';
+  @override String get adminAnalyticsSubscriptionsTitle => 'ملخص الاشتراكات';
+  @override String get adminAnalyticsSubtitle => 'راقب نمو المنصة واتجاهات النشاط وحالة الدعم.';
+  @override String get adminAnalyticsTickets => 'التذاكر';
+  @override String get adminAnalyticsTitle => 'نظرة عامة على التحليلات';
+  @override String get adminAnalyticsTotalUsers => 'إجمالي المستخدمين';
+  @override String get adminAnalyticsUsageTitle => 'اتجاه الاستخدام';
+  @override String get adminAuditActionColumn => 'الإجراء';
+  @override String get adminAuditActionFilter => 'الإجراء';
+  @override String get adminAuditAdminColumn => 'المسؤول';
+  @override String get adminAuditAdminFilter => 'معرّف المسؤول';
+  @override String get adminAuditApplyFilters => 'تطبيق الفلاتر';
+  @override String get adminAuditDateFromFilter => 'من تاريخ';
+  @override String get adminAuditDateToFilter => 'إلى تاريخ';
+  @override String get adminAuditEntityColumn => 'الكيان';
+  @override String get adminAuditNetworkColumn => 'IP / الجهاز';
+  @override String get adminAuditSubtitle => 'راجع إجراءات المسؤولين الحساسة وتتبع تغييرات النظام.';
+  @override String get adminAuditTimeColumn => 'الوقت';
+  @override String get adminAuditTitle => 'سجلات التدقيق';
+  @override String get adminChildrenActionsColumn => 'الإجراءات';
+  @override String get adminChildrenActivitySection => 'سجل النشاط';
+  @override String get adminChildrenAgeColumn => 'العمر';
+  @override String get adminChildrenAgeField => 'العمر';
+  @override String get adminChildrenAgeFilter => 'العمر';
+  @override String get adminChildrenAvatarField => 'الصورة الرمزية';
+  @override String get adminChildrenDeactivateAction => 'تعطيل';
+  @override String get adminChildrenDeactivateConfirm => 'هل تريد تعطيل ملف هذا الطفل؟';
+  @override String get adminChildrenDeactivateTitle => 'تعطيل الطفل';
+  @override String get adminChildrenDeactivatedMessage => 'تم تعطيل الطفل بنجاح';
+  @override String get adminChildrenEditTitle => 'تعديل الطفل';
+  @override String get adminChildrenMilestonesSection => 'الإنجازات المرحلية';
+  @override String get adminChildrenNameColumn => 'الاسم';
+  @override String get adminChildrenNameField => 'الاسم';
+  @override String get adminChildrenOverviewCard => 'نظرة عامة';
+  @override String get adminChildrenParentColumn => 'ولي الأمر';
+  @override String get adminChildrenParentFilter => 'معرّف ولي الأمر';
+  @override String get adminChildrenProgressCard => 'التقدم';
+  @override String get adminChildrenProgressDaysMetric => 'أيام منذ الإنشاء';
+  @override String get adminChildrenProgressEventsMetric => 'أحداث التدقيق';
+  @override String get adminChildrenStatusColumn => 'الحالة';
+  @override String get adminChildrenStatusFilter => 'الحالة';
+  @override String get adminChildrenSubtitle => 'فحص ملفات الأطفال وصيانتها.';
+  @override String get adminChildrenTitle => 'إدارة الأطفال';
+  @override String get adminChildrenUpdatedMessage => 'تم تحديث الطفل بنجاح';
+  @override String get adminCmsAddCategory => 'إضافة فئة';
+  @override String get adminCmsAddContent => 'إضافة محتوى';
+  @override String get adminCmsAddQuiz => 'إضافة اختبار';
+  @override String get adminCmsAgeGroupLabel => 'الفئة العمرية';
+  @override String get adminCmsAllCategories => 'كل الفئات';
+  @override String get adminCmsBodyArLabel => 'المحتوى العربي';
+  @override String get adminCmsBodyEnLabel => 'المحتوى الإنجليزي';
+  @override String get adminCmsCategoriesTab => 'الفئات';
+  @override String get adminCmsCategoryCreateTitle => 'إنشاء فئة';
+  @override String get adminCmsCategoryEditTitle => 'تعديل الفئة';
+  @override String get adminCmsCategoryLabel => 'الفئة';
+  @override String get adminCmsCategorySaved => 'تم حفظ الفئة';
+  @override String get adminCmsCategorySlug => 'المعرّف النصي';
+  @override String get adminCmsCategoryUsage => 'المحتوى / الاختبارات';
+  @override String get adminCmsContentsTab => 'المحتويات';
+  @override String get adminCmsCreateContentTitle => 'إنشاء محتوى';
+  @override String get adminCmsCreateQuizTitle => 'إنشاء اختبار';
+  @override String get adminCmsDeleteCategoryConfirm => 'هل تريد حذف هذه الفئة؟';
+  @override String get adminCmsDeleteCategoryTitle => 'حذف الفئة';
+  @override String get adminCmsDeleteContentConfirm => 'هل تريد حذف عنصر المحتوى هذا؟';
+  @override String get adminCmsDeleteContentTitle => 'حذف المحتوى';
+  @override String get adminCmsDeleteQuizConfirm => 'هل تريد حذف هذا الاختبار؟';
+  @override String get adminCmsDeleteQuizTitle => 'حذف الاختبار';
+  @override String get adminCmsDescriptionArLabel => 'الوصف العربي';
+  @override String get adminCmsDescriptionEnLabel => 'الوصف الإنجليزي';
+  @override String get adminCmsEditContentTitle => 'تعديل المحتوى';
+  @override String get adminCmsEditQuizTitle => 'تعديل الاختبار';
+  @override String get adminCmsLinkedContentLabel => 'المحتوى المرتبط';
+  @override String get adminCmsLinkedQuizzes => 'الاختبارات المرتبطة';
+  @override String get adminCmsMetadataLabel => 'بيانات وصفية JSON';
+  @override String get adminCmsNoCategory => 'لا توجد فئة';
+  @override String get adminCmsNoLinkedContent => 'لا يوجد محتوى مرتبط';
+  @override String get adminCmsPreviewAction => 'معاينة';
+  @override String get adminCmsPreviewTitle => 'معاينة';
+  @override String get adminCmsPublishAction => 'نشر';
+  @override String get adminCmsQuestionsJsonLabel => 'أسئلة JSON';
+  @override String get adminCmsQuestionsLabel => 'الأسئلة';
+  @override String get adminCmsQuizSaved => 'تم حفظ الاختبار';
+  @override String get adminCmsQuizzesTab => 'الاختبارات';
+  @override String get adminCmsSearchLabel => 'بحث';
+  @override String get adminCmsStatusAll => 'كل الحالات';
+  @override String get adminCmsStatusDraft => 'مسودة';
+  @override String get adminCmsStatusLabel => 'الحالة';
+  @override String get adminCmsStatusPublished => 'منشور';
+  @override String get adminCmsStatusReview => 'قيد المراجعة';
+  @override String get adminCmsSubtitle => 'إدارة الفئات والمحتوى التعليمي والاختبارات.';
+  @override String get adminCmsThumbnailLabel => 'رابط الصورة المصغرة';
+  @override String get adminCmsTitle => 'إدارة المحتوى';
+  @override String get adminCmsTitleArLabel => 'العنوان العربي';
+  @override String get adminCmsTitleEnLabel => 'العنوان الإنجليزي';
+  @override String get adminCmsTypeActivity => 'نشاط';
+  @override String get adminCmsTypeLabel => 'النوع';
+  @override String get adminCmsTypeLesson => 'درس';
+  @override String get adminCmsTypeStory => 'قصة';
+  @override String get adminCmsTypeVideo => 'فيديو';
+  @override String get adminCmsUnpublishAction => 'إلغاء النشر';
+  @override String get adminDashboard => 'لوحة تحكم المسؤول';
+  @override String get adminDashboardPermissionsTitle => 'صلاحياتك';
+  @override String get adminDashboardSubtitle => 'إليك ما يحدث في كيندر وورلد';
+  @override String get adminDashboardWelcome => 'مرحبًا بعودتك';
+  @override String get adminDisabledAccount => 'تم تعطيل حساب المسؤول الخاص بك. يرجى التواصل مع مسؤول النظام.';
+  @override String get adminEmail => 'بريد المسؤول الإلكتروني';
+  @override String get adminEmailInvalid => 'أدخل بريدًا إلكترونيًا صحيحًا';
+  @override String get adminEmailRequired => 'البريد الإلكتروني مطلوب';
+  @override String get adminLoginFooter => 'بوابة إدارة كيندر وورلد — دخول للمصرح لهم فقط';
+  @override String get adminLoginSubtitle => 'سجّل الدخول لإدارة كيندر وورلد';
+  @override String get adminLogout => 'تسجيل الخروج';
+  @override String get adminLogoutConfirm => 'هل أنت متأكد من تسجيل الخروج من بوابة الإدارة؟';
+  @override String get adminMenuTooltip => 'القائمة';
+  @override String get adminPaginationNext => 'التالي';
+  @override String get adminPaginationPrevious => 'السابق';
+  @override String get adminPassword => 'كلمة مرور المسؤول';
+  @override String get adminPasswordRequired => 'كلمة المرور مطلوبة';
+  @override String get adminPermissionDenied => 'تم رفض الصلاحية';
+  @override String get adminPermissionDeniedMessage => 'ليست لديك صلاحية للوصول إلى هذا القسم. تواصل مع مسؤول النظام.';
+  @override String get adminPlanFamilyPlus => 'عائلي بلس';
+  @override String get adminPlanFree => 'مجاني';
+  @override String get adminPlanPremium => 'مميز';
+  @override String get adminRefreshTooltip => 'تحديث';
+  @override String get adminRoleAnalyticsAdmin => 'مسؤول التحليلات';
+  @override String get adminRoleContentAdmin => 'مسؤول المحتوى';
+  @override String get adminRoleFinanceAdmin => 'مسؤول المالية';
+  @override String get adminRoleSuperAdmin => 'المسؤول العام';
+  @override String get adminRoleSupportAdmin => 'مسؤول الدعم';
+  @override String get adminSessionExpired => 'انتهت جلسة المسؤول. يرجى تسجيل الدخول مرة أخرى.';
+  @override String get adminSettingsAiBuddyEnabled => 'تفعيل رفيق الذكاء الاصطناعي';
+  @override String get adminSettingsAiBuddyEnabledHint => 'فعّل رفيق الذكاء الاصطناعي في جميع أنحاء التطبيق.';
+  @override String get adminSettingsDefaultChildLimitLabel => 'الحد الافتراضي للأطفال';
+  @override String get adminSettingsDefaultPlanLabel => 'الخطة الافتراضية';
+  @override String get adminSettingsDefaultsTitle => 'الإعدادات الافتراضية';
+  @override String get adminSettingsFeatureFlagsTitle => 'ميزات التفعيل';
+  @override String get adminSettingsMaintenanceMode => 'وضع الصيانة';
+  @override String get adminSettingsMaintenanceModeHint => 'تعطيل الوصول الطبيعي للتطبيق مؤقتًا.';
+  @override String get adminSettingsRegistrationEnabled => 'السماح بالتسجيل';
+  @override String get adminSettingsRegistrationEnabledHint => 'السماح بتسجيل أولياء الأمور الجدد.';
+  @override String get adminSidebarAdmins => 'المسؤولون';
+  @override String get adminSidebarAudit => 'سجل التدقيق';
+  @override String get adminSidebarChildren => 'الأطفال';
+  @override String get adminSidebarContent => 'المحتوى';
+  @override String get adminSidebarOverview => 'نظرة عامة';
+  @override String get adminSidebarReports => 'التقارير';
+  @override String get adminSidebarSettings => 'الإعدادات';
+  @override String get adminSidebarSubscriptions => 'الاشتراكات';
+  @override String get adminSidebarSupport => 'الدعم';
+  @override String get adminSidebarUsers => 'المستخدمون';
+  @override String get adminSignIn => 'تسجيل الدخول';
+  @override String get adminSubscriptionsCancelAction => 'إلغاء';
+  @override String get adminSubscriptionsCancelConfirm => 'هل تريد إعادة هذا المستخدم إلى الخطة المجانية؟';
+  @override String get adminSubscriptionsCancelTitle => 'إلغاء الاشتراك';
+  @override String get adminSubscriptionsChildrenMetric => 'الأطفال';
+  @override String get adminSubscriptionsFeaturesTitle => 'الميزات المفعلة';
+  @override String get adminSubscriptionsNoSelection => 'اختر اشتراكًا لعرض التفاصيل';
+  @override String get adminSubscriptionsOverrideAction => 'تعديل الخطة';
+  @override String get adminSubscriptionsOverrideTitle => 'تعديل الخطة';
+  @override String get adminSubscriptionsPaymentMethodsMetric => 'طرق الدفع';
+  @override String get adminSubscriptionsPlanAll => 'كل الخطط';
+  @override String get adminSubscriptionsPlanFilter => 'الخطة';
+  @override String get adminSubscriptionsRefundAction => 'استرداد';
+  @override String get adminSubscriptionsRefundNotSupported => 'الاسترداد غير مدعوم في نموذج الدفع الحالي';
+  @override String get adminSubscriptionsSearchLabel => 'بحث';
+  @override String get adminSubscriptionsStatusActive => 'نشط';
+  @override String get adminSubscriptionsStatusAll => 'كل الحالات';
+  @override String get adminSubscriptionsStatusDisabled => 'معطل';
+  @override String get adminSubscriptionsStatusFilter => 'الحالة';
+  @override String get adminSubscriptionsStatusFree => 'مجاني';
+  @override String get adminSubscriptionsStatusLabel => 'الحالة';
+  @override String get adminSubscriptionsSubtitle => 'راجع الخطط والإجراءات المالية وتعديلات الاشتراك.';
+  @override String get adminSubscriptionsTitle => 'الاشتراكات';
+  @override String get adminSubscriptionsUserName => 'الاسم';
+  @override String get adminSupportAssign => 'تعيين';
+  @override String get adminSupportAssignSuccess => 'تم تعيين التذكرة بنجاح';
+  @override String get adminSupportAssignedToMe => 'تعيين لي';
+  @override String get adminSupportAssignee => 'المكلّف';
+  @override String get adminSupportClose => 'إغلاق التذكرة';
+  @override String get adminSupportCloseConfirm => 'هل أنت متأكد من إغلاق هذه التذكرة؟';
+  @override String get adminSupportCloseSuccess => 'تم إغلاق التذكرة بنجاح';
+  @override String get adminSupportNoTicketSelected => 'اختر تذكرة لعرض التفاصيل';
+  @override String get adminSupportNoTickets => 'لا توجد تذاكر';
+  @override String get adminSupportReply => 'رد';
+  @override String get adminSupportReplyHint => 'اكتب ردك';
+  @override String get adminSupportReplySuccess => 'تم إرسال الرد بنجاح';
+  @override String get adminSupportRequester => 'مقدم الطلب';
+  @override String get adminSupportStatusAll => 'كل الحالات';
+  @override String get adminSupportStatusClosed => 'مغلقة';
+  @override String get adminSupportStatusFilter => 'الحالة';
+  @override String get adminSupportStatusInProgress => 'قيد المعالجة';
+  @override String get adminSupportStatusOpen => 'مفتوحة';
+  @override String get adminSupportThread => 'المحادثة';
+  @override String get adminSupportTicketsSubtitle => 'راجع وعيّن وردّ وأغلق طلبات الدعم.';
+  @override String get adminSupportTicketsTitle => 'تذاكر الدعم';
+  @override String get adminSystemSettingsSubtitle => 'تحكم في وضع الصيانة العام وميزات التفعيل والإعدادات الافتراضية.';
+  @override String get adminSystemSettingsTitle => 'إعدادات النظام';
+  @override String get adminUsersActionsColumn => 'الإجراءات';
+  @override String get adminUsersActivityCard => 'ملخص النشاط';
+  @override String get adminUsersChildrenColumn => 'الأطفال';
+  @override String get adminUsersChildrenSection => 'الأطفال';
+  @override String get adminUsersDisableAction => 'تعطيل';
+  @override String get adminUsersDisableConfirm => 'هل تريد تعطيل حساب هذا المستخدم؟';
+  @override String get adminUsersDisableTitle => 'تعطيل المستخدم';
+  @override String get adminUsersDisabledMessage => 'تم تعطيل المستخدم بنجاح';
+  @override String get adminUsersEditTitle => 'تعديل المستخدم';
+  @override String get adminUsersEmailColumn => 'البريد الإلكتروني';
+  @override String get adminUsersEmailField => 'البريد الإلكتروني';
+  @override String get adminUsersEnableAction => 'تفعيل';
+  @override String get adminUsersEnableConfirm => 'هل تريد تفعيل حساب هذا المستخدم؟';
+  @override String get adminUsersEnableTitle => 'تفعيل المستخدم';
+  @override String get adminUsersEnabledMessage => 'تم تفعيل المستخدم بنجاح';
+  @override String get adminUsersLastUpdatedMetric => 'آخر تحديث';
+  @override String get adminUsersNameColumn => 'الاسم';
+  @override String get adminUsersNameField => 'الاسم';
+  @override String get adminUsersNotificationsMetric => 'الإشعارات';
+  @override String get adminUsersNotificationsSection => 'الإشعارات الأخيرة';
+  @override String get adminUsersOverviewCard => 'نظرة عامة';
+  @override String get adminUsersPlanColumn => 'الخطة';
+  @override String get adminUsersPlanField => 'الخطة';
+  @override String get adminUsersSearchLabel => 'البحث عن المستخدمين';
+  @override String get adminUsersStatusActive => 'نشط';
+  @override String get adminUsersStatusAll => 'الكل';
+  @override String get adminUsersStatusColumn => 'الحالة';
+  @override String get adminUsersStatusDisabled => 'معطل';
+  @override String get adminUsersStatusFilter => 'الحالة';
+  @override String get adminUsersSubtitle => 'ابحث وراجع وأدر حسابات أولياء الأمور.';
+  @override String get adminUsersSupportMetric => 'تذاكر الدعم';
+  @override String get adminUsersSupportSection => 'تذاكر الدعم';
+  @override String get adminUsersTitle => 'إدارة المستخدمين';
+  @override String get adminUsersUpdatedMessage => 'تم تحديث المستخدم بنجاح';
+  @override String get adminUsersViewAction => 'عرض';
+  @override String get adminWelcome => 'بوابة الإدارة';
+  @override String get advanced => 'متقدم';
+  @override String get advancedReportsLabel => 'تقارير متقدمة';
+  @override String get allCaughtUp => 'أنت مطّلع على كل شيء! ستظهر هنا التنبيهات الجديدة وملخصات النشاط.';
+  @override String get allVideos => 'كل الفيديوهات';
+  @override String get amountLabel => 'المبلغ';
+  @override String get analyticsSubtitle => 'ساعد في تحسين كيندر وورلد من خلال بيانات الاستخدام';
+  @override String get analyticsTitle => 'التحليلات';
+  @override String get available247 => 'متاح 24/7';
+  @override String get availablePlans => 'الخطط المتاحة';
+  @override String get awesomeColoring => 'تلوين رائع!';
+  @override String get backToChildLogin => 'العودة إلى دخول الطفل';
+  @override String get basicFeaturesOnly => 'ميزات أساسية فقط';
+  @override String get beginner => 'مبتدئ';
+  @override String get bestForFamilies => 'الأفضل للعائلات';
+  @override String get billingComingSoon => 'إدارة الفواتير قريبًا. ستتمكن من تحديث طرق الدفع والفواتير هنا عندما يصبح الباك إند جاهزًا.';
+  @override String get billingInformation => 'معلومات الفوترة';
+  @override String get billingTitle => 'الفواتير';
+  @override String get categoryGames => 'ألعاب ممتعة';
+  @override String get categoryMusic => 'الموسيقى والأغاني';
+  @override String get categoryStories => 'القصص';
+  @override String get categoryVideos => 'فيديوهات تعليمية';
+  @override String get changePasswordSubtitle => 'حدّث بيانات تسجيل الدخول الخاصة بك';
+  @override String get checkYourInbox => 'تحقق من بريدك الوارد!';
+  @override String get childIdHint => 'مثال: Ava123';
+  @override String get childIdRequired => 'يرجى إدخال معرّف الطفل';
+  @override String get childLoginIncorrectPictures => 'صور تسجيل الدخول غير صحيحة';
+  @override String get childLoginMissingData => 'أكمل البيانات المطلوبة';
+  @override String get childLoginNotFound => 'الطفل غير موجود';
+  @override String get childProfileNotFound => 'لم يتم العثور على ملف الطفل.';
+  @override String get childProfilesSubtitle => 'إدارة حسابات أطفالك';
+  @override String get childRegisterForbidden => 'غير مسموح';
+  @override String get childRegisterLimitReached => 'لقد وصلت إلى الحد الأقصى لعدد الأطفال. قم بالترقية الآن مقابل 10 دولارات شهريًا.';
+  @override String get childRegisterParentNotFound => 'لم يتم العثور على بريد ولي الأمر';
+  @override String get childStep1 => 'سيتلقى ولي أمرك رسالة بريد إلكتروني منا';
+  @override String get childStep2 => 'وسيساعدك في تعيين كلمات مرور صور جديدة';
+  @override String get childStep3 => 'وستعود للعب في أسرع وقت!';
+  @override String get chooseActivity => 'اختر نشاطًا';
+  @override String get choosePlanLabel => 'اختر الخطة';
+  @override String get chooseProfileToContinue => 'اختر ملفك الشخصي للمتابعة.';
+  @override String get chooseYourProfile => 'اختر ملفك الشخصي:';
+  @override String get confirmPasswordHintAlt => 'أعد إدخال كلمة المرور الجديدة';
+  @override String get confirmPasswordLabel => 'تأكيد كلمة المرور';
+  @override String get contactSupportToResetPin => 'يرجى التواصل مع الدعم لإعادة تعيين رمز PIN';
+  @override String get contactUsAction => 'تواصل معنا';
+  @override String get contactUsIntro => 'يسعدنا الاستماع إليك. أرسل رسالتك وسنعود إليك قريبًا.';
+  @override String get contentAbcSong => 'أغنية الحروف';
+  @override String get contentAdventureTime => 'وقت المغامرة';
+  @override String get contentBabyShark => 'بيبي شارك';
+  @override String get contentFunnyAnimals => 'حيوانات مضحكة';
+  @override String get contentMagicWorld => 'العالم السحري';
+  @override String get contentPuzzleGame => 'لعبة الألغاز';
+  @override String get contentRacingCars => 'سيارات السباق';
+  @override String get contentSpaceHeroes => 'أبطال الفضاء';
+  @override String get contentTwinkleStar => 'النجمة المتلألئة';
+  @override String get correct => 'صحيح';
+  @override String get countingNumbers => 'عدّ الأرقام من 1 إلى 10';
+  @override String get countingNumbersDesc => 'تعلّم العد من 1 إلى 10';
+  @override String get currentPasswordHint => 'أدخل كلمة المرور الحالية';
+  @override String get currentPasswordLabel => 'كلمة المرور الحالية';
+  @override String get currentPlanLabel => 'الخطة الحالية';
+  @override String get dataCollectionOptOutSubtitle => 'عدم جمع أي بيانات استخدام';
+  @override String get dataCollectionOptOutTitle => 'إلغاء جمع البيانات';
+  @override String get daysLabel => 'أيام';
+  @override String get didntReceiveIt => 'لم تستلمه؟ حاول مرة أخرى';
+  @override String get difficulty => 'الصعوبة';
+  @override String get discoverSomethingAmazing => 'اكتشف شيئًا مذهلًا اليوم!';
+  @override String get emailAddress => 'عنوان البريد الإلكتروني';
+  @override String get emailPlaceholder => 'parent@email.com';
+  @override String get emailSupport => 'الدعم عبر البريد الإلكتروني';
+  @override String get emailValidationEmpty => 'يرجى إدخال عنوان بريدك الإلكتروني';
+  @override String get emailValidationInvalid => 'يرجى إدخال بريد إلكتروني صحيح (Gmail أو Outlook وغيرهما)';
+  @override String get enterPinToContinue => 'أدخل رمز PIN للمتابعة';
+  @override String get entertainmentBrainTeasers => 'ألغاز ذهنية';
+  @override String get entertainmentCartoons => 'رسوم متحركة';
+  @override String get entertainmentGames => 'ألعاب';
+  @override String get eraser => 'ممحاة';
+  @override String get estimatedCompletion => 'الوقت المتوقع للإنهاء';
+  @override String get exploreLessons => 'استكشف الدروس';
+  @override String get exploreNewActivities => 'استكشف أنشطة جديدة';
+  @override String get failedToStartSession => 'فشل بدء الجلسة. يرجى المحاولة مرة أخرى.';
+  @override String get fanFavourite => 'المفضل لدى الجميع';
+  @override String get featured => 'مميز';
+  @override String get fieldRequired => 'هذا الحقل مطلوب';
+  @override String get followUsForUpdates => 'تابعنا للحصول على التحديثات:';
+  @override String get foreverLabel => 'إلى الأبد';
+  @override String get forgotPasswordDescription => 'لا تقلق! أدخل بريدك الإلكتروني وسنرسل لك رابطًا لإعادة تعيين كلمة المرور.';
+  @override String get forgotPicturesDescription => 'لا مشكلة! أخبرنا بمعرّف الطفل وبريد ولي أمرك، وسنرسل له رسالة لمساعدتك على العودة.';
+  @override String get forgotPin => 'نسيت رمز PIN؟';
+  @override String get forgotYourPassword => 'هل نسيت كلمة المرور؟';
+  @override String get forgotYourPictures => 'هل نسيت صورك؟';
+  @override String get friendFallback => 'صديقي';
+  @override String get funAndPlayful => 'مرح وممتع';
+  @override String get funTab => 'مرح';
+  @override String get goLabel => 'هيا!';
+  @override String get goToLogin => 'اذهب إلى تسجيل الدخول';
+  @override String get goalComplete => '🎉 تم إنجاز الهدف!';
+  @override String get greatJob => 'عمل رائع!';
+  @override String get helpAppUpdates => 'تحديثات التطبيق';
+  @override String get helpContactSupportTitle => 'التواصل مع الدعم';
+  @override String get helpEmailSupportTitle => 'الدعم عبر البريد الإلكتروني';
+  @override String get helpFaqA1 => 'اذهب إلى وضع ولي الأمر ← إدارة الأطفال واضغط على "إضافة ملف جديد". اتبع الدليل خطوة بخطوة لإنشاء ملف شخصي مناسب لطفلك.';
+  @override String get helpFaqA2 => 'نعم! في وضع ولي الأمر، اذهب إلى الرقابة الأبوية ← وقت الشاشة لتحديد الحدود اليومية وفترات الاستراحة والساعات المسموح بها.';
+  @override String get helpFaqA3 => 'يستخدم المساعد الذكي عمر طفلك واهتماماته وتقدمه التعليمي لتقديم توصيات وإرشادات مخصصة.';
+  @override String get helpFaqA4 => 'بالتأكيد! نحن نتبع سياسات خصوصية صارمة ونلتزم بلوائح COPPA وGDPR لحماية معلومات طفلك.';
+  @override String get helpFaqA5 => 'نعم، كثير من الأنشطة متاحة دون إنترنت. قم بتنزيل المحتوى مسبقًا لتجربة تعلم مستمرة.';
+  @override String get helpFaqQ1 => 'كيف يمكنني إعداد ملف لطفلي؟';
+  @override String get helpFaqQ2 => 'هل يمكنني تحديد وقت الشاشة لطفلي؟';
+  @override String get helpFaqQ3 => 'كيف يعمل المساعد الذكي؟';
+  @override String get helpFaqQ4 => 'هل بيانات طفلي آمنة؟';
+  @override String get helpFaqQ5 => 'هل يمكن لطفلي استخدام التطبيق دون إنترنت؟';
+  @override String get helpFaqSubtitle => 'أدلة الاستخدام والأسئلة الشائعة';
+  @override String get helpFaqTitle => 'الأسئلة الشائعة';
+  @override String get helpLiveChatSubtitle => 'متاح 24/7';
+  @override String get helpLiveChatTitle => 'الدردشة المباشرة';
+  @override String get helpNeedHelpSubtitle => 'نحن هنا لدعمك';
+  @override String get helpNeedHelpTitle => 'هل تحتاج إلى مساعدة؟';
+  @override String get helpPhoneSupportSubtitle => '1-800-KINDER';
+  @override String get helpPhoneSupportTitle => 'الدعم الهاتفي';
+  @override String get helpPreparingArticles => 'نحن نجهّز لك مقالات مفيدة.';
+  @override String get helpResourcesTitle => 'موارد إضافية';
+  @override String get helpUserGuide => 'دليل المستخدم';
+  @override String get historyColorQuest => 'مغامرة الألوان';
+  @override String get historyDanceParty => 'حفلة الرقص';
+  @override String get historyHelpingHands => 'الأيادي المساعدة';
+  @override String get historyKindWords => 'كلمات طيبة';
+  @override String get historyMagicShow => 'العرض السحري';
+  @override String get historyMemoryGame => 'لعبة الذاكرة';
+  @override String get historyNumbersAdventure => 'مغامرة الأرقام';
+  @override String get historyPuzzleBuilder => 'بناء الألغاز';
+  @override String get historyShapeMatch => 'مطابقة الأشكال';
+  @override String get historySharingStars => 'نجوم المشاركة';
+  @override String get historySingAlong => 'غنِّ معنا';
+  @override String get historyStoryTime => 'وقت القصة';
+  @override String get hoursAgoSync => 'منذ ساعتين';
+  @override String get interactiveActivity => 'نشاط تفاعلي';
+  @override String get intermediate => 'متوسط';
+  @override String get invalidEmail => 'يرجى إدخال بريد إلكتروني صحيح';
+  @override String get kindnessTab => 'اللطف';
+  @override String get languageSubtitle => 'English / العربية';
+  @override String get learningContent => 'المحتوى التعليمي';
+  @override String get learningTab => 'التعلم';
+  @override String get lessonAdvancedConcepts => 'مفاهيم متقدمة';
+  @override String get lessonDeepDive => 'تعمّق';
+  @override String get lessonFunWithMath => 'مرح مع الرياضيات';
+  @override String get lessonIntermediatePractice => 'تدريب متوسط';
+  @override String get lessonIntroductionToBasics => 'مقدمة إلى الأساسيات';
+  @override String get lessonTime => 'الوقت';
+  @override String get letsPractice => 'هيا نتدرّب!';
+  @override String get limitedActivities => 'أنشطة محدودة';
+  @override String get liveChat => 'الدردشة المباشرة';
+  @override String get loadingVersion => 'جارٍ تحميل الإصدار...';
+  @override String get loginFailed => 'فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.';
+  @override String get logoutMessage => 'ستحتاج إلى تسجيل الدخول مرة أخرى للوصول إلى لوحة تحكم ولي الأمر.';
+  @override String get logoutTitle => 'تسجيل الخروج؟';
+  @override String get manageBilling => 'إدارة الفواتير';
+  @override String get messageLabel => 'الرسالة *';
+  @override String get messageRequiredError => 'يرجى إدخال رسالة';
+  @override String get messageSentSuccess => 'تم إرسال الرسالة بنجاح. سنعود إليك قريبًا.';
+  @override String get messageSentTitle => 'تم إرسال الرسالة!';
+  @override String get myActivities => 'أنشطتي';
+  @override String get needHelp => 'هل تحتاج إلى مساعدة؟';
+  @override String get newPasswordHint => 'أدخل كلمة المرور الجديدة (6 أحرف على الأقل)';
+  @override String get newPasswordLabel => 'كلمة المرور الجديدة';
+  @override String get newTopicsAwait => 'مواضيع وأنشطة جديدة بانتظارك!';
+  @override String get nextPayment => 'الدفعة القادمة';
+  @override String get nextPaymentSampleDate => '31 ديسمبر 2024';
+  @override String get noActiveChildSession => 'لا توجد جلسة طفل نشطة';
+  @override String get noChildProfilesFound => 'لم يتم العثور على ملفات أطفال.';
+  @override String get noFaqsYet => 'لا توجد أسئلة شائعة بعد';
+  @override String get noInternetConnection => 'لا يوجد اتصال بالإنترنت';
+  @override String get noResultsFound => 'لا توجد نتائج';
+  @override String get nothingFound => 'لم يتم العثور على شيء';
+  @override String get notificationFallback => 'إشعار';
+  @override String get notificationsSubtitle => 'تنبيهات وتذكيرات وملخصات';
+  @override String get offlineDownloadsLabel => 'التنزيلات دون إنترنت';
+  @override String get oneChildProfile => 'ملف طفل واحد';
+  @override String get oopsSomethingWentWrong => 'عذرًا! حدث خطأ ما';
+  @override String get pageNotFound => 'الصفحة غير موجودة';
+  @override String get paletteDefault => 'الافتراضي';
+  @override String get paletteForestGreen => 'الأخضر الغابي';
+  @override String get paletteOceanBlue => 'الأزرق البحري';
+  @override String get palettePurpleNight => 'البنفسجي الليلي';
+  @override String get paletteSunsetOrange => 'برتقالي الغروب';
+  @override String get parentAbout => 'حول';
+  @override String get parentAccess => 'وصول ولي الأمر';
+  @override String get parentContactUs => 'تواصل معنا';
+  @override String get parentEmailHint => 'parent@email.com';
+  @override String get parentEmailInvalid => 'يرجى إدخال بريد إلكتروني صحيح';
+  @override String get parentEmailRequired => 'يرجى إدخال بريد ولي أمرك';
+  @override String get parentFallback => 'ولي الأمر';
+  @override String get parentHelp => 'المساعدة والأسئلة الشائعة';
+  @override String get parentPortal => 'بوابة ولي الأمر';
+  @override String get parentPrivacySettings => 'إعدادات الخصوصية';
+  @override String get parentWillGetEmail => 'سيتلقى ولي أمرك رسالة بريد إلكتروني ويمكنه مساعدتك في تسجيل الدخول مجددًا!';
+  @override String get parentalControlsSubtitle => 'وقت الشاشة ومرشحات المحتوى والحدود';
+  @override String get parentsEmail => 'بريد ولي الأمر';
+  @override String get passwordFair => 'متوسطة';
+  @override String get passwordStrong => 'قوية';
+  @override String get passwordTooShortRegister => 'يجب أن تكون كلمة المرور 8 أحرف على الأقل';
+  @override String get passwordUpdatedSuccess => 'تم تحديث كلمة المرور بنجاح.';
+  @override String get passwordWeak => 'ضعيفة';
+  @override String get paymentMethodLabel => 'طريقة الدفع';
+  @override String get perMonthLabel => '/ شهريًا';
+  @override String get personalizedRecommendationsSubtitle => 'احصل على اقتراحات محتوى مخصصة';
+  @override String get personalizedRecommendationsTitle => 'توصيات مخصصة';
+  @override String get phoneNumber => '1-800-KINDER';
+  @override String get phoneSupport => 'الدعم الهاتفي';
+  @override String get playEducationalGames => 'ألعاب تعليمية';
+  @override String get playEducationalGamesSubtitle => 'ألعاب ممتعة للتعلّم';
+  @override String get playEducationalVideos => 'فيديوهات تعليمية';
+  @override String get playEducationalVideosSubtitle => 'شاهد وتعلّم';
+  @override String get playInteractiveStories => 'قصص تفاعلية';
+  @override String get playInteractiveStoriesSubtitle => 'اختر مغامرتك';
+  @override String get playMusicSongs => 'الموسيقى والأغاني';
+  @override String get playMusicSongsSubtitle => 'غنِّ وارقص';
+  @override String get playSubtitle => 'استمتع بالألعاب والقصص والترفيه!';
+  @override String get playTime => 'وقت اللعب';
+  @override String get playTitle => 'اللعب والمرح';
+  @override String get pleaseTryAgain => 'يرجى المحاولة مرة أخرى';
+  @override String get premiumActive => 'مميز — نشط';
+  @override String get prioritySupportLabel => 'دعم أولوية';
+  @override String get privacyInfoBody => 'خصوصيتك مهمة بالنسبة لنا. تتحكم هذه الإعدادات في البيانات التي نجمعها وكيفية استخدامها لتحسين تجربتك.';
+  @override String get privacyInfoTitle => 'معلومات الخصوصية';
+  @override String get privacyPolicyResource => 'سياسة الخصوصية';
+  @override String get privacySettingsError => 'خطأ في تحميل إعدادات الخصوصية';
+  @override String get privacySettingsSubtitle => 'مشاركة البيانات والصلاحيات';
+  @override String get processingLabel => 'جارٍ المعالجة...';
+  @override String get quickQuiz => 'اختبار سريع';
+  @override String get readyForAdventure => '🚀 هل أنت مستعد لمغامرة اليوم؟';
+  @override String get recommendedLabel => 'موصى به';
+  @override String get redo => 'إعادة';
+  @override String get registrationFailed => 'فشل التسجيل. يرجى المحاولة مرة أخرى.';
+  @override String get resetPassword => 'إعادة تعيين كلمة المرور';
+  @override String get retryAction => 'إعادة المحاولة';
+  @override String get safeAndFunVideos => 'فيديوهات آمنة وممتعة لك';
+  @override String get safeMode => 'الوضع الآمن';
+  @override String get sampleAmountPerMonth => '9.99\$ / شهر';
+  @override String get samplePaymentMethod => '**** **** **** 1234';
+  @override String get searchVideos => 'ابحث عن الفيديوهات...';
+  @override String get secureAndStructured => 'آمن ومنظم';
+  @override String get signIn => 'تسجيل الدخول';
+  @override String get signInToContinue => 'يرجى تسجيل الدخول لمتابعة مغامرتك!';
+  @override String get skillColoringDesc => 'استخدم الألوان';
+  @override String get skillCooking => 'الطبخ';
+  @override String get skillCookingDesc => 'طعام شهي';
+  @override String get skillDrawing => 'الرسم';
+  @override String get skillDrawingDesc => 'عبّر بالفن';
+  @override String get skillHandcrafts => 'الأعمال اليدوية';
+  @override String get skillHandcraftsDesc => 'قصّ ولصق';
+  @override String get skillMusicDesc => 'اعزف الآلات';
+  @override String get skillSinging => 'الغناء';
+  @override String get skillSingingDesc => 'تعلّم الأغاني';
+  @override String get skillSports => 'الرياضة';
+  @override String get skillSportsDesc => 'حافظ على لياقتك';
+  @override String get skillsTab => 'المهارات';
+  @override String get songsAndMusic => 'الأغاني والموسيقى';
+  @override String get spamFolderNote => 'تحقق من مجلد الرسائل المزعجة إذا لم تجد البريد خلال بضع دقائق.';
+  @override String get startLearning => 'ابدأ التعلّم!';
+  @override String get step1OpenEmail => 'افتح البريد الإلكتروني من كيندر وورلد';
+  @override String get step2ClickLink => 'اضغط على رابط "إعادة تعيين كلمة المرور"';
+  @override String get step3CreatePassword => 'أنشئ كلمة المرور الجديدة';
+  @override String get subjectHint => 'ما موضوع استفسارك؟';
+  @override String get subjectLabel => 'الموضوع *';
+  @override String get subjectRequiredError => 'يرجى إدخال موضوع';
+  @override String get subscriptionActivationFailed => 'فشل تفعيل الاشتراك.';
+  @override String get subscriptionActiveLabel => 'الاشتراك نشط';
+  @override String get subscriptionTitle => 'الاشتراك';
+  @override String get tapCorrectAnswer => 'اضغط على الإجابة الصحيحة!';
+  @override String get tapShapeToFill => 'اضغط على أي شكل أبيض لملئه!';
+  @override String get termsOfServiceResource => 'شروط الخدمة';
+  @override String get themeSubtitle => 'فاتح أو داكن أو افتراضي النظام';
+  @override String get todayLabel => 'اليوم';
+  @override String get todayWeWillLearn => 'اليوم سنتعلّم عن:';
+  @override String get todaysPick => 'اختيار اليوم';
+  @override String get topRated => 'الأعلى تقييمًا';
+  @override String get tryAgainDifferentInfo => 'حاول مرة أخرى بمعلومات مختلفة';
+  @override String get tryDifferentSearch => 'جرّب بحثًا أو فئة مختلفة!';
+  @override String get undo => 'تراجع';
+  @override String get unexpectedError => 'حدث خطأ غير متوقع';
+  @override String get unlimitedActivities => 'أنشطة غير محدودة';
+  @override String get upToThreeChildren => 'حتى 3 أطفال';
+  @override String get updatePassword => 'تحديث كلمة المرور';
+  @override String get upgradePlan => 'قم بترقية خطتك';
+  @override String get useAllowedEmail => 'استخدم بريد Gmail أو Outlook أو Hotmail أو Live';
+  @override String get useGmailOrMicrosoftEmail => 'استخدم بريد Gmail أو Microsoft';
+  @override String get videoAlphabetSong => 'أغنية الحروف';
+  @override String get videoAnimalFriends => 'أصدقاء الحيوانات';
+  @override String get videoBuildAndCreate => 'ابنِ وابتكر';
+  @override String get videoColoringFun => 'مرح التلوين';
+  @override String get videoKindnessChallenge => 'تحدي اللطف';
+  @override String get videoMathBasicsFun => 'أساسيات الرياضيات | مرح';
+  @override String get videoMomoAndMimiArabic => 'مومو وميمي | عربي';
+  @override String get videoPuzzlePlay => 'لعب الألغاز';
+  @override String get videoScienceWonders => 'روائع العلوم';
+  @override String get videoSharingTime => 'وقت المشاركة';
+  @override String get videoTomAndJerryKeepCalm => 'توم وجيري | ابق هادئًا';
+  @override String get weAreHereToSupportYou => 'نحن هنا لدعمك';
+  @override String get wellAskYourParent => 'سنطلب من ولي أمرك!';
+  @override String get whatDidYouLearn => 'ماذا تعلّمت في هذا الدرس؟';
+  @override String get whatHappensNext => 'ماذا يحدث بعد ذلك؟';
+  @override String get whoIsUsingKinderWorld => 'من يستخدم\nكيندر وورلد؟';
+  @override String get xpBonusEarned => '+ 50 نقطة خبرة إضافية!';
+  @override String get xpBonusLabel => '⭐ +50 نقطة خبرة إضافية';
+  @override String get xpEarned => 'نقاط الخبرة المكتسبة';
+  @override String get xpProgress => 'تقدم نقاط الخبرة';
+  @override String get xpReward => 'مكافأة الخبرة';
+  @override String get yesterdayLabel => 'أمس';
+  @override String get youCompletedLesson => 'لقد أكملت الدرس!';
+  @override String get yourChildId => 'معرّف طفلك';
+  @override String get yourPlanIncludes => 'تشمل خطتك:';
+  }

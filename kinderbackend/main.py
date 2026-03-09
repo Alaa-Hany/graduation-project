@@ -2,6 +2,7 @@ import os
 from typing import Optional, List
 import logging
 import logging.handlers
+from dotenv import load_dotenv
 from fastapi import FastAPI, Depends, HTTPException, Header
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from sqlalchemy import func
@@ -9,6 +10,9 @@ from sqlalchemy.orm import Session
 from datetime import datetime, date
 from jose import jwt, JWTError
 from fastapi.middleware.cors import CORSMiddleware
+
+# Load environment variables from .env file
+load_dotenv()
 
 from database import engine
 from db_migrations import verify_database_schema

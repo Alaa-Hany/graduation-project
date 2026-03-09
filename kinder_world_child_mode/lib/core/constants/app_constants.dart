@@ -11,7 +11,7 @@ class AppConstants {
   //   flutter build apk --dart-define=API_BASE_URL=http://<HOST>:8000
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://localhost:8000',
+    defaultValue: 'http://192.168.42.128:8000',
   );
   static const Duration apiTimeout = Duration(seconds: 60);
   

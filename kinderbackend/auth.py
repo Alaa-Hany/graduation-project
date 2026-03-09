@@ -4,8 +4,12 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict
 from jose import jwt
 import bcrypt
+from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
+
+# Load environment variables from .env file
+load_dotenv()
 
 ALGORITHM = "HS256"
 
