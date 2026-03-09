@@ -6,9 +6,12 @@ class AppConstants {
   static const String appVersion = '1.0.0';
   
   // API
+  // Override at build time:
+  //   flutter run  --dart-define=API_BASE_URL=http://<HOST>:8000
+  //   flutter build apk --dart-define=API_BASE_URL=http://<HOST>:8000
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://10.65.107.201:8000',
+    defaultValue: 'http://localhost:8000',
   );
   static const Duration apiTimeout = Duration(seconds: 60);
   

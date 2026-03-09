@@ -162,28 +162,6 @@ class ProgressController extends StateNotifier<ProgressState> {
 
   // ==================== STATISTICS ====================
 
-  /// Load child statistics
-  Future<void> loadChildStats(String childId) async {
-    state = state.copyWith(isLoading: true, error: null);
-    
-    try {
-      final stats = await _progressRepository.getChildStats(childId);
-      
-      state = state.copyWith(
-        stats: stats,
-        isLoading: false,
-      );
-      
-      _logger.d('Loaded stats for child: $childId');
-    } catch (e, _) {
-      _logger.e('Error loading child stats: $childId, $e');
-      state = state.copyWith(
-        isLoading: false,
-        error: 'Failed to load child statistics',
-      );
-    }
-  }
-
   /// Get weekly summary
   Future<Map<String, dynamic>> getWeeklySummary(String childId) async {
     try {
@@ -248,31 +226,6 @@ class ProgressController extends StateNotifier<ProgressState> {
   }
 
   // ==================== GOALS & ACHIEVEMENTS ====================
-
-  /// Check daily goal completion
-  Future<bool> checkDailyGoal(String childId, {
-    int targetActivities = 3,
-    int targetXP = 100,
-    int targetTime = 30,
-  }) async {
-    try {
-      final todayProgress = await loadTodayProgress(childId);
-      
-      final completedActivities = todayProgress.length;
-      final earnedXP = todayProgress.fold(0, (sum, record) => sum + record.xpEarned);
-      final spentTime = todayProgress.fold(0, (sum, record) => sum + record.duration);
-      
-      final goalAchieved = completedActivities >= targetActivities &&
-                          earnedXP >= targetXP &&
-                          spentTime >= targetTime;
-      
-      _logger.d('Daily goal check for $childId: $goalAchieved');
-      return goalAchieved;
-    } catch (e, _) {
-      _logger.e('Error checking daily goal for child: $childId, $e');
-      return false;
-    }
-  }
 
   /// Get achievement progress
   Future<Map<String, dynamic>> getAchievementProgress(String childId) async {
@@ -396,7 +349,7 @@ class ProgressController extends StateNotifier<ProgressState> {
 }
 
 // Provider
-final progressControllerProvider = StateNotifierProvider<ProgressController, ProgressState>((ref) {
+final progressControllerProvider = StateNotifierProvider.autoDispose<ProgressController, ProgressState>((ref) {
   final progressRepository = ref.watch(progressRepositoryProvider);
   final childRepository = ref.watch(childRepositoryProvider);
   final logger = ref.watch(loggerProvider);
@@ -429,17 +382,17 @@ final progressStatsProvider = Provider<Map<String, dynamic>>((ref) {
 });
 
 // Async providers
-final weeklySummaryProvider = FutureProvider.family<Map<String, dynamic>, String>((ref, childId) async {
+final weeklySummaryProvider = FutureProvider.autoDispose.family<Map<String, dynamic>, String>((ref, childId) async {
   final controller = ref.watch(progressControllerProvider.notifier);
   return await controller.getWeeklySummary(childId);
 });
 
-final monthlySummaryProvider = FutureProvider.family<Map<String, dynamic>, String>((ref, childId) async {
+final monthlySummaryProvider = FutureProvider.autoDispose.family<Map<String, dynamic>, String>((ref, childId) async {
   final controller = ref.watch(progressControllerProvider.notifier);
   return await controller.getMonthlySummary(childId);
 });
 
-final achievementProgressProvider = FutureProvider.family<Map<String, dynamic>, String>((ref, childId) async {
+final achievementProgressProvider = FutureProvider.autoDispose.family<Map<String, dynamic>, String>((ref, childId) async {
   final controller = ref.watch(progressControllerProvider.notifier);
   return await controller.getAchievementProgress(childId);
 });

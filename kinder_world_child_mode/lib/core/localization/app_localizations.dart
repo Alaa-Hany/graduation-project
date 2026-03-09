@@ -278,6 +278,19 @@ abstract class AppLocalizations {
   String get activityVideo3Desc;
   String get activityVideo4Title;
   String get activityVideo4Desc;
+  String get activityOfDayTreasureHuntTitle;
+  String get activityOfDayTreasureHuntSubtitle;
+  String get activityOfDayMissionTitle;
+  String get activityOfDayFindColorsTitle;
+  String get activityOfDayFindColorsSubtitle;
+  String get activityOfDaySpotShapesTitle;
+  String get activityOfDaySpotShapesSubtitle;
+  String get activityOfDayShareSmileTitle;
+  String get activityOfDayShareSmileSubtitle;
+  String get activityOfDayTimeHint;
+  String get activityOfDayCompletedCta;
+  String get activityOfDayFinishCta;
+  String get activityOfDayStartCta;
   String get splashTagline;
 
   // Authentication
@@ -919,18 +932,36 @@ abstract class AppLocalizations {
   String get tapMicToSpeak;
   String get askKinderAnything;
   String get aiInitialGreeting;
+  String get aiWelcomeGreeting;
+  String get aiMathResponse;
+  String get aiStoryResponse;
+  String get aiGameResponse;
+  String get aiSadResponse;
+  String get aiTiredResponse;
+  String get aiDefaultResponse;
+  String get aiQuickActionLessonResponse;
+  String get aiQuickActionGameResponse;
+  String get aiQuickActionStoryResponse;
+  String get aiQuickActionFactResponse;
+  String get aiQuickActionMotivationResponse;
+  String get aiQuickActionFallbackResponse;
 
   // ── Lesson Flow Screen ──
   String get lessonFinish;
   String get startLearning;
   String get learningContent;
   String get todayWeWillLearn;
+  String get lessonContentFallback;
+  String get lessonContentPlaceholder;
   String get letsPractice;
   String get interactiveActivity;
   String get tapCorrectAnswer;
   String get quickQuiz;
   String questionOf(int current, int total);
   String get whatDidYouLearn;
+  String get lessonAnswerOptionA;
+  String get lessonAnswerOptionB;
+  String get lessonAnswerOptionC;
   String get greatJob;
   String get youCompletedLesson;
   String get correct;
@@ -1480,6 +1511,52 @@ abstract class AppLocalizations {
   String get adminCmsDeleteQuizTitle;
   String get adminCmsDeleteQuizConfirm;
   String get adminCmsQuizSaved;
+  String get adminCmsContentSaved;
+  String get adminCmsStructuredMetadataTitle;
+  String get adminCmsAdvancedJsonTitle;
+  String get adminCmsAdvancedJsonHelp;
+  String get adminCmsMetadataDurationLabel;
+  String get adminCmsMetadataDifficultyLabel;
+  String get adminCmsMetadataFeaturedLabel;
+  String get adminCmsMetadataTagsLabel;
+  String get adminCmsPreviewEnglishSection;
+  String get adminCmsPreviewArabicSection;
+  String get adminCmsPreviewMetadataSection;
+  String get adminCmsPreviewQuestionsSection;
+  String get adminCmsPreviewEmpty;
+  String get adminCmsQuizPreviewAction;
+  String get adminCmsPublishConfirmTitle;
+  String get adminCmsPublishConfirmMessage;
+  String get adminCmsUnpublishConfirmTitle;
+  String get adminCmsUnpublishConfirmMessage;
+  String get adminCmsPublishSuccess;
+  String get adminCmsUnpublishSuccess;
+  String get adminCmsQuestionAdd;
+  String adminCmsQuestionLabel(int number);
+  String get adminCmsQuestionPromptEnLabel;
+  String get adminCmsQuestionPromptArLabel;
+  String get adminCmsQuestionOptionsLabel;
+  String adminCmsQuestionOptionLabel(int number);
+  String get adminCmsQuestionCorrectAnswerLabel;
+  String get adminCmsQuestionExplanationEnLabel;
+  String get adminCmsQuestionExplanationArLabel;
+  String get adminCmsQuestionRemove;
+  String get adminCmsOptionAdd;
+  String get adminCmsOptionRemove;
+  String get adminCmsValidationTitleEnRequired;
+  String get adminCmsValidationTitleArRequired;
+  String get adminCmsValidationBodyEnRequired;
+  String get adminCmsValidationBodyArRequired;
+  String get adminCmsValidationInvalidUrl;
+  String get adminCmsValidationInvalidAgeGroup;
+  String get adminCmsValidationInvalidJsonObject;
+  String get adminCmsValidationInvalidJsonList;
+  String get adminCmsValidationInvalidJsonSyntax;
+  String get adminCmsValidationQuestionRequired;
+  String get adminCmsValidationQuestionPromptRequired;
+  String get adminCmsValidationQuestionOptionsRequired;
+  String get adminCmsValidationQuestionCorrectAnswerRequired;
+  String get adminCmsValidationQuestionOptionTextRequired;
 
   // Pagination
   String adminPaginationSummary(int page, int totalPages, int total);
@@ -1519,9 +1596,13 @@ abstract class AppLocalizations {
   String get adminSettingsDefaultsTitle;
   String get adminSettingsDefaultPlanLabel;
   String get adminSettingsDefaultChildLimitLabel;
+
+  // Generic labels
+  String get labelId;
 }
 
-class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override
@@ -1539,5 +1620,6 @@ class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> 
   }
 
   @override
-  bool shouldReload(covariant LocalizationsDelegate<AppLocalizations> old) => false;
+  bool shouldReload(covariant LocalizationsDelegate<AppLocalizations> old) =>
+      false;
 }

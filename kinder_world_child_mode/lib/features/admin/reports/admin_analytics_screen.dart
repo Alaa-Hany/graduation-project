@@ -55,7 +55,7 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final admin = ref.watch(currentAdminProvider);
     if (!(admin?.hasPermission('admin.analytics.view') ?? false)) {
       return const AdminPermissionPlaceholder();
@@ -67,13 +67,12 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            l10n?.adminAnalyticsTitle ?? 'Analytics overview',
+            l10n.adminAnalyticsTitle,
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 8),
           Text(
-            l10n?.adminAnalyticsSubtitle ??
-                'Monitor platform growth, activity trends, and support health.',
+            l10n.adminAnalyticsSubtitle,
           ),
           const SizedBox(height: 20),
           Wrap(
@@ -84,13 +83,11 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
                 segments: [
                   ButtonSegment(
                     value: 'week',
-                    label:
-                        Text(l10n?.adminAnalyticsRangeWeek ?? 'Week'),
+                    label: Text(l10n.adminAnalyticsRangeWeek),
                   ),
                   ButtonSegment(
                     value: 'month',
-                    label:
-                        Text(l10n?.adminAnalyticsRangeMonth ?? 'Month'),
+                    label: Text(l10n.adminAnalyticsRangeMonth),
                   ),
                 ],
                 selected: {_range},
@@ -102,7 +99,7 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
               OutlinedButton.icon(
                 onPressed: _loadAnalytics,
                 icon: const Icon(Icons.refresh),
-                label: Text(l10n?.retry ?? 'Refresh'),
+                label: Text(l10n.retry),
               ),
             ],
           ),
@@ -125,22 +122,22 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
               runSpacing: 12,
               children: [
                 _KpiCard(
-                  title: l10n?.adminAnalyticsTotalUsers ?? 'Total users',
+                  title: l10n.adminAnalyticsTotalUsers,
                   value: '${_overview!.kpis['total_users'] ?? 0}',
                   icon: Icons.people_outline,
                 ),
                 _KpiCard(
-                  title: l10n?.adminAnalyticsActiveChildren ?? 'Active children',
+                  title: l10n.adminAnalyticsActiveChildren,
                   value: '${_overview!.kpis['active_children'] ?? 0}',
                   icon: Icons.child_care_outlined,
                 ),
                 _KpiCard(
-                  title: l10n?.adminAnalyticsActivitiesToday ?? 'Activities today',
+                  title: l10n.adminAnalyticsActivitiesToday,
                   value: '${_overview!.kpis['activities_today'] ?? 0}',
                   icon: Icons.bolt_outlined,
                 ),
                 _KpiCard(
-                  title: l10n?.adminAnalyticsOpenTickets ?? 'Open tickets',
+                  title: l10n.adminAnalyticsOpenTickets,
                   value: '${_overview!.kpis['open_tickets'] ?? 0}',
                   icon: Icons.support_agent_outlined,
                 ),
@@ -181,7 +178,7 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
     );
   }
 
-  Widget _buildUsageCard(BuildContext context, AppLocalizations? l10n) {
+  Widget _buildUsageCard(BuildContext context, AppLocalizations l10n) {
     final usage = _usage!;
     return Card(
       child: Padding(
@@ -190,7 +187,7 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              l10n?.adminAnalyticsUsageTitle ?? 'Usage trend',
+              l10n.adminAnalyticsUsageTitle,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -204,19 +201,19 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
               children: [
                 _LegendDot(
                   color: Theme.of(context).colorScheme.primary,
-                  label: l10n?.adminAnalyticsNewUsers ?? 'Users',
+                  label: l10n.adminAnalyticsNewUsers,
                 ),
                 _LegendDot(
                   color: Theme.of(context).colorScheme.secondary,
-                  label: l10n?.adminAnalyticsNewChildren ?? 'Children',
+                  label: l10n.adminAnalyticsNewChildren,
                 ),
                 _LegendDot(
                   color: Theme.of(context).colorScheme.tertiary,
-                  label: l10n?.adminAnalyticsActivities ?? 'Activities',
+                  label: l10n.adminAnalyticsActivities,
                 ),
                 _LegendDot(
                   color: Theme.of(context).colorScheme.error,
-                  label: l10n?.adminAnalyticsTickets ?? 'Tickets',
+                  label: l10n.adminAnalyticsTickets,
                 ),
               ],
             ),
@@ -226,7 +223,7 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
     );
   }
 
-  Widget _buildSummaryCards(BuildContext context, AppLocalizations? l10n) {
+  Widget _buildSummaryCards(BuildContext context, AppLocalizations l10n) {
     final overview = _overview!;
     return Column(
       children: [
@@ -237,8 +234,7 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  l10n?.adminAnalyticsSubscriptionsTitle ??
-                      'Subscriptions summary',
+                  l10n.adminAnalyticsSubscriptionsTitle,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -261,14 +257,12 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
                 ),
                 const Divider(),
                 _summaryRow(
-                  l10n?.adminAnalyticsPaidSubscriptions ??
-                      'Paid subscriptions',
+                  l10n.adminAnalyticsPaidSubscriptions,
                   '${overview.paidSubscriptions}',
                 ),
                 const SizedBox(height: 8),
                 _summaryRow(
-                  l10n?.adminAnalyticsFreeSubscriptions ??
-                      'Free subscriptions',
+                  l10n.adminAnalyticsFreeSubscriptions,
                   '${overview.freeSubscriptions}',
                 ),
               ],
@@ -283,14 +277,14 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  l10n?.adminAnalyticsRecentTickets ?? 'Recent ticket summary',
+                  l10n.adminAnalyticsRecentTickets,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                 ),
                 const SizedBox(height: 12),
                 if (overview.recentTickets.isEmpty)
-                  Text(l10n?.adminAnalyticsNoData ?? 'No data available')
+                  Text(l10n.adminAnalyticsNoData)
                 else
                   ...overview.recentTickets.map(
                     (ticket) => Padding(
@@ -299,12 +293,12 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            ticket['subject']?.toString() ?? '—',
+                            ticket['subject']?.toString() ?? '-',
                             style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '${ticket['status'] ?? 'open'} • ${ticket['email'] ?? '—'}',
+                            '${ticket['status'] ?? '-'} | ${ticket['email'] ?? '-'}',
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ],

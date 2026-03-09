@@ -1,3 +1,8 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// DEAD CODE — faqProvider / legalContentProvider / contentServiceProvider are
+// not imported anywhere in the app (LegalScreen uses networkServiceProvider
+// directly). Safe to delete or wire up when a dedicated content service is needed.
+// ─────────────────────────────────────────────────────────────────────────────
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/models/faq_item.dart';
 import 'package:kinder_world/core/services/content_service.dart';

@@ -510,7 +510,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: ParentCard(
-        onTap: () => context.go('/parent/reports'),
+        onTap: () => context.push('/parent/reports', extra: child.id),
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [

@@ -26,18 +26,18 @@ class _AdminSubscriptionsScreenState
   String _plan = '';
   int _page = 1;
 
-  List<DropdownMenuItem<String>> _planItems(AppLocalizations? l10n) => [
+  List<DropdownMenuItem<String>> _planItems(AppLocalizations l10n) => [
         DropdownMenuItem(
           value: 'FREE',
-          child: Text(l10n?.adminPlanFree ?? 'Free'),
+          child: Text(l10n.adminPlanFree),
         ),
         DropdownMenuItem(
           value: 'PREMIUM',
-          child: Text(l10n?.adminPlanPremium ?? 'Premium'),
+          child: Text(l10n.adminPlanPremium),
         ),
         DropdownMenuItem(
           value: 'FAMILY_PLUS',
-          child: Text(l10n?.adminPlanFamilyPlus ?? 'Family Plus'),
+          child: Text(l10n.adminPlanFamilyPlus),
         ),
       ];
 
@@ -93,7 +93,7 @@ class _AdminSubscriptionsScreenState
   }
 
   Future<void> _overridePlan() async {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final subscription = _selected;
     if (subscription == null) return;
     String plan = subscription.plan;
@@ -101,8 +101,7 @@ class _AdminSubscriptionsScreenState
           context: context,
           builder: (context) => StatefulBuilder(
             builder: (context, setDialogState) => AlertDialog(
-              title: Text(
-                  l10n?.adminSubscriptionsOverrideTitle ?? 'Override plan'),
+              title: Text(l10n.adminSubscriptionsOverrideTitle),
               content: DropdownButtonFormField<String>(
                 initialValue: plan,
                 items: _planItems(l10n),
@@ -112,11 +111,11 @@ class _AdminSubscriptionsScreenState
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: Text(l10n?.cancel ?? 'Cancel'),
+                  child: Text(l10n.cancel),
                 ),
                 FilledButton(
                   onPressed: () => Navigator.pop(context, true),
-                  child: Text(l10n?.save ?? 'Save'),
+                  child: Text(l10n.save),
                 ),
               ],
             ),
@@ -132,26 +131,23 @@ class _AdminSubscriptionsScreenState
   }
 
   Future<void> _cancelSubscription() async {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final subscription = _selected;
     if (subscription == null) return;
     final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text(
-                l10n?.adminSubscriptionsCancelTitle ?? 'Cancel subscription'),
+            title: Text(l10n.adminSubscriptionsCancelTitle),
             content: Text(
-              l10n?.adminSubscriptionsCancelConfirm ??
-                  'Move this user back to the FREE plan?',
+              l10n.adminSubscriptionsCancelConfirm,
             ),
             actions: [
               TextButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: Text(l10n?.cancel ?? 'Cancel')),
+                  child: Text(l10n.cancel)),
               FilledButton(
                   onPressed: () => Navigator.pop(context, true),
-                  child:
-                      Text(l10n?.adminSubscriptionsCancelAction ?? 'Confirm')),
+                  child: Text(l10n.adminSubscriptionsCancelAction)),
             ],
           ),
         ) ??
@@ -165,7 +161,7 @@ class _AdminSubscriptionsScreenState
   }
 
   Future<void> _refundSubscription() async {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final subscription = _selected;
     if (subscription == null) return;
     final message = await ref
@@ -175,15 +171,14 @@ class _AdminSubscriptionsScreenState
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
           content: Text(message.isEmpty
-              ? (l10n?.adminSubscriptionsRefundNotSupported ??
-                  'Refunds are not supported')
+              ? (l10n.adminSubscriptionsRefundNotSupported)
               : message)),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final admin = ref.watch(currentAdminProvider);
     if (!(admin?.hasPermission('admin.subscription.view') ?? false)) {
       return const AdminPermissionPlaceholder();
@@ -196,11 +191,10 @@ class _AdminSubscriptionsScreenState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(l10n?.adminSubscriptionsTitle ?? 'Subscriptions',
+              Text(l10n.adminSubscriptionsTitle,
                   style: Theme.of(context).textTheme.headlineSmall),
               const SizedBox(height: 8),
-              Text(l10n?.adminSubscriptionsSubtitle ??
-                  'Review plans, finance actions, and subscription overrides.'),
+              Text(l10n.adminSubscriptionsSubtitle),
               const SizedBox(height: 20),
               Wrap(
                 spacing: 12,
@@ -211,8 +205,7 @@ class _AdminSubscriptionsScreenState
                     child: TextFormField(
                       initialValue: _search,
                       decoration: InputDecoration(
-                          labelText:
-                              l10n?.adminSubscriptionsSearchLabel ?? 'Search'),
+                          labelText: l10n.adminSubscriptionsSearchLabel),
                       onFieldSubmitted: (value) {
                         setState(() {
                           _search = value.trim();
@@ -227,26 +220,20 @@ class _AdminSubscriptionsScreenState
                     child: DropdownButtonFormField<String>(
                       initialValue: _status,
                       decoration: InputDecoration(
-                          labelText:
-                              l10n?.adminSubscriptionsStatusFilter ?? 'Status'),
+                          labelText: l10n.adminSubscriptionsStatusFilter),
                       items: [
                         DropdownMenuItem(
                             value: '',
-                            child: Text(l10n?.adminSubscriptionsStatusAll ??
-                                'All statuses')),
+                            child: Text(l10n.adminSubscriptionsStatusAll)),
                         DropdownMenuItem(
                             value: 'active',
-                            child: Text(l10n?.adminSubscriptionsStatusActive ??
-                                'Active')),
+                            child: Text(l10n.adminSubscriptionsStatusActive)),
                         DropdownMenuItem(
                             value: 'free',
-                            child: Text(
-                                l10n?.adminSubscriptionsStatusFree ?? 'Free')),
+                            child: Text(l10n.adminSubscriptionsStatusFree)),
                         DropdownMenuItem(
                             value: 'disabled',
-                            child: Text(
-                                l10n?.adminSubscriptionsStatusDisabled ??
-                                    'Disabled')),
+                            child: Text(l10n.adminSubscriptionsStatusDisabled)),
                       ],
                       onChanged: (value) {
                         setState(() {
@@ -262,13 +249,11 @@ class _AdminSubscriptionsScreenState
                     child: DropdownButtonFormField<String>(
                       initialValue: _plan,
                       decoration: InputDecoration(
-                          labelText:
-                              l10n?.adminSubscriptionsPlanFilter ?? 'Plan'),
+                          labelText: l10n.adminSubscriptionsPlanFilter),
                       items: [
                         DropdownMenuItem(
                             value: '',
-                            child: Text(l10n?.adminSubscriptionsPlanAll ??
-                                'All plans')),
+                            child: Text(l10n.adminSubscriptionsPlanAll)),
                         ..._planItems(l10n),
                       ],
                       onChanged: (value) {
@@ -283,7 +268,7 @@ class _AdminSubscriptionsScreenState
                   OutlinedButton.icon(
                     onPressed: _load,
                     icon: const Icon(Icons.refresh),
-                    label: Text(l10n?.retry ?? 'Refresh'),
+                    label: Text(l10n.retry),
                   ),
                 ],
               ),
@@ -318,12 +303,11 @@ class _AdminSubscriptionsScreenState
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    l10n?.adminPaginationSummary(
-                          (_pagination['page'] as int?) ?? _page,
-                          (_pagination['total_pages'] as int?) ?? 1,
-                          (_pagination['total'] as int?) ?? _items.length,
-                        ) ??
-                        '',
+                    l10n.adminPaginationSummary(
+                      (_pagination['page'] as int?) ?? _page,
+                      (_pagination['total_pages'] as int?) ?? 1,
+                      (_pagination['total'] as int?) ?? _items.length,
+                    ),
                   ),
                   Row(
                     children: [
@@ -335,8 +319,7 @@ class _AdminSubscriptionsScreenState
                                     _load();
                                   }
                                 : null,
-                        child:
-                            Text(l10n?.adminPaginationPrevious ?? 'Previous'),
+                        child: Text(l10n.adminPaginationPrevious),
                       ),
                       const SizedBox(width: 8),
                       FilledButton(
@@ -346,7 +329,7 @@ class _AdminSubscriptionsScreenState
                                 _load();
                               }
                             : null,
-                        child: Text(l10n?.adminPaginationNext ?? 'Next'),
+                        child: Text(l10n.adminPaginationNext),
                       ),
                     ],
                   ),
@@ -359,7 +342,7 @@ class _AdminSubscriptionsScreenState
     );
   }
 
-  Widget _buildList(BuildContext context, AppLocalizations? l10n) {
+  Widget _buildList(BuildContext context, AppLocalizations l10n) {
     return Column(
       children: _items.map((item) {
         final selected = _selected?.id == item.id;
@@ -373,7 +356,7 @@ class _AdminSubscriptionsScreenState
           child: ListTile(
             onTap: () => _load(selectId: item.id),
             title: Text(item.email),
-            subtitle: Text('${item.plan} • ${item.status}\n${item.name}'),
+            subtitle: Text('${item.plan} أ¢â‚¬آ¢ ${item.status}\n${item.name}'),
             isThreeLine: true,
             trailing: _PlanChip(plan: item.plan),
           ),
@@ -382,14 +365,13 @@ class _AdminSubscriptionsScreenState
     );
   }
 
-  Widget _buildDetail(BuildContext context, AppLocalizations? l10n, admin) {
+  Widget _buildDetail(BuildContext context, AppLocalizations l10n, admin) {
     final item = _selected;
     if (item == null) {
       return Card(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Text(l10n?.adminSubscriptionsNoSelection ??
-              'Select a subscription to view details'),
+          child: Text(l10n.adminSubscriptionsNoSelection),
         ),
       );
     }
@@ -409,15 +391,14 @@ class _AdminSubscriptionsScreenState
             ]),
             const SizedBox(height: 12),
             Text(
-                '${l10n?.adminSubscriptionsUserName ?? 'Name'}: ${item.name.isEmpty ? '—' : item.name}'),
+                '${l10n.adminSubscriptionsUserName}: ${item.name.isEmpty ? 'أ¢â‚¬â€‌' : item.name}'),
+            Text('${l10n.adminSubscriptionsStatusLabel}: ${item.status}'),
             Text(
-                '${l10n?.adminSubscriptionsStatusLabel ?? 'Status'}: ${item.status}'),
+                '${l10n.adminSubscriptionsChildrenMetric}: ${item.childCount}'),
             Text(
-                '${l10n?.adminSubscriptionsChildrenMetric ?? 'Children'}: ${item.childCount}'),
-            Text(
-                '${l10n?.adminSubscriptionsPaymentMethodsMetric ?? 'Payment methods'}: ${item.paymentMethodCount}'),
+                '${l10n.adminSubscriptionsPaymentMethodsMetric}: ${item.paymentMethodCount}'),
             const SizedBox(height: 16),
-            Text(l10n?.adminSubscriptionsFeaturesTitle ?? 'Enabled features',
+            Text(l10n.adminSubscriptionsFeaturesTitle,
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             ...item.features.entries
@@ -430,16 +411,15 @@ class _AdminSubscriptionsScreenState
               children: [
                 FilledButton(
                   onPressed: canOverride ? _overridePlan : null,
-                  child: Text(l10n?.adminSubscriptionsOverrideAction ??
-                      'Override plan'),
+                  child: Text(l10n.adminSubscriptionsOverrideAction),
                 ),
                 OutlinedButton(
                   onPressed: canOverride ? _cancelSubscription : null,
-                  child: Text(l10n?.adminSubscriptionsCancelAction ?? 'Cancel'),
+                  child: Text(l10n.adminSubscriptionsCancelAction),
                 ),
                 OutlinedButton(
                   onPressed: canOverride ? _refundSubscription : null,
-                  child: Text(l10n?.adminSubscriptionsRefundAction ?? 'Refund'),
+                  child: Text(l10n.adminSubscriptionsRefundAction),
                 ),
               ],
             ),

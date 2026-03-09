@@ -546,6 +546,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activityVideo4Desc => 'Journey to the stars';
 
   @override
+  String get activityOfDayTreasureHuntTitle => 'Treasure Hunt';
+
+  @override
+  String get activityOfDayTreasureHuntSubtitle =>
+      'Find colors and shapes around you';
+
+  @override
+  String get activityOfDayMissionTitle => 'Your Mission';
+
+  @override
+  String get activityOfDayFindColorsTitle => 'Find 3 colors';
+
+  @override
+  String get activityOfDayFindColorsSubtitle =>
+      'Point to something red, blue, and green.';
+
+  @override
+  String get activityOfDaySpotShapesTitle => 'Spot 2 shapes';
+
+  @override
+  String get activityOfDaySpotShapesSubtitle =>
+      'Find a circle and a square around you.';
+
+  @override
+  String get activityOfDayShareSmileTitle => 'Share a smile';
+
+  @override
+  String get activityOfDayShareSmileSubtitle =>
+      'Give a high-five or say something kind.';
+
+  @override
+  String get activityOfDayTimeHint => 'Take about 5 minutes and have fun!';
+
+  @override
+  String get activityOfDayCompletedCta => 'Completed! +50 XP';
+
+  @override
+  String get activityOfDayFinishCta => 'Finish Activity';
+
+  @override
+  String get activityOfDayStartCta => 'Start Activity';
+
+  @override
   String get splashTagline => 'Learn. Play. Grow.';
 
   @override
@@ -2505,6 +2548,57 @@ class AppLocalizationsEn extends AppLocalizations {
   String get askKinderAnything => 'Ask Kinder anything...';
 
   @override
+  String get aiWelcomeGreeting =>
+      'Hi there! I am Kinder, your learning buddy. How can I help you today?';
+
+  @override
+  String get aiMathResponse =>
+      'I love math too! 🔢 Try this: 3 + 5 = ? How about a quick numbers game?';
+
+  @override
+  String get aiStoryResponse =>
+      'Once upon a time in Kinder World, a brave little explorer discovered that learning is the greatest adventure of all. ✨';
+
+  @override
+  String get aiGameResponse =>
+      'Ooh, games! 🎮 Try Puzzle Builder in the Skills section. It is fun and helps your brain grow!';
+
+  @override
+  String get aiSadResponse =>
+      'I am sorry you feel that way 💙. Big feelings are okay. Want something cheerful?';
+
+  @override
+  String get aiTiredResponse =>
+      'Rest matters too 😴. Maybe try a short calm activity like coloring today.';
+
+  @override
+  String get aiDefaultResponse =>
+      'That is interesting! Tell me more. I am here to help you learn and have fun every day!';
+
+  @override
+  String get aiQuickActionLessonResponse =>
+      '📚 I recommend "Numbers Adventure". It matches your level and is super fun!';
+
+  @override
+  String get aiQuickActionGameResponse =>
+      '🎮 Try "Puzzle Challenge" right now. It sharpens your problem-solving skills!';
+
+  @override
+  String get aiQuickActionStoryResponse =>
+      '📖 Here is a quick tale: Sammy the Science Explorer found a magic potion... but it was just orange juice! 😄';
+
+  @override
+  String get aiQuickActionFactResponse =>
+      '🧠 Did you know octopuses have three hearts and blue blood? Nature is amazing!';
+
+  @override
+  String get aiQuickActionMotivationResponse =>
+      '⭐ You are doing great! Every new thing you learn makes your brain stronger. Keep going!';
+
+  @override
+  String get aiQuickActionFallbackResponse => 'Here is something cool for you!';
+
+  @override
   String get aiInitialGreeting =>
       'Hi there! 👋 I\'m Kinder, your learning buddy! How can I help you today?';
 
@@ -2520,6 +2614,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get todayWeWillLearn => 'Today we will learn about:';
+
+  @override
+  String get lessonContentFallback =>
+      'This is where the main learning content appears. It can include text, pictures, videos, or interactive activities.';
+
+  @override
+  String get lessonContentPlaceholder => 'Learning Content';
 
   @override
   String get letsPractice => 'Let\'s Practice!';
@@ -2538,6 +2639,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get whatDidYouLearn => 'What did you learn in this lesson?';
+
+  @override
+  String get lessonAnswerOptionA => 'Answer A';
+
+  @override
+  String get lessonAnswerOptionB => 'Answer B';
+
+  @override
+  String get lessonAnswerOptionC => 'Answer C';
 
   @override
   String get greatJob => 'Great Job!';
@@ -3822,6 +3932,158 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminCmsQuizSaved => 'Quiz saved';
 
   @override
+  String get adminCmsContentSaved => 'Content saved';
+
+  @override
+  String get adminCmsStructuredMetadataTitle => 'Structured metadata';
+
+  @override
+  String get adminCmsAdvancedJsonTitle => 'Advanced JSON';
+
+  @override
+  String get adminCmsAdvancedJsonHelp =>
+      'Use this only for extra fields that are not covered by the structured form.';
+
+  @override
+  String get adminCmsMetadataDurationLabel => 'Duration (minutes)';
+
+  @override
+  String get adminCmsMetadataDifficultyLabel => 'Difficulty';
+
+  @override
+  String get adminCmsMetadataFeaturedLabel => 'Featured';
+
+  @override
+  String get adminCmsMetadataTagsLabel => 'Tags';
+
+  @override
+  String get adminCmsPreviewEnglishSection => 'English preview';
+
+  @override
+  String get adminCmsPreviewArabicSection => 'Arabic preview';
+
+  @override
+  String get adminCmsPreviewMetadataSection => 'Metadata';
+
+  @override
+  String get adminCmsPreviewQuestionsSection => 'Questions';
+
+  @override
+  String get adminCmsPreviewEmpty => 'Nothing to preview yet';
+
+  @override
+  String get adminCmsQuizPreviewAction => 'Preview quiz';
+
+  @override
+  String get adminCmsPublishConfirmTitle => 'Publish content';
+
+  @override
+  String get adminCmsPublishConfirmMessage =>
+      'This item will become visible to the app. Continue?';
+
+  @override
+  String get adminCmsUnpublishConfirmTitle => 'Unpublish content';
+
+  @override
+  String get adminCmsUnpublishConfirmMessage =>
+      'This item will be moved back to draft. Continue?';
+
+  @override
+  String get adminCmsPublishSuccess => 'Content published';
+
+  @override
+  String get adminCmsUnpublishSuccess => 'Content moved back to draft';
+
+  @override
+  String get adminCmsQuestionAdd => 'Add question';
+
+  @override
+  String adminCmsQuestionLabel(int number) => 'Question $number';
+
+  @override
+  String get adminCmsQuestionPromptEnLabel => 'English prompt';
+
+  @override
+  String get adminCmsQuestionPromptArLabel => 'Arabic prompt';
+
+  @override
+  String get adminCmsQuestionOptionsLabel => 'Answer options';
+
+  @override
+  String adminCmsQuestionOptionLabel(int number) => 'Option $number';
+
+  @override
+  String get adminCmsQuestionCorrectAnswerLabel => 'Correct answer';
+
+  @override
+  String get adminCmsQuestionExplanationEnLabel => 'English explanation';
+
+  @override
+  String get adminCmsQuestionExplanationArLabel => 'Arabic explanation';
+
+  @override
+  String get adminCmsQuestionRemove => 'Remove question';
+
+  @override
+  String get adminCmsOptionAdd => 'Add option';
+
+  @override
+  String get adminCmsOptionRemove => 'Remove option';
+
+  @override
+  String get adminCmsValidationTitleEnRequired => 'English title is required';
+
+  @override
+  String get adminCmsValidationTitleArRequired => 'Arabic title is required';
+
+  @override
+  String get adminCmsValidationBodyEnRequired =>
+      'English body is required before publishing';
+
+  @override
+  String get adminCmsValidationBodyArRequired =>
+      'Arabic body is required before publishing';
+
+  @override
+  String get adminCmsValidationInvalidUrl => 'Enter a valid http or https URL';
+
+  @override
+  String get adminCmsValidationInvalidAgeGroup =>
+      'Use an age group like 5-7 or 8+';
+
+  @override
+  String get adminCmsValidationInvalidJsonObject =>
+      'Advanced metadata must be a JSON object';
+
+  @override
+  String get adminCmsValidationInvalidJsonList =>
+      'Advanced quiz JSON must be a JSON list';
+
+  @override
+  String get adminCmsValidationInvalidJsonSyntax =>
+      'Enter valid JSON before saving';
+
+  @override
+  String get adminCmsValidationQuestionRequired =>
+      'Add at least one question before publishing';
+
+  @override
+  String get adminCmsValidationQuestionPromptRequired =>
+      'Each question needs English or Arabic prompt text';
+
+  @override
+  String get adminCmsValidationQuestionOptionsRequired =>
+      'Each question needs at least two answer options';
+
+  @override
+  String get adminCmsValidationQuestionCorrectAnswerRequired =>
+      'Choose a valid correct answer for every question';
+
+  @override
+  String get adminCmsValidationQuestionOptionTextRequired =>
+      'Each answer option needs text';
+
+  @override
   String get adminCmsCategoryLabel => 'Category';
 
   @override
@@ -4172,4 +4434,8 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get legalCoppaFooterText =>
       'Parents stay in control and kids stay safe.';
+
+  // Generic labels
+  @override
+  String get labelId => 'ID';
 }

@@ -1,12 +1,17 @@
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/admin_cms_models.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/management/admin_management_repository.dart';
+import 'package:kinder_world/features/admin/shared/admin_confirm_dialog.dart';
+import 'package:kinder_world/features/admin/shared/admin_filter_bar.dart';
 import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
+import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
+import 'package:kinder_world/features/admin/shared/admin_table_widgets.dart';
 
 /// IMPORTANT:
 /// All UI text must use AppLocalizations.
@@ -111,11 +116,39 @@ class _AdminContentManagementScreenState
     }
   }
 
+  String _extractErrorMessage(AppLocalizations l10n, Object error) {
+    if (error is DioException) {
+      final data = error.response?.data;
+      if (data is Map && data['detail'] is String) {
+        return data['detail'] as String;
+      }
+      if (data is String && data.trim().isNotEmpty) {
+        return data;
+      }
+      if ((error.message ?? '').trim().isNotEmpty) {
+        return error.message!;
+      }
+    }
+    final raw = error.toString().trim();
+    return raw.isEmpty ? l10n.errorTitle : raw;
+  }
+
+  void _showFeedback(String message, {bool isError = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          backgroundColor: isError ? Theme.of(context).colorScheme.error : null,
+          content: Text(message),
+        ),
+      );
+  }
+
   List<_StatusOption> _statusOptions(AppLocalizations l10n) => [
         _StatusOption('draft', l10n.adminCmsStatusDraft),
         _StatusOption('review', l10n.adminCmsStatusReview),
-        _StatusOption(
-            'published', l10n.adminCmsStatusPublished),
+        _StatusOption('published', l10n.adminCmsStatusPublished),
       ];
 
   String _statusLabel(String status, AppLocalizations l10n) {
@@ -123,6 +156,21 @@ class _AdminContentManagementScreenState
       if (option.value == status) return option.label;
     }
     return status;
+  }
+
+  String _contentTypeLabel(String type, AppLocalizations l10n) {
+    switch (type) {
+      case 'lesson':
+        return l10n.adminCmsTypeLesson;
+      case 'story':
+        return l10n.adminCmsTypeStory;
+      case 'video':
+        return l10n.adminCmsTypeVideo;
+      case 'activity':
+        return l10n.adminCmsTypeActivity;
+      default:
+        return type;
+    }
   }
 
   Future<void> _saveCategory({AdminCmsCategory? category}) async {
@@ -151,14 +199,12 @@ class _AdminContentManagementScreenState
                   TextField(
                       controller: titleEn,
                       decoration: InputDecoration(
-                          labelText:
-                              l10n.adminCmsTitleEnLabel)),
+                          labelText: l10n.adminCmsTitleEnLabel)),
                   const SizedBox(height: 12),
                   TextField(
                       controller: titleAr,
                       decoration: InputDecoration(
-                          labelText:
-                              l10n.adminCmsTitleArLabel)),
+                          labelText: l10n.adminCmsTitleArLabel)),
                   const SizedBox(height: 12),
                   TextField(
                       controller: descEn,
@@ -184,61 +230,78 @@ class _AdminContentManagementScreenState
         ) ??
         false;
     if (!confirmed) return;
-    final repo = ref.read(adminManagementRepositoryProvider);
-    if (category == null) {
-      await repo.createCategory(
-        slug: slug.text.trim(),
-        titleEn: titleEn.text.trim(),
-        titleAr: titleAr.text.trim(),
-        descriptionEn: descEn.text.trim(),
-        descriptionAr: descAr.text.trim(),
-      );
-    } else {
-      await repo.updateCategory(
-        category.id,
-        slug: slug.text.trim(),
-        titleEn: titleEn.text.trim(),
-        titleAr: titleAr.text.trim(),
-        descriptionEn: descEn.text.trim(),
-        descriptionAr: descAr.text.trim(),
-      );
+    if (titleEn.text.trim().isEmpty) {
+      _showFeedback(l10n.adminCmsValidationTitleEnRequired, isError: true);
+      return;
     }
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.adminCmsCategorySaved)),
-    );
-    await _loadAll();
+    if (titleAr.text.trim().isEmpty) {
+      _showFeedback(l10n.adminCmsValidationTitleArRequired, isError: true);
+      return;
+    }
+    if (slug.text.trim().isEmpty) {
+      slug.text = titleEn.text
+          .trim()
+          .toLowerCase()
+          .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+          .replaceAll(RegExp(r'^-+|-+$'), '');
+    }
+    final repo = ref.read(adminManagementRepositoryProvider);
+    try {
+      if (category == null) {
+        await repo.createCategory(
+          slug: slug.text.trim(),
+          titleEn: titleEn.text.trim(),
+          titleAr: titleAr.text.trim(),
+          descriptionEn: descEn.text.trim(),
+          descriptionAr: descAr.text.trim(),
+        );
+      } else {
+        await repo.updateCategory(
+          category.id,
+          slug: slug.text.trim(),
+          titleEn: titleEn.text.trim(),
+          titleAr: titleAr.text.trim(),
+          descriptionEn: descEn.text.trim(),
+          descriptionAr: descAr.text.trim(),
+        );
+      }
+      _showFeedback(l10n.adminCmsCategorySaved);
+      await _loadAll();
+    } catch (error) {
+      _showFeedback(_extractErrorMessage(l10n, error), isError: true);
+    }
   }
 
   Future<void> _deleteCategory(AdminCmsCategory category) async {
     final l10n = AppLocalizations.of(context)!;
-    final confirmed = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text(l10n.adminCmsDeleteCategoryTitle),
-            content: Text(
-                l10n.adminCmsDeleteCategoryConfirm),
-            actions: [
-              TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: Text(l10n.cancel)),
-              FilledButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  child: Text(l10n.delete)),
-            ],
-          ),
-        ) ??
-        false;
+    final confirmed = await showAdminConfirmDialog(
+      context: context,
+      title: l10n.adminCmsDeleteCategoryTitle,
+      message: l10n.adminCmsDeleteCategoryConfirm,
+      confirmLabel: l10n.delete,
+      destructive: true,
+    );
     if (!confirmed) return;
-    await ref
-        .read(adminManagementRepositoryProvider)
-        .deleteCategory(category.id);
-    if (!mounted) return;
-    await _loadAll();
+    try {
+      await ref
+          .read(adminManagementRepositoryProvider)
+          .deleteCategory(category.id);
+      if (!mounted) return;
+      await _loadAll();
+    } catch (error) {
+      _showFeedback(_extractErrorMessage(l10n, error), isError: true);
+    }
   }
 
   Future<void> _saveContent({AdminCmsContent? content}) async {
     final l10n = AppLocalizations.of(context)!;
+    final metadataMap =
+        Map<String, dynamic>.from(content?.metadataJson ?? const {});
+    final advancedMetadata = Map<String, dynamic>.from(metadataMap)
+      ..remove('duration_minutes')
+      ..remove('difficulty')
+      ..remove('tags')
+      ..remove('featured');
     final titleEn = TextEditingController(text: content?.titleEn ?? '');
     final titleAr = TextEditingController(text: content?.titleAr ?? '');
     final descEn = TextEditingController(text: content?.descriptionEn ?? '');
@@ -247,13 +310,24 @@ class _AdminContentManagementScreenState
     final bodyAr = TextEditingController(text: content?.bodyAr ?? '');
     final thumb = TextEditingController(text: content?.thumbnailUrl ?? '');
     final age = TextEditingController(text: content?.ageGroup ?? '');
+    final duration = TextEditingController(
+      text: metadataMap['duration_minutes']?.toString() ?? '',
+    );
+    final difficulty = TextEditingController(
+      text: metadataMap['difficulty']?.toString() ?? '',
+    );
+    final tags = TextEditingController(
+      text: metadataMap['tags'] is List
+          ? (metadataMap['tags'] as List<dynamic>).join(', ')
+          : '',
+    );
     final metadata = TextEditingController(
-      text: const JsonEncoder.withIndent('  ')
-          .convert(content?.metadataJson ?? const <String, dynamic>{}),
+      text: const JsonEncoder.withIndent('  ').convert(advancedMetadata),
     );
     int? selectedCategoryId = content?.categoryId;
     String selectedType = content?.contentType ?? 'lesson';
     String selectedStatus = content?.status ?? 'draft';
+    bool featured = metadataMap['featured'] == true;
     final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => StatefulBuilder(
@@ -270,13 +344,11 @@ class _AdminContentManagementScreenState
                       DropdownButtonFormField<int?>(
                         initialValue: selectedCategoryId,
                         decoration: InputDecoration(
-                            labelText:
-                                l10n.adminCmsCategoryLabel),
+                            labelText: l10n.adminCmsCategoryLabel),
                         items: [
                           DropdownMenuItem<int?>(
                               value: null,
-                              child: Text(
-                                  l10n.adminCmsNoCategory)),
+                              child: Text(l10n.adminCmsNoCategory)),
                           ..._categories.map((category) =>
                               DropdownMenuItem<int?>(
                                   value: category.id,
@@ -318,8 +390,7 @@ class _AdminContentManagementScreenState
                           child: DropdownButtonFormField<String>(
                             initialValue: selectedStatus,
                             decoration: InputDecoration(
-                                labelText:
-                                    l10n.adminCmsStatusLabel),
+                                labelText: l10n.adminCmsStatusLabel),
                             items: _statusOptions(l10n)
                                 .map((item) => DropdownMenuItem(
                                     value: item.value, child: Text(item.label)))
@@ -349,16 +420,14 @@ class _AdminContentManagementScreenState
                           minLines: 4,
                           maxLines: 6,
                           decoration: InputDecoration(
-                              labelText:
-                                  l10n.adminCmsBodyEnLabel)),
+                              labelText: l10n.adminCmsBodyEnLabel)),
                       const SizedBox(height: 12),
                       TextField(
                           controller: bodyAr,
                           minLines: 4,
                           maxLines: 6,
                           decoration: InputDecoration(
-                              labelText:
-                                  l10n.adminCmsBodyArLabel)),
+                              labelText: l10n.adminCmsBodyArLabel)),
                       const SizedBox(height: 12),
                       TextField(
                           controller: thumb,
@@ -368,8 +437,67 @@ class _AdminContentManagementScreenState
                       TextField(
                           controller: age,
                           decoration: InputDecoration(
-                              labelText:
-                                  l10n.adminCmsAgeGroupLabel)),
+                              labelText: l10n.adminCmsAgeGroupLabel)),
+                      const SizedBox(height: 16),
+                      Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text(
+                          l10n.adminCmsStructuredMetadataTitle,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(children: [
+                        Expanded(
+                          child: TextField(
+                            controller: duration,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              labelText: l10n.adminCmsMetadataDurationLabel,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextField(
+                            controller: difficulty,
+                            decoration: InputDecoration(
+                              labelText: l10n.adminCmsMetadataDifficultyLabel,
+                            ),
+                          ),
+                        ),
+                      ]),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: tags,
+                        decoration: InputDecoration(
+                          labelText: l10n.adminCmsMetadataTagsLabel,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        value: featured,
+                        title: Text(l10n.adminCmsMetadataFeaturedLabel),
+                        onChanged: (value) =>
+                            setStateDialog(() => featured = value),
+                      ),
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text(
+                          l10n.adminCmsAdvancedJsonTitle,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text(
+                          l10n.adminCmsAdvancedJsonHelp,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
                       const SizedBox(height: 12),
                       TextField(
                           controller: metadata,
@@ -394,6 +522,61 @@ class _AdminContentManagementScreenState
         ) ??
         false;
     if (!confirmed) return;
+    if (titleEn.text.trim().isEmpty) {
+      _showFeedback(l10n.adminCmsValidationTitleEnRequired, isError: true);
+      return;
+    }
+    if (titleAr.text.trim().isEmpty) {
+      _showFeedback(l10n.adminCmsValidationTitleArRequired, isError: true);
+      return;
+    }
+    if (selectedStatus == 'published' && bodyEn.text.trim().isEmpty) {
+      _showFeedback(l10n.adminCmsValidationBodyEnRequired, isError: true);
+      return;
+    }
+    if (selectedStatus == 'published' && bodyAr.text.trim().isEmpty) {
+      _showFeedback(l10n.adminCmsValidationBodyArRequired, isError: true);
+      return;
+    }
+    final thumbValue = thumb.text.trim();
+    if (thumbValue.isNotEmpty) {
+      final uri = Uri.tryParse(thumbValue);
+      if (uri == null ||
+          !uri.hasAuthority ||
+          !['http', 'https'].contains(uri.scheme)) {
+        _showFeedback(l10n.adminCmsValidationInvalidUrl, isError: true);
+        return;
+      }
+    }
+    final ageValue = age.text.trim();
+    if (ageValue.isNotEmpty &&
+        !RegExp(r'^\s*(\d{1,2}\s*-\s*\d{1,2}|\d{1,2}\+)\s*$')
+            .hasMatch(ageValue)) {
+      _showFeedback(l10n.adminCmsValidationInvalidAgeGroup, isError: true);
+      return;
+    }
+    Map<String, dynamic> advancedJson;
+    try {
+      if (metadata.text.trim().isEmpty || metadata.text.trim() == '{}') {
+        advancedJson = <String, dynamic>{};
+      } else {
+        final parsed = jsonDecode(metadata.text.trim());
+        if (parsed is! Map) {
+          _showFeedback(l10n.adminCmsValidationInvalidJsonObject,
+              isError: true);
+          return;
+        }
+        advancedJson = Map<String, dynamic>.from(parsed);
+      }
+    } on FormatException {
+      _showFeedback(l10n.adminCmsValidationInvalidJsonSyntax, isError: true);
+      return;
+    }
+    final tagsList = tags.text
+        .split(',')
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
     final payload = {
       'category_id': selectedCategoryId,
       'content_type': selectedType,
@@ -402,78 +585,231 @@ class _AdminContentManagementScreenState
       'title_ar': titleAr.text.trim(),
       'description_en': descEn.text.trim(),
       'description_ar': descAr.text.trim(),
-      'body_en': bodyEn.text,
-      'body_ar': bodyAr.text,
-      'thumbnail_url': thumb.text.trim(),
-      'age_group': age.text.trim(),
-      'metadata_json': metadata.text.trim().isEmpty
-          ? <String, dynamic>{}
-          : Map<String, dynamic>.from(jsonDecode(metadata.text.trim()) as Map),
+      'body_en': bodyEn.text.trim(),
+      'body_ar': bodyAr.text.trim(),
+      'thumbnail_url': thumbValue,
+      'age_group': ageValue,
+      'metadata_json': {
+        ...advancedJson,
+        if (duration.text.trim().isNotEmpty)
+          'duration_minutes':
+              int.tryParse(duration.text.trim()) ?? duration.text.trim(),
+        if (difficulty.text.trim().isNotEmpty)
+          'difficulty': difficulty.text.trim(),
+        if (tagsList.isNotEmpty) 'tags': tagsList,
+        'featured': featured,
+      },
     };
     final repo = ref.read(adminManagementRepositoryProvider);
-    if (content == null) {
-      await repo.createContent(payload);
-    } else {
-      await repo.updateContent(content.id, payload);
+    try {
+      if (content == null) {
+        await repo.createContent(payload);
+      } else {
+        await repo.updateContent(content.id, payload);
+      }
+      _showFeedback(l10n.adminCmsContentSaved);
+      await _loadAll();
+    } catch (error) {
+      _showFeedback(_extractErrorMessage(l10n, error), isError: true);
     }
-    if (!mounted) return;
-    await _loadAll();
   }
 
   Future<void> _previewContent(AdminCmsContent content) async {
     final l10n = AppLocalizations.of(context)!;
-    final detail = await ref
-        .read(adminManagementRepositoryProvider)
-        .fetchContentDetail(content.id);
-    if (!mounted) return;
-    await showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.adminCmsPreviewTitle),
-        content: SizedBox(
-          width: 680,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(detail.titleEn,
-                    style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 8),
-                Text(detail.descriptionEn ?? ''),
-                const SizedBox(height: 16),
-                Text(detail.bodyEn ?? ''),
-                const SizedBox(height: 16),
-                Text(
-                    '${l10n.adminCmsLinkedQuizzes}: ${detail.quizCount}'),
-              ],
+    try {
+      final detail = await ref
+          .read(adminManagementRepositoryProvider)
+          .fetchContentDetail(content.id);
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(l10n.adminCmsPreviewTitle),
+          content: SizedBox(
+            width: 720,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    l10n.adminCmsPreviewEnglishSection,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    detail.titleEn.trim().isEmpty
+                        ? l10n.adminCmsPreviewEmpty
+                        : detail.titleEn,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text((detail.descriptionEn ?? '').trim().isEmpty
+                      ? l10n.notAvailable
+                      : detail.descriptionEn!),
+                  const SizedBox(height: 8),
+                  Text((detail.bodyEn ?? '').trim().isEmpty
+                      ? l10n.notAvailable
+                      : detail.bodyEn!),
+                  const SizedBox(height: 16),
+                  Text(
+                    l10n.adminCmsPreviewArabicSection,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    detail.titleAr.trim().isEmpty
+                        ? l10n.adminCmsPreviewEmpty
+                        : detail.titleAr,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text((detail.descriptionAr ?? '').trim().isEmpty
+                      ? l10n.notAvailable
+                      : detail.descriptionAr!),
+                  const SizedBox(height: 8),
+                  Text((detail.bodyAr ?? '').trim().isEmpty
+                      ? l10n.notAvailable
+                      : detail.bodyAr!),
+                  const SizedBox(height: 16),
+                  Text(
+                    l10n.adminCmsPreviewMetadataSection,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${l10n.adminCmsCategoryLabel}: ${detail.category?.titleEn ?? l10n.notAvailable}',
+                  ),
+                  Text(
+                    '${l10n.adminCmsTypeLabel}: ${_contentTypeLabel(detail.contentType, l10n)}',
+                  ),
+                  Text(
+                    '${l10n.adminCmsStatusLabel}: ${_statusLabel(detail.status, l10n)}',
+                  ),
+                  Text(
+                    '${l10n.adminCmsAgeGroupLabel}: ${detail.ageGroup ?? l10n.notAvailable}',
+                  ),
+                  Text(
+                    '${l10n.adminCmsLinkedQuizzes}: ${detail.quizCount}',
+                  ),
+                  const SizedBox(height: 8),
+                  if (detail.metadataJson.isEmpty)
+                    Text(l10n.adminCmsPreviewEmpty)
+                  else
+                    ...detail.metadataJson.entries.map(
+                      (entry) => Text('${entry.key}: ${entry.value}'),
+                    ),
+                ],
+              ),
             ),
           ),
-        ),
-        actions: [
-          TextButton(
+          actions: [
+            TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text(l10n.cancel)),
-        ],
-      ),
-    );
+              child: Text(l10n.cancel),
+            ),
+          ],
+        ),
+      );
+    } catch (error) {
+      _showFeedback(_extractErrorMessage(l10n, error), isError: true);
+    }
   }
 
   Future<void> _togglePublish(AdminCmsContent content) async {
+    final l10n = AppLocalizations.of(context)!;
     final repo = ref.read(adminManagementRepositoryProvider);
-    if (content.status == 'published') {
-      await repo.unpublishContent(content.id);
-    } else {
-      await repo.publishContent(content.id);
+    try {
+      if (content.status == 'published') {
+        if (!mounted) return;
+        final confirmed = await showDialog<bool>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: Text(l10n.adminCmsUnpublishConfirmTitle),
+                content: Text(l10n.adminCmsUnpublishConfirmMessage),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: Text(l10n.cancel),
+                  ),
+                  FilledButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: Text(l10n.adminCmsUnpublishAction),
+                  ),
+                ],
+              ),
+            ) ??
+            false;
+        if (!confirmed) return;
+        await repo.unpublishContent(content.id);
+        _showFeedback(l10n.adminCmsUnpublishSuccess);
+      } else {
+        final detail = await repo.fetchContentDetail(content.id);
+        if (detail.titleEn.trim().isEmpty) {
+          _showFeedback(l10n.adminCmsValidationTitleEnRequired, isError: true);
+          return;
+        }
+        if (detail.titleAr.trim().isEmpty) {
+          _showFeedback(l10n.adminCmsValidationTitleArRequired, isError: true);
+          return;
+        }
+        if ((detail.bodyEn ?? '').trim().isEmpty) {
+          _showFeedback(l10n.adminCmsValidationBodyEnRequired, isError: true);
+          return;
+        }
+        if ((detail.bodyAr ?? '').trim().isEmpty) {
+          _showFeedback(l10n.adminCmsValidationBodyArRequired, isError: true);
+          return;
+        }
+        if (!mounted) return;
+        final confirmed = await showDialog<bool>(
+              context: context,
+              builder: (dialogContext) => AlertDialog(
+                title: Text(l10n.adminCmsPublishConfirmTitle),
+                content: Text(l10n.adminCmsPublishConfirmMessage),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogContext, false),
+                    child: Text(l10n.cancel),
+                  ),
+                  FilledButton(
+                    onPressed: () => Navigator.pop(dialogContext, true),
+                    child: Text(l10n.adminCmsPublishAction),
+                  ),
+                ],
+              ),
+            ) ??
+            false;
+        if (!confirmed) return;
+        await repo.publishContent(content.id);
+        _showFeedback(l10n.adminCmsPublishSuccess);
+      }
+      if (!mounted) return;
+      await _loadAll();
+    } catch (error) {
+      _showFeedback(_extractErrorMessage(l10n, error), isError: true);
     }
-    if (!mounted) return;
-    await _loadAll();
   }
 
   Future<void> _deleteContent(AdminCmsContent content) async {
-    await ref.read(adminManagementRepositoryProvider).deleteContent(content.id);
-    if (!mounted) return;
-    await _loadAll();
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showAdminConfirmDialog(
+      context: context,
+      title: l10n.adminCmsDeleteContentTitle,
+      message: l10n.adminCmsDeleteContentConfirm,
+      confirmLabel: l10n.delete,
+      destructive: true,
+    );
+    if (!confirmed) return;
+    try {
+      await ref
+          .read(adminManagementRepositoryProvider)
+          .deleteContent(content.id);
+      if (!mounted) return;
+      await _loadAll();
+    } catch (error) {
+      _showFeedback(_extractErrorMessage(l10n, error), isError: true);
+    }
   }
 
   Future<void> _saveQuiz({AdminCmsQuiz? quiz}) async {
@@ -505,13 +841,11 @@ class _AdminContentManagementScreenState
                       DropdownButtonFormField<int?>(
                         initialValue: selectedCategoryId,
                         decoration: InputDecoration(
-                            labelText:
-                                l10n.adminCmsCategoryLabel),
+                            labelText: l10n.adminCmsCategoryLabel),
                         items: [
                           DropdownMenuItem<int?>(
                               value: null,
-                              child: Text(
-                                  l10n.adminCmsNoCategory)),
+                              child: Text(l10n.adminCmsNoCategory)),
                           ..._categories.map((category) =>
                               DropdownMenuItem<int?>(
                                   value: category.id,
@@ -591,6 +925,63 @@ class _AdminContentManagementScreenState
         ) ??
         false;
     if (!confirmed) return;
+    if (titleEn.text.trim().isEmpty) {
+      _showFeedback(l10n.adminCmsValidationTitleEnRequired, isError: true);
+      return;
+    }
+    if (titleAr.text.trim().isEmpty) {
+      _showFeedback(l10n.adminCmsValidationTitleArRequired, isError: true);
+      return;
+    }
+    List<Map<String, dynamic>> questionsJson;
+    try {
+      final parsed = jsonDecode(
+          questions.text.trim().isEmpty ? '[]' : questions.text.trim());
+      if (parsed is! List) {
+        _showFeedback(l10n.adminCmsValidationInvalidJsonList, isError: true);
+        return;
+      }
+      questionsJson = List<Map<String, dynamic>>.from(
+        parsed.map((item) => Map<String, dynamic>.from(item as Map)),
+      );
+    } on FormatException {
+      _showFeedback(l10n.adminCmsValidationInvalidJsonSyntax, isError: true);
+      return;
+    }
+    if (selectedStatus == 'published' && questionsJson.isEmpty) {
+      _showFeedback(l10n.adminCmsValidationQuestionRequired, isError: true);
+      return;
+    }
+    for (final question in questionsJson) {
+      final promptEn = (question['prompt_en'] ?? '').toString().trim();
+      final promptAr = (question['prompt_ar'] ?? '').toString().trim();
+      if (promptEn.isEmpty && promptAr.isEmpty) {
+        _showFeedback(l10n.adminCmsValidationQuestionPromptRequired,
+            isError: true);
+        return;
+      }
+      final options = (question['options'] as List<dynamic>? ?? const [])
+          .map((item) => item.toString().trim())
+          .toList();
+      if (options.length < 2) {
+        _showFeedback(l10n.adminCmsValidationQuestionOptionsRequired,
+            isError: true);
+        return;
+      }
+      if (options.any((option) => option.isEmpty)) {
+        _showFeedback(l10n.adminCmsValidationQuestionOptionTextRequired,
+            isError: true);
+        return;
+      }
+      final correctIndex = question['correct_index'];
+      if (correctIndex is! int ||
+          correctIndex < 0 ||
+          correctIndex >= options.length) {
+        _showFeedback(l10n.adminCmsValidationQuestionCorrectAnswerRequired,
+            isError: true);
+        return;
+      }
+    }
     final payload = {
       'content_id': selectedContentId,
       'category_id': selectedCategoryId,
@@ -599,25 +990,136 @@ class _AdminContentManagementScreenState
       'title_ar': titleAr.text.trim(),
       'description_en': descEn.text.trim(),
       'description_ar': descAr.text.trim(),
-      'questions_json': List<Map<String, dynamic>>.from(
-        (jsonDecode(questions.text.trim()) as List<dynamic>)
-            .map((item) => Map<String, dynamic>.from(item as Map)),
-      ),
+      'questions_json': questionsJson,
     };
     final repo = ref.read(adminManagementRepositoryProvider);
-    if (quiz == null) {
-      await repo.createQuiz(payload);
-    } else {
-      await repo.updateQuiz(quiz.id, payload);
+    try {
+      if (quiz == null) {
+        await repo.createQuiz(payload);
+      } else {
+        await repo.updateQuiz(quiz.id, payload);
+      }
+      _showFeedback(l10n.adminCmsQuizSaved);
+      if (!mounted) return;
+      await _loadAll();
+    } catch (error) {
+      _showFeedback(_extractErrorMessage(l10n, error), isError: true);
     }
-    if (!mounted) return;
-    await _loadAll();
   }
 
   Future<void> _deleteQuiz(AdminCmsQuiz quiz) async {
-    await ref.read(adminManagementRepositoryProvider).deleteQuiz(quiz.id);
-    if (!mounted) return;
-    await _loadAll();
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showAdminConfirmDialog(
+      context: context,
+      title: l10n.adminCmsDeleteQuizTitle,
+      message: l10n.adminCmsDeleteQuizConfirm,
+      confirmLabel: l10n.delete,
+      destructive: true,
+    );
+    if (!confirmed) return;
+    try {
+      await ref.read(adminManagementRepositoryProvider).deleteQuiz(quiz.id);
+      if (!mounted) return;
+      await _loadAll();
+    } catch (error) {
+      _showFeedback(_extractErrorMessage(l10n, error), isError: true);
+    }
+  }
+
+  Future<void> _previewQuiz(AdminCmsQuiz quiz) async {
+    final l10n = AppLocalizations.of(context)!;
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.adminCmsQuizPreviewAction),
+        content: SizedBox(
+          width: 700,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  quiz.titleEn.trim().isEmpty
+                      ? l10n.adminCmsPreviewEmpty
+                      : quiz.titleEn,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  quiz.titleAr.trim().isEmpty
+                      ? l10n.adminCmsPreviewEmpty
+                      : quiz.titleAr,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  (quiz.descriptionEn ?? '').trim().isEmpty
+                      ? l10n.notAvailable
+                      : quiz.descriptionEn!,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  '${l10n.adminCmsLinkedContentLabel}: ${quiz.contentTitleEn ?? l10n.adminCmsNoLinkedContent}',
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.adminCmsPreviewQuestionsSection,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                if (quiz.questionsJson.isEmpty)
+                  Text(l10n.adminCmsPreviewEmpty)
+                else
+                  ...quiz.questionsJson.asMap().entries.map((entry) {
+                    final question = entry.value;
+                    final options =
+                        (question['options'] as List<dynamic>? ?? const [])
+                            .map((item) => item.toString())
+                            .toList();
+                    final correctIndex = question['correct_index'] as int?;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.adminCmsQuestionLabel(entry.key + 1),
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            (question['prompt_en'] ??
+                                        question['prompt_ar'] ??
+                                        '')
+                                    .toString()
+                                    .trim()
+                                    .isEmpty
+                                ? l10n.adminCmsPreviewEmpty
+                                : (question['prompt_en'] ??
+                                        question['prompt_ar'])
+                                    .toString(),
+                          ),
+                          const SizedBox(height: 6),
+                          ...List.generate(options.length, (index) {
+                            final marker = correctIndex == index ? '*' : '-';
+                            return Text('$marker ${options[index]}');
+                          }),
+                        ],
+                      ),
+                    );
+                  }),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.cancel),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -648,14 +1150,9 @@ class _AdminContentManagementScreenState
           ),
           const SizedBox(height: 20),
           if (_loading)
-            const Padding(
-              padding: EdgeInsets.all(40),
-              child: Center(child: CircularProgressIndicator()),
-            )
+            const AdminLoadingState()
           else if (_error != null)
-            Card(
-                child: Padding(
-                    padding: const EdgeInsets.all(16), child: Text(_error!)))
+            AdminErrorState(message: _error!, onRetry: _loadAll)
           else
             SizedBox(
               height: 860,
@@ -724,20 +1221,18 @@ class _AdminContentManagementScreenState
     );
   }
 
-  Widget _buildContentsTab(
-      BuildContext context, AppLocalizations l10n, admin) {
+  Widget _buildContentsTab(BuildContext context, AppLocalizations l10n, admin) {
     final canCreate = admin?.hasPermission('admin.content.create') ?? false;
     final canEdit = admin?.hasPermission('admin.content.edit') ?? false;
     final canPublish = admin?.hasPermission('admin.content.publish') ?? false;
     final canDelete = admin?.hasPermission('admin.content.delete') ?? false;
     return Column(children: [
-      Wrap(spacing: 12, runSpacing: 12, children: [
+      AdminFilterBar(children: [
         SizedBox(
           width: 240,
           child: TextFormField(
             initialValue: _contentSearch,
-            decoration: InputDecoration(
-                labelText: l10n.adminCmsSearchLabel),
+            decoration: InputDecoration(labelText: l10n.adminCmsSearchLabel),
             onFieldSubmitted: (value) {
               setState(() {
                 _contentSearch = value.trim();
@@ -751,12 +1246,9 @@ class _AdminContentManagementScreenState
           width: 200,
           child: DropdownButtonFormField<String>(
             initialValue: _contentStatus,
-            decoration: InputDecoration(
-                labelText: l10n.adminCmsStatusLabel),
+            decoration: InputDecoration(labelText: l10n.adminCmsStatusLabel),
             items: [
-              DropdownMenuItem(
-                  value: '',
-                  child: Text(l10n.adminCmsStatusAll)),
+              DropdownMenuItem(value: '', child: Text(l10n.adminCmsStatusAll)),
               ..._statusOptions(l10n).map((item) =>
                   DropdownMenuItem(value: item.value, child: Text(item.label))),
             ],
@@ -773,12 +1265,10 @@ class _AdminContentManagementScreenState
           width: 220,
           child: DropdownButtonFormField<int?>(
             initialValue: _contentCategoryId,
-            decoration: InputDecoration(
-                labelText: l10n.adminCmsCategoryLabel),
+            decoration: InputDecoration(labelText: l10n.adminCmsCategoryLabel),
             items: [
               DropdownMenuItem<int?>(
-                  value: null,
-                  child: Text(l10n.adminCmsAllCategories)),
+                  value: null, child: Text(l10n.adminCmsAllCategories)),
               ..._categories.map((item) => DropdownMenuItem<int?>(
                   value: item.id, child: Text(item.titleEn))),
             ],
@@ -819,14 +1309,18 @@ class _AdminContentManagementScreenState
                             status: content.status),
                       ]),
                       const SizedBox(height: 8),
-                      Text(content.descriptionEn ?? '',
-                          maxLines: 2, overflow: TextOverflow.ellipsis),
+                      Text(
+                          (content.descriptionEn ?? '').trim().isEmpty
+                              ? l10n.notAvailable
+                              : content.descriptionEn!,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis),
                       const SizedBox(height: 10),
                       Wrap(spacing: 12, children: [
                         Text(
-                            '${l10n.adminCmsCategoryLabel}: ${content.category?.titleEn ?? '—'}'),
+                            '${l10n.adminCmsCategoryLabel}: ${content.category?.titleEn ?? l10n.notAvailable}'),
                         Text(
-                            '${l10n.adminCmsTypeLabel}: ${content.contentType}'),
+                            '${l10n.adminCmsTypeLabel}: ${_contentTypeLabel(content.contentType, l10n)}'),
                         Text(
                             '${l10n.adminCmsLinkedQuizzes}: ${content.quizCount}'),
                       ]),
@@ -834,8 +1328,7 @@ class _AdminContentManagementScreenState
                       Wrap(spacing: 8, runSpacing: 8, children: [
                         OutlinedButton(
                             onPressed: () => _previewContent(content),
-                            child:
-                                Text(l10n.adminCmsPreviewAction)),
+                            child: Text(l10n.adminCmsPreviewAction)),
                         OutlinedButton(
                             onPressed: canEdit
                                 ? () => _saveContent(content: content)
@@ -861,11 +1354,11 @@ class _AdminContentManagementScreenState
         ),
       ),
       const SizedBox(height: 12),
-      _PaginationBar(
+      AdminPaginationBar(
         summary: l10n.adminPaginationSummary(
-                (_contentPagination['page'] as int?) ?? _contentPage,
-                (_contentPagination['total_pages'] as int?) ?? 1,
-                (_contentPagination['total'] as int?) ?? _contents.length),
+            (_contentPagination['page'] as int?) ?? _contentPage,
+            (_contentPagination['total_pages'] as int?) ?? 1,
+            (_contentPagination['total'] as int?) ?? _contents.length),
         hasPrevious: (_contentPagination['has_previous'] as bool?) ?? false,
         hasNext: (_contentPagination['has_next'] as bool?) ?? false,
         previousLabel: l10n.adminPaginationPrevious,
@@ -887,17 +1380,14 @@ class _AdminContentManagementScreenState
     final canEdit = admin?.hasPermission('admin.content.edit') ?? false;
     final canDelete = admin?.hasPermission('admin.content.delete') ?? false;
     return Column(children: [
-      Wrap(spacing: 12, runSpacing: 12, children: [
+      AdminFilterBar(children: [
         SizedBox(
           width: 200,
           child: DropdownButtonFormField<String>(
             initialValue: _quizStatus,
-            decoration: InputDecoration(
-                labelText: l10n.adminCmsStatusLabel),
+            decoration: InputDecoration(labelText: l10n.adminCmsStatusLabel),
             items: [
-              DropdownMenuItem(
-                  value: '',
-                  child: Text(l10n.adminCmsStatusAll)),
+              DropdownMenuItem(value: '', child: Text(l10n.adminCmsStatusAll)),
               ..._statusOptions(l10n).map((item) =>
                   DropdownMenuItem(value: item.value, child: Text(item.label))),
             ],
@@ -914,12 +1404,10 @@ class _AdminContentManagementScreenState
           width: 220,
           child: DropdownButtonFormField<int?>(
             initialValue: _quizCategoryId,
-            decoration: InputDecoration(
-                labelText: l10n.adminCmsCategoryLabel),
+            decoration: InputDecoration(labelText: l10n.adminCmsCategoryLabel),
             items: [
               DropdownMenuItem<int?>(
-                  value: null,
-                  child: Text(l10n.adminCmsAllCategories)),
+                  value: null, child: Text(l10n.adminCmsAllCategories)),
               ..._categories.map((item) => DropdownMenuItem<int?>(
                   value: item.id, child: Text(item.titleEn))),
             ],
@@ -948,11 +1436,14 @@ class _AdminContentManagementScreenState
               child: ListTile(
                 title: Text(quiz.titleEn),
                 subtitle: Text(
-                    '${quiz.questionCount} ${l10n.adminCmsQuestionsLabel} ? ${quiz.category?.titleEn ?? l10n.notAvailable}'),
+                    '${quiz.questionCount} ${l10n.adminCmsQuestionsLabel} * ${quiz.category?.titleEn ?? l10n.notAvailable}'),
                 trailing: Wrap(spacing: 8, children: [
                   _CmsStatusChip(
                       label: _statusLabel(quiz.status, l10n),
                       status: quiz.status),
+                  IconButton(
+                      onPressed: () => _previewQuiz(quiz),
+                      icon: const Icon(Icons.visibility_outlined)),
                   IconButton(
                       onPressed: canEdit ? () => _saveQuiz(quiz: quiz) : null,
                       icon: const Icon(Icons.edit_outlined)),
@@ -966,11 +1457,11 @@ class _AdminContentManagementScreenState
         ),
       ),
       const SizedBox(height: 12),
-      _PaginationBar(
+      AdminPaginationBar(
         summary: l10n.adminPaginationSummary(
-                (_quizPagination['page'] as int?) ?? _quizPage,
-                (_quizPagination['total_pages'] as int?) ?? 1,
-                (_quizPagination['total'] as int?) ?? _quizzes.length),
+            (_quizPagination['page'] as int?) ?? _quizPage,
+            (_quizPagination['total_pages'] as int?) ?? 1,
+            (_quizPagination['total'] as int?) ?? _quizzes.length),
         hasPrevious: (_quizPagination['has_previous'] as bool?) ?? false,
         hasNext: (_quizPagination['has_next'] as bool?) ?? false,
         previousLabel: l10n.adminPaginationPrevious,
@@ -1019,44 +1510,6 @@ class _CmsStatusChip extends StatelessWidget {
       child: Text(label,
           style: TextStyle(
               color: foreground, fontSize: 12, fontWeight: FontWeight.w700)),
-    );
-  }
-}
-
-class _PaginationBar extends StatelessWidget {
-  const _PaginationBar({
-    required this.summary,
-    required this.hasPrevious,
-    required this.hasNext,
-    required this.previousLabel,
-    required this.nextLabel,
-    required this.onPrevious,
-    required this.onNext,
-  });
-
-  final String summary;
-  final bool hasPrevious;
-  final bool hasNext;
-  final String previousLabel;
-  final String nextLabel;
-  final VoidCallback onPrevious;
-  final VoidCallback onNext;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(summary),
-        Row(children: [
-          OutlinedButton(
-              onPressed: hasPrevious ? onPrevious : null,
-              child: Text(previousLabel)),
-          const SizedBox(width: 8),
-          FilledButton(
-              onPressed: hasNext ? onNext : null, child: Text(nextLabel)),
-        ]),
-      ],
     );
   }
 }

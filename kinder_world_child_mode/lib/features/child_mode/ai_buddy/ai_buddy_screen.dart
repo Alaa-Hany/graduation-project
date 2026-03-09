@@ -5,10 +5,6 @@ import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DATA MODELS
-// ─────────────────────────────────────────────────────────────────────────────
-
 class ChatMessage {
   final String text;
   final bool isUser;
@@ -37,10 +33,6 @@ class _QuickAction {
   });
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SCREEN
-// ─────────────────────────────────────────────────────────────────────────────
-
 class AiBuddyScreen extends ConsumerStatefulWidget {
   const AiBuddyScreen({super.key});
 
@@ -50,10 +42,9 @@ class AiBuddyScreen extends ConsumerStatefulWidget {
 
 class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
     with SingleTickerProviderStateMixin {
-  // Kinder avatar pulse animation
-  late AnimationController _pulseCtrl;
-  late Animation<double> _pulseScale;
-  late Animation<double> _pulseGlow;
+  late final AnimationController _pulseCtrl;
+  late final Animation<double> _pulseScale;
+  late final Animation<double> _pulseGlow;
 
   late List<ChatMessage> _messages;
   bool _messagesInitialized = false;
@@ -63,37 +54,37 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
   bool _isVoiceMode = false;
 
   List<_QuickAction> _getQuickActions(AppLocalizations l10n) => [
-    _QuickAction(
-      title: l10n.recommendLesson,
-      emoji: '📚',
-      color: ChildColors.learningBlue,
-      action: 'recommend_lesson',
-    ),
-    _QuickAction(
-      title: l10n.suggestGame,
-      emoji: '🎮',
-      color: ChildColors.skillPurple,
-      action: 'suggest_game',
-    ),
-    _QuickAction(
-      title: l10n.tellStory,
-      emoji: '📖',
-      color: ChildColors.kindnessPink,
-      action: 'tell_story',
-    ),
-    _QuickAction(
-      title: l10n.funFact,
-      emoji: '🔬',
-      color: ChildColors.funCyan,
-      action: 'fun_fact',
-    ),
-    _QuickAction(
-      title: l10n.motivation,
-      emoji: '🚀',
-      color: ChildColors.streakFire,
-      action: 'motivation',
-    ),
-  ];
+        _QuickAction(
+          title: l10n.recommendLesson,
+          emoji: '📚',
+          color: ChildColors.learningBlue,
+          action: 'recommend_lesson',
+        ),
+        _QuickAction(
+          title: l10n.suggestGame,
+          emoji: '🎮',
+          color: ChildColors.skillPurple,
+          action: 'suggest_game',
+        ),
+        _QuickAction(
+          title: l10n.tellStory,
+          emoji: '📖',
+          color: ChildColors.kindnessPink,
+          action: 'tell_story',
+        ),
+        _QuickAction(
+          title: l10n.funFact,
+          emoji: '🧠',
+          color: ChildColors.funCyan,
+          action: 'fun_fact',
+        ),
+        _QuickAction(
+          title: l10n.motivation,
+          emoji: '⭐',
+          color: ChildColors.streakFire,
+          action: 'motivation',
+        ),
+      ];
 
   @override
   void didChangeDependencies() {
@@ -102,7 +93,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
       final l10n = AppLocalizations.of(context)!;
       _messages = [
         ChatMessage(
-          text: l10n.aiInitialGreeting,
+          text: l10n.aiWelcomeGreeting,
           isUser: false,
           timestamp: DateTime.now(),
         ),
@@ -152,11 +143,13 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
     if (text.isEmpty) return;
 
     setState(() {
-      _messages.add(ChatMessage(
-        text: text,
-        isUser: true,
-        timestamp: DateTime.now(),
-      ));
+      _messages.add(
+        ChatMessage(
+          text: text,
+          isUser: true,
+          timestamp: DateTime.now(),
+        ),
+      );
       _textCtrl.clear();
     });
     _scrollToBottom();
@@ -165,12 +158,14 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
 
   void _simulateResponse(String userMessage) {
     setState(() {
-      _messages.add(ChatMessage(
-        text: '...',
-        isUser: false,
-        isTyping: true,
-        timestamp: DateTime.now(),
-      ));
+      _messages.add(
+        ChatMessage(
+          text: '...',
+          isUser: false,
+          isTyping: true,
+          timestamp: DateTime.now(),
+        ),
+      );
     });
     _scrollToBottom();
 
@@ -178,47 +173,61 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
       if (!mounted) return;
       setState(() {
         _messages.removeWhere((m) => m.isTyping);
-        _messages.add(ChatMessage(
-          text: _generateResponse(userMessage),
-          isUser: false,
-          timestamp: DateTime.now(),
-        ));
+        _messages.add(
+          ChatMessage(
+            text: _generateResponse(userMessage),
+            isUser: false,
+            timestamp: DateTime.now(),
+          ),
+        );
       });
       _scrollToBottom();
     });
   }
 
-  String _generateResponse(String msg) {
-    final lower = msg.toLowerCase();
-    if (lower.contains('math')) {
-      return 'I love math too! 🔢  Try this: 3 + 5 = ?  How about we play a quick numbers game?';
-    } else if (lower.contains('story')) {
-      return 'Once upon a time in the land of Kinder World, a brave little explorer discovered that learning was the greatest adventure of all... ✨';
-    } else if (lower.contains('game')) {
-      return 'Ooh, games! 🎮  Try the Puzzle Builder in the Skills section — it\'s super fun and helps your brain grow!';
-    } else if (lower.contains('sad') || lower.contains('upset')) {
-      return 'I\'m sorry you\'re feeling that way 💙  It\'s okay to have big feelings. Want to hear something that might cheer you up?';
-    } else if (lower.contains('tired')) {
-      return 'Rest is important! 😴  Maybe do a short, calm activity today. The Coloring page is a great choice!';
+  String _generateResponse(String message) {
+    final l10n = AppLocalizations.of(context)!;
+    final lower = message.toLowerCase();
+
+    if (lower.contains('math') || lower.contains('رياض')) {
+      return l10n.aiMathResponse;
     }
-    return 'That\'s interesting! 🌟  Tell me more — I\'m here to help you learn and have fun every single day!';
+    if (lower.contains('story') || lower.contains('قص')) {
+      return l10n.aiStoryResponse;
+    }
+    if (lower.contains('game') || lower.contains('لعب')) {
+      return l10n.aiGameResponse;
+    }
+    if (lower.contains('sad') ||
+        lower.contains('upset') ||
+        lower.contains('حزين') ||
+        lower.contains('زعلان')) {
+      return l10n.aiSadResponse;
+    }
+    if (lower.contains('tired') || lower.contains('تعب')) {
+      return l10n.aiTiredResponse;
+    }
+    return l10n.aiDefaultResponse;
   }
 
   void _handleQuickAction(String action) {
+    final l10n = AppLocalizations.of(context)!;
     final responses = {
-      'recommend_lesson': '📚  I recommend "Numbers Adventure" — it\'s perfect for your level and super fun! Want me to open it?',
-      'suggest_game': '🎮  Try "Puzzle Challenge" right now! It sharpens your problem-solving skills while keeping things exciting.',
-      'tell_story': '📖  Here\'s a quick tale: Sammy the Science Explorer once found a magic potion... but it turned out to just be orange juice! 😄',
-      'fun_fact': '🔬  Did you know octopuses have THREE hearts and BLUE blood? Nature is incredibly amazing!',
-      'motivation': '🚀  You\'re doing GREAT! Every time you learn something new, your brain gets stronger. Keep going — I believe in you! ⭐',
+      'recommend_lesson': l10n.aiQuickActionLessonResponse,
+      'suggest_game': l10n.aiQuickActionGameResponse,
+      'tell_story': l10n.aiQuickActionStoryResponse,
+      'fun_fact': l10n.aiQuickActionFactResponse,
+      'motivation': l10n.aiQuickActionMotivationResponse,
     };
 
     setState(() {
-      _messages.add(ChatMessage(
-        text: responses[action] ?? 'Here\'s something cool for you! 🌟',
-        isUser: false,
-        timestamp: DateTime.now(),
-      ));
+      _messages.add(
+        ChatMessage(
+          text: responses[action] ?? l10n.aiQuickActionFallbackResponse,
+          isUser: false,
+          timestamp: DateTime.now(),
+        ),
+      );
     });
     _scrollToBottom();
   }
@@ -227,6 +236,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
+
     return Scaffold(
       backgroundColor: colors.surface,
       body: SafeArea(
@@ -236,14 +246,12 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
             _buildQuickActions(colors, l10n),
             const Divider(height: 1),
             Expanded(child: _buildChatList(colors)),
-            _buildInputBar(colors),
+            _buildInputBar(colors, l10n),
           ],
         ),
       ),
     );
   }
-
-  // ── HEADER (Kinder avatar + identity) ─────────────────────────────────────
 
   Widget _buildHeader(ColorScheme colors, AppLocalizations l10n) {
     return Container(
@@ -261,18 +269,14 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Nav row
           const Row(
             children: [
               ChildHeader(compact: true, padding: EdgeInsets.zero),
             ],
           ),
           const SizedBox(height: 16),
-
-          // Kinder identity row
           Row(
             children: [
-              // Kinder avatar with pulse glow
               AnimatedBuilder(
                 animation: _pulseCtrl,
                 builder: (context, child) => Transform.scale(
@@ -300,14 +304,12 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
                       ],
                     ),
                     child: const Center(
-                      child: Text('⭐', style: TextStyle(fontSize: 28)),
+                      child: Text('🤖', style: TextStyle(fontSize: 28)),
                     ),
                   ),
                 ),
               ),
               const SizedBox(width: 16),
-
-              // Name + status
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -315,7 +317,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
                     Row(
                       children: [
                         Text(
-                          'Kinder',
+                          l10n.aiBuddyName,
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w800,
@@ -369,10 +371,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
               ),
             ],
           ),
-
           const SizedBox(height: 14),
-
-          // Quick action label
           Text(
             l10n.quickActions,
             style: TextStyle(
@@ -385,8 +384,6 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
       ),
     );
   }
-
-  // ── QUICK ACTIONS ─────────────────────────────────────────────────────────
 
   Widget _buildQuickActions(ColorScheme colors, AppLocalizations l10n) {
     final actions = _getQuickActions(l10n);
@@ -442,8 +439,6 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
     );
   }
 
-  // ── CHAT LIST ─────────────────────────────────────────────────────────────
-
   Widget _buildChatList(ColorScheme colors) {
     return ListView.builder(
       controller: _scrollCtrl,
@@ -457,16 +452,15 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
     if (msg.isUser) {
       return _buildUserBubble(msg, colors);
     }
-    return _buildKinderBubble(msg, colors);
+    return _buildBuddyBubble(msg, colors);
   }
 
-  Widget _buildKinderBubble(ChatMessage msg, ColorScheme colors) {
+  Widget _buildBuddyBubble(ChatMessage msg, ColorScheme colors) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          // Mini Kinder avatar
           Container(
             width: 32,
             height: 32,
@@ -478,10 +472,9 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
               shape: BoxShape.circle,
             ),
             child: const Center(
-              child: Text('⭐', style: TextStyle(fontSize: 14)),
+              child: Text('🤖', style: TextStyle(fontSize: 14)),
             ),
           ),
-          // Bubble
           Flexible(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -529,8 +522,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
         children: [
           Flexible(
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               constraints: BoxConstraints(
                 maxWidth: MediaQuery.of(context).size.width * 0.68,
               ),
@@ -572,9 +564,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
     );
   }
 
-  // ── INPUT BAR ─────────────────────────────────────────────────────────────
-
-  Widget _buildInputBar(ColorScheme colors) {
+  Widget _buildInputBar(ColorScheme colors, AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -590,7 +580,6 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
         top: false,
         child: Row(
           children: [
-            // Voice / text toggle
             InkWell(
               onTap: () => setState(() => _isVoiceMode = !_isVoiceMode),
               borderRadius: BorderRadius.circular(14),
@@ -614,8 +603,6 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
               ),
             ),
             const SizedBox(width: 8),
-
-            // Text field
             Expanded(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -626,12 +613,11 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
                 child: TextField(
                   controller: _textCtrl,
                   decoration: InputDecoration(
-                  hintText: _isVoiceMode
-                      ? AppLocalizations.of(context)!.tapMicToSpeak
-                      : AppLocalizations.of(context)!.askKinderAnything,
+                    hintText: _isVoiceMode
+                        ? l10n.tapMicToSpeak
+                        : l10n.askKinderAnything,
                     border: InputBorder.none,
-                    contentPadding:
-                        const EdgeInsets.symmetric(vertical: 11),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 11),
                   ),
                   style: TextStyle(
                     fontSize: AppConstants.fontSize,
@@ -643,8 +629,6 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
               ),
             ),
             const SizedBox(width: 8),
-
-            // Send button
             InkWell(
               onTap: _sendMessage,
               borderRadius: BorderRadius.circular(22),

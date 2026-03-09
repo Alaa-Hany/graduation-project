@@ -4,10 +4,6 @@ import 'package:kinder_world/app.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 
-/// IMPORTANT:
-/// All UI text must use AppLocalizations.
-/// Hardcoded strings are NOT allowed.
-
 class ParentTermsScreen extends StatelessWidget {
   const ParentTermsScreen({super.key});
 
@@ -187,8 +183,8 @@ extension _LegalStyleConfigExt on _LegalPageStyle {
           accent: const Color(0xFF9A3F1C),
           heroGradient: const LinearGradient(
             colors: [
-              Color(0xFFFFE2CF),
-              Color(0xFFF6D1C1)
+             Color(0xFFFFE2CF),
+             Color(0xFFF6D1C1)
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -207,8 +203,8 @@ extension _LegalStyleConfigExt on _LegalPageStyle {
           accent: const Color(0xFF1F6FEB),
           heroGradient: const LinearGradient(
             colors: [
-              Color(0xFFDDEBFF),
-              Color(0xFFCDE0FF)
+               Color(0xFFDDEBFF),
+               Color(0xFFCDE0FF)
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -227,8 +223,8 @@ extension _LegalStyleConfigExt on _LegalPageStyle {
           accent: const Color(0xFF2E7D32),
           heroGradient: const LinearGradient(
             colors: [
-              Color(0xFFD7F5DD),
-              Color(0xFFC5EED0)
+               Color(0xFFD7F5DD),
+               Color(0xFFC5EED0)
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,

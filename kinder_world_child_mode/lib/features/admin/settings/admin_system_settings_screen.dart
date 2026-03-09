@@ -32,8 +32,9 @@ class _AdminSystemSettingsScreenState
       _error = null;
     });
     try {
-      final payload =
-          await ref.read(adminManagementRepositoryProvider).fetchAdminSettings();
+      final payload = await ref
+          .read(adminManagementRepositoryProvider)
+          .fetchAdminSettings();
       if (!mounted) return;
       setState(() {
         _payload = payload;
@@ -58,7 +59,7 @@ class _AdminSystemSettingsScreenState
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final admin = ref.watch(currentAdminProvider);
     if (!(admin?.hasPermission('admin.settings.edit') ?? false)) {
       return const AdminPermissionPlaceholder();
@@ -69,13 +70,12 @@ class _AdminSystemSettingsScreenState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            l10n?.adminSystemSettingsTitle ?? 'System settings',
+            l10n.adminSystemSettingsTitle,
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 8),
           Text(
-            l10n?.adminSystemSettingsSubtitle ??
-                'Control global maintenance mode, feature flags, and defaults.',
+            l10n.adminSystemSettingsSubtitle,
           ),
           const SizedBox(height: 20),
           if (_loading)
@@ -84,7 +84,9 @@ class _AdminSystemSettingsScreenState
               child: Center(child: CircularProgressIndicator()),
             )
           else if (_error != null)
-            Card(child: Padding(padding: const EdgeInsets.all(16), child: Text(_error!)))
+            Card(
+                child: Padding(
+                    padding: const EdgeInsets.all(16), child: Text(_error!)))
           else if (_payload != null)
             _buildSettings(context, l10n, _payload!),
         ],
@@ -94,7 +96,7 @@ class _AdminSystemSettingsScreenState
 
   Widget _buildSettings(
     BuildContext context,
-    AppLocalizations? l10n,
+    AppLocalizations l10n,
     AdminSystemSettingsPayload payload,
   ) {
     final effective = payload.effective;
@@ -104,8 +106,8 @@ class _AdminSystemSettingsScreenState
     final defaults = effective['defaults'] is Map
         ? Map<String, dynamic>.from(effective['defaults'] as Map)
         : <String, dynamic>{};
-    final defaultPlanController =
-        TextEditingController(text: defaults['default_plan']?.toString() ?? 'FREE');
+    final defaultPlanController = TextEditingController(
+        text: defaults['default_plan']?.toString() ?? 'FREE');
     final childLimitController = TextEditingController(
       text: defaults['default_child_limit']?.toString() ?? '1',
     );
@@ -114,8 +116,8 @@ class _AdminSystemSettingsScreenState
       children: [
         Card(
           child: SwitchListTile(
-            title: Text(l10n?.adminSettingsMaintenanceMode ?? 'Maintenance mode'),
-            subtitle: Text(l10n?.adminSettingsMaintenanceModeHint ?? 'Temporarily disable normal app access.'),
+            title: Text(l10n.adminSettingsMaintenanceMode),
+            subtitle: Text(l10n.adminSettingsMaintenanceModeHint),
             value: effective['maintenance_mode'] as bool? ?? false,
             onChanged: (value) => _save({'maintenance_mode': value}),
           ),
@@ -123,8 +125,8 @@ class _AdminSystemSettingsScreenState
         const SizedBox(height: 12),
         Card(
           child: SwitchListTile(
-            title: Text(l10n?.adminSettingsRegistrationEnabled ?? 'Registration enabled'),
-            subtitle: Text(l10n?.adminSettingsRegistrationEnabledHint ?? 'Allow new parent registrations.'),
+            title: Text(l10n.adminSettingsRegistrationEnabled),
+            subtitle: Text(l10n.adminSettingsRegistrationEnabledHint),
             value: effective['registration_enabled'] as bool? ?? true,
             onChanged: (value) => _save({'registration_enabled': value}),
           ),
@@ -132,8 +134,8 @@ class _AdminSystemSettingsScreenState
         const SizedBox(height: 12),
         Card(
           child: SwitchListTile(
-            title: Text(l10n?.adminSettingsAiBuddyEnabled ?? 'AI Buddy enabled'),
-            subtitle: Text(l10n?.adminSettingsAiBuddyEnabledHint ?? 'Enable AI Buddy across the app.'),
+            title: Text(l10n.adminSettingsAiBuddyEnabled),
+            subtitle: Text(l10n.adminSettingsAiBuddyEnabledHint),
             value: effective['ai_buddy_enabled'] as bool? ?? true,
             onChanged: (value) => _save({'ai_buddy_enabled': value}),
           ),
@@ -145,7 +147,7 @@ class _AdminSystemSettingsScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l10n?.adminSettingsFeatureFlagsTitle ?? 'Feature flags',
+                Text(l10n.adminSettingsFeatureFlagsTitle,
                     style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 12),
                 ...featureFlags.entries.map(
@@ -171,20 +173,20 @@ class _AdminSystemSettingsScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l10n?.adminSettingsDefaultsTitle ?? 'Defaults',
+                Text(l10n.adminSettingsDefaultsTitle,
                     style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 12),
                 TextField(
                   controller: defaultPlanController,
                   decoration: InputDecoration(
-                    labelText: l10n?.adminSettingsDefaultPlanLabel ?? 'Default plan',
+                    labelText: l10n.adminSettingsDefaultPlanLabel,
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: childLimitController,
                   decoration: InputDecoration(
-                    labelText: l10n?.adminSettingsDefaultChildLimitLabel ?? 'Default child limit',
+                    labelText: l10n.adminSettingsDefaultChildLimitLabel,
                   ),
                   keyboardType: TextInputType.number,
                 ),
@@ -199,7 +201,7 @@ class _AdminSystemSettingsScreenState
                           int.tryParse(childLimitController.text.trim()) ?? 1,
                     }
                   }),
-                  child: Text(l10n?.save ?? 'Save'),
+                  child: Text(l10n.save),
                 ),
               ],
             ),

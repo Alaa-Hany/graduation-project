@@ -184,8 +184,7 @@ class _NavItemWidget extends StatelessWidget {
               duration: const Duration(milliseconds: 220),
               style: TextStyle(
                 fontSize: 10,
-                fontWeight:
-                    isSelected ? FontWeight.w700 : FontWeight.w500,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 color: color,
               ),
               child: Text(item.label),
@@ -211,15 +210,21 @@ class ChildHomeContent extends ConsumerStatefulWidget {
 class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
   int _selectedAxisIndex = 0;
 
+  /// Cached Future so [_buildDailyGoal]'s FutureBuilder does not create a new
+  /// network call on every rebuild.
+  Future<List<ProgressRecord>>? _dailyGoalFuture;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final childProfile = ref.read(currentChildProvider);
       if (childProfile != null) {
-        ref
-            .read(progressControllerProvider.notifier)
-            .loadTodayProgress(childProfile.id);
+        setState(() {
+          _dailyGoalFuture = ref
+              .read(progressControllerProvider.notifier)
+              .loadTodayProgress(childProfile.id);
+        });
       }
     });
   }
@@ -608,9 +613,8 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
     final textTheme = theme.textTheme;
     final childTheme = context.childTheme;
     return FutureBuilder<List<ProgressRecord>>(
-      future: ref
-          .read(progressControllerProvider.notifier)
-          .loadTodayProgress(child.id),
+      // Use the cached future — never recreated on rebuild.
+      future: _dailyGoalFuture,
       builder: (context, snapshot) {
         final l10n = AppLocalizations.of(context)!;
         final done = snapshot.hasData ? snapshot.data!.length : 0;
@@ -622,9 +626,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ChildSectionHeader(
-              title: isComplete
-                  ? '${l10n.dailyGoal} ✅'
-                  : l10n.dailyGoal,
+              title: isComplete ? '${l10n.dailyGoal} ✅' : l10n.dailyGoal,
             ),
             const SizedBox(height: 12),
             KinderCard(
@@ -647,9 +649,8 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                         style: TextStyle(
                           fontSize: AppConstants.fontSize,
                           fontWeight: FontWeight.w700,
-                          color: isComplete
-                              ? colors.onPrimary
-                              : colors.onSurface,
+                          color:
+                              isComplete ? colors.onPrimary : colors.onSurface,
                         ),
                       ),
                       Container(
@@ -660,8 +661,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                         decoration: BoxDecoration(
                           color: isComplete
                               ? colors.onPrimary.withValues(alpha: 0.25)
-                              : childTheme.success
-                                  .withValues(alpha: 0.12),
+                              : childTheme.success.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -686,9 +686,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                           ? colors.onPrimary.withValues(alpha: 0.25)
                           : colors.surfaceContainerHighest,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        isComplete
-                            ? colors.onPrimary
-                            : childTheme.success,
+                        isComplete ? colors.onPrimary : childTheme.success,
                       ),
                       minHeight: 10,
                     ),
@@ -871,10 +869,11 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
       1 => l10n.yesterdayLabel,
       _ => l10n.daysAgoCount(dayOffset),
     };
-    return '$dayLabel • ${l10n.minutesShort(minutes)}';
+    return '$dayLabel | ${l10n.minutesShort(minutes)}';
   }
 
   Widget _buildHistoryCard(_HistoryItem item, _AxisHistory axis) {
+    final l10n = AppLocalizations.of(context)!;
     return KinderCard(
       padding: const EdgeInsets.all(14),
       child: Row(
@@ -919,7 +918,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
-              '+${item.xp} XP',
+              l10n.activityXp(item.xp),
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
@@ -1034,7 +1033,6 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
       ],
     );
   }
-
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

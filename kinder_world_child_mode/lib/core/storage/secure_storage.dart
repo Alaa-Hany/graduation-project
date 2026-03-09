@@ -466,6 +466,7 @@ class SecureStorage {
     try {
       // Clear auth tokens and session
       await _storage.delete(key: _keyAuthToken);
+      await _storage.delete(key: _keyRefreshToken);
       await _storage.delete(key: _keyUserRole);
       await _storage.delete(key: _keyUserId);
       await _storage.delete(key: _keyUserEmail);

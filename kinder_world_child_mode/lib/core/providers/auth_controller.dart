@@ -10,6 +10,7 @@ import 'package:logger/logger.dart';
 
 /// Authentication state
 class AuthState {
+  static const Object _sentinel = Object();
   final User? user;
   final bool isLoading;
   final String? error;
@@ -25,13 +26,13 @@ class AuthState {
   AuthState copyWith({
     User? user,
     bool? isLoading,
-    String? error,
+    Object? error = _sentinel,
     bool? isAuthenticated,
   }) {
     return AuthState(
       user: user ?? this.user,
       isLoading: isLoading ?? this.isLoading,
-      error: error ?? this.error,
+      error: identical(error, _sentinel) ? this.error : error as String?,
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
     );
   }
@@ -61,8 +62,9 @@ class AuthController extends StateNotifier<AuthState> {
   Future<void> _initialize() async {
     _logger.d('Initializing auth controller');
     
-    final isAuthenticated = await _authRepository.isAuthenticated();
+    final storedIsAuthenticated = await _authRepository.isAuthenticated();
     final user = await _authRepository.getCurrentUser();
+    final isAuthenticated = user != null && storedIsAuthenticated;
     
     state = state.copyWith(
       isAuthenticated: isAuthenticated,
@@ -447,6 +449,7 @@ final authServiceProvider = Provider<AuthService>((ref) {
 });
 
 /// Main auth controller provider - SINGLE SOURCE OF TRUTH
+/// Not autoDispose: auth state must persist across navigation to avoid re-initialization.
 final authControllerProvider = StateNotifierProvider<AuthController, AuthState>((ref) {
   final authRepository = ref.watch(authRepositoryProvider);
   final logger = ref.watch(loggerProvider);
@@ -470,7 +473,7 @@ final currentUserProvider = Provider<User?>((ref) {
 });
 
 /// Get current authenticated user - fetches fresh data from API
-final meProvider = FutureProvider<User?>((ref) async {
+final meProvider = FutureProvider.autoDispose<User?>((ref) async {
   final authRepository = ref.watch(authRepositoryProvider);
   return await authRepository.getMe();
 });

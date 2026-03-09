@@ -1,3 +1,8 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// DEAD CODE — ThemeModeToggle widget is not imported anywhere in the app.
+// The app uses inline IconButton toggles in child_home_screen.dart instead.
+// Safe to delete or adopt as a shared widget.
+// ─────────────────────────────────────────────────────────────────────────────
 import 'package:flutter/material.dart';
 
 class ThemeModeToggle extends StatelessWidget {

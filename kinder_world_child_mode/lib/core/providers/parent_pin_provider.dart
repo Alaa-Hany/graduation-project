@@ -175,7 +175,7 @@ class ParentPinNotifier extends StateNotifier<ParentPinState> {
 }
 
 // Provider
-final parentPinProvider = StateNotifierProvider<ParentPinNotifier, ParentPinState>((ref) {
+final parentPinProvider = StateNotifierProvider.autoDispose<ParentPinNotifier, ParentPinState>((ref) {
   final secureStorage = ref.watch(secureStorageProvider);
   final logger = ref.watch(loggerProvider);
   

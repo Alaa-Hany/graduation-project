@@ -5,7 +5,9 @@ import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/app.dart';
 
-class LegalScreen extends ConsumerWidget {
+/// LegalScreen uses ConsumerStatefulWidget so the network Future is created
+/// once in [initState] and cached — preventing a new HTTP request on every rebuild.
+class LegalScreen extends ConsumerStatefulWidget {
   final String type;
 
   const LegalScreen({
@@ -14,12 +16,27 @@ class LegalScreen extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LegalScreen> createState() => _LegalScreenState();
+}
+
+class _LegalScreenState extends ConsumerState<LegalScreen> {
+  late Future<Map<String, dynamic>> _contentFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _contentFuture = ref
+        .read(networkServiceProvider)
+        .get<Map<String, dynamic>>(_getEndpoint(widget.type))
+        .then((value) => value.data ?? {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final title = _getTitle(type, l10n);
+    final title = _getTitle(widget.type, l10n);
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final endpoint = _getEndpoint(type);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -36,16 +53,21 @@ class LegalScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: Icon(Icons.refresh, color: colors.onSurface),
-            onPressed: () {},
+            onPressed: () {
+              // Re-fetch on manual refresh
+              setState(() {
+                _contentFuture = ref
+                    .read(networkServiceProvider)
+                    .get<Map<String, dynamic>>(_getEndpoint(widget.type))
+                    .then((value) => value.data ?? {});
+              });
+            },
           ),
         ],
       ),
       body: SafeArea(
         child: FutureBuilder<Map<String, dynamic>>(
-          future: ref
-              .read(networkServiceProvider)
-              .get<Map<String, dynamic>>(endpoint)
-              .then((value) => value.data ?? {}),
+          future: _contentFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -73,7 +95,7 @@ class LegalScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        _getPlaceholder(type, l10n),
+                        _getPlaceholder(widget.type, l10n),
                         textAlign: TextAlign.center,
                         style: textTheme.bodyMedium?.copyWith(
                           fontSize: 16,
@@ -130,7 +152,7 @@ class LegalScreen extends ConsumerWidget {
     }
   }
 
-  String _getEndpoint(String type) {
+  static String _getEndpoint(String type) {
     switch (type) {
       case 'terms':
         return '/legal/terms';

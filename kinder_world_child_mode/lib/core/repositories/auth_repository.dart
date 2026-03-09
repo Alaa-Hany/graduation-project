@@ -100,8 +100,9 @@ class AuthRepository {
 
   /// Get current user from storage/API
   Future<User?> getCurrentUser() async {
+    String? role;
     try {
-      final role = await _secureStorage.getUserRole();
+      role = await _secureStorage.getUserRole();
       if (role == null) return null;
 
       if (role == UserRoles.child) {
@@ -124,7 +125,25 @@ class AuthRepository {
       if (data == null) return null;
       return _userFromJson(data['user']);
     } on DioException catch (e) {
+      final statusCode = e.response?.statusCode;
       _logger.e('Error getting current user: ${e.message}');
+      if (role == UserRoles.parent && statusCode == 401) {
+        final refreshedToken = await refreshToken();
+        if (refreshedToken != null && refreshedToken.isNotEmpty) {
+          try {
+            final retryResponse =
+                await _networkService.get<Map<String, dynamic>>('/auth/me');
+            final retryData = retryResponse.data;
+            if (retryData == null) return null;
+            return _userFromJson(retryData['user']);
+          } on DioException catch (retryError) {
+            _logger.e(
+              'Error retrying current user after refresh: ${retryError.message}',
+            );
+          }
+        }
+        await _secureStorage.clearAuthOnly();
+      }
       return null;
     } catch (e) {
       _logger.e('Error getting current user: $e');

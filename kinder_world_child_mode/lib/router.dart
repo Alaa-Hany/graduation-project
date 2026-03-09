@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter/foundation.dart';
 
 import 'package:kinder_world/app.dart';
 
@@ -169,25 +170,50 @@ bool _isParentAuthRoute(String path) {
 bool _isAnyChildRoute(String path) => path.startsWith('/child/');
 bool _isAnyParentRoute(String path) => path.startsWith('/parent/');
 
+class _RouterRefreshListenable extends ChangeNotifier {
+  _RouterRefreshListenable(this.ref) {
+    _subscription = ref.listen<AdminAuthState>(
+      adminAuthProvider,
+      (_, __) => notifyListeners(),
+    );
+  }
+
+  final Ref ref;
+  late final ProviderSubscription<AdminAuthState> _subscription;
+
+  @override
+  void dispose() {
+    _subscription.close();
+    super.dispose();
+  }
+}
+
 // Router provider
 final routerProvider = Provider<GoRouter>((ref) {
-  final secureStorage = ref.watch(secureStorageProvider);
-  final logger = ref.watch(loggerProvider);
-  final adminAuthState = ref.watch(adminAuthProvider);
+  final secureStorage = ref.read(secureStorageProvider);
+  final logger = ref.read(loggerProvider);
+  final refreshListenable = _RouterRefreshListenable(ref);
+  ref.onDispose(refreshListenable.dispose);
 
   return GoRouter(
     initialLocation: Routes.splash,
     debugLogDiagnostics: true,
+    refreshListenable: refreshListenable,
 
     // Important: keep redirect logic strict + stable to avoid loops.
     redirect: (context, state) async {
       final path = state.uri.path;
+      final adminAuthState = ref.read(adminAuthProvider);
 
       // Always allow public/system routes
       if (_isPublicRoute(path)) return null;
 
       // ── Admin route guard ──────────────────────────────────────────────
       if (_isAdminRoute(path)) {
+        if (adminAuthState.status == AdminAuthStatus.initial ||
+            adminAuthState.status == AdminAuthStatus.loading) {
+          return null;
+        }
         if (path == Routes.adminLogin) {
           return adminAuthState.isAuthenticated ? Routes.adminDashboard : null;
         }
@@ -432,8 +458,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           }
           if (child == null) {
             return ErrorScreen(
-                error: AppLocalizations.of(context)?.childProfileNotFound ??
-                    'Child profile not found');
+              error: AppLocalizations.of(context)!.childProfileNotFound,
+            );
           }
           return ParentChildProfileScreen(child: child);
         },
@@ -596,8 +622,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.error,
         builder: (context, state) => ErrorScreen(
           error: state.extra as String? ??
-              (AppLocalizations.of(context)?.unexpectedError ??
-                  'An unexpected error occurred'),
+              AppLocalizations.of(context)!.unexpectedError,
         ),
       ),
       GoRoute(
@@ -618,8 +643,8 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
 
     errorBuilder: (context, state) => ErrorScreen(
-      error: state.error?.toString() ??
-          (AppLocalizations.of(context)?.pageNotFound ?? 'Page not found'),
+      error:
+          state.error?.toString() ?? AppLocalizations.of(context)!.pageNotFound,
     ),
   );
 });

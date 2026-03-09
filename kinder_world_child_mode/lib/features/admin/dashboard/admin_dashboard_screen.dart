@@ -35,14 +35,26 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final authState = ref.watch(adminAuthProvider);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    if (authState.status == AdminAuthStatus.initial ||
+        authState.status == AdminAuthStatus.loading) {
+      return Scaffold(
+        backgroundColor: colorScheme.surfaceContainerLowest,
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     if (authState.status == AdminAuthStatus.unauthenticated) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) context.go(Routes.adminLogin);
+        if (mounted) {
+          context.go(Routes.adminLogin);
+        }
       });
     }
 
@@ -62,7 +74,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_rounded),
             onPressed: () => context.go(Routes.selectUserType),
-            tooltip: l10n?.goBack ?? 'Back',
+            tooltip: l10n.goBack,
           ),
           title: Row(
             children: [
@@ -74,7 +86,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               const SizedBox(width: 8),
               Flexible(
                 child: Text(
-                  l10n?.adminDashboard ?? 'Admin Dashboard',
+                  l10n.adminDashboard,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
@@ -87,11 +99,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             IconButton(
               icon: const Icon(Icons.menu),
               onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-              tooltip: l10n?.adminMenuTooltip ?? 'Menu',
+              tooltip: l10n.adminMenuTooltip,
             ),
             IconButton(
               icon: const Icon(Icons.refresh_outlined),
-              tooltip: l10n?.adminRefreshTooltip ?? 'Refresh',
+              tooltip: l10n.adminRefreshTooltip,
               onPressed: () =>
                   ref.read(adminAuthProvider.notifier).refreshProfile(),
             ),
@@ -128,7 +140,9 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
       }
     }
     if (path == Routes.adminChildren) return const AdminChildrenScreen();
-    if (path == Routes.adminContent) return const AdminContentManagementScreen();
+    if (path == Routes.adminContent) {
+      return const AdminContentManagementScreen();
+    }
     if (path == Routes.adminReports) return const AdminAnalyticsScreen();
     if (path == Routes.adminSupport) return const AdminSupportTicketsScreen();
     if (path == Routes.adminSubscriptions) {
@@ -144,24 +158,23 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
 
   Future<void> _handleLogout(
     BuildContext context,
-    AppLocalizations? l10n,
+    AppLocalizations l10n,
   ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(l10n?.adminLogout ?? 'Logout'),
+        title: Text(l10n.adminLogout),
         content: Text(
-          l10n?.adminLogoutConfirm ??
-              'Are you sure you want to log out of the admin portal?',
+          l10n.adminLogoutConfirm,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n?.cancel ?? 'Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n?.adminLogout ?? 'Logout'),
+            child: Text(l10n.adminLogout),
           ),
         ],
       ),
@@ -186,7 +199,7 @@ class _AdminAvatarButton extends ConsumerWidget {
     final initials = _initials(admin?.name ?? admin?.email ?? 'A');
 
     return PopupMenuButton<String>(
-      tooltip: admin?.email ?? 'Admin',
+      tooltip: admin?.email ?? '',
       offset: const Offset(0, 48),
       child: CircleAvatar(
         radius: 18,
@@ -207,7 +220,7 @@ class _AdminAvatarButton extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                admin?.name ?? 'Admin',
+                admin?.name ?? admin?.email ?? '',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               if (admin?.email != null)
@@ -232,7 +245,7 @@ class _AdminAvatarButton extends ConsumerWidget {
               Icon(Icons.logout, size: 18, color: colorScheme.error),
               const SizedBox(width: 8),
               Text(
-                AppLocalizations.of(ctx)?.adminLogout ?? 'Logout',
+                AppLocalizations.of(ctx)!.adminLogout,
                 style: TextStyle(color: colorScheme.error),
               ),
             ],
@@ -250,6 +263,6 @@ class _AdminAvatarButton extends ConsumerWidget {
     if (parts.length >= 2) {
       return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
     }
-    return name.isNotEmpty ? name[0].toUpperCase() : 'A';
+    return name.isNotEmpty ? name[0].toUpperCase() : '';
   }
 }

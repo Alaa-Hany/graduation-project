@@ -5,7 +5,12 @@ import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/admin_parent_user.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/management/admin_management_repository.dart';
+import 'package:kinder_world/features/admin/shared/admin_confirm_dialog.dart';
+import 'package:kinder_world/features/admin/shared/admin_filter_bar.dart';
+import 'package:kinder_world/features/admin/shared/admin_form_dialog.dart';
 import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
+import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
+import 'package:kinder_world/features/admin/shared/admin_table_widgets.dart';
 import 'package:kinder_world/router.dart';
 
 /// IMPORTANT:
@@ -91,9 +96,9 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
     final saved = await showDialog<bool>(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text(l10n.adminUsersEditTitle),
-          content: StatefulBuilder(
+        return AdminFormDialog(
+          title: l10n.adminUsersEditTitle,
+          child: StatefulBuilder(
             builder: (context, setState) {
               return Column(
                 mainAxisSize: MainAxisSize.min,
@@ -124,16 +129,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
               );
             },
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(l10n.cancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(l10n.save),
-            ),
-          ],
+          onSubmit: () => Navigator.pop(context, true),
         );
       },
     );
@@ -148,45 +144,22 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
         );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content: Text(
-              l10n.adminUsersUpdatedMessage)),
+      SnackBar(content: Text(l10n.adminUsersUpdatedMessage)),
     );
     await _loadUsers();
   }
 
   Future<void> _toggleEnabled(AdminParentUser user, bool enabled) async {
     final l10n = AppLocalizations.of(context)!;
-    final confirmed = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text(
-              enabled
-                  ? l10n.adminUsersEnableTitle
-                  : l10n.adminUsersDisableTitle,
-            ),
-            content: Text(
-              enabled
-                  ? l10n.adminUsersEnableConfirm
-                  : l10n.adminUsersDisableConfirm,
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text(l10n.cancel),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: Text(
-                  enabled
-                      ? l10n.adminUsersEnableAction
-                      : l10n.adminUsersDisableAction,
-                ),
-              ),
-            ],
-          ),
-        ) ??
-        false;
+    final confirmed = await showAdminConfirmDialog(
+      context: context,
+      title: enabled ? l10n.adminUsersEnableTitle : l10n.adminUsersDisableTitle,
+      message: enabled
+          ? l10n.adminUsersEnableConfirm
+          : l10n.adminUsersDisableConfirm,
+      confirmLabel:
+          enabled ? l10n.adminUsersEnableAction : l10n.adminUsersDisableAction,
+    );
     if (!confirmed) return;
 
     await ref
@@ -225,7 +198,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
           const SizedBox(height: 8),
           Text(l10n.adminUsersSubtitle),
           const SizedBox(height: 24),
-          Row(
+          AdminFilterBar(
             children: [
               Expanded(
                 child: TextField(
@@ -281,124 +254,85 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
           ),
           const SizedBox(height: 20),
           if (_loading)
-            const Center(
-                child: Padding(
-              padding: EdgeInsets.all(40),
-              child: CircularProgressIndicator(),
-            ))
+            const AdminLoadingState()
           else if (_error != null)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(_error!),
-              ),
-            )
+            AdminErrorState(message: _error!, onRetry: _loadUsers)
           else
-            Card(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: DataTable(
-                  columns: [
-                    DataColumn(
-                        label: Text(l10n.adminUsersNameColumn)),
-                    DataColumn(
-                        label: Text(l10n.adminUsersEmailColumn)),
-                    DataColumn(
-                        label: Text(l10n.adminUsersPlanColumn)),
-                    DataColumn(
-                        label:
-                            Text(l10n.adminUsersChildrenColumn)),
-                    DataColumn(
-                        label: Text(l10n.adminUsersStatusColumn)),
-                    DataColumn(
-                        label:
-                            Text(l10n.adminUsersActionsColumn)),
-                  ],
-                  rows: _users
-                      .map(
-                        (user) => DataRow(
-                          cells: [
-                            DataCell(Text(user.name.isEmpty ? '—' : user.name)),
-                            DataCell(Text(user.email)),
-                            DataCell(Text(user.plan)),
-                            DataCell(Text('${user.childCount}')),
-                            DataCell(
-                              Chip(
-                                label: Text(
+            AdminDataTableCard(
+              columns: [
+                DataColumn(label: Text(l10n.adminUsersNameColumn)),
+                DataColumn(label: Text(l10n.adminUsersEmailColumn)),
+                DataColumn(label: Text(l10n.adminUsersPlanColumn)),
+                DataColumn(label: Text(l10n.adminUsersChildrenColumn)),
+                DataColumn(label: Text(l10n.adminUsersStatusColumn)),
+                DataColumn(label: Text(l10n.adminUsersActionsColumn)),
+              ],
+              rows: _users
+                  .map(
+                    (user) => DataRow(
+                      cells: [
+                        DataCell(Text(user.name.isEmpty ? '-' : user.name)),
+                        DataCell(Text(user.email)),
+                        DataCell(Text(user.plan)),
+                        DataCell(Text('${user.childCount}')),
+                        DataCell(
+                          Chip(
+                            label: Text(
+                              user.isActive
+                                  ? (l10n.adminUsersStatusActive)
+                                  : (l10n.adminUsersStatusDisabled),
+                            ),
+                          ),
+                        ),
+                        DataCell(
+                          Wrap(
+                            spacing: 8,
+                            children: [
+                              TextButton(
+                                onPressed: () => context
+                                    .go('${Routes.adminUsers}/${user.id}'),
+                                child: Text(l10n.adminUsersViewAction),
+                              ),
+                              TextButton(
+                                onPressed: () => _showEditDialog(user),
+                                child: Text(l10n.edit),
+                              ),
+                              TextButton(
+                                onPressed: () =>
+                                    _toggleEnabled(user, !user.isActive),
+                                child: Text(
                                   user.isActive
-                                      ? (l10n.adminUsersStatusActive)
-                                      : (l10n.adminUsersStatusDisabled),
+                                      ? (l10n.adminUsersDisableAction)
+                                      : (l10n.adminUsersEnableAction),
                                 ),
                               ),
-                            ),
-                            DataCell(
-                              Wrap(
-                                spacing: 8,
-                                children: [
-                                  TextButton(
-                                    onPressed: () => context
-                                        .go('${Routes.adminUsers}/${user.id}'),
-                                    child: Text(
-                                        l10n.adminUsersViewAction),
-                                  ),
-                                  TextButton(
-                                    onPressed: () => _showEditDialog(user),
-                                    child: Text(l10n.edit),
-                                  ),
-                                  TextButton(
-                                    onPressed: () =>
-                                        _toggleEnabled(user, !user.isActive),
-                                    child: Text(
-                                      user.isActive
-                                          ? (l10n.adminUsersDisableAction)
-                                          : (l10n.adminUsersEnableAction),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      )
-                      .toList(),
-                ),
-              ),
+                      ],
+                    ),
+                  )
+                  .toList(),
             ),
           const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                l10n.adminPaginationSummary(
-                      (_pagination['page'] as int?) ?? _page,
-                      (_pagination['total_pages'] as int?) ?? 1,
-                      (_pagination['total'] as int?) ?? _users.length,
-                    ),
-              ),
-              Row(
-                children: [
-                  OutlinedButton(
-                    onPressed: ((_pagination['has_previous'] as bool?) ?? false)
-                        ? () {
-                            setState(() => _page -= 1);
-                            _loadUsers();
-                          }
-                        : null,
-                    child: Text(l10n.adminPaginationPrevious),
-                  ),
-                  const SizedBox(width: 8),
-                  FilledButton(
-                    onPressed: ((_pagination['has_next'] as bool?) ?? false)
-                        ? () {
-                            setState(() => _page += 1);
-                            _loadUsers();
-                          }
-                        : null,
-                    child: Text(l10n.adminPaginationNext),
-                  ),
-                ],
-              ),
-            ],
+          AdminPaginationBar(
+            summary: l10n.adminPaginationSummary(
+              (_pagination['page'] as int?) ?? _page,
+              (_pagination['total_pages'] as int?) ?? 1,
+              (_pagination['total'] as int?) ?? _users.length,
+            ),
+            hasPrevious: (_pagination['has_previous'] as bool?) ?? false,
+            hasNext: (_pagination['has_next'] as bool?) ?? false,
+            previousLabel: l10n.adminPaginationPrevious,
+            nextLabel: l10n.adminPaginationNext,
+            onPrevious: () {
+              setState(() => _page -= 1);
+              _loadUsers();
+            },
+            onNext: () {
+              setState(() => _page += 1);
+              _loadUsers();
+            },
           ),
         ],
       ),

@@ -5,7 +5,12 @@ import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/admin_child_record.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/management/admin_management_repository.dart';
+import 'package:kinder_world/features/admin/shared/admin_confirm_dialog.dart';
+import 'package:kinder_world/features/admin/shared/admin_filter_bar.dart';
+import 'package:kinder_world/features/admin/shared/admin_form_dialog.dart';
 import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
+import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
+import 'package:kinder_world/features/admin/shared/admin_table_widgets.dart';
 import 'package:kinder_world/router.dart';
 
 /// IMPORTANT:
@@ -16,7 +21,8 @@ class AdminChildrenScreen extends ConsumerStatefulWidget {
   const AdminChildrenScreen({super.key});
 
   @override
-  ConsumerState<AdminChildrenScreen> createState() => _AdminChildrenScreenState();
+  ConsumerState<AdminChildrenScreen> createState() =>
+      _AdminChildrenScreenState();
 }
 
 class _AdminChildrenScreenState extends ConsumerState<AdminChildrenScreen> {
@@ -48,12 +54,13 @@ class _AdminChildrenScreenState extends ConsumerState<AdminChildrenScreen> {
       _error = null;
     });
     try {
-      final response = await ref.read(adminManagementRepositoryProvider).fetchChildren(
-            parentId: _parentIdController.text.trim(),
-            age: _ageController.text.trim(),
-            active: _active,
-            page: _page,
-          );
+      final response =
+          await ref.read(adminManagementRepositoryProvider).fetchChildren(
+                parentId: _parentIdController.text.trim(),
+                age: _ageController.text.trim(),
+                active: _active,
+                page: _page,
+              );
       if (!mounted) return;
       setState(() {
         _children = response.items;
@@ -72,13 +79,14 @@ class _AdminChildrenScreenState extends ConsumerState<AdminChildrenScreen> {
   Future<void> _showEditDialog(AdminChildRecord child) async {
     final l10n = AppLocalizations.of(context)!;
     final nameController = TextEditingController(text: child.name);
-    final ageController = TextEditingController(text: child.age?.toString() ?? '');
+    final ageController =
+        TextEditingController(text: child.age?.toString() ?? '');
     final avatarController = TextEditingController(text: child.avatar ?? '');
     final saved = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.adminChildrenEditTitle),
-        content: Column(
+      builder: (context) => AdminFormDialog(
+        title: l10n.adminChildrenEditTitle,
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
@@ -103,16 +111,7 @@ class _AdminChildrenScreenState extends ConsumerState<AdminChildrenScreen> {
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(l10n.save),
-          ),
-        ],
+        onSubmit: () => Navigator.pop(context, true),
       ),
     );
     if (saved != true) return;
@@ -132,26 +131,12 @@ class _AdminChildrenScreenState extends ConsumerState<AdminChildrenScreen> {
 
   Future<void> _deactivate(AdminChildRecord child) async {
     final l10n = AppLocalizations.of(context)!;
-    final confirmed = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text(l10n.adminChildrenDeactivateTitle),
-            content: Text(
-              l10n.adminChildrenDeactivateConfirm,
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text(l10n.cancel),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: Text(l10n.adminChildrenDeactivateAction),
-              ),
-            ],
-          ),
-        ) ??
-        false;
+    final confirmed = await showAdminConfirmDialog(
+      context: context,
+      title: l10n.adminChildrenDeactivateTitle,
+      message: l10n.adminChildrenDeactivateConfirm,
+      confirmLabel: l10n.adminChildrenDeactivateAction,
+    );
     if (!confirmed) return;
 
     await ref.read(adminManagementRepositoryProvider).deactivateChild(child.id);
@@ -182,7 +167,7 @@ class _AdminChildrenScreenState extends ConsumerState<AdminChildrenScreen> {
           const SizedBox(height: 8),
           Text(l10n.adminChildrenSubtitle),
           const SizedBox(height: 24),
-          Row(
+          AdminFilterBar(
             children: [
               Expanded(
                 child: TextField(
@@ -250,106 +235,80 @@ class _AdminChildrenScreenState extends ConsumerState<AdminChildrenScreen> {
           ),
           const SizedBox(height: 20),
           if (_loading)
-            const Center(child: Padding(
-              padding: EdgeInsets.all(40),
-              child: CircularProgressIndicator(),
-            ))
+            const AdminLoadingState()
           else if (_error != null)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(_error!),
-              ),
-            )
+            AdminErrorState(message: _error!, onRetry: _loadChildren)
           else
-            Card(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: DataTable(
-                  columns: [
-                    DataColumn(label: Text(l10n.adminChildrenNameColumn)),
-                    DataColumn(label: Text(l10n.adminChildrenParentColumn)),
-                    DataColumn(label: Text(l10n.adminChildrenAgeColumn)),
-                    DataColumn(label: Text(l10n.adminChildrenStatusColumn)),
-                    DataColumn(label: Text(l10n.adminChildrenActionsColumn)),
-                  ],
-                  rows: _children
-                      .map(
-                        (child) => DataRow(
-                          cells: [
-                            DataCell(Text(child.name)),
-                            DataCell(Text('${child.parentId}')),
-                            DataCell(Text(child.age?.toString() ?? '—')),
-                            DataCell(
-                              Chip(
-                                label: Text(
-                                  child.isActive
-                                      ? (l10n.adminUsersStatusActive)
-                                      : (l10n.adminUsersStatusDisabled),
-                                ),
-                              ),
+            AdminDataTableCard(
+              columns: [
+                DataColumn(label: Text(l10n.adminChildrenNameColumn)),
+                DataColumn(label: Text(l10n.adminChildrenParentColumn)),
+                DataColumn(label: Text(l10n.adminChildrenAgeColumn)),
+                DataColumn(label: Text(l10n.adminChildrenStatusColumn)),
+                DataColumn(label: Text(l10n.adminChildrenActionsColumn)),
+              ],
+              rows: _children
+                  .map(
+                    (child) => DataRow(
+                      cells: [
+                        DataCell(Text(child.name)),
+                        DataCell(Text('${child.parentId}')),
+                        DataCell(Text(child.age?.toString() ?? '-')),
+                        DataCell(
+                          Chip(
+                            label: Text(
+                              child.isActive
+                                  ? (l10n.adminUsersStatusActive)
+                                  : (l10n.adminUsersStatusDisabled),
                             ),
-                            DataCell(
-                              Wrap(
-                                spacing: 8,
-                                children: [
-                                  TextButton(
-                                    onPressed: () => context.go('${Routes.adminChildren}/${child.id}'),
-                                    child: Text(l10n.adminUsersViewAction),
-                                  ),
-                                  TextButton(
-                                    onPressed: () => _showEditDialog(child),
-                                    child: Text(l10n.edit),
-                                  ),
-                                  TextButton(
-                                    onPressed: child.isActive ? () => _deactivate(child) : null,
-                                    child: Text(l10n.adminChildrenDeactivateAction),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
-                      )
-                      .toList(),
-                ),
-              ),
+                        DataCell(
+                          Wrap(
+                            spacing: 8,
+                            children: [
+                              TextButton(
+                                onPressed: () => context
+                                    .go('${Routes.adminChildren}/${child.id}'),
+                                child: Text(l10n.adminUsersViewAction),
+                              ),
+                              TextButton(
+                                onPressed: () => _showEditDialog(child),
+                                child: Text(l10n.edit),
+                              ),
+                              TextButton(
+                                onPressed: child.isActive
+                                    ? () => _deactivate(child)
+                                    : null,
+                                child: Text(l10n.adminChildrenDeactivateAction),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                  .toList(),
             ),
           const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                l10n.adminPaginationSummary(
-                      (_pagination['page'] as int?) ?? _page,
-                      (_pagination['total_pages'] as int?) ?? 1,
-                      (_pagination['total'] as int?) ?? _children.length,
-                    ),
-              ),
-              Row(
-                children: [
-                  OutlinedButton(
-                    onPressed: ((_pagination['has_previous'] as bool?) ?? false)
-                        ? () {
-                            setState(() => _page -= 1);
-                            _loadChildren();
-                          }
-                        : null,
-                    child: Text(l10n.adminPaginationPrevious),
-                  ),
-                  const SizedBox(width: 8),
-                  FilledButton(
-                    onPressed: ((_pagination['has_next'] as bool?) ?? false)
-                        ? () {
-                            setState(() => _page += 1);
-                            _loadChildren();
-                          }
-                        : null,
-                    child: Text(l10n.adminPaginationNext),
-                  ),
-                ],
-              ),
-            ],
+          AdminPaginationBar(
+            summary: l10n.adminPaginationSummary(
+              (_pagination['page'] as int?) ?? _page,
+              (_pagination['total_pages'] as int?) ?? 1,
+              (_pagination['total'] as int?) ?? _children.length,
+            ),
+            hasPrevious: (_pagination['has_previous'] as bool?) ?? false,
+            hasNext: (_pagination['has_next'] as bool?) ?? false,
+            previousLabel: l10n.adminPaginationPrevious,
+            nextLabel: l10n.adminPaginationNext,
+            onPrevious: () {
+              setState(() => _page -= 1);
+              _loadChildren();
+            },
+            onNext: () {
+              setState(() => _page += 1);
+              _loadChildren();
+            },
           ),
         ],
       ),

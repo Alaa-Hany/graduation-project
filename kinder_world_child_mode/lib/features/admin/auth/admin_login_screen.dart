@@ -41,7 +41,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final authState = ref.watch(adminAuthProvider);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -67,7 +67,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                       alignment: AlignmentDirectional.centerStart,
                       child: IconButton(
                         onPressed: () => context.go(Routes.selectUserType),
-                        tooltip: l10n?.goBack ?? 'Back',
+                        tooltip: l10n.goBack,
                         icon: const Icon(Icons.arrow_back_rounded),
                       ),
                     ),
@@ -92,18 +92,16 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                                 textInputAction: TextInputAction.next,
                                 autocorrect: false,
                                 decoration: InputDecoration(
-                                  labelText: l10n?.adminEmail ?? 'Admin Email',
+                                  labelText: l10n.adminEmail,
                                   prefixIcon: const Icon(Icons.email_outlined),
                                   border: const OutlineInputBorder(),
                                 ),
                                 validator: (v) {
                                   if (v == null || v.trim().isEmpty) {
-                                    return l10n?.adminEmailRequired ??
-                                        'Email is required';
+                                    return l10n.adminEmailRequired;
                                   }
                                   if (!v.contains('@')) {
-                                    return l10n?.adminEmailInvalid ??
-                                        'Enter a valid email';
+                                    return l10n.adminEmailInvalid;
                                   }
                                   return null;
                                 },
@@ -115,8 +113,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                                 textInputAction: TextInputAction.done,
                                 onFieldSubmitted: (_) => _submit(),
                                 decoration: InputDecoration(
-                                  labelText:
-                                      l10n?.adminPassword ?? 'Admin Password',
+                                  labelText: l10n.adminPassword,
                                   prefixIcon: const Icon(Icons.lock_outline),
                                   border: const OutlineInputBorder(),
                                   suffixIcon: IconButton(
@@ -133,8 +130,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                                 ),
                                 validator: (v) {
                                   if (v == null || v.isEmpty) {
-                                    return l10n?.adminPasswordRequired ??
-                                        'Password is required';
+                                    return l10n.adminPasswordRequired;
                                   }
                                   return null;
                                 },
@@ -163,7 +159,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                                         ),
                                       )
                                     : Text(
-                                        l10n?.adminSignIn ?? 'Sign In',
+                                        l10n.adminSignIn,
                                         style: const TextStyle(fontSize: 16),
                                       ),
                               ),
@@ -174,8 +170,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      l10n?.adminLoginFooter ??
-                          'Kinder World Admin Portal - authorised access only',
+                      l10n.adminLoginFooter,
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurface.withValues(alpha: 0.5),
@@ -195,7 +190,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
 class _AdminHeader extends StatelessWidget {
   const _AdminHeader({required this.l10n, required this.colorScheme});
 
-  final AppLocalizations? l10n;
+  final AppLocalizations l10n;
   final ColorScheme colorScheme;
 
   @override
@@ -217,7 +212,7 @@ class _AdminHeader extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          l10n?.adminWelcome ?? 'Admin Portal',
+          l10n.adminWelcome,
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -225,7 +220,7 @@ class _AdminHeader extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Text(
-          l10n?.adminLoginSubtitle ?? 'Sign in to manage Kinder World',
+          l10n.adminLoginSubtitle,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurface.withValues(alpha: 0.6),
               ),

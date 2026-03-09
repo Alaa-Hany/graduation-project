@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
+import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/core/theme/app_colors.dart';
@@ -9,21 +10,24 @@ class ActivityOfTheDayScreen extends ConsumerStatefulWidget {
   const ActivityOfTheDayScreen({super.key});
 
   @override
-  ConsumerState<ActivityOfTheDayScreen> createState() => _ActivityOfTheDayScreenState();
+  ConsumerState<ActivityOfTheDayScreen> createState() =>
+      _ActivityOfTheDayScreenState();
 }
 
-class _ActivityOfTheDayScreenState extends ConsumerState<ActivityOfTheDayScreen> {
+class _ActivityOfTheDayScreenState
+    extends ConsumerState<ActivityOfTheDayScreen> {
   bool _started = false;
   bool _completed = false;
   bool _saving = false;
 
   Future<void> _completeActivity() async {
     if (_saving || _completed) return;
+    final l10n = AppLocalizations.of(context)!;
     final childProfile = ref.read(childSessionControllerProvider).childProfile;
     if (childProfile == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No active child session')),
+          SnackBar(content: Text(l10n.noActiveChildSession)),
         );
       }
       return;
@@ -33,13 +37,15 @@ class _ActivityOfTheDayScreenState extends ConsumerState<ActivityOfTheDayScreen>
       _saving = true;
     });
 
-    final record = await ref.read(progressControllerProvider.notifier).recordActivityCompletion(
+    final record = await ref
+        .read(progressControllerProvider.notifier)
+        .recordActivityCompletion(
           childId: childProfile.id,
           activityId: 'activity_of_the_day',
           score: 100,
           duration: 5,
           xpEarned: 50,
-          notes: 'Activity of the Day',
+          notes: l10n.activityOfTheDay,
         );
 
     if (!mounted) return;
@@ -51,21 +57,22 @@ class _ActivityOfTheDayScreenState extends ConsumerState<ActivityOfTheDayScreen>
 
     if (record != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Great job! You earned +50 XP')),
+        SnackBar(content: Text(l10n.xpBonusEarned)),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Try again!')),
+        SnackBar(content: Text(l10n.tryAgain)),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Activity of the Day'),
+        title: Text(l10n.activityOfTheDay),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -86,7 +93,8 @@ class _ActivityOfTheDayScreenState extends ConsumerState<ActivityOfTheDayScreen>
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.secondary.withValues(alpha: 0.25)),
+                  border: Border.all(
+                      color: AppColors.secondary.withValues(alpha: 0.25)),
                 ),
                 child: Row(
                   children: [
@@ -109,7 +117,7 @@ class _ActivityOfTheDayScreenState extends ConsumerState<ActivityOfTheDayScreen>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Treasure Hunt',
+                            l10n.activityOfDayTreasureHuntTitle,
                             style: TextStyle(
                               fontSize: AppConstants.fontSize,
                               fontWeight: FontWeight.bold,
@@ -118,7 +126,7 @@ class _ActivityOfTheDayScreenState extends ConsumerState<ActivityOfTheDayScreen>
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'Find colors and shapes around you',
+                            l10n.activityOfDayTreasureHuntSubtitle,
                             style: TextStyle(
                               fontSize: 14,
                               color: colors.onSurfaceVariant,
@@ -128,7 +136,8 @@ class _ActivityOfTheDayScreenState extends ConsumerState<ActivityOfTheDayScreen>
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: AppColors.xpColor.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
@@ -147,7 +156,7 @@ class _ActivityOfTheDayScreenState extends ConsumerState<ActivityOfTheDayScreen>
               ),
               const SizedBox(height: 20),
               Text(
-                'Your Mission',
+                l10n.activityOfDayMissionTitle,
                 style: TextStyle(
                   fontSize: AppConstants.fontSize,
                   fontWeight: FontWeight.bold,
@@ -158,8 +167,8 @@ class _ActivityOfTheDayScreenState extends ConsumerState<ActivityOfTheDayScreen>
               _buildStepCard(
                 context,
                 index: 1,
-                title: 'Find 3 colors',
-                subtitle: 'Point to something red, blue, and green.',
+                title: l10n.activityOfDayFindColorsTitle,
+                subtitle: l10n.activityOfDayFindColorsSubtitle,
                 icon: Icons.palette,
                 color: AppColors.educational,
               ),
@@ -167,8 +176,8 @@ class _ActivityOfTheDayScreenState extends ConsumerState<ActivityOfTheDayScreen>
               _buildStepCard(
                 context,
                 index: 2,
-                title: 'Spot 2 shapes',
-                subtitle: 'Find a circle and a square around you.',
+                title: l10n.activityOfDaySpotShapesTitle,
+                subtitle: l10n.activityOfDaySpotShapesSubtitle,
                 icon: Icons.category,
                 color: AppColors.skillful,
               ),
@@ -176,8 +185,8 @@ class _ActivityOfTheDayScreenState extends ConsumerState<ActivityOfTheDayScreen>
               _buildStepCard(
                 context,
                 index: 3,
-                title: 'Share a smile',
-                subtitle: 'Give a high-five or say something kind.',
+                title: l10n.activityOfDayShareSmileTitle,
+                subtitle: l10n.activityOfDayShareSmileSubtitle,
                 icon: Icons.emoji_emotions,
                 color: AppColors.behavioral,
               ),
@@ -195,7 +204,7 @@ class _ActivityOfTheDayScreenState extends ConsumerState<ActivityOfTheDayScreen>
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Take about 5 minutes and have fun!',
+                        l10n.activityOfDayTimeHint,
                         style: TextStyle(
                           fontSize: 14,
                           color: colors.onSurfaceVariant,
@@ -219,7 +228,8 @@ class _ActivityOfTheDayScreenState extends ConsumerState<ActivityOfTheDayScreen>
                           }
                         },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _completed ? AppColors.success : colors.primary,
+                    backgroundColor:
+                        _completed ? AppColors.success : colors.primary,
                     foregroundColor: colors.onPrimary,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -228,10 +238,12 @@ class _ActivityOfTheDayScreenState extends ConsumerState<ActivityOfTheDayScreen>
                   ),
                   child: Text(
                     _completed
-                        ? 'Completed! +50 XP'
+                        ? l10n.activityOfDayCompletedCta
                         : _started
-                            ? (_saving ? 'Saving...' : 'Finish Activity')
-                            : 'Start Activity',
+                            ? (_saving
+                                ? l10n.loading
+                                : l10n.activityOfDayFinishCta)
+                            : l10n.activityOfDayStartCta,
                     style: const TextStyle(
                       fontSize: AppConstants.fontSize,
                       fontWeight: FontWeight.w600,

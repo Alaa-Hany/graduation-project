@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 
-class DataSyncScreen extends ConsumerStatefulWidget {
+class DataSyncScreen extends StatefulWidget {
   const DataSyncScreen({super.key});
 
   @override
-  ConsumerState<DataSyncScreen> createState() => _DataSyncScreenState();
+  State<DataSyncScreen> createState() => _DataSyncScreenState();
 }
 
-class _DataSyncScreenState extends ConsumerState<DataSyncScreen> 
+class _DataSyncScreenState extends State<DataSyncScreen>
     with SingleTickerProviderStateMixin {
   bool _isSyncing = false;
   double _syncProgress = 0.0;

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart'
     as custom_localizations;
@@ -97,6 +96,29 @@ class _ConnectivityGuardState extends ConsumerState<_ConnectivityGuard> {
   bool _isOffline = false;
   late final ProviderSubscription<AsyncValue<ConnectivityResult>> _subscription;
 
+  void _handleConnectivityChange(ConnectivityResult result) {
+    final router = ref.read(routerProvider);
+    final location = router.routerDelegate.currentConfiguration.uri.toString();
+    final onNoInternet = location == Routes.noInternet;
+    final isOffline = result == ConnectivityResult.none;
+
+    if (isOffline && !_isOffline) {
+      _isOffline = true;
+      if (!onNoInternet) {
+        _lastLocation = location;
+        router.go(Routes.noInternet);
+      }
+      return;
+    }
+
+    if (!isOffline && _isOffline) {
+      _isOffline = false;
+      if (onNoInternet) {
+        router.go(_lastLocation ?? Routes.welcome);
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -105,28 +127,10 @@ class _ConnectivityGuardState extends ConsumerState<_ConnectivityGuard> {
       (previous, next) {
         final result = next.asData?.value;
         if (result == null) return;
-
-        final router = GoRouter.of(context);
-        final location =
-            router.routerDelegate.currentConfiguration.uri.toString();
-        final onNoInternet = location == Routes.noInternet;
-        final isOffline = result == ConnectivityResult.none;
-
-        if (isOffline && !_isOffline) {
-          _isOffline = true;
-          if (!onNoInternet) {
-            _lastLocation = location;
-            router.go(Routes.noInternet);
-          }
-          return;
-        }
-
-        if (!isOffline && _isOffline) {
-          _isOffline = false;
-          if (onNoInternet) {
-            router.go(_lastLocation ?? Routes.welcome);
-          }
-        }
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _handleConnectivityChange(result);
+        });
       },
     );
   }

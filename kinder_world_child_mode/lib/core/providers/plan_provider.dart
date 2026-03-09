@@ -3,7 +3,7 @@ import 'package:kinder_world/app.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
 import 'package:kinder_world/core/subscription/plan_info.dart';
 
-final planInfoProvider = FutureProvider<PlanInfo>((ref) async {
+final planInfoProvider = FutureProvider.autoDispose<PlanInfo>((ref) async {
   final storage = ref.read(secureStorageProvider);
   final storedPlan = await storage.getPlanType();
   final isPremium = await storage.getIsPremium() ?? false;

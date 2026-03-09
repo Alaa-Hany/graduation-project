@@ -277,7 +277,10 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.2),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .shadow
+                          .withValues(alpha: 0.2),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -526,7 +529,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
     // Prioritize existing age if it's valid
     final existingAge = existing?.age ?? 0;
     if (existingAge > 0) return existingAge;
-    
+
     final apiAge = _parseInt(data['age'], 0);
     final birthDate = _parseBirthDate(
       data['birthdate'] ??
@@ -560,11 +563,14 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
     final apiName = data['name']?.toString().trim();
     final existingName = existing?.name;
     // Don't use existing name if it's the same as the ID (default placeholder)
-    final hasRealName = existingName != null && 
-                        existingName.isNotEmpty && 
-                        existingName != childId &&
-                        existingName.toLowerCase() != 'child';
-    final resolvedName = (apiName != null && apiName.isNotEmpty && apiName != childId && apiName.toLowerCase() != 'child')
+    final hasRealName = existingName != null &&
+        existingName.isNotEmpty &&
+        existingName != childId &&
+        existingName.toLowerCase() != 'child';
+    final resolvedName = (apiName != null &&
+            apiName.isNotEmpty &&
+            apiName != childId &&
+            apiName.toLowerCase() != 'child')
         ? apiName
         : (hasRealName ? existingName : childId);
     final age = _resolveAgeFromApi(data, existing);
@@ -648,8 +654,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
 
     if (existing != null) {
       var updatedProfile = existing;
-      if ((existing.avatarPath.isEmpty) &&
-          (existing.avatar.isNotEmpty)) {
+      if ((existing.avatarPath.isEmpty) && (existing.avatar.isNotEmpty)) {
         updatedProfile = updatedProfile.copyWith(
           avatarPath: existing.avatar,
           updatedAt: DateTime.now(),
@@ -681,23 +686,23 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
     }
 
     final now = DateTime.now();
-    
+
     // Ensure we have a valid name - use childId as fallback if needed
     String finalName;
-    if (childProfile != null && 
-        childProfile.name.isNotEmpty && 
+    if (childProfile != null &&
+        childProfile.name.isNotEmpty &&
         childProfile.name != childId &&
         childProfile.name.toLowerCase() != 'child') {
       finalName = childProfile.name;
-    } else if (!isDefaultName && 
-               resolvedFallback != null && 
-               resolvedFallback.toLowerCase() != 'child') {
+    } else if (!isDefaultName &&
+        resolvedFallback != null &&
+        resolvedFallback.toLowerCase() != 'child') {
       finalName = resolvedFallback;
     } else {
       // Use child ID as a final fallback to allow login
       finalName = childId;
     }
-    
+
     final newProfile = ChildProfile(
       id: childId,
       name: finalName,
@@ -850,21 +855,19 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
           builder: (context, setDialogState) {
             final childName = childNameController.text.trim();
             final parentEmail = parentEmailController.text.trim();
-            final isValidName = childName.isNotEmpty && 
-                                childName.toLowerCase() != 'child' && 
-                                childName.length >= 2;
+            final isValidName = childName.isNotEmpty &&
+                childName.toLowerCase() != 'child' &&
+                childName.length >= 2;
             final canSave = isValidName &&
                 isValidEmail(parentEmail) &&
                 selectedPassword.length == 3 &&
                 !isSaving;
-                    final nameError = nameTouched
+            final nameError = nameTouched
                 ? (childName.isEmpty
                     ? l10n.fieldRequired
                     : (childName.toLowerCase() == 'child'
                         ? l10n.pleaseEnterRealName
-                        : (childName.length < 2
-                            ? l10n.nameTooShort
-                            : null)))
+                        : (childName.length < 2 ? l10n.nameTooShort : null)))
                 : null;
             final emailError = emailTouched && !isValidEmail(parentEmail)
                 ? (parentEmail.isEmpty ? l10n.fieldRequired : l10n.invalidEmail)
@@ -973,7 +976,9 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                                     border: Border.all(
                                       color: isSelected
                                           ? AppColors.primary
-                                          : Theme.of(context).colorScheme.surfaceContainerHighest,
+                                          : Theme.of(context)
+                                              .colorScheme
+                                              .surfaceContainerHighest,
                                       width: 2,
                                     ),
                                   ),
@@ -1045,7 +1050,9 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                                     border: Border.all(
                                       color: isSelected
                                           ? option.color
-                                          : Theme.of(context).colorScheme.surfaceContainerHighest,
+                                          : Theme.of(context)
+                                              .colorScheme
+                                              .surfaceContainerHighest,
                                       width: 2,
                                     ),
                                   ),
@@ -1088,7 +1095,8 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                                             parentEmailController.text.trim();
 
                                         if (trimmedName.isEmpty ||
-                                            trimmedName.toLowerCase() == 'child' ||
+                                            trimmedName.toLowerCase() ==
+                                                'child' ||
                                             trimmedName.length < 2 ||
                                             !isValidEmail(trimmedEmail) ||
                                             age == null ||
@@ -1207,7 +1215,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                                           name: resolvedName,
                                           age: age ?? existing?.age ?? 0,
                                           avatar: selectedAvatar,
-                                                  avatarPath: selectedAvatar,
+                                          avatarPath: selectedAvatar,
                                           parentId: trimmedEmail,
                                           parentEmail: trimmedEmail,
                                           picturePassword: List<String>.from(
@@ -1285,7 +1293,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
+          icon: const BackButtonIcon(),
           onPressed: _isLoading ? null : () => context.go('/select-user-type'),
         ),
       ),
@@ -1493,20 +1501,22 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
               ),
             ),
             child: _isLoading
-                ? CircularProgressIndicator(color: Theme.of(context).colorScheme.surface)
+                ? CircularProgressIndicator(
+                    color: Theme.of(context).colorScheme.surface)
                 : Text(
                     l10n.login,
                     style: TextStyle(
                       fontSize: AppConstants.fontSize,
                       fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
           ),
         ),
         const SizedBox(height: 10),
         Center(
           child: TextButton(
-            onPressed: _isLoading ? null : () => context.go('/child/forgot-password'),
+            onPressed:
+                _isLoading ? null : () => context.go('/child/forgot-password'),
             child: Text(l10n.forgotPassword),
           ),
         ),
@@ -1609,7 +1619,8 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
               ),
               if (canChangeChild)
                 IconButton(
-                  icon: Icon(Icons.close, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  icon: Icon(Icons.close,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant),
                   onPressed: _isLoading ? null : _resetSelection,
                 ),
             ],
@@ -1637,20 +1648,22 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
               ),
             ),
             child: _isLoading
-                ? CircularProgressIndicator(color: Theme.of(context).colorScheme.surface)
+                ? CircularProgressIndicator(
+                    color: Theme.of(context).colorScheme.surface)
                 : Text(
                     l10n.login,
                     style: TextStyle(
                       fontSize: AppConstants.fontSize,
                       fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
           ),
         ),
         const SizedBox(height: 10),
         Center(
           child: TextButton(
-            onPressed: _isLoading ? null : () => context.go('/child/forgot-password'),
+            onPressed:
+                _isLoading ? null : () => context.go('/child/forgot-password'),
             child: Text(l10n.forgotPassword),
           ),
         ),
@@ -1699,7 +1712,9 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                       : Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isSelected ? option.color : Theme.of(context).colorScheme.surfaceContainerHighest,
+                    color: isSelected
+                        ? option.color
+                        : Theme.of(context).colorScheme.surfaceContainerHighest,
                     width: 2,
                   ),
                 ),
@@ -1760,7 +1775,9 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
               : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? AppColors.primary : Theme.of(context).colorScheme.surfaceContainerHighest,
+            color: isSelected
+                ? AppColors.primary
+                : Theme.of(context).colorScheme.surfaceContainerHighest,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -1833,7 +1850,8 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+          border: Border.all(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest),
         ),
         child: Column(
           children: [
@@ -1867,4 +1885,3 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
     );
   }
 }
-

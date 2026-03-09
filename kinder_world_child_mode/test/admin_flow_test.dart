@@ -6,6 +6,7 @@ import 'package:kinder_world/app.dart';
 import 'package:kinder_world/core/models/admin_user.dart';
 import 'package:kinder_world/core/network/network_service.dart';
 import 'package:kinder_world/core/providers/connectivity_provider.dart';
+import 'package:kinder_world/core/providers/shared_preferences_provider.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_repository.dart';
@@ -113,8 +114,10 @@ Future<ProviderContainer> _pumpApp(
   _FakeAdminAuthRepository? repo,
 }) async {
   SharedPreferences.setMockInitialValues({});
+  final sharedPreferences = await SharedPreferences.getInstance();
   final container = ProviderContainer(
     overrides: [
+      sharedPreferencesProvider.overrideWithValue(sharedPreferences),
       secureStorageProvider.overrideWithValue(_TestSecureStorage()),
       loggerProvider.overrideWithValue(Logger()),
       adminAuthRepositoryProvider.overrideWithValue(
@@ -233,11 +236,28 @@ void main() {
     await tester.tap(find.byTooltip('Menu'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Overview'), findsOneWidget);
-    expect(find.text('Support'), findsOneWidget);
-    expect(find.text('Users'), findsNothing);
-    expect(find.text('Subscriptions'), findsNothing);
-    expect(find.text('Audit Log'), findsNothing);
+    final drawerFinder = find.byType(Drawer);
+
+    expect(
+      find.descendant(of: drawerFinder, matching: find.text('Overview')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: drawerFinder, matching: find.text('Support')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: drawerFinder, matching: find.text('Users')),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: drawerFinder, matching: find.text('Subscriptions')),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: drawerFinder, matching: find.text('Audit Log')),
+      findsNothing,
+    );
   });
 
   testWidgets('logout flow redirects to admin login', (

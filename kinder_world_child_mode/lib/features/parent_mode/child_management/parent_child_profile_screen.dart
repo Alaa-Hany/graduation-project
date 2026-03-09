@@ -129,7 +129,7 @@ class ParentChildProfileScreen extends StatelessWidget {
                             border: Border.all(color: colors.surface, width: 2),
                           ),
                           child: Text(
-                            'Lv. ${child.level}',
+                            l10n.levelBadge(child.level),
                             style: const TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w800,
@@ -209,13 +209,13 @@ class ParentChildProfileScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const ParentSectionHeader(title: 'XP Progress'),
+                    ParentSectionHeader(title: l10n.xpProgress),
                     const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          '${child.xp % 1000} XP',
+                          l10n.xpValue(child.xp % 1000),
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
@@ -223,7 +223,7 @@ class ParentChildProfileScreen extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          '${1000 - (child.xp % 1000)} to next level',
+                          l10n.xpToNextLevel(1000 - (child.xp % 1000)),
                           style: TextStyle(
                             fontSize: 12,
                             color: colors.onSurfaceVariant,

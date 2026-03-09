@@ -1,3 +1,7 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// DEAD CODE — childSyncServiceProvider is not imported anywhere in the app.
+// Safe to delete once background-sync feature is implemented or abandoned.
+// ─────────────────────────────────────────────────────────────────────────────
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/app.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';

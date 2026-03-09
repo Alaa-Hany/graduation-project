@@ -401,7 +401,7 @@ class ContentController extends StateNotifier<ContentState> {
 }
 
 // Provider
-final contentControllerProvider = StateNotifierProvider<ContentController, ContentState>((ref) {
+final contentControllerProvider = StateNotifierProvider.autoDispose<ContentController, ContentState>((ref) {
   final contentRepository = ref.watch(contentRepositoryProvider);
   final logger = ref.watch(loggerProvider);
   
@@ -436,17 +436,17 @@ final popularActivitiesProvider = Provider<List<Activity>>((ref) {
 });
 
 // Async providers for dynamic content
-final activitiesByCategoryProvider = FutureProvider.family<List<Activity>, String>((ref, category) async {
+final activitiesByCategoryProvider = FutureProvider.autoDispose.family<List<Activity>, String>((ref, category) async {
   final controller = ref.watch(contentControllerProvider.notifier);
   return await controller.loadActivitiesByCategory(category);
 });
 
-final dailyRecommendationsProvider = FutureProvider.family<List<Activity>, ChildProfile>((ref, child) async {
+final dailyRecommendationsProvider = FutureProvider.autoDispose.family<List<Activity>, ChildProfile>((ref, child) async {
   final controller = ref.watch(contentControllerProvider.notifier);
   return await controller.getDailyRecommendations(child);
 });
 
-final offlineActivitiesProvider = FutureProvider<List<Activity>>((ref) async {
+final offlineActivitiesProvider = FutureProvider.autoDispose<List<Activity>>((ref) async {
   final controller = ref.watch(contentControllerProvider.notifier);
   return await controller.getOfflineActivities();
 });

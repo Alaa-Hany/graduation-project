@@ -19,10 +19,12 @@ class AdminUserDetailsScreen extends ConsumerStatefulWidget {
   final int userId;
 
   @override
-  ConsumerState<AdminUserDetailsScreen> createState() => _AdminUserDetailsScreenState();
+  ConsumerState<AdminUserDetailsScreen> createState() =>
+      _AdminUserDetailsScreenState();
 }
 
-class _AdminUserDetailsScreenState extends ConsumerState<AdminUserDetailsScreen> {
+class _AdminUserDetailsScreenState
+    extends ConsumerState<AdminUserDetailsScreen> {
   AdminParentUser? _user;
   Map<String, dynamic>? _activity;
   bool _loading = true;
@@ -60,7 +62,7 @@ class _AdminUserDetailsScreenState extends ConsumerState<AdminUserDetailsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final admin = ref.watch(currentAdminProvider);
     if (!(admin?.hasPermission('admin.users.view') ?? false)) {
       return const AdminPermissionPlaceholder();
@@ -72,7 +74,8 @@ class _AdminUserDetailsScreenState extends ConsumerState<AdminUserDetailsScreen>
       return Center(child: Text(_error ?? 'Failed to load user'));
     }
 
-    final summary = Map<String, dynamic>.from(_activity?['summary'] as Map? ?? const {});
+    final summary =
+        Map<String, dynamic>.from(_activity?['summary'] as Map? ?? const {});
     final notifications = List<Map<String, dynamic>>.from(
       (_activity?['notifications'] as List<dynamic>? ?? const []).map(
         (item) => Map<String, dynamic>.from(item as Map),
@@ -90,7 +93,7 @@ class _AdminUserDetailsScreenState extends ConsumerState<AdminUserDetailsScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            l10n?.adminUsersDetailTitle(_user!.email) ?? 'User details',
+            l10n.adminUsersDetailTitle(_user!.email),
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 20),
@@ -99,36 +102,37 @@ class _AdminUserDetailsScreenState extends ConsumerState<AdminUserDetailsScreen>
             runSpacing: 16,
             children: [
               _InfoCard(
-                title: l10n?.adminUsersOverviewCard ?? 'Overview',
+                title: l10n.adminUsersOverviewCard,
                 lines: [
-                  '${l10n?.adminUsersNameField ?? 'Name'}: ${_user!.name.isEmpty ? '—' : _user!.name}',
-                  '${l10n?.adminUsersEmailField ?? 'Email'}: ${_user!.email}',
-                  '${l10n?.adminUsersPlanColumn ?? 'Plan'}: ${_user!.plan}',
-                  '${l10n?.adminUsersStatusColumn ?? 'Status'}: ${_user!.isActive ? (l10n?.adminUsersStatusActive ?? 'Active') : (l10n?.adminUsersStatusDisabled ?? 'Disabled')}',
+                  '${l10n.adminUsersNameField}: ${_user!.name.isEmpty ? 'â€”' : _user!.name}',
+                  '${l10n.adminUsersEmailField}: ${_user!.email}',
+                  '${l10n.adminUsersPlanColumn}: ${_user!.plan}',
+                  '${l10n.adminUsersStatusColumn}: ${_user!.isActive ? (l10n.adminUsersStatusActive) : (l10n.adminUsersStatusDisabled)}',
                 ],
               ),
               _InfoCard(
-                title: l10n?.adminUsersActivityCard ?? 'Activity summary',
+                title: l10n.adminUsersActivityCard,
                 lines: [
-                  '${l10n?.adminUsersChildrenColumn ?? 'Children'}: ${summary['child_count'] ?? _user!.childCount}',
-                  '${l10n?.adminUsersNotificationsMetric ?? 'Notifications'}: ${summary['notification_count'] ?? 0}',
-                  '${l10n?.adminUsersSupportMetric ?? 'Support tickets'}: ${summary['support_ticket_count'] ?? 0}',
-                  '${l10n?.adminUsersLastUpdatedMetric ?? 'Last updated'}: ${summary['last_updated_at'] ?? _user!.updatedAt ?? '—'}',
+                  '${l10n.adminUsersChildrenColumn}: ${summary['child_count'] ?? _user!.childCount}',
+                  '${l10n.adminUsersNotificationsMetric}: ${summary['notification_count'] ?? 0}',
+                  '${l10n.adminUsersSupportMetric}: ${summary['support_ticket_count'] ?? 0}',
+                  '${l10n.adminUsersLastUpdatedMetric}: ${summary['last_updated_at'] ?? _user!.updatedAt ?? 'â€”'}',
                 ],
               ),
             ],
           ),
           const SizedBox(height: 24),
           _SectionCard(
-            title: l10n?.adminUsersChildrenSection ?? 'Children',
+            title: l10n.adminUsersChildrenSection,
             child: Column(
               children: _user!.children
                   .map(
                     (child) => ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: const Icon(Icons.child_care_outlined),
-                      title: Text(child['name'] as String? ?? '—'),
-                      subtitle: Text('ID ${child['id']}'),
+                      title: Text(child['name'] as String? ?? 'â€”'),
+                      subtitle: Text(
+                          '${AppLocalizations.of(context)!.labelId} ${child['id']}'),
                     ),
                   )
                   .toList(),
@@ -136,13 +140,13 @@ class _AdminUserDetailsScreenState extends ConsumerState<AdminUserDetailsScreen>
           ),
           const SizedBox(height: 24),
           _SectionCard(
-            title: l10n?.adminUsersNotificationsSection ?? 'Recent notifications',
+            title: l10n.adminUsersNotificationsSection,
             child: Column(
               children: notifications
                   .map(
                     (entry) => ListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: Text(entry['title'] as String? ?? '—'),
+                      title: Text(entry['title'] as String? ?? 'â€”'),
                       subtitle: Text(entry['created_at'] as String? ?? ''),
                     ),
                   )
@@ -151,13 +155,13 @@ class _AdminUserDetailsScreenState extends ConsumerState<AdminUserDetailsScreen>
           ),
           const SizedBox(height: 24),
           _SectionCard(
-            title: l10n?.adminUsersSupportSection ?? 'Support tickets',
+            title: l10n.adminUsersSupportSection,
             child: Column(
               children: tickets
                   .map(
                     (entry) => ListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: Text(entry['subject'] as String? ?? '—'),
+                      title: Text(entry['subject'] as String? ?? 'â€”'),
                       subtitle: Text(entry['created_at'] as String? ?? ''),
                     ),
                   )
