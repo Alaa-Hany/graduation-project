@@ -5,9 +5,9 @@ Run from kinderbackend/ directory with the venv activated.
 import os
 import sys
 
-os.environ.setdefault("SECRET_KEY", "test-secret-key-for-demo-testing-only")
-os.environ.setdefault("ENABLE_ADMIN_SEED_ENDPOINT", "true")
-os.environ.setdefault("ADMIN_SEED_SECRET", "demo-seed-secret")
+os.environ.setdefault("SECRET_KEY", "TEST_ONLY_SECRET")
+os.environ.setdefault("ENABLE_ADMIN_SEED_ENDPOINT", "true")  # dev/test only
+os.environ.setdefault("ADMIN_SEED_SECRET", "TEST_ONLY_SECRET")
 
 MODULES = [
     ("database", "database"),

@@ -17,13 +17,13 @@ if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8")
 
 # ── Set env vars before any imports ──────────────────────────────────────────
-os.environ["SECRET_KEY"] = "test-secret-key-for-demo-testing-only-32chars!!"
-os.environ["KINDER_JWT_SECRET"] = "test-secret-key-for-demo-testing-only-32chars!!"
-os.environ["ENABLE_ADMIN_SEED_ENDPOINT"] = "true"
-os.environ["ADMIN_SEED_SECRET"] = "demo-seed-secret"
-os.environ["ADMIN_SEED_PASSWORD"] = "Admin@123456"
-os.environ["ADMIN_SEED_EMAIL"] = "admin@kinderworld.app"
-os.environ["ADMIN_SEED_NAME"] = "Super Admin"
+os.environ.setdefault("SECRET_KEY", "TEST_ONLY_SECRET")
+os.environ.setdefault("KINDER_JWT_SECRET", "TEST_ONLY_SECRET")
+os.environ.setdefault("ENABLE_ADMIN_SEED_ENDPOINT", "true")  # dev/test only
+os.environ.setdefault("ADMIN_SEED_SECRET", "TEST_ONLY_SECRET")
+os.environ.setdefault("ADMIN_SEED_PASSWORD", "CHANGE_ME")
+os.environ.setdefault("ADMIN_SEED_EMAIL", "change-me@example.invalid")
+os.environ.setdefault("ADMIN_SEED_NAME", "DEV ONLY ADMIN")
 
 import urllib.request
 import urllib.error
@@ -124,17 +124,20 @@ def run_tests():
     print("\n[2] ADMIN SEED")
     # secret is a QUERY PARAMETER, not body
     ok, _, seed_resp = test("seed admin data", "POST", "/admin/seed",
-        params={"secret": "demo-seed-secret"}, expect_status=200)
+        params={"secret": os.environ["ADMIN_SEED_SECRET"]}, expect_status=200)
 
     # ── 3. Admin Auth ─────────────────────────────────────────────────────────
     print("\n[3] ADMIN AUTH")
     ok, _, admin_login_resp = test("admin login (valid)", "POST", "/admin/auth/login",
-        body={"email": "admin@kinderworld.app", "password": "Admin@123456"},
+        body={
+            "email": os.environ["ADMIN_SEED_EMAIL"],
+            "password": os.environ["ADMIN_SEED_PASSWORD"],
+        },
         expect_status=200, expect_key="access_token")
     admin_token = admin_login_resp.get("access_token", "")
 
     test("admin login (wrong password)", "POST", "/admin/auth/login",
-        body={"email": "admin@kinderworld.app", "password": "wrongpassword"},
+        body={"email": os.environ["ADMIN_SEED_EMAIL"], "password": "wrongpassword"},
         expect_status=401)
 
     test("admin login (nonexistent user)", "POST", "/admin/auth/login",
