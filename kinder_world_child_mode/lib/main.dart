@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -7,7 +8,13 @@ import 'package:kinder_world/app.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-void main() async {
+const _startupHiveBoxes = <String>[
+  'child_profiles',
+  'activities',
+  'progress_records',
+];
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Hive for local storage
@@ -16,11 +23,7 @@ void main() async {
   // Open required Hive boxes as untyped for JSON storage
   // Note: Freezed models don't work directly with Hive TypeAdapters,
   // so we store as JSON maps and serialize/deserialize in repositories
-  await Future.wait([
-    Hive.openBox('child_profiles'),
-    Hive.openBox('activities'),
-    Hive.openBox('progress_records'),
-  ]);
+  await Future.wait(_startupHiveBoxes.map(Hive.openBox));
 
   final sharedPreferences = await SharedPreferences.getInstance();
 
@@ -33,8 +36,8 @@ void main() async {
       methodCount: 0,
       errorMethodCount: 5,
       lineLength: 50,
-      colors: true,
-      printEmojis: true,
+      colors: kDebugMode,
+      printEmojis: kDebugMode,
       dateTimeFormat: DateTimeFormat.none,
     ),
   );
