@@ -2,7 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
-import 'package:kinder_world/core/theme/app_colors.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
 import 'package:kinder_world/features/child_mode/learn/coloring_page_screen.dart';
 import 'package:kinder_world/features/child_mode/learn/coloring_progress_storage.dart';
@@ -132,19 +132,21 @@ class _ColoringGalleryScreenState extends State<ColoringGalleryScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final colors = Theme.of(context).colorScheme;
+    final child = context.childTheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFEAF8FF),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(Icons.arrow_back, color: colors.onSurface),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           l10n.coloringTitle,
-          style: const TextStyle(
-            color: Color(0xFF1D4E89),
+          style: TextStyle(
+            color: colors.onSurface,
             fontWeight: FontWeight.w900,
             fontFamily: 'Comic Sans MS',
           ),
@@ -179,20 +181,20 @@ class _ColoringGalleryScreenState extends State<ColoringGalleryScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 24),
                           decoration: BoxDecoration(
                             color: selected
-                                ? const Color(0xFFFF9CC9)
-                                : Colors.white,
+                                ? child.kindness.withValues(alpha: 0.22)
+                                : colors.surface,
                             borderRadius: BorderRadius.circular(26),
                             border: Border.all(
                               color: selected
-                                  ? const Color(0xFFFF7AB4)
-                                  : Colors.white,
+                                  ? child.kindness
+                                  : colors.outlineVariant,
                               width: 2,
                             ),
                             boxShadow: [
                               BoxShadow(
                                 color: (selected
-                                        ? const Color(0xFFFF9CC9)
-                                        : const Color(0xFF9EDCFF))
+                                        ? child.kindness
+                                        : child.fun)
                                     .withValues(alpha: 0.4),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
@@ -210,8 +212,8 @@ class _ColoringGalleryScreenState extends State<ColoringGalleryScreen> {
                                 fontWeight: FontWeight.w800,
                                 fontFamily: 'Comic Sans MS',
                                 color: selected
-                                    ? Colors.white
-                                    : const Color(0xFF1D4E89),
+                                    ? child.kindness.onColor
+                                    : colors.onSurface,
                               ),
                             ),
                           ),
@@ -230,11 +232,11 @@ class _ColoringGalleryScreenState extends State<ColoringGalleryScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 20, vertical: 18),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.9),
+                            color: colors.surface.withValues(alpha: 0.92),
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF9EDCFF)
+                                color: child.fun
                                     .withValues(alpha: 0.35),
                                 blurRadius: 12,
                                 offset: const Offset(0, 5),
@@ -244,11 +246,11 @@ class _ColoringGalleryScreenState extends State<ColoringGalleryScreen> {
                           child: Text(
                             l10n.noColoringPages,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w900,
                               fontFamily: 'Comic Sans MS',
-                              color: Color(0xFF1D4E89),
+                              color: colors.onSurface,
                             ),
                           ),
                         ),
@@ -320,6 +322,7 @@ class _ColoringItemCardState extends State<_ColoringItemCard> {
   Widget build(BuildContext context) {
     final isSvg = widget.imagePath.toLowerCase().endsWith('.svg');
     final hasPreviewSvg = isSvg && widget.previewTemplate != null;
+    final compact = MediaQuery.sizeOf(context).width < 390;
     return GestureDetector(
       onTapDown: (_) => setState(() => _pressed = true),
       onTapCancel: () => setState(() => _pressed = false),
@@ -331,7 +334,7 @@ class _ColoringItemCardState extends State<_ColoringItemCard> {
           onTap: widget.onTap,
           borderRadius: BorderRadius.circular(30),
           child: Container(
-            height: 122,
+            height: compact ? 132 : 138,
             margin: const EdgeInsets.only(bottom: 14),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
@@ -356,7 +359,7 @@ class _ColoringItemCardState extends State<_ColoringItemCard> {
                     bottomLeft: Radius.circular(30),
                   ),
                   child: Container(
-                    width: 126,
+                    width: compact ? 108 : 120,
                     color: const Color(0xFFDDF3FF),
                     child: hasPreviewSvg
                         ? Stack(
@@ -384,7 +387,7 @@ class _ColoringItemCardState extends State<_ColoringItemCard> {
                           )
                         : isSvg
                             ? Padding(
-                                padding: const EdgeInsets.all(10),
+                                padding: const EdgeInsets.all(8),
                                 child: SvgPicture.asset(
                                   widget.imagePath,
                                   fit: BoxFit.contain,
@@ -400,9 +403,9 @@ class _ColoringItemCardState extends State<_ColoringItemCard> {
                                     width: 126,
                                     color: Colors.teal.shade50,
                                     alignment: Alignment.center,
-                                    child: const Icon(
+                                    child: Icon(
                                       Icons.image_not_supported_rounded,
-                                      color: AppColors.skillful,
+                                      color: context.childTheme.skill,
                                       size: 34,
                                     ),
                                   );
@@ -413,7 +416,7 @@ class _ColoringItemCardState extends State<_ColoringItemCard> {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
+                        horizontal: 12, vertical: 10),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -423,13 +426,14 @@ class _ColoringItemCardState extends State<_ColoringItemCard> {
                             Expanded(
                               child: Text(
                                 widget.title,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 18,
+                                maxLines: 2,
+                                overflow: TextOverflow.fade,
+                                style: TextStyle(
+                                  fontSize: compact ? 15 : 17,
                                   fontWeight: FontWeight.w900,
                                   fontFamily: 'Comic Sans MS',
-                                  color: Color(0xFF0B4A75),
+                                  color: const Color(0xFF0B4A75),
+                                  height: 1.05,
                                 ),
                               ),
                             ),
@@ -452,9 +456,10 @@ class _ColoringItemCardState extends State<_ColoringItemCard> {
                                   const SizedBox(width: 6),
                                   Text(
                                     l10n.greatJob,
-                                    style: const TextStyle(
+                                    style: TextStyle(
+                                      fontSize: compact ? 12 : 13,
                                       fontWeight: FontWeight.w800,
-                                      color: Color(0xFF2E7D32),
+                                      color: const Color(0xFF2E7D32),
                                       fontFamily: 'Comic Sans MS',
                                     ),
                                   ),
@@ -486,10 +491,12 @@ class _ColoringItemCardState extends State<_ColoringItemCard> {
                               final l10n = AppLocalizations.of(ctx)!;
                               return Text(
                                 l10n.tapToColor,
+                                textAlign: TextAlign.center,
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w800,
                                   fontFamily: 'Comic Sans MS',
+                                  fontSize: 12,
                                 ),
                               );
                             },
@@ -500,10 +507,10 @@ class _ColoringItemCardState extends State<_ColoringItemCard> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.all(10),
                   child: Container(
-                    width: 38,
-                    height: 38,
+                    width: compact ? 34 : 38,
+                    height: compact ? 34 : 38,
                     decoration: BoxDecoration(
                       color: const Color(0xFFFFD66B),
                       shape: BoxShape.circle,
@@ -518,6 +525,7 @@ class _ColoringItemCardState extends State<_ColoringItemCard> {
                     child: const Icon(
                       Icons.play_arrow_rounded,
                       color: Color(0xFF8B4E00),
+                      size: 20,
                     ),
                   ),
                 ),

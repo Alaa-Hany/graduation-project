@@ -1,3 +1,65 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// SPACING SYSTEM — use these instead of raw SizedBox / EdgeInsets values
+// ─────────────────────────────────────────────────────────────────────────────
+class AppSpacing {
+  AppSpacing._();
+
+  static const double xs = 4.0;
+  static const double sm = 8.0;
+  static const double md = 12.0;
+  static const double lg = 16.0;
+  static const double xl = 20.0;
+  static const double xxl = 24.0;
+  static const double xxxl = 32.0;
+  static const double huge = 40.0;
+  static const double massive = 48.0;
+
+  /// Standard horizontal page padding
+  static const double pagePadding = 20.0;
+
+  /// Standard vertical section gap
+  static const double sectionGap = 24.0;
+
+  /// Gap between cards in a list
+  static const double cardGap = 12.0;
+
+  /// Inner card padding
+  static const double cardPadding = 18.0;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RADIUS SYSTEM — consistent border radius values
+// ─────────────────────────────────────────────────────────────────────────────
+class AppRadius {
+  AppRadius._();
+
+  static const double xs = 6.0;
+  static const double sm = 8.0;
+  static const double md = 12.0;
+  static const double lg = 16.0;
+  static const double xl = 20.0;
+  static const double xxl = 24.0;
+  static const double full = 999.0;
+
+  /// Standard card radius
+  static const double card = 16.0;
+
+  /// Button radius
+  static const double button = 14.0;
+
+  /// Input field radius
+  static const double input = 12.0;
+
+  /// Icon container radius
+  static const double icon = 10.0;
+
+  /// Chip radius
+  static const double chip = 8.0;
+
+  /// Badge radius
+  static const double badge = 6.0;
+}
+
 class AppConstants {
   AppConstants._();
 

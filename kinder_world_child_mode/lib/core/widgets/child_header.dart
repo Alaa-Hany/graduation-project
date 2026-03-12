@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
-import 'package:kinder_world/core/widgets/avatar_view.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/widgets/child_customizable_avatar.dart';
 
 class ChildHeader extends ConsumerWidget {
   final bool compact;
@@ -42,12 +42,23 @@ class ChildHeader extends ConsumerWidget {
       padding: padding,
       child: Row(
         children: [
-          AvatarView(
-            avatarId: child?.avatar,
-            avatarPath: child?.avatarPath,
-            radius: avatarRadius,
-            backgroundColor: avatarBackground ?? theme.colorScheme.surfaceContainerHighest,
-          ),
+          if (child != null)
+            ChildCustomizableAvatar(
+              child: child,
+              radius: avatarRadius,
+              backgroundColor:
+                  avatarBackground ?? theme.colorScheme.surfaceContainerHighest,
+            )
+          else
+            CircleAvatar(
+              radius: avatarRadius,
+              backgroundColor:
+                  avatarBackground ?? theme.colorScheme.surfaceContainerHighest,
+              child: Icon(
+                Icons.face_rounded,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
           const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,

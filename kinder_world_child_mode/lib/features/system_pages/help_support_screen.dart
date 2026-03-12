@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
+import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/router.dart';
 
 class HelpSupportScreen extends StatelessWidget {
   const HelpSupportScreen({super.key});
@@ -16,9 +17,11 @@ class HelpSupportScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: colors.onSurface),
-          onPressed: () => context.go('/parent/settings'),
+        leading: AppBackButton(
+          fallback: Routes.parentDashboard,
+          color: colors.onSurface,
+          icon: Icons.arrow_back,
+          iconSize: 24,
         ),
         title: Text(
           AppLocalizations.of(context)!.helpSupportTitle,
@@ -38,9 +41,11 @@ class HelpSupportScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
+                  color: colors.primaryContainer.withValues(alpha: 0.65),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: colors.primary.withValues(alpha: 0.22),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -48,7 +53,7 @@ class HelpSupportScreen extends StatelessWidget {
                       width: 60,
                       height: 60,
                       decoration: BoxDecoration(
-                        color: AppColors.primary,
+                        color: colors.primary,
                         borderRadius: BorderRadius.circular(30),
                       ),
                       child: Icon(
@@ -83,7 +88,7 @@ class HelpSupportScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 32),
-              
+
               // FAQ Section
               Text(
                 AppLocalizations.of(context)!.helpFaqTitle,
@@ -93,38 +98,38 @@ class HelpSupportScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               _FAQItem(
                 question: AppLocalizations.of(context)!.helpFaqQ1,
                 answer: AppLocalizations.of(context)!.helpFaqA1,
               ),
               const SizedBox(height: 12),
-              
+
               _FAQItem(
                 question: AppLocalizations.of(context)!.helpFaqQ2,
                 answer: AppLocalizations.of(context)!.helpFaqA2,
               ),
               const SizedBox(height: 12),
-              
+
               _FAQItem(
                 question: AppLocalizations.of(context)!.helpFaqQ3,
                 answer: AppLocalizations.of(context)!.helpFaqA3,
               ),
               const SizedBox(height: 12),
-              
+
               _FAQItem(
                 question: AppLocalizations.of(context)!.helpFaqQ4,
                 answer: AppLocalizations.of(context)!.helpFaqA4,
               ),
               const SizedBox(height: 12),
-              
+
               _FAQItem(
                 question: AppLocalizations.of(context)!.helpFaqQ5,
                 answer: AppLocalizations.of(context)!.helpFaqA5,
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // Contact Support
               Text(
                 AppLocalizations.of(context)!.helpContactSupportTitle,
@@ -134,7 +139,7 @@ class HelpSupportScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
@@ -179,9 +184,9 @@ class HelpSupportScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // Additional Resources
               Text(
                 AppLocalizations.of(context)!.additionalResources,
@@ -191,7 +196,7 @@ class HelpSupportScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
@@ -217,7 +222,8 @@ class HelpSupportScreen extends StatelessWidget {
                     const SizedBox(height: 16),
                     _ResourceItem(
                       icon: Icons.privacy_tip,
-                      title: AppLocalizations.of(context)!.privacyPolicyResource,
+                      title:
+                          AppLocalizations.of(context)!.privacyPolicyResource,
                       onTap: () {
                         context.go('/legal?type=privacy');
                       },
@@ -225,7 +231,8 @@ class HelpSupportScreen extends StatelessWidget {
                     const SizedBox(height: 16),
                     _ResourceItem(
                       icon: Icons.gavel,
-                      title: AppLocalizations.of(context)!.termsOfServiceResource,
+                      title:
+                          AppLocalizations.of(context)!.termsOfServiceResource,
                       onTap: () {
                         context.go('/legal?type=terms');
                       },
@@ -241,13 +248,14 @@ class HelpSupportScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // App version
               Center(
                 child: Text(
-                  AppLocalizations.of(context)!.appVersionLabel(AppConstants.appVersion),
+                  AppLocalizations.of(context)!
+                      .appVersionLabel(AppConstants.appVersion),
                   style: textTheme.bodySmall?.copyWith(
                     fontSize: 14,
                     color: colors.onSurfaceVariant,
@@ -265,7 +273,7 @@ class HelpSupportScreen extends StatelessWidget {
 class _FAQItem extends StatefulWidget {
   final String question;
   final String answer;
-  
+
   const _FAQItem({
     required this.question,
     required this.answer,
@@ -310,22 +318,21 @@ class _FAQItemState extends State<_FAQItem> {
                   Expanded(
                     child: Text(
                       widget.question,
-                  style: textTheme.titleSmall?.copyWith(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                      style: textTheme.titleSmall?.copyWith(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   Icon(
                     _isExpanded ? Icons.expand_less : Icons.expand_more,
                     size: 24,
-                color: colors.onSurfaceVariant,
+                    color: colors.onSurfaceVariant,
                   ),
                 ],
               ),
             ),
           ),
-          
           if (_isExpanded)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -348,7 +355,7 @@ class _ContactOption extends StatelessWidget {
   final String title;
   final String subtitle;
   final VoidCallback onTap;
-  
+
   const _ContactOption({
     required this.icon,
     required this.title,
@@ -369,17 +376,16 @@ class _ContactOption extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
+              color: colors.primaryContainer.withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(24),
             ),
             child: Icon(
               icon,
               size: 24,
-              color: AppColors.primary,
+              color: colors.primary,
             ),
           ),
           const SizedBox(width: 16),
-          
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -401,7 +407,6 @@ class _ContactOption extends StatelessWidget {
               ],
             ),
           ),
-          
           Icon(
             Icons.chevron_right,
             size: 24,
@@ -417,7 +422,7 @@ class _ResourceItem extends StatelessWidget {
   final IconData icon;
   final String title;
   final VoidCallback onTap;
-  
+
   const _ResourceItem({
     required this.icon,
     required this.title,
@@ -437,17 +442,16 @@ class _ResourceItem extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.secondary.withValues(alpha: 0.1),
+              color: colors.secondaryContainer.withValues(alpha: 0.65),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Icon(
               icon,
               size: 20,
-              color: AppColors.secondary,
+              color: colors.secondary,
             ),
           ),
           const SizedBox(width: 16),
-          
           Expanded(
             child: Text(
               title,
@@ -456,7 +460,6 @@ class _ResourceItem extends StatelessWidget {
               ),
             ),
           ),
-          
           Icon(
             Icons.chevron_right,
             size: 24,

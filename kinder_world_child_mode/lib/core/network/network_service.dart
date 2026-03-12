@@ -38,10 +38,21 @@ class NetworkService {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          // Add auth token if available
-          final token = await _secureStorage.getAuthToken();
-          if (token != null) {
-            options.headers['Authorization'] = 'Bearer $token';
+          final authorizationHeaderKey =
+              _findHeaderKey(options.headers, 'Authorization');
+          if (authorizationHeaderKey != null) {
+            final explicitAuthorization = options.headers[authorizationHeaderKey];
+            if (explicitAuthorization == null ||
+                explicitAuthorization.toString().trim().isEmpty) {
+              options.headers.remove(authorizationHeaderKey);
+            }
+          } else {
+            final token = _secureStorage.hasCachedAuthToken
+                ? _secureStorage.cachedAuthToken
+                : await _secureStorage.getAuthToken();
+            if (_shouldAttachAuthToken(token)) {
+              options.headers['Authorization'] = 'Bearer $token';
+            }
           }
           
           _logger.d('Request: ${options.method} ${options.path}');
@@ -65,6 +76,26 @@ class NetworkService {
         logger: _logger,
       ),
     );
+  }
+
+  String? _findHeaderKey(Map<String, dynamic> headers, String target) {
+    for (final key in headers.keys) {
+      if (key.toLowerCase() == target.toLowerCase()) {
+        return key;
+      }
+    }
+    return null;
+  }
+
+  bool _shouldAttachAuthToken(String? token) {
+    if (token == null || token.isEmpty) {
+      return false;
+    }
+    // Child mode uses a local session marker, not a backend JWT.
+    if (token.startsWith('child_session_')) {
+      return false;
+    }
+    return true;
   }
 
   // Check internet connectivity
@@ -237,8 +268,10 @@ class RetryInterceptor extends Interceptor {
       if (retryCount < maxRetries) {
         logger.d('Retrying request: ${err.requestOptions.path} (Attempt: ${retryCount + 1})');
         
-        // Add exponential backoff delay
-        await Future.delayed(Duration(seconds: 2 ^ retryCount));
+        // Keep retries responsive so the app does not feel frozen on transient failures.
+        await Future.delayed(
+          Duration(milliseconds: 250 * (1 << retryCount)),
+        );
         
         // Clone request with incremented retry count
         final options = Options(

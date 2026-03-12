@@ -5,6 +5,7 @@ import 'package:kinder_world/core/models/admin_parent_user.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/management/admin_management_repository.dart';
 import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
+import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
 
 /// IMPORTANT:
 /// All UI text must use AppLocalizations.
@@ -36,6 +37,14 @@ class _AdminUserDetailsScreenState
     _load();
   }
 
+  @override
+  void didUpdateWidget(covariant AdminUserDetailsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.userId != widget.userId) {
+      _load();
+    }
+  }
+
   Future<void> _load() async {
     setState(() {
       _loading = true;
@@ -43,12 +52,14 @@ class _AdminUserDetailsScreenState
     });
     try {
       final repo = ref.read(adminManagementRepositoryProvider);
-      final user = await repo.fetchUserDetail(widget.userId);
-      final activity = await repo.fetchUserActivity(widget.userId);
+      final results = await Future.wait<Object?>([
+        repo.fetchUserDetail(widget.userId),
+        repo.fetchUserActivity(widget.userId),
+      ]);
       if (!mounted) return;
       setState(() {
-        _user = user;
-        _activity = activity;
+        _user = results[0] as AdminParentUser;
+        _activity = results[1] as Map<String, dynamic>;
         _loading = false;
       });
     } catch (e) {
@@ -68,10 +79,13 @@ class _AdminUserDetailsScreenState
       return const AdminPermissionPlaceholder();
     }
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const AdminLoadingState(padding: EdgeInsets.all(24));
     }
     if (_error != null || _user == null) {
-      return Center(child: Text(_error ?? 'Failed to load user'));
+      return AdminErrorState(
+        message: _error ?? l10n.unexpectedError,
+        onRetry: _load,
+      );
     }
 
     final summary =
@@ -104,10 +118,10 @@ class _AdminUserDetailsScreenState
               _InfoCard(
                 title: l10n.adminUsersOverviewCard,
                 lines: [
-                  '${l10n.adminUsersNameField}: ${_user!.name.isEmpty ? 'â€”' : _user!.name}',
+                  '${l10n.adminUsersNameField}: ${_user!.name.isEmpty ? l10n.notAvailable : _user!.name}',
                   '${l10n.adminUsersEmailField}: ${_user!.email}',
                   '${l10n.adminUsersPlanColumn}: ${_user!.plan}',
-                  '${l10n.adminUsersStatusColumn}: ${_user!.isActive ? (l10n.adminUsersStatusActive) : (l10n.adminUsersStatusDisabled)}',
+                  '${l10n.adminUsersStatusColumn}: ${_user!.isActive ? l10n.adminUsersStatusActive : l10n.adminUsersStatusDisabled}',
                 ],
               ),
               _InfoCard(
@@ -116,7 +130,7 @@ class _AdminUserDetailsScreenState
                   '${l10n.adminUsersChildrenColumn}: ${summary['child_count'] ?? _user!.childCount}',
                   '${l10n.adminUsersNotificationsMetric}: ${summary['notification_count'] ?? 0}',
                   '${l10n.adminUsersSupportMetric}: ${summary['support_ticket_count'] ?? 0}',
-                  '${l10n.adminUsersLastUpdatedMetric}: ${summary['last_updated_at'] ?? _user!.updatedAt ?? 'â€”'}',
+                  '${l10n.adminUsersLastUpdatedMetric}: ${summary['last_updated_at'] ?? _user!.updatedAt ?? l10n.notAvailable}',
                 ],
               ),
             ],
@@ -124,49 +138,71 @@ class _AdminUserDetailsScreenState
           const SizedBox(height: 24),
           _SectionCard(
             title: l10n.adminUsersChildrenSection,
-            child: Column(
-              children: _user!.children
-                  .map(
-                    (child) => ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.child_care_outlined),
-                      title: Text(child['name'] as String? ?? 'â€”'),
-                      subtitle: Text(
-                          '${AppLocalizations.of(context)!.labelId} ${child['id']}'),
-                    ),
+            child: _user!.children.isEmpty
+                ? AdminEmptyState(
+                    message: l10n.adminChildrenNoChildren,
+                    icon: Icons.child_care_outlined,
                   )
-                  .toList(),
-            ),
+                : Column(
+                    children: _user!.children
+                        .map(
+                          (child) => ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.child_care_outlined),
+                            title: Text(
+                              child['name'] as String? ?? l10n.notAvailable,
+                            ),
+                            subtitle: Text('${l10n.labelId} ${child['id']}'),
+                          ),
+                        )
+                        .toList(),
+                  ),
           ),
           const SizedBox(height: 24),
           _SectionCard(
             title: l10n.adminUsersNotificationsSection,
-            child: Column(
-              children: notifications
-                  .map(
-                    (entry) => ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(entry['title'] as String? ?? 'â€”'),
-                      subtitle: Text(entry['created_at'] as String? ?? ''),
-                    ),
+            child: notifications.isEmpty
+                ? AdminEmptyState(
+                    message: l10n.adminUsersNotificationsMetric,
+                    icon: Icons.notifications_none_rounded,
                   )
-                  .toList(),
-            ),
+                : Column(
+                    children: notifications
+                        .map(
+                          (entry) => ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(
+                              entry['title'] as String? ?? l10n.notAvailable,
+                            ),
+                            subtitle:
+                                Text(entry['created_at'] as String? ?? ''),
+                          ),
+                        )
+                        .toList(),
+                  ),
           ),
           const SizedBox(height: 24),
           _SectionCard(
             title: l10n.adminUsersSupportSection,
-            child: Column(
-              children: tickets
-                  .map(
-                    (entry) => ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(entry['subject'] as String? ?? 'â€”'),
-                      subtitle: Text(entry['created_at'] as String? ?? ''),
-                    ),
+            child: tickets.isEmpty
+                ? AdminEmptyState(
+                    message: l10n.adminUsersSupportMetric,
+                    icon: Icons.support_agent_outlined,
                   )
-                  .toList(),
-            ),
+                : Column(
+                    children: tickets
+                        .map(
+                          (entry) => ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(
+                              entry['subject'] as String? ?? l10n.notAvailable,
+                            ),
+                            subtitle:
+                                Text(entry['created_at'] as String? ?? ''),
+                          ),
+                        )
+                        .toList(),
+                  ),
           ),
         ],
       ),
@@ -195,10 +231,12 @@ class _InfoCard extends StatelessWidget {
             children: [
               Text(title, style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 12),
-              ...lines.map((line) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Text(line),
-                  )),
+              ...lines.map(
+                (line) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(line),
+                ),
+              ),
             ],
           ),
         ),

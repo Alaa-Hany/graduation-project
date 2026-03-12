@@ -5,7 +5,10 @@ import 'package:kinder_world/core/models/admin_rbac_models.dart';
 import 'package:kinder_world/core/models/admin_user.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/management/admin_management_repository.dart';
+import 'package:kinder_world/features/admin/shared/admin_form_dialog.dart';
 import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
+import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
+import 'package:kinder_world/features/admin/shared/admin_table_widgets.dart';
 
 /// IMPORTANT:
 /// All UI text must use AppLocalizations.
@@ -23,8 +26,12 @@ class _AdminAdminManagementScreenState
     extends ConsumerState<AdminAdminManagementScreen> {
   bool _loadingUsers = true;
   bool _loadingRoles = true;
+  bool _adminDetailLoading = false;
+  bool _roleDetailLoading = false;
   String? _usersError;
   String? _rolesError;
+  String? _adminDetailError;
+  String? _roleDetailError;
 
   List<AdminUser> _adminUsers = const [];
   Map<String, dynamic> _adminPagination = const {};
@@ -48,15 +55,16 @@ class _AdminAdminManagementScreenState
     setState(() {
       _loadingUsers = true;
       _usersError = null;
+      _adminDetailError = null;
     });
     try {
-      final response =
-          await ref.read(adminManagementRepositoryProvider).fetchAdminUsers(
-                search: _search,
-                status: _status,
-                page: _page,
-              );
-      AdminUser? selected = _selectedAdmin;
+      final repository = ref.read(adminManagementRepositoryProvider);
+      final response = await repository.fetchAdminUsers(
+        search: _search,
+        status: _status,
+        page: _page,
+      );
+      AdminUser? selected;
       final targetId = selectId ?? _selectedAdmin?.id;
       if (targetId != null) {
         for (final item in response.items) {
@@ -67,23 +75,23 @@ class _AdminAdminManagementScreenState
         }
       }
       selected ??= response.items.isNotEmpty ? response.items.first : null;
-      if (selected != null) {
-        selected = await ref
-            .read(adminManagementRepositoryProvider)
-            .fetchAdminUserDetail(selected.id);
-      }
       if (!mounted) return;
       setState(() {
         _adminUsers = response.items;
         _adminPagination = response.pagination;
         _selectedAdmin = selected;
         _loadingUsers = false;
+        _adminDetailLoading = false;
       });
+      if (selected != null) {
+        await _selectAdmin(selected.id, quiet: true);
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _usersError = e.toString();
         _loadingUsers = false;
+        _adminDetailLoading = false;
       });
     }
   }
@@ -92,12 +100,17 @@ class _AdminAdminManagementScreenState
     setState(() {
       _loadingRoles = true;
       _rolesError = null;
+      _roleDetailError = null;
     });
     try {
       final repository = ref.read(adminManagementRepositoryProvider);
-      final roles = await repository.fetchRoles();
-      final permissions = await repository.fetchPermissions();
-      AdminRoleRecord? selected = _selectedRole;
+      final results = await Future.wait<Object?>([
+        repository.fetchRoles(),
+        repository.fetchPermissions(),
+      ]);
+      final roles = results[0] as List<AdminRoleRecord>;
+      final permissions = results[1] as AdminPermissionsPayload;
+      AdminRoleRecord? selected;
       final targetId = selectId ?? _selectedRole?.id;
       if (targetId != null) {
         for (final item in roles) {
@@ -108,21 +121,85 @@ class _AdminAdminManagementScreenState
         }
       }
       selected ??= roles.isNotEmpty ? roles.first : null;
-      if (selected != null) {
-        selected = await repository.fetchRoleDetail(selected.id);
-      }
       if (!mounted) return;
       setState(() {
         _roles = roles;
         _permissionsPayload = permissions;
         _selectedRole = selected;
         _loadingRoles = false;
+        _roleDetailLoading = false;
       });
+      if (selected != null) {
+        await _selectRole(selected.id, quiet: true);
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _rolesError = e.toString();
         _loadingRoles = false;
+        _roleDetailLoading = false;
+      });
+    }
+  }
+
+  Future<void> _selectAdmin(int adminUserId, {bool quiet = false}) async {
+    final placeholder = _adminUsers.cast<AdminUser?>().firstWhere(
+          (item) => item?.id == adminUserId,
+          orElse: () => _selectedAdmin,
+        );
+    setState(() {
+      _selectedAdmin = placeholder;
+      _adminDetailLoading = true;
+      _adminDetailError = null;
+      if (!quiet) {
+        _usersError = null;
+      }
+    });
+    try {
+      final admin = await ref
+          .read(adminManagementRepositoryProvider)
+          .fetchAdminUserDetail(adminUserId);
+      if (!mounted) return;
+      setState(() {
+        _selectedAdmin = admin;
+        _adminDetailLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _adminDetailError = e.toString();
+        _adminDetailLoading = false;
+      });
+    }
+  }
+
+  Future<void> _selectRole(int roleId, {bool quiet = false}) async {
+    final placeholder = _roles.cast<AdminRoleRecord?>().firstWhere(
+          (item) => item?.id == roleId,
+          orElse: () => _selectedRole,
+        );
+    setState(() {
+      _selectedRole = placeholder;
+      _roleDetailLoading = true;
+      _roleDetailError = null;
+      if (!quiet) {
+        _rolesError = null;
+      }
+    });
+    try {
+      final role = await ref
+          .read(adminManagementRepositoryProvider)
+          .fetchRoleDetail(roleId);
+      if (!mounted) return;
+      setState(() {
+        _selectedRole = role;
+        _roleDetailLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _roleDetailError = e.toString();
+        _roleDetailLoading = false;
       });
     }
   }
@@ -133,13 +210,20 @@ class _AdminAdminManagementScreenState
     final nameController = TextEditingController();
     final passwordController = TextEditingController();
     final selectedRoleIds = <int>{};
-    final confirmed = await showDialog<bool>(
+      final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => StatefulBuilder(
             builder: (context, setDialogState) => AlertDialog(
+              insetPadding: EdgeInsets.symmetric(
+                horizontal: MediaQuery.sizeOf(context).width < 600 ? 16 : 40,
+                vertical: 24,
+              ),
               title: Text(l10n.adminAdminsCreateTitle),
               content: SizedBox(
-                width: 520,
+                width: adminResponsiveDialogWidth(
+                  context,
+                  preferredWidth: 520,
+                ),
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -163,8 +247,7 @@ class _AdminAdminManagementScreenState
                         controller: passwordController,
                         obscureText: true,
                         decoration: InputDecoration(
-                          labelText:
-                              l10n.adminAdminsPasswordField,
+                          labelText: l10n.adminAdminsPasswordField,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -239,35 +322,44 @@ class _AdminAdminManagementScreenState
     final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
+            insetPadding: EdgeInsets.symmetric(
+              horizontal: MediaQuery.sizeOf(context).width < 600 ? 16 : 40,
+              vertical: 24,
+            ),
             title: Text(l10n.adminAdminsEditTitle),
             content: SizedBox(
-              width: 440,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: nameController,
-                    decoration: InputDecoration(
-                      labelText: l10n.adminAdminsNameField,
+              width: adminResponsiveDialogWidth(
+                context,
+                preferredWidth: 440,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: InputDecoration(
+                        labelText: l10n.adminAdminsNameField,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: emailController,
-                    decoration: InputDecoration(
-                      labelText: l10n.adminAdminsEmailField,
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: emailController,
+                      decoration: InputDecoration(
+                        labelText: l10n.adminAdminsEmailField,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: passwordController,
-                    obscureText: true,
-                    decoration: InputDecoration(
-                      labelText: l10n.adminAdminsPasswordField,
-                      helperText: l10n.adminAdminsPasswordHelper,
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: passwordController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: l10n.adminAdminsPasswordField,
+                        helperText: l10n.adminAdminsPasswordHelper,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             actions: [
@@ -454,26 +546,35 @@ class _AdminAdminManagementScreenState
     final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
+            insetPadding: EdgeInsets.symmetric(
+              horizontal: MediaQuery.sizeOf(context).width < 600 ? 16 : 40,
+              vertical: 24,
+            ),
             title: Text(l10n.adminAdminsCreateRoleTitle),
             content: SizedBox(
-              width: 440,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: nameController,
-                    decoration: InputDecoration(
-                      labelText: l10n.adminAdminsRoleNameField,
+              width: adminResponsiveDialogWidth(
+                context,
+                preferredWidth: 440,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: InputDecoration(
+                        labelText: l10n.adminAdminsRoleNameField,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: descriptionController,
-                    decoration: InputDecoration(
-                      labelText: l10n.adminAdminsRoleDescriptionField,
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: descriptionController,
+                      decoration: InputDecoration(
+                        labelText: l10n.adminAdminsRoleDescriptionField,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             actions: [
@@ -515,26 +616,35 @@ class _AdminAdminManagementScreenState
     final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
+            insetPadding: EdgeInsets.symmetric(
+              horizontal: MediaQuery.sizeOf(context).width < 600 ? 16 : 40,
+              vertical: 24,
+            ),
             title: Text(l10n.adminAdminsEditRoleTitle),
             content: SizedBox(
-              width: 440,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: nameController,
-                    decoration: InputDecoration(
-                      labelText: l10n.adminAdminsRoleNameField,
+              width: adminResponsiveDialogWidth(
+                context,
+                preferredWidth: 440,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: InputDecoration(
+                        labelText: l10n.adminAdminsRoleNameField,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: descriptionController,
-                    decoration: InputDecoration(
-                      labelText: l10n.adminAdminsRoleDescriptionField,
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: descriptionController,
+                      decoration: InputDecoration(
+                        labelText: l10n.adminAdminsRoleDescriptionField,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             actions: [
@@ -601,13 +711,16 @@ class _AdminAdminManagementScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              l10n.adminAdminsTitle,
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.adminAdminsSubtitle,
+            AdminPageHeader(
+              title: l10n.adminAdminsTitle,
+              subtitle: l10n.adminAdminsSubtitle,
+              actions: [
+                OutlinedButton.icon(
+                  onPressed: _loadUsers,
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                  label: Text(l10n.retry),
+                ),
+              ],
             ),
             const SizedBox(height: 20),
             TabBar(
@@ -638,14 +751,17 @@ class _AdminAdminManagementScreenState
     AdminUser? currentAdmin,
   ) {
     if (_loadingUsers) {
-      return const Center(child: CircularProgressIndicator());
+      return const AdminLoadingState();
     }
     if (_usersError != null) {
-      return Center(child: Text(_usersError!));
+      return AdminErrorState(message: _usersError!, onRetry: _loadUsers);
     }
     return LayoutBuilder(
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 1100;
+        final compact = constraints.maxWidth < 720;
+        final fieldWidth = compact ? constraints.maxWidth : 260.0;
+        final dropdownWidth = compact ? constraints.maxWidth : 200.0;
         final list = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -654,12 +770,17 @@ class _AdminAdminManagementScreenState
               runSpacing: 12,
               children: [
                 SizedBox(
-                  width: 260,
+                  width: fieldWidth,
                   child: TextFormField(
                     initialValue: _search,
                     decoration: InputDecoration(
-                      labelText:
-                          l10n.adminAdminsSearchLabel,
+                      labelText: l10n.adminAdminsSearchLabel,
+                      prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
                     ),
                     onFieldSubmitted: (value) {
                       setState(() {
@@ -671,11 +792,18 @@ class _AdminAdminManagementScreenState
                   ),
                 ),
                 SizedBox(
-                  width: 200,
+                  width: dropdownWidth,
                   child: DropdownButtonFormField<String>(
                     initialValue: _status,
+                    isDense: true,
                     decoration: InputDecoration(
                       labelText: l10n.adminAdminsStatusFilter,
+                      prefixIcon:
+                          const Icon(Icons.filter_list_rounded, size: 18),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
                     ),
                     items: [
                       DropdownMenuItem(
@@ -688,8 +816,7 @@ class _AdminAdminManagementScreenState
                       ),
                       DropdownMenuItem(
                         value: 'disabled',
-                        child:
-                            Text(l10n.adminUsersStatusDisabled),
+                        child: Text(l10n.adminUsersStatusDisabled),
                       ),
                     ],
                     onChanged: (value) {
@@ -723,7 +850,7 @@ class _AdminAdminManagementScreenState
                         .withValues(alpha: 0.35)
                     : null,
                 child: ListTile(
-                  onTap: () => _loadUsers(selectId: adminUser.id),
+                  onTap: () => _selectAdmin(adminUser.id),
                   title: Text(adminUser.email),
                   subtitle: Text(
                     '${adminUser.name.isEmpty ? '—' : adminUser.name}\n${adminUser.roles.join(', ')}',
@@ -738,43 +865,24 @@ class _AdminAdminManagementScreenState
               ),
             ),
             const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  l10n.adminPaginationSummary(
-                        (_adminPagination['page'] as int?) ?? _page,
-                        (_adminPagination['total_pages'] as int?) ?? 1,
-                        (_adminPagination['total'] as int?) ??
-                            _adminUsers.length,
-                      ),
-                ),
-                Row(
-                  children: [
-                    OutlinedButton(
-                      onPressed:
-                          ((_adminPagination['has_previous'] as bool?) ?? false)
-                              ? () {
-                                  setState(() => _page -= 1);
-                                  _loadUsers();
-                                }
-                              : null,
-                      child: Text(l10n.adminPaginationPrevious),
-                    ),
-                    const SizedBox(width: 8),
-                    FilledButton(
-                      onPressed:
-                          ((_adminPagination['has_next'] as bool?) ?? false)
-                              ? () {
-                                  setState(() => _page += 1);
-                                  _loadUsers();
-                                }
-                              : null,
-                      child: Text(l10n.adminPaginationNext),
-                    ),
-                  ],
-                ),
-              ],
+            AdminPaginationBar(
+              summary: l10n.adminPaginationSummary(
+                (_adminPagination['page'] as int?) ?? _page,
+                (_adminPagination['total_pages'] as int?) ?? 1,
+                (_adminPagination['total'] as int?) ?? _adminUsers.length,
+              ),
+              hasPrevious: (_adminPagination['has_previous'] as bool?) ?? false,
+              hasNext: (_adminPagination['has_next'] as bool?) ?? false,
+              previousLabel: l10n.adminPaginationPrevious,
+              nextLabel: l10n.adminPaginationNext,
+              onPrevious: () {
+                setState(() => _page -= 1);
+                _loadUsers();
+              },
+              onNext: () {
+                setState(() => _page += 1);
+                _loadUsers();
+              },
             ),
           ],
         );
@@ -782,6 +890,7 @@ class _AdminAdminManagementScreenState
         if (!wide) {
           return SingleChildScrollView(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [list, const SizedBox(height: 16), detail],
             ),
           );
@@ -805,11 +914,23 @@ class _AdminAdminManagementScreenState
   ) {
     final adminUser = _selectedAdmin;
     if (adminUser == null) {
+      return AdminEmptyState(
+        message: l10n.adminAdminsNoSelection,
+        icon: Icons.manage_accounts_outlined,
+      );
+    }
+    if (_adminDetailLoading) {
+      return const Card(
+        child: AdminLoadingState(padding: EdgeInsets.all(24)),
+      );
+    }
+    if (_adminDetailError != null) {
       return Card(
         child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            l10n.adminAdminsNoSelection,
+          padding: const EdgeInsets.all(20),
+          child: AdminErrorState(
+            message: _adminDetailError!,
+            onRetry: () => _selectAdmin(adminUser.id),
           ),
         ),
       );
@@ -825,7 +946,9 @@ class _AdminAdminManagementScreenState
                 Expanded(
                   child: Text(
                     adminUser.email,
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                 ),
                 _StatusChip(
@@ -838,12 +961,23 @@ class _AdminAdminManagementScreenState
             const SizedBox(height: 12),
             Text(
               '${l10n.adminAdminsNameField}: ${adminUser.name.isEmpty ? l10n.notAvailable : adminUser.name}',
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
-            Text('${l10n.adminAdminsIdLabel}: ${adminUser.id}'),
+            Text(
+              '${l10n.adminAdminsIdLabel}: ${adminUser.id}',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.6),
+                  ),
+            ),
             const SizedBox(height: 16),
             Text(
               l10n.adminAdminsRolesSection,
-              style: Theme.of(context).textTheme.titleMedium,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
             ),
             const SizedBox(height: 8),
             Wrap(
@@ -866,21 +1000,27 @@ class _AdminAdminManagementScreenState
               spacing: 8,
               runSpacing: 8,
               children: [
-                FilledButton(
+                FilledButton.icon(
                   onPressed: () => _showAssignRoleDialog(adminUser),
-                  child: Text(
-                    l10n.adminAdminsAssignRoleAction,
-                  ),
+                  icon: const Icon(Icons.add_moderator_outlined, size: 18),
+                  label: Text(l10n.adminAdminsAssignRoleAction),
                 ),
-                OutlinedButton(
+                OutlinedButton.icon(
                   onPressed: () => _showEditAdminDialog(adminUser),
-                  child: Text(l10n.adminAdminsEditAction),
+                  icon: const Icon(Icons.edit_outlined, size: 18),
+                  label: Text(l10n.adminAdminsEditAction),
                 ),
-                OutlinedButton(
+                OutlinedButton.icon(
                   onPressed: adminUser.isActive
                       ? () => _setAdminEnabled(adminUser, false)
                       : () => _setAdminEnabled(adminUser, true),
-                  child: Text(
+                  icon: Icon(
+                    adminUser.isActive
+                        ? Icons.block_outlined
+                        : Icons.check_circle_outline,
+                    size: 18,
+                  ),
+                  label: Text(
                     adminUser.isActive
                         ? l10n.adminAdminsDisableAction
                         : l10n.adminAdminsEnableAction,
@@ -891,14 +1031,21 @@ class _AdminAdminManagementScreenState
             const SizedBox(height: 16),
             Text(
               l10n.adminAdminsPermissionsSection,
-              style: Theme.of(context).textTheme.titleMedium,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
             ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: adminUser.permissions
-                  .map((permission) => Chip(label: Text(permission)))
+                  .map((permission) => Chip(
+                        label: Text(permission),
+                        labelStyle: Theme.of(context).textTheme.bodySmall,
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ))
                   .toList(),
             ),
             if (currentAdmin?.id == adminUser.id) ...[
@@ -916,10 +1063,10 @@ class _AdminAdminManagementScreenState
 
   Widget _buildRolesTab(BuildContext context, AppLocalizations l10n) {
     if (_loadingRoles) {
-      return const Center(child: CircularProgressIndicator());
+      return const AdminLoadingState();
     }
     if (_rolesError != null) {
-      return Center(child: Text(_rolesError!));
+      return AdminErrorState(message: _rolesError!, onRetry: _loadRoles);
     }
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -934,8 +1081,7 @@ class _AdminAdminManagementScreenState
                 FilledButton.icon(
                   onPressed: _showCreateRoleDialog,
                   icon: const Icon(Icons.add),
-                  label:
-                      Text(l10n.adminAdminsCreateRoleAction),
+                  label: Text(l10n.adminAdminsCreateRoleAction),
                 ),
                 OutlinedButton.icon(
                   onPressed: _loadRoles,
@@ -954,10 +1100,10 @@ class _AdminAdminManagementScreenState
                         .withValues(alpha: 0.35)
                     : null,
                 child: ListTile(
-                  onTap: () => _loadRoles(selectId: role.id),
+                  onTap: () => _selectRole(role.id),
                   title: Text(role.name),
                   subtitle: Text(
-                    '${role.description.isEmpty ? '—' : role.description}\n${role.permissionCount} permissions • ${role.adminCount} admins',
+                    '${role.description.isEmpty ? '—' : role.description}\n${l10n.adminRoleStats(role.permissionCount, role.adminCount)}',
                   ),
                   isThreeLine: true,
                 ),
@@ -969,6 +1115,7 @@ class _AdminAdminManagementScreenState
         if (!wide) {
           return SingleChildScrollView(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [list, const SizedBox(height: 16), detail],
             ),
           );
@@ -989,11 +1136,23 @@ class _AdminAdminManagementScreenState
     final role = _selectedRole;
     final permissionsPayload = _permissionsPayload;
     if (role == null || permissionsPayload == null) {
+      return AdminEmptyState(
+        message: l10n.adminAdminsNoRoleSelection,
+        icon: Icons.security_outlined,
+      );
+    }
+    if (_roleDetailLoading) {
+      return const Card(
+        child: AdminLoadingState(padding: EdgeInsets.all(24)),
+      );
+    }
+    if (_roleDetailError != null) {
       return Card(
         child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            l10n.adminAdminsNoRoleSelection,
+          padding: const EdgeInsets.all(20),
+          child: AdminErrorState(
+            message: _roleDetailError!,
+            onRetry: () => _selectRole(role.id),
           ),
         ),
       );
@@ -1012,30 +1171,60 @@ class _AdminAdminManagementScreenState
                   Expanded(
                     child: Text(
                       role.name,
-                      style: Theme.of(context).textTheme.titleLarge,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                   ),
-                  OutlinedButton(
+                  OutlinedButton.icon(
                     onPressed: () => _showEditRoleDialog(role),
-                    child: Text(l10n.adminAdminsEditRoleAction),
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    label: Text(l10n.adminAdminsEditRoleAction),
                   ),
                 ],
               ),
               const SizedBox(height: 8),
-              Text(role.description.isEmpty ? '—' : role.description),
+              Text(
+                role.description.isEmpty ? '—' : role.description,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.7),
+                    ),
+              ),
               const SizedBox(height: 16),
               Text(
                 l10n.adminAdminsPermissionsSection,
-                style: Theme.of(context).textTheme.titleMedium,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
               ),
               const SizedBox(height: 12),
               ...permissionsPayload.groups.entries.map(
                 (entry) => Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      entry.key.toUpperCase(),
-                      style: Theme.of(context).textTheme.titleSmall,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        entry.key.toUpperCase(),
+                        style:
+                            Theme.of(context).textTheme.labelMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                  letterSpacing: 0.5,
+                                ),
+                      ),
                     ),
                     const SizedBox(height: 8),
                     ...entry.value.map(
@@ -1062,12 +1251,11 @@ class _AdminAdminManagementScreenState
                   ],
                 ),
               ),
-              FilledButton(
+              FilledButton.icon(
                 onPressed: () =>
                     _saveRolePermissions(role, selectedPermissionIds),
-                child: Text(
-                  l10n.adminAdminsSavePermissionsAction,
-                ),
+                icon: const Icon(Icons.save_outlined, size: 18),
+                label: Text(l10n.adminAdminsSavePermissionsAction),
               ),
             ],
           ),

@@ -39,6 +39,34 @@ class ParentAuthException implements Exception {
   const ParentAuthException({required this.message, this.statusCode});
 }
 
+class ParentPinStatus {
+  final bool hasPin;
+  final bool isLocked;
+  final int failedAttempts;
+  final DateTime? lockedUntil;
+
+  const ParentPinStatus({
+    required this.hasPin,
+    required this.isLocked,
+    required this.failedAttempts,
+    required this.lockedUntil,
+  });
+}
+
+class ParentPinActionResult {
+  final bool success;
+  final String? message;
+  final String? error;
+  final DateTime? lockedUntil;
+
+  const ParentPinActionResult({
+    required this.success,
+    this.message,
+    this.error,
+    this.lockedUntil,
+  });
+}
+
 /// Repository for authentication operations
 class AuthRepository {
   final SecureStorage _secureStorage;
@@ -494,6 +522,7 @@ class AuthRepository {
   Future<bool> logout() async {
     try {
       _logger.d('Logging out user');
+      await _secureStorage.clearParentPinVerification();
       await _secureStorage.clearAuthOnly();
       _logger.d('Logout successful');
       return true;
@@ -505,48 +534,202 @@ class AuthRepository {
 
   // ==================== PARENT PIN ====================
 
-  /// Set parent PIN
-  Future<bool> setParentPin(String pin) async {
+  Future<ParentPinStatus> getParentPinStatus() async {
     try {
-      if (pin.length != 4) {
-        _logger.w('Invalid PIN length');
-        return false;
+      final response = await _networkService.get<Map<String, dynamic>>(
+        '/auth/parent-pin/status',
+      );
+      final data = response.data ?? const <String, dynamic>{};
+
+      final status = ParentPinStatus(
+        hasPin: data['has_pin'] == true,
+        isLocked: data['is_locked'] == true,
+        failedAttempts: (data['failed_attempts'] as num?)?.toInt() ?? 0,
+        lockedUntil: data['locked_until'] is String
+            ? DateTime.tryParse(data['locked_until'] as String)
+            : null,
+      );
+
+      // Migrate legacy local PIN if it exists and backend has no PIN yet.
+      final legacyPin = await _secureStorage.getParentPin();
+      if (!status.hasPin &&
+          legacyPin != null &&
+          legacyPin.length == 4 &&
+          RegExp(r'^\d{4}$').hasMatch(legacyPin)) {
+        final migrated = await setParentPin(legacyPin, legacyPin);
+        if (migrated.success) {
+          await _secureStorage.deleteParentPin();
+          return const ParentPinStatus(
+            hasPin: true,
+            isLocked: false,
+            failedAttempts: 0,
+            lockedUntil: null,
+          );
+        }
       }
 
-      return await _secureStorage.saveParentPin(pin);
+      return status;
+    } catch (e) {
+      _logger.e('Error getting parent PIN status: $e');
+      return const ParentPinStatus(
+        hasPin: false,
+        isLocked: false,
+        failedAttempts: 0,
+        lockedUntil: null,
+      );
+    }
+  }
+
+  Future<ParentPinActionResult> setParentPin(String pin, String confirmPin) async {
+    try {
+      final response = await _networkService.post<Map<String, dynamic>>(
+        '/auth/parent-pin/set',
+        data: {
+          'pin': pin,
+          'confirm_pin': confirmPin,
+        },
+      );
+      await _secureStorage.saveParentPinVerified(true);
+      return ParentPinActionResult(
+        success: response.data?['success'] == true,
+        message: response.data?['message']?.toString(),
+      );
+    } on DioException catch (e) {
+      return ParentPinActionResult(
+        success: false,
+        error: _extractErrorMessage(e) ?? 'Failed to set PIN',
+      );
     } catch (e) {
       _logger.e('Error setting parent PIN: $e');
-      return false;
+      return const ParentPinActionResult(
+        success: false,
+        error: 'Failed to set PIN',
+      );
     }
   }
 
-  /// Verify parent PIN
-  Future<bool> verifyParentPin(String enteredPin) async {
+  Future<ParentPinActionResult> verifyParentPin(String enteredPin) async {
     try {
-      final storedPin = await _secureStorage.getParentPin();
-      
-      if (storedPin == null) {
-        _logger.w('No PIN found');
-        return false;
-      }
-
-      final isValid = storedPin == enteredPin;
-      _logger.d('PIN verification: $isValid');
-      return isValid;
+      final response = await _networkService.post<Map<String, dynamic>>(
+        '/auth/parent-pin/verify',
+        data: {'pin': enteredPin},
+      );
+      await _secureStorage.saveParentPinVerified(true);
+      return ParentPinActionResult(
+        success: response.data?['success'] == true,
+        message: response.data?['message']?.toString(),
+      );
+    } on DioException catch (e) {
+      final lockedUntil = _extractLockedUntil(e);
+      await _secureStorage.saveParentPinVerified(false);
+      return ParentPinActionResult(
+        success: false,
+        error: _extractErrorMessage(e) ?? 'Incorrect PIN',
+        lockedUntil: lockedUntil,
+      );
     } catch (e) {
-      _logger.e('Error verifying PIN: $e');
-      return false;
+      _logger.e('Error verifying parent PIN: $e');
+      return const ParentPinActionResult(
+        success: false,
+        error: 'Failed to verify PIN',
+      );
     }
   }
 
-  /// Check if PIN is required
+  Future<ParentPinActionResult> changeParentPin({
+    required String currentPin,
+    required String newPin,
+    required String confirmPin,
+  }) async {
+    try {
+      final response = await _networkService.post<Map<String, dynamic>>(
+        '/auth/parent-pin/change',
+        data: {
+          'current_pin': currentPin,
+          'new_pin': newPin,
+          'confirm_pin': confirmPin,
+        },
+      );
+      await _secureStorage.saveParentPinVerified(true);
+      return ParentPinActionResult(
+        success: response.data?['success'] == true,
+        message: response.data?['message']?.toString(),
+      );
+    } on DioException catch (e) {
+      return ParentPinActionResult(
+        success: false,
+        error: _extractErrorMessage(e) ?? 'Failed to change PIN',
+      );
+    } catch (e) {
+      _logger.e('Error changing parent PIN: $e');
+      return const ParentPinActionResult(
+        success: false,
+        error: 'Failed to change PIN',
+      );
+    }
+  }
+
+  Future<ParentPinActionResult> requestParentPinReset({String? note}) async {
+    try {
+      final response = await _networkService.post<Map<String, dynamic>>(
+        '/auth/parent-pin/reset-request',
+        data: {
+          if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
+        },
+      );
+      return ParentPinActionResult(
+        success: response.data?['success'] == true,
+        message: response.data?['message']?.toString(),
+      );
+    } on DioException catch (e) {
+      return ParentPinActionResult(
+        success: false,
+        error: _extractErrorMessage(e) ?? 'Failed to request PIN reset',
+      );
+    } catch (e) {
+      _logger.e('Error requesting parent PIN reset: $e');
+      return const ParentPinActionResult(
+        success: false,
+        error: 'Failed to request PIN reset',
+      );
+    }
+  }
+
   Future<bool> isPinRequired() async {
     try {
-      return await _secureStorage.hasParentPin();
+      final status = await getParentPinStatus();
+      return status.hasPin;
     } catch (e) {
       _logger.e('Error checking PIN requirement: $e');
       return false;
     }
+  }
+
+  Future<bool> isParentPinVerified() async {
+    try {
+      return await _secureStorage.isParentPinVerified();
+    } catch (e) {
+      _logger.e('Error reading parent PIN verification: $e');
+      return false;
+    }
+  }
+
+  Future<void> clearParentPinVerification() async {
+    await _secureStorage.clearParentPinVerification();
+  }
+
+  DateTime? _extractLockedUntil(DioException e) {
+    final data = e.response?.data;
+    if (data is Map) {
+      final detail = data['detail'];
+      if (detail is Map && detail['locked_until'] is String) {
+        return DateTime.tryParse(detail['locked_until'].toString());
+      }
+      if (data['locked_until'] is String) {
+        return DateTime.tryParse(data['locked_until'].toString());
+      }
+    }
+    return null;
   }
 
   // ==================== CHILD SESSION ====================

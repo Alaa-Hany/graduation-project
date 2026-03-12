@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
 
@@ -53,35 +54,39 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
   final ScrollController _scrollCtrl = ScrollController();
   bool _isVoiceMode = false;
 
-  List<_QuickAction> _getQuickActions(AppLocalizations l10n) => [
+  List<_QuickAction> _getQuickActions(
+        BuildContext context,
+        AppLocalizations l10n,
+      ) =>
+      [
         _QuickAction(
           title: l10n.recommendLesson,
           emoji: '📚',
-          color: ChildColors.learningBlue,
+          color: context.childTheme.learning,
           action: 'recommend_lesson',
         ),
         _QuickAction(
           title: l10n.suggestGame,
           emoji: '🎮',
-          color: ChildColors.skillPurple,
+          color: context.childTheme.skill,
           action: 'suggest_game',
         ),
         _QuickAction(
           title: l10n.tellStory,
           emoji: '📖',
-          color: ChildColors.kindnessPink,
+          color: context.childTheme.kindness,
           action: 'tell_story',
         ),
         _QuickAction(
           title: l10n.funFact,
           emoji: '🧠',
-          color: ChildColors.funCyan,
+          color: context.childTheme.fun,
           action: 'fun_fact',
         ),
         _QuickAction(
           title: l10n.motivation,
           emoji: '⭐',
-          color: ChildColors.streakFire,
+          color: context.childTheme.streak,
           action: 'motivation',
         ),
       ];
@@ -243,7 +248,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
         child: Column(
           children: [
             _buildHeader(colors, l10n),
-            _buildQuickActions(colors, l10n),
+            _buildQuickActions(context, colors, l10n),
             const Divider(height: 1),
             Expanded(child: _buildChatList(colors)),
             _buildInputBar(colors, l10n),
@@ -254,6 +259,8 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
   }
 
   Widget _buildHeader(ColorScheme colors, AppLocalizations l10n) {
+    final childTheme = context.childTheme;
+    final textTheme = Theme.of(context).textTheme;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
@@ -285,18 +292,18 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
                     width: 64,
                     height: 64,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
+                      gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          ChildColors.buddyStart,
-                          ChildColors.buddyEnd,
+                          childTheme.buddyStart,
+                          childTheme.buddyEnd,
                         ],
                       ),
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: ChildColors.buddyStart
+                          color: childTheme.buddyStart
                               .withValues(alpha: _pulseGlow.value),
                           blurRadius: 20,
                           spreadRadius: 4,
@@ -318,7 +325,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
                       children: [
                         Text(
                           l10n.aiBuddyName,
-                          style: TextStyle(
+                          style: textTheme.titleLarge?.copyWith(
                             fontSize: 22,
                             fontWeight: FontWeight.w800,
                             color: colors.onSurface,
@@ -332,25 +339,25 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: ChildColors.successGreen
+                            color: childTheme.success
                                 .withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.circle,
                                 size: 7,
-                                color: ChildColors.successGreen,
+                                color: childTheme.success,
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 l10n.aiBuddyOnline,
-                                style: const TextStyle(
+                                style: textTheme.labelSmall?.copyWith(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: ChildColors.successGreen,
+                                  color: childTheme.success,
                                 ),
                               ),
                             ],
@@ -361,7 +368,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
                     const SizedBox(height: 2),
                     Text(
                       l10n.aiCompanionSubtitle,
-                      style: TextStyle(
+                      style: textTheme.bodySmall?.copyWith(
                         fontSize: 13,
                         color: colors.onSurfaceVariant,
                       ),
@@ -374,7 +381,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
           const SizedBox(height: 14),
           Text(
             l10n.quickActions,
-            style: TextStyle(
+            style: textTheme.labelLarge?.copyWith(
               fontSize: 14,
               fontWeight: FontWeight.w700,
               color: colors.onSurface,
@@ -385,8 +392,12 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
     );
   }
 
-  Widget _buildQuickActions(ColorScheme colors, AppLocalizations l10n) {
-    final actions = _getQuickActions(l10n);
+  Widget _buildQuickActions(
+    BuildContext context,
+    ColorScheme colors,
+    AppLocalizations l10n,
+  ) {
+    final actions = _getQuickActions(context, l10n);
     return Container(
       color: colors.surface,
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
@@ -456,6 +467,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
   }
 
   Widget _buildBuddyBubble(ChatMessage msg, ColorScheme colors) {
+    final childTheme = context.childTheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Row(
@@ -465,9 +477,9 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
             width: 32,
             height: 32,
             margin: const EdgeInsetsDirectional.only(end: 8),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [ChildColors.buddyStart, ChildColors.buddyEnd],
+                colors: [childTheme.buddyStart, childTheme.buddyEnd],
               ),
               shape: BoxShape.circle,
             ),
@@ -565,6 +577,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
   }
 
   Widget _buildInputBar(ColorScheme colors, AppLocalizations l10n) {
+    final childTheme = context.childTheme;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -589,7 +602,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
                 height: 44,
                 decoration: BoxDecoration(
                   color: _isVoiceMode
-                      ? ChildColors.buddyStart.withValues(alpha: 0.15)
+                      ? childTheme.buddyStart.withValues(alpha: 0.15)
                       : colors.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(14),
                 ),
@@ -597,7 +610,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
                   _isVoiceMode ? Icons.mic_rounded : Icons.mic_none_rounded,
                   size: 22,
                   color: _isVoiceMode
-                      ? ChildColors.buddyStart
+                      ? childTheme.buddyStart
                       : colors.onSurfaceVariant,
                 ),
               ),
@@ -636,23 +649,23 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
+                  gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [ChildColors.buddyStart, ChildColors.buddyEnd],
+                    colors: [childTheme.buddyStart, childTheme.buddyEnd],
                   ),
                   borderRadius: BorderRadius.circular(22),
                   boxShadow: [
                     BoxShadow(
-                      color: ChildColors.buddyStart.withValues(alpha: 0.35),
+                      color: childTheme.buddyStart.withValues(alpha: 0.35),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),
                   ],
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.send_rounded,
-                  color: Colors.white,
+                  color: childTheme.buddyStart.onColor,
                   size: 20,
                 ),
               ),

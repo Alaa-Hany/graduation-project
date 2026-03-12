@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/app.dart';
-import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/features/child_mode/paywall/child_paywall_screen.dart';
 
 /// IMPORTANT:
@@ -129,7 +129,7 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: isError ? AppColors.error : AppColors.success,
+                  color: isError ? Theme.of(context).colorScheme.error : context.successColor,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
@@ -375,7 +375,7 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
                       margin: const EdgeInsets.symmetric(horizontal: 4),
                       decoration: BoxDecoration(
                         color: index <= _currentStep 
-                            ? AppColors.primary 
+                            ? Theme.of(context).colorScheme.primary 
                             : Theme.of(context).colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(2),
                       ),
@@ -408,13 +408,13 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
                         },
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: const BorderSide(color: AppColors.primary),
+                          side: BorderSide(color: Theme.of(context).colorScheme.primary),
                         ),
                         child: Text(
                           AppLocalizations.of(context)!.back,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: AppConstants.fontSize,
-                            color: AppColors.primary,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
                       ),
@@ -428,7 +428,7 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
                         });
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: Theme.of(context).colorScheme.primary,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       child: Text(
@@ -622,7 +622,7 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
                     color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isSelected ? AppColors.primary : Theme.of(context).colorScheme.surfaceContainerHighest,
+                      color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surfaceContainerHighest,
                       width: isSelected ? 3 : 1,
                     ),
                   ),
@@ -631,17 +631,17 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
                       width: 80,
                       height: 80,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(40),
                       ),
                       child: ClipOval(
                         child: Image.asset(
                           avatar,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Icon(
+                          errorBuilder: (_, __, ___) => Icon(
                             Icons.person,
                             size: 40,
-                            color: AppColors.primary,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
                       ),
@@ -701,11 +701,11 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
                 child: Container(
                   decoration: BoxDecoration(
                     color: isSelected 
-                        ? AppColors.primary.withValues(alpha: 0.1)
+                        ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
                         : Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isSelected ? AppColors.primary : Theme.of(context).colorScheme.surfaceContainerHighest,
+                      color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surfaceContainerHighest,
                       width: isSelected ? 2 : 1,
                     ),
                   ),
@@ -715,7 +715,7 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        color: isSelected ? AppColors.primary : Theme.of(context).colorScheme.onSurface,
+                        color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                   ),
@@ -811,11 +811,11 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
                 child: Container(
                   decoration: BoxDecoration(
                     color: isSelected 
-                        ? AppColors.primary.withValues(alpha: 0.2)
+                        ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)
                         : Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isSelected ? AppColors.primary : Theme.of(context).colorScheme.surfaceContainerHighest,
+                      color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surfaceContainerHighest,
                       width: 2,
                     ),
                   ),
@@ -845,4 +845,5 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
     );
   }
 }
+
 

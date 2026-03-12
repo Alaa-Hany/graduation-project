@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/router.dart';
@@ -50,7 +51,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop || !mounted) return;
-        context.go(Routes.selectUserType);
+        context.appBack(fallback: Routes.selectUserType);
       },
       child: Scaffold(
         backgroundColor: colorScheme.surface,
@@ -66,7 +67,8 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                     Align(
                       alignment: AlignmentDirectional.centerStart,
                       child: IconButton(
-                        onPressed: () => context.go(Routes.selectUserType),
+                        onPressed: () =>
+                            context.appBack(fallback: Routes.selectUserType),
                         tooltip: l10n.goBack,
                         icon: const Icon(Icons.arrow_back_rounded),
                       ),

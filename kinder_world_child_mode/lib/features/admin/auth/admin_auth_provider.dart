@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/app.dart';
+import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/models/admin_user.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_repository.dart';
 
@@ -53,8 +54,10 @@ final adminAuthRepositoryProvider = Provider<AdminAuthRepository>((ref) {
 
 class AdminAuthNotifier extends StateNotifier<AdminAuthState> {
   final AdminAuthRepository _repo;
+  final AppNavigationController _navigationController;
 
-  AdminAuthNotifier(this._repo) : super(const AdminAuthState()) {
+  AdminAuthNotifier(this._repo, this._navigationController)
+      : super(const AdminAuthState()) {
     _restoreSession();
   }
 
@@ -101,6 +104,7 @@ class AdminAuthNotifier extends StateNotifier<AdminAuthState> {
   Future<void> logout() async {
     state = state.copyWith(status: AdminAuthStatus.loading);
     await _repo.logout();
+    _navigationController.clearHistory(seedLocation: '/admin/login');
     state = const AdminAuthState(status: AdminAuthStatus.unauthenticated);
   }
 
@@ -160,7 +164,8 @@ class AdminAuthNotifier extends StateNotifier<AdminAuthState> {
 final adminAuthProvider =
     StateNotifierProvider<AdminAuthNotifier, AdminAuthState>((ref) {
   final repo = ref.watch(adminAuthRepositoryProvider);
-  return AdminAuthNotifier(repo);
+  final navigationController = ref.watch(appNavigationControllerProvider);
+  return AdminAuthNotifier(repo, navigationController);
 });
 
 /// Convenience provider — returns the current AdminUser or null.

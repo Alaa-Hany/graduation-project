@@ -7,6 +7,7 @@ import 'package:kinder_world/core/models/admin_analytics_overview.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/management/admin_management_repository.dart';
 import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
+import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
 
 class AdminAnalyticsScreen extends ConsumerStatefulWidget {
   const AdminAnalyticsScreen({super.key});
@@ -60,118 +61,130 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
     if (!(admin?.hasPermission('admin.analytics.view') ?? false)) {
       return const AdminPermissionPlaceholder();
     }
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l10n.adminAnalyticsTitle,
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            l10n.adminAnalyticsSubtitle,
-          ),
-          const SizedBox(height: 20),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              SegmentedButton<String>(
-                segments: [
-                  ButtonSegment(
-                    value: 'week',
-                    label: Text(l10n.adminAnalyticsRangeWeek),
-                  ),
-                  ButtonSegment(
-                    value: 'month',
-                    label: Text(l10n.adminAnalyticsRangeMonth),
-                  ),
-                ],
-                selected: {_range},
-                onSelectionChanged: (selection) {
-                  setState(() => _range = selection.first);
-                  _loadAnalytics();
-                },
-              ),
+          // ── Header ──────────────────────────────────────────────────
+          AdminPageHeader(
+            title: l10n.adminAnalyticsTitle,
+            subtitle: l10n.adminAnalyticsSubtitle,
+            actions: [
               OutlinedButton.icon(
-                onPressed: _loadAnalytics,
-                icon: const Icon(Icons.refresh),
-                label: Text(l10n.retry),
+                onPressed: _loading ? null : _loadAnalytics,
+                icon: const Icon(Icons.refresh_rounded, size: 18),
+                label: Text(l10n.adminRefreshTooltip),
               ),
             ],
           ),
           const SizedBox(height: 20),
-          if (_loading)
-            const Padding(
-              padding: EdgeInsets.all(40),
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else if (_error != null)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(_error!),
-              ),
-            )
-          else if (_overview != null && _usage != null) ...[
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                _KpiCard(
-                  title: l10n.adminAnalyticsTotalUsers,
-                  value: '${_overview!.kpis['total_users'] ?? 0}',
-                  icon: Icons.people_outline,
+
+          // ── Range selector ──────────────────────────────────────────
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SegmentedButton<String>(
+              segments: [
+                ButtonSegment(
+                  value: 'week',
+                  icon: const Icon(Icons.calendar_view_week_rounded, size: 16),
+                  label: Text(l10n.adminAnalyticsRangeWeek),
                 ),
-                _KpiCard(
-                  title: l10n.adminAnalyticsActiveChildren,
-                  value: '${_overview!.kpis['active_children'] ?? 0}',
-                  icon: Icons.child_care_outlined,
-                ),
-                _KpiCard(
-                  title: l10n.adminAnalyticsActivitiesToday,
-                  value: '${_overview!.kpis['activities_today'] ?? 0}',
-                  icon: Icons.bolt_outlined,
-                ),
-                _KpiCard(
-                  title: l10n.adminAnalyticsOpenTickets,
-                  value: '${_overview!.kpis['open_tickets'] ?? 0}',
-                  icon: Icons.support_agent_outlined,
+                ButtonSegment(
+                  value: 'month',
+                  icon: const Icon(Icons.calendar_month_rounded, size: 16),
+                  label: Text(l10n.adminAnalyticsRangeMonth),
                 ),
               ],
-            ),
-            const SizedBox(height: 20),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final isWide = constraints.maxWidth >= 1100;
-                if (isWide) {
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        flex: 8,
-                        child: _buildUsageCard(context, l10n),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        flex: 5,
-                        child: _buildSummaryCards(context, l10n),
-                      ),
-                    ],
-                  );
-                }
-                return Column(
-                  children: [
-                    _buildUsageCard(context, l10n),
-                    const SizedBox(height: 16),
-                    _buildSummaryCards(context, l10n),
-                  ],
-                );
+              selected: {_range},
+              onSelectionChanged: (s) {
+                setState(() => _range = s.first);
+                _loadAnalytics();
               },
             ),
+          ),
+          const SizedBox(height: 20),
+
+          if (_loading)
+            const AdminLoadingState()
+          else if (_error != null)
+            AdminErrorState(message: _error!, onRetry: _loadAnalytics)
+          else if (_overview == null && _usage == null)
+            AdminEmptyState(
+              message: l10n.adminAnalyticsNoData,
+              icon: Icons.analytics_outlined,
+            )
+          else if (_overview != null && _usage != null) ...[
+            // ── KPI Grid ──────────────────────────────────────────────
+            LayoutBuilder(builder: (context, constraints) {
+              final cols = constraints.maxWidth >= 900
+                  ? 4
+                  : constraints.maxWidth >= 600
+                      ? 2
+                      : 1;
+              return GridView.count(
+                crossAxisCount: cols,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 1.8,
+                children: [
+                  _KpiCard(
+                    title: l10n.adminAnalyticsTotalUsers,
+                    value: '${_overview!.kpis['total_users'] ?? 0}',
+                    icon: Icons.people_outline,
+                    bgColor: cs.primaryContainer,
+                    iconColor: cs.primary,
+                  ),
+                  _KpiCard(
+                    title: l10n.adminAnalyticsActiveChildren,
+                    value: '${_overview!.kpis['active_children'] ?? 0}',
+                    icon: Icons.child_care_outlined,
+                    bgColor: cs.secondaryContainer,
+                    iconColor: cs.secondary,
+                  ),
+                  _KpiCard(
+                    title: l10n.adminAnalyticsActivitiesToday,
+                    value: '${_overview!.kpis['activities_today'] ?? 0}',
+                    icon: Icons.bolt_outlined,
+                    bgColor: cs.tertiaryContainer,
+                    iconColor: cs.tertiary,
+                  ),
+                  _KpiCard(
+                    title: l10n.adminAnalyticsOpenTickets,
+                    value: '${_overview!.kpis['open_tickets'] ?? 0}',
+                    icon: Icons.support_agent_outlined,
+                    bgColor: cs.errorContainer,
+                    iconColor: cs.error,
+                  ),
+                ],
+              );
+            }),
+            const SizedBox(height: 20),
+
+            // ── Charts + Summary ──────────────────────────────────────
+            LayoutBuilder(builder: (context, constraints) {
+              final isWide = constraints.maxWidth >= 1100;
+              if (isWide) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(flex: 8, child: _buildUsageCard(context, l10n)),
+                    const SizedBox(width: 16),
+                    Expanded(flex: 5, child: _buildSummaryCards(context, l10n)),
+                  ],
+                );
+              }
+              return Column(children: [
+                _buildUsageCard(context, l10n),
+                const SizedBox(height: 16),
+                _buildSummaryCards(context, l10n),
+              ]);
+            }),
           ],
         ],
       ),
@@ -180,43 +193,36 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
 
   Widget _buildUsageCard(BuildContext context, AppLocalizations l10n) {
     final usage = _usage!;
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              l10n.adminAnalyticsUsageTitle,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
+            Row(children: [
+              Icon(Icons.bar_chart_rounded, size: 18, color: cs.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  l10n.adminAnalyticsUsageTitle,
+                  style: theme.textTheme.titleSmall
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ]),
             const SizedBox(height: 16),
             _UsageChart(points: usage.points),
             const SizedBox(height: 16),
-            Wrap(
-              spacing: 16,
-              runSpacing: 8,
-              children: [
-                _LegendDot(
-                  color: Theme.of(context).colorScheme.primary,
-                  label: l10n.adminAnalyticsNewUsers,
-                ),
-                _LegendDot(
-                  color: Theme.of(context).colorScheme.secondary,
-                  label: l10n.adminAnalyticsNewChildren,
-                ),
-                _LegendDot(
-                  color: Theme.of(context).colorScheme.tertiary,
-                  label: l10n.adminAnalyticsActivities,
-                ),
-                _LegendDot(
-                  color: Theme.of(context).colorScheme.error,
-                  label: l10n.adminAnalyticsTickets,
-                ),
-              ],
-            ),
+            Wrap(spacing: 16, runSpacing: 8, children: [
+              _LegendDot(color: cs.primary, label: l10n.adminAnalyticsNewUsers),
+              _LegendDot(
+                  color: cs.secondary, label: l10n.adminAnalyticsNewChildren),
+              _LegendDot(
+                  color: cs.tertiary, label: l10n.adminAnalyticsActivities),
+              _LegendDot(color: cs.error, label: l10n.adminAnalyticsTickets),
+            ]),
           ],
         ),
       ),
@@ -225,144 +231,233 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
 
   Widget _buildSummaryCards(BuildContext context, AppLocalizations l10n) {
     final overview = _overview!;
-    return Column(
-      children: [
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n.adminAnalyticsSubscriptionsTitle,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                const SizedBox(height: 12),
-                ...overview.subscriptionsByPlan.entries.map(
-                  (entry) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(entry.key),
-                        Text(
-                          '${entry.value}',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final planTotal = overview.subscriptionsByPlan.values
+        .fold<int>(0, (a, b) => a + (b as int? ?? 0));
+    return Column(children: [
+      Card(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                Icon(Icons.pie_chart_outline_rounded,
+                    size: 18, color: cs.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    l10n.adminAnalyticsSubscriptionsTitle,
+                    style: theme.textTheme.titleSmall
+                        ?.copyWith(fontWeight: FontWeight.bold),
                   ),
                 ),
-                const Divider(),
-                _summaryRow(
-                  l10n.adminAnalyticsPaidSubscriptions,
-                  '${overview.paidSubscriptions}',
-                ),
-                const SizedBox(height: 8),
-                _summaryRow(
-                  l10n.adminAnalyticsFreeSubscriptions,
-                  '${overview.freeSubscriptions}',
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n.adminAnalyticsRecentTickets,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                const SizedBox(height: 12),
-                if (overview.recentTickets.isEmpty)
-                  Text(l10n.adminAnalyticsNoData)
-                else
-                  ...overview.recentTickets.map(
-                    (ticket) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+              ]),
+              const SizedBox(height: 12),
+              ...overview.subscriptionsByPlan.entries.map((entry) {
+                final count = entry.value as int? ?? 0;
+                final fraction =
+                    planTotal > 0 ? (count / planTotal).clamp(0.0, 1.0) : 0.0;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
+                          Text(entry.key, style: theme.textTheme.bodySmall),
                           Text(
-                            ticket['subject']?.toString() ?? '-',
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '${ticket['status'] ?? '-'} | ${ticket['email'] ?? '-'}',
-                            style: Theme.of(context).textTheme.bodySmall,
+                            '$count',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                                color: cs.primary, fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
-                    ),
+                      const SizedBox(height: 4),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: fraction,
+                          minHeight: 6,
+                          backgroundColor:
+                              cs.primaryContainer.withValues(alpha: 0.4),
+                          valueColor: AlwaysStoppedAnimation<Color>(cs.primary),
+                        ),
+                      ),
+                    ],
                   ),
-              ],
-            ),
+                );
+              }),
+              const Divider(height: 20),
+              _summaryRow(context, l10n.adminAnalyticsPaidSubscriptions,
+                  '${overview.paidSubscriptions}', cs.tertiary),
+              const SizedBox(height: 8),
+              _summaryRow(context, l10n.adminAnalyticsFreeSubscriptions,
+                  '${overview.freeSubscriptions}', cs.secondary),
+            ],
           ),
         ),
-      ],
-    );
+      ),
+      const SizedBox(height: 16),
+      Card(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                Icon(Icons.confirmation_num_outlined,
+                    size: 18, color: cs.error),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    l10n.adminAnalyticsRecentTickets,
+                    style: theme.textTheme.titleSmall
+                        ?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ]),
+              const SizedBox(height: 12),
+              if (overview.recentTickets.isEmpty)
+                Text(l10n.adminAnalyticsNoData,
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: cs.onSurface.withValues(alpha: 0.5)))
+              else
+                ...overview.recentTickets.map((ticket) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Builder(builder: (_) {
+                            final s =
+                                ticket['status']?.toString().toLowerCase();
+                            final dotColor = s == 'open'
+                                ? cs.error
+                                : s == 'in_progress'
+                                    ? cs.tertiary
+                                    : s == 'resolved'
+                                        ? cs.secondary
+                                        : cs.outline;
+                            return Container(
+                              width: 8,
+                              height: 8,
+                              margin: const EdgeInsets.only(top: 5, right: 8),
+                              decoration: BoxDecoration(
+                                  color: dotColor, shape: BoxShape.circle),
+                            );
+                          }),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(ticket['subject']?.toString() ?? '-',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                        fontWeight: FontWeight.w600)),
+                                const SizedBox(height: 2),
+                                Text(
+                                    '${ticket['status'] ?? '-'} · ${ticket['email'] ?? '-'}',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                        color: cs.onSurface
+                                            .withValues(alpha: 0.55))),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    )),
+            ],
+          ),
+        ),
+      ),
+    ]);
   }
 
-  Widget _summaryRow(String label, String value) {
+  Widget _summaryRow(
+      BuildContext context, String label, String value, Color valueColor) {
+    final theme = Theme.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+        Expanded(
+          child: Text(
+            label,
+            style: theme.textTheme.bodySmall,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(value,
+            style: theme.textTheme.bodySmall
+                ?.copyWith(fontWeight: FontWeight.bold, color: valueColor)),
       ],
     );
   }
 }
+
+// ─────────────────────────── KPI Card ────────────────────────────────────────
 
 class _KpiCard extends StatelessWidget {
   const _KpiCard({
     required this.title,
     required this.value,
     required this.icon,
+    required this.bgColor,
+    required this.iconColor,
   });
 
   final String title;
   final String value;
   final IconData icon;
+  final Color bgColor;
+  final Color iconColor;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return SizedBox(
-      width: 240,
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, color: scheme.primary),
-              const SizedBox(height: 14),
-              Text(
-                value,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: bgColor.withValues(alpha: 0.7), width: 1.5),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                  color: bgColor, borderRadius: BorderRadius.circular(10)),
+              child: Icon(icon, size: 22, color: iconColor),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(value,
+                      style: theme.textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 2),
+                  Text(title,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.6)),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis),
+                ],
               ),
-              const SizedBox(height: 4),
-              Text(title),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
+
+// ─────────────────────────── Legend Dot ──────────────────────────────────────
 
 class _LegendDot extends StatelessWidget {
   const _LegendDot({required this.color, required this.label});
@@ -376,16 +471,17 @@ class _LegendDot extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
         const SizedBox(width: 6),
-        Text(label),
+        Text(label, style: Theme.of(context).textTheme.bodySmall),
       ],
     );
   }
 }
+
+// ─────────────────────────── Usage Chart ─────────────────────────────────────
 
 class _UsageChart extends StatelessWidget {
   const _UsageChart({required this.points});
@@ -395,118 +491,79 @@ class _UsageChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final maxValue = points.fold<int>(
+    final maxVal = points.fold<int>(
       1,
-      (current, point) => math.max(
-        current,
-        math.max(
-          math.max(point.users, point.children),
-          math.max(point.activities, point.tickets),
-        ),
-      ),
+      (cur, p) => math.max(
+          cur,
+          math.max(math.max(p.users, p.children),
+              math.max(p.activities, p.tickets))),
     );
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const pointWidth = 42.0;
-        final chartWidth = math.max(
-          constraints.maxWidth,
-          points.length * pointWidth,
-        );
-
-        return SizedBox(
-          height: 220,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SizedBox(
-              width: chartWidth,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: points.map((point) {
-                  return SizedBox(
-                    width: pointWidth,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Expanded(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                _Bar(
-                                  color: scheme.primary,
-                                  value: point.users,
-                                  maxValue: maxValue,
-                                ),
-                                const SizedBox(width: 2),
-                                _Bar(
-                                  color: scheme.secondary,
-                                  value: point.children,
-                                  maxValue: maxValue,
-                                ),
-                                const SizedBox(width: 2),
-                                _Bar(
-                                  color: scheme.tertiary,
-                                  value: point.activities,
-                                  maxValue: maxValue,
-                                ),
-                                const SizedBox(width: 2),
-                                _Bar(
-                                  color: scheme.error,
-                                  value: point.tickets,
-                                  maxValue: maxValue,
-                                ),
-                              ],
-                            ),
+    return LayoutBuilder(builder: (context, constraints) {
+      const pw = 42.0;
+      final chartW = math.max(constraints.maxWidth, points.length * pw);
+      return SizedBox(
+        height: 220,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: SizedBox(
+            width: chartW,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: points.map((point) {
+                return SizedBox(
+                  width: pw,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Expanded(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _buildBar(scheme.primary, point.users, maxVal),
+                              const SizedBox(width: 2),
+                              _buildBar(
+                                  scheme.secondary, point.children, maxVal),
+                              const SizedBox(width: 2),
+                              _buildBar(
+                                  scheme.tertiary, point.activities, maxVal),
+                              const SizedBox(width: 2),
+                              _buildBar(scheme.error, point.tickets, maxVal),
+                            ],
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            point.label,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(point.label,
                             style: Theme.of(context).textTheme.bodySmall,
                             textAlign: TextAlign.center,
                             maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
+                            overflow: TextOverflow.ellipsis),
+                      ],
                     ),
-                  );
-                }).toList(),
-              ),
+                  ),
+                );
+              }).toList(),
             ),
           ),
-        );
-      },
-    );
+        ),
+      );
+    });
   }
-}
 
-class _Bar extends StatelessWidget {
-  const _Bar({
-    required this.color,
-    required this.value,
-    required this.maxValue,
-  });
-
-  final Color color;
-  final int value;
-  final int maxValue;
-
-  @override
-  Widget build(BuildContext context) {
-    final heightFactor = value == 0 || maxValue == 0 ? 0.0 : value / maxValue;
+  Widget _buildBar(Color color, int value, int maxVal) {
+    final hf =
+        (value == 0 || maxVal == 0) ? 0.0 : (value / maxVal).clamp(0.04, 1.0);
     return Expanded(
       child: Align(
         alignment: Alignment.bottomCenter,
         child: FractionallySizedBox(
-          heightFactor: heightFactor == 0 ? 0 : heightFactor.clamp(0.04, 1.0),
+          heightFactor: hf,
           child: Container(
             decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(6),
-            ),
+                color: color, borderRadius: BorderRadius.circular(6)),
           ),
         ),
       ),

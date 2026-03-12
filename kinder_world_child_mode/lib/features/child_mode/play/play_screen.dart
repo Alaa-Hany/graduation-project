@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/features/child_mode/profile/child_profile_screen.dart';
 
@@ -18,13 +19,17 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
   String _searchQuery = '';
 
   // 'key' is stable for filtering; 'label' is kept for legacy but not used for filtering
-  static const _tabs = <Map<String, Object>>[
-    {'key': 'all', 'emoji': '🌟', 'color': Color(0xFF6C63FF)},
-    {'key': 'kindness', 'emoji': '💖', 'color': Color(0xFFE91E63)},
-    {'key': 'learning', 'emoji': '📚', 'color': Color(0xFF3F51B5)},
-    {'key': 'skills', 'emoji': '🧩', 'color': Color(0xFF9C27B0)},
-    {'key': 'music', 'emoji': '🎵', 'color': Color(0xFF00BCD4)},
-  ];
+  List<Map<String, Object>> _tabs(BuildContext context) {
+    final child = context.childTheme;
+    final colors = Theme.of(context).colorScheme;
+    return [
+      {'key': 'all', 'emoji': '🌟', 'color': colors.primary},
+      {'key': 'kindness', 'emoji': '💖', 'color': child.kindness},
+      {'key': 'learning', 'emoji': '📚', 'color': child.learning},
+      {'key': 'skills', 'emoji': '🧩', 'color': child.skill},
+      {'key': 'music', 'emoji': '🎵', 'color': child.fun},
+    ];
+  }
 
   static const _cards = <Map<String, String>>[
     {
@@ -147,7 +152,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
 
   List<Map<String, String>> _filteredCards(AppLocalizations l10n) {
     final query = _searchQuery.trim().toLowerCase();
-    final key = _tabs[_selectedTab]['key'] as String;
+    final key = _tabs(context)[_selectedTab]['key'] as String;
     final tag = switch (key) {
       'kindness' => 'Behavioral',
       'learning' => 'Educational',
@@ -231,6 +236,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
   // ── HEADER ─────────────────────────────────────────────────────────────────
 
   Widget _buildHeader(ColorScheme colors, AppLocalizations l10n) {
+    final successColor = context.successColor;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
       child: Row(
@@ -262,24 +268,24 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.green.withValues(alpha: 0.12),
+              color: successColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: Colors.green.withValues(alpha: 0.3),
+                color: successColor.withValues(alpha: 0.3),
                 width: 1,
               ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.shield_rounded, size: 14, color: Colors.green),
+                Icon(Icons.shield_rounded, size: 14, color: successColor),
                 const SizedBox(width: 4),
                 Text(
                   l10n.safeMode,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: Colors.green,
+                    color: successColor,
                   ),
                 ),
               ],
@@ -313,10 +319,10 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: _tabs.length,
+        itemCount: _tabs(context).length,
         separatorBuilder: (_, __) => const SizedBox(width: 10),
         itemBuilder: (_, i) {
-          final tab = _tabs[i];
+          final tab = _tabs(context)[i];
           return ChildCategoryChip(
             label: tabLabels[i],
             emoji: tab['emoji'] as String,
@@ -487,7 +493,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            Colors.black.withValues(alpha: 0.55),
+                            colors.shadow.withValues(alpha: 0.55),
                           ],
                         ),
                       ),
@@ -507,10 +513,10 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
                         ),
                         child: Text(
                           _featuredLabel(card['label'] ?? '', l10n),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
-                            color: Colors.white,
+                            color: colors.onPrimary,
                           ),
                         ),
                       ),
@@ -525,13 +531,13 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.65),
+                          color: colors.surface.withValues(alpha: 0.82),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           card['duration'] ?? '',
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: colors.onSurface,
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
                           ),
@@ -544,12 +550,12 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.9),
+                          color: colors.surface.withValues(alpha: 0.92),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.play_arrow_rounded,
-                          color: Colors.black87,
+                          color: colors.onSurface,
                           size: 24,
                         ),
                       ),
@@ -617,12 +623,12 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
                       width: 30,
                       height: 30,
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.5),
+                        color: colors.shadow.withValues(alpha: 0.5),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.play_arrow_rounded,
-                        color: Colors.white,
+                        color: colors.onSurface,
                         size: 18,
                       ),
                     ),
@@ -636,13 +642,13 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.65),
+                        color: colors.surface.withValues(alpha: 0.82),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         card['duration'] ?? '',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: colors.onSurface,
                           fontSize: 9,
                           fontWeight: FontWeight.w600,
                         ),
@@ -713,14 +719,15 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
 
   Color _tagColor(String tag) {
     final l10n = AppLocalizations.of(context)!;
+    final childTheme = context.childTheme;
     return switch (tag) {
       var value when value == l10n.categoryBehavioral =>
-        ChildColors.kindnessPink,
+        childTheme.kindness,
       var value when value == l10n.categoryEducational =>
-        ChildColors.learningBlue,
-      var value when value == l10n.categorySkillful => ChildColors.skillPurple,
-      var value when value == l10n.categoryEntertaining => ChildColors.funCyan,
-      _ => ChildColors.learningBlue,
+        childTheme.learning,
+      var value when value == l10n.categorySkillful => childTheme.skill,
+      var value when value == l10n.categoryEntertaining => childTheme.fun,
+      _ => childTheme.learning,
     };
   }
 

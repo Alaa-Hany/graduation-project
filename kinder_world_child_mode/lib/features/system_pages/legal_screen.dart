@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
-import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/app.dart';
 
@@ -80,15 +79,15 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.description,
                         size: 72,
-                        color: AppColors.primary,
+                        color: colors.primary,
                       ),
                       const SizedBox(height: 24),
                       Text(
                         l10n.legalNoContent,
-                        style: const TextStyle(
+                        style: textTheme.titleMedium?.copyWith(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
@@ -116,6 +115,7 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
                   style: textTheme.bodyMedium?.copyWith(
                     fontSize: 16,
                     height: 1.5,
+                    color: colors.onSurface,
                   ),
                 ),
               ),

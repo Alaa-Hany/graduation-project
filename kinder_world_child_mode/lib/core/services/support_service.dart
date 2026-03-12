@@ -1,32 +1,90 @@
+import 'package:dio/dio.dart';
+import 'package:kinder_world/core/models/support_ticket_record.dart';
 import 'package:kinder_world/core/network/network_service.dart';
 import 'package:logger/logger.dart';
 
 class SupportService {
-  final NetworkService _networkService;
-  final Logger _logger;
-
   SupportService({
     required NetworkService networkService,
     required Logger logger,
   })  : _networkService = networkService,
         _logger = logger;
 
-  Future<bool> sendContactMessage({
+  final NetworkService _networkService;
+  final Logger _logger;
+
+  Future<SupportTicketRecord> sendContactMessage({
     required String subject,
     required String message,
+    required String category,
   }) async {
     try {
-      await _networkService.post<Map<String, dynamic>>(
+      final response = await _networkService.post<Map<String, dynamic>>(
         '/support/contact',
         data: {
           'subject': subject.trim(),
           'message': message.trim(),
+          'category': category,
         },
       );
-      return true;
-    } catch (e) {
+      final body = Map<String, dynamic>.from(response.data ?? const {});
+      return SupportTicketRecord.fromJson(
+        Map<String, dynamic>.from(body['item'] as Map),
+      );
+    } on DioException catch (e) {
       _logger.e('Error sending contact message: $e');
-      return false;
+      throw Exception(_extractError(e));
+    }
+  }
+
+  Future<List<SupportTicketRecord>> fetchTickets() async {
+    try {
+      final response = await _networkService.get<Map<String, dynamic>>(
+        '/support/tickets',
+      );
+      final body = Map<String, dynamic>.from(response.data ?? const {});
+      return (body['items'] as List<dynamic>? ?? const [])
+          .map((item) => SupportTicketRecord.fromJson(
+                Map<String, dynamic>.from(item as Map),
+              ))
+          .toList();
+    } on DioException catch (e) {
+      _logger.e('Error loading support tickets: $e');
+      throw Exception(_extractError(e));
+    }
+  }
+
+  Future<SupportTicketRecord> fetchTicketDetail(int ticketId) async {
+    try {
+      final response = await _networkService.get<Map<String, dynamic>>(
+        '/support/tickets/$ticketId',
+      );
+      final body = Map<String, dynamic>.from(response.data ?? const {});
+      return SupportTicketRecord.fromJson(
+        Map<String, dynamic>.from(body['item'] as Map),
+      );
+    } on DioException catch (e) {
+      _logger.e('Error loading support ticket detail: $e');
+      throw Exception(_extractError(e));
+    }
+  }
+
+  Future<SupportTicketRecord> replyToTicket({
+    required int ticketId,
+    required String message,
+  }) async {
+    try {
+      final response = await _networkService.post<Map<String, dynamic>>(
+        '/support/tickets/$ticketId/reply',
+        data: {'message': message.trim()},
+      );
+      final body = Map<String, dynamic>.from(response.data ?? const {});
+      return SupportTicketRecord.fromJson(
+        Map<String, dynamic>.from(body['item'] as Map),
+      );
+    } on DioException catch (e) {
+      _logger.e('Error replying to support ticket: $e');
+      throw Exception(_extractError(e));
     }
   }
 
@@ -49,5 +107,22 @@ class SupportService {
       _logger.e('Error getting FAQ: $e');
       return [];
     }
+  }
+
+  String _extractError(DioException e) {
+    final data = e.response?.data;
+    if (data is Map<String, dynamic>) {
+      final detail = data['detail'];
+      if (detail is String) {
+        return detail;
+      }
+      if (detail is Map<String, dynamic>) {
+        final message = detail['message'];
+        if (message is String && message.isNotEmpty) {
+          return message;
+        }
+      }
+    }
+    return e.message ?? 'Support request failed';
   }
 }

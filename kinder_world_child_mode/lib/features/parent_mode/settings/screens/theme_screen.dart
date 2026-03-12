@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/providers/theme_provider.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/theme/theme_palette.dart';
 import 'package:kinder_world/core/widgets/parent_design_system.dart';
+import 'package:kinder_world/router.dart';
 
 class ParentThemeScreen extends ConsumerWidget {
   const ParentThemeScreen({super.key});
@@ -12,7 +14,9 @@ class ParentThemeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final colors = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final textTheme = theme.textTheme;
     final themeSettings = ref.watch(themeControllerProvider);
 
     return Scaffold(
@@ -21,20 +25,13 @@ class ParentThemeScreen extends ConsumerWidget {
         backgroundColor: colors.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded,
-              size: 20, color: colors.onSurface),
-          onPressed: () {
-            if (Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
-            } else {
-              context.go('/parent/settings');
-            }
-          },
+        leading: AppBackButton(
+          fallback: Routes.parentDashboard,
+          color: colors.onSurface,
         ),
         title: Text(
           l10n.theme,
-          style: TextStyle(
+          style: textTheme.titleMedium?.copyWith(
             fontSize: 18,
             fontWeight: FontWeight.w800,
             color: colors.onSurface,
@@ -44,8 +41,7 @@ class ParentThemeScreen extends ConsumerWidget {
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Divider(
-              height: 1,
-              color: colors.outlineVariant.withValues(alpha: 0.4)),
+              height: 1, color: colors.outlineVariant.withValues(alpha: 0.4)),
         ),
       ),
       body: SafeArea(
@@ -66,8 +62,7 @@ class ParentThemeScreen extends ConsumerWidget {
                         _ModeButton(
                           icon: Icons.light_mode_rounded,
                           label: l10n.lightMode,
-                          isSelected:
-                              themeSettings.mode == ThemeMode.light,
+                          isSelected: themeSettings.mode == ThemeMode.light,
                           onTap: () => ref
                               .read(themeControllerProvider.notifier)
                               .setMode(ThemeMode.light),
@@ -76,8 +71,7 @@ class ParentThemeScreen extends ConsumerWidget {
                         _ModeButton(
                           icon: Icons.dark_mode_rounded,
                           label: l10n.darkMode,
-                          isSelected:
-                              themeSettings.mode == ThemeMode.dark,
+                          isSelected: themeSettings.mode == ThemeMode.dark,
                           onTap: () => ref
                               .read(themeControllerProvider.notifier)
                               .setMode(ThemeMode.dark),
@@ -86,8 +80,7 @@ class ParentThemeScreen extends ConsumerWidget {
                         _ModeButton(
                           icon: Icons.auto_mode_rounded,
                           label: l10n.systemMode,
-                          isSelected:
-                              themeSettings.mode == ThemeMode.system,
+                          isSelected: themeSettings.mode == ThemeMode.system,
                           onTap: () => ref
                               .read(themeControllerProvider.notifier)
                               .setMode(ThemeMode.system),
@@ -110,8 +103,7 @@ class ParentThemeScreen extends ConsumerWidget {
                           padding: const EdgeInsets.only(bottom: 10),
                           child: _PaletteRow(
                             palette: palette,
-                            isSelected:
-                                themeSettings.paletteId == palette.id,
+                            isSelected: themeSettings.paletteId == palette.id,
                             onTap: () => ref
                                 .read(themeControllerProvider.notifier)
                                 .setPalette(palette.id),
@@ -148,6 +140,8 @@ class _ModeButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final parent = context.parentTheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return Expanded(
       child: GestureDetector(
@@ -157,13 +151,11 @@ class _ModeButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
             color: isSelected
-                ? ParentColors.parentGreen.withValues(alpha: 0.12)
+                ? parent.primaryLight
                 : colors.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected
-                  ? ParentColors.parentGreen
-                  : Colors.transparent,
+              color: isSelected ? parent.primary : Colors.transparent,
               width: 2,
             ),
           ),
@@ -172,19 +164,15 @@ class _ModeButton extends StatelessWidget {
               Icon(
                 icon,
                 size: 22,
-                color: isSelected
-                    ? ParentColors.parentGreen
-                    : colors.onSurfaceVariant,
+                color: isSelected ? parent.primary : colors.onSurfaceVariant,
               ),
               const SizedBox(height: 6),
               Text(
                 label,
-                style: TextStyle(
+                style: textTheme.labelMedium?.copyWith(
                   fontSize: 11,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected
-                      ? ParentColors.parentGreen
-                      : colors.onSurfaceVariant,
+                  color: isSelected ? parent.primary : colors.onSurfaceVariant,
                 ),
               ),
             ],
@@ -213,6 +201,8 @@ class _PaletteRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final parent = context.parentTheme;
 
     return InkWell(
       onTap: onTap,
@@ -222,50 +212,59 @@ class _PaletteRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected
-              ? ParentColors.parentGreen.withValues(alpha: 0.08)
+              ? parent.primaryLight.withValues(alpha: 0.72)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
-                ? ParentColors.parentGreen
+                ? parent.primary
                 : colors.outlineVariant.withValues(alpha: 0.5),
             width: isSelected ? 2 : 1,
           ),
         ),
         child: Row(
           children: [
-            Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: palette.seedColor,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: palette.seedColor.withValues(alpha: 0.4),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
+            Row(
+              children: palette.previewColors.take(3).map((previewColor) {
+                return Container(
+                  width: 18,
+                  height: 18,
+                  margin: const EdgeInsetsDirectional.only(end: 4),
+                  decoration: BoxDecoration(
+                    color: previewColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: colors.surface,
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: previewColor.withValues(alpha: 0.28),
+                        blurRadius: 5,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                );
+              }).toList(),
             ),
             const SizedBox(width: 14),
             Expanded(
               child: Text(
                 palette.name,
-                style: TextStyle(
+                style: textTheme.bodyMedium?.copyWith(
                   fontSize: 14,
-                  fontWeight:
-                      isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected
-                      ? ParentColors.parentGreen
-                      : colors.onSurface,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? parent.primary : colors.onSurface,
                 ),
               ),
             ),
             if (isSelected)
-              const Icon(Icons.check_circle_rounded,
-                  size: 20, color: ParentColors.parentGreen),
+              Icon(
+                Icons.check_circle_rounded,
+                size: 20,
+                color: parent.primary,
+              ),
           ],
         ),
       ),

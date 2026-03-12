@@ -1215,6 +1215,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get safety => 'Safety';
 
   @override
+  String get safetyDashboard => 'Safety Dashboard';
+
+  @override
+  String get safetyDashboardSubtitle =>
+      'Parental controls, privacy, alerts, and support in one place.';
+
+  @override
   String get privacy => 'Privacy';
 
   @override
@@ -1471,6 +1478,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addChildToViewReports => 'Add a child to view reports';
 
   @override
+  String get lessonsCompletedLabel => 'Lessons Completed';
+
+  @override
+  String get mostUsedContentLabel => 'Most Used Content';
+
+  @override
+  String get completionRateLabel => 'Completion Rate';
+
+  @override
+  String get dailyTrendLabel => 'Daily Trend';
+
+  @override
+  String get moodTrendLabel => 'Mood Trend';
+
+  @override
+  String get currentMoodLabel => 'Current Mood';
+
+  @override
+  String get recordedSessionsNotice =>
+      'These insights are based on recorded child sessions on this device.';
+
+  @override
+  String get profileFallbackNotice =>
+      'Detailed session history is not available yet, so the report falls back to saved child profile totals.';
+
+  @override
+  String get noRecordedActivityYet =>
+      'No recorded sessions yet for this period.';
+
+  @override
   String get contentRestrictionsAndScreenTime =>
       'Content Restrictions & Screen Time';
 
@@ -1568,6 +1605,18 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String notificationRecommendation(String name) =>
       'New educational content available for $name based on interests.';
+
+  @override
+  String notificationLessonCompleted(String name, String lessonTitle) =>
+      '$name completed the lesson "$lessonTitle".';
+
+  @override
+  String notificationStreakReached(String name, int streakDays) =>
+      '$name reached a $streakDays-day learning streak.';
+
+  @override
+  String notificationInactive(String name, int days) =>
+      '$name has not used the app for $days days.';
 
   @override
   String get hoursAgo => 'hours ago';
@@ -1727,6 +1776,53 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chooseAvatar => 'Choose Avatar';
+
+  @override
+  String get customizeProfile => 'Customize Profile';
+
+  @override
+  String get customizeProfileSubtitle =>
+      'Pick an avatar, color, and frame that feels like you.';
+
+  @override
+  String get frameColors => 'Frame Colors';
+
+  @override
+  String get frameStyles => 'Frame Styles';
+
+  @override
+  String get profileStyle => 'Profile Style';
+
+  @override
+  String get frameStyleClassic => 'Classic';
+
+  @override
+  String get frameStyleGlow => 'Glow';
+
+  @override
+  String get frameStyleStars => 'Stars';
+
+  @override
+  String get frameStyleShield => 'Shield';
+
+  @override
+  String get customizationSaved => 'Customization saved';
+
+  @override
+  String get lockedLabel => 'Locked';
+
+  @override
+  String get unlockedLabel => 'Unlocked';
+
+  @override
+  String unlockAtLevel(int level) => 'Unlocks at level $level';
+
+  @override
+  String unlockWithStreak(int streak) => 'Unlocks with a $streak-day streak';
+
+  @override
+  String unlockWithActivities(int count) =>
+      'Unlocks after $count completed activities';
 
   @override
   String get avatarSaved => 'Avatar Saved';
@@ -2057,6 +2153,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sendMessageTitle => 'Send us a message';
 
   @override
+  String get supportCategoryLabel => 'Ticket category';
+
+  @override
+  String get supportCategoryLoginIssue => 'Login issue';
+
+  @override
+  String get supportCategoryBillingIssue => 'Billing issue';
+
+  @override
+  String get supportCategoryChildContentIssue => 'Child content issue';
+
+  @override
+  String get supportCategoryTechnicalIssue => 'Technical issue';
+
+  @override
+  String get supportCategoryGeneralInquiry => 'General inquiry';
+
+  @override
   String get subjectLabel => 'Subject *';
 
   @override
@@ -2083,6 +2197,48 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sendMessage => 'Send Message';
+
+  @override
+  String get supportTicketHistoryTitle => 'Your support tickets';
+
+  @override
+  String get supportTicketHistorySubtitle =>
+      'Track updates, admin replies, and the current status of each request.';
+
+  @override
+  String get supportTicketNoHistory =>
+      'You have not submitted any support tickets yet.';
+
+  @override
+  String get supportStatusOpen => 'Open';
+
+  @override
+  String get supportStatusInProgress => 'In progress';
+
+  @override
+  String get supportStatusResolved => 'Resolved';
+
+  @override
+  String get supportStatusClosed => 'Closed';
+
+  @override
+  String get supportReplyLabel => 'Add a follow-up';
+
+  @override
+  String get supportReplyHint =>
+      'Share any extra details that can help the support team.';
+
+  @override
+  String get supportReplyAction => 'Send follow-up';
+
+  @override
+  String get supportReplySentSuccess => 'Follow-up sent successfully.';
+
+  @override
+  String get supportAgentLabel => 'Support team';
+
+  @override
+  String get youLabel => 'You';
 
   @override
   String get subscriptionTitle => 'Subscription';
@@ -2372,6 +2528,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get securitySection => 'Security';
 
   @override
+  String get noActiveAlerts => 'No active alerts';
+
+  @override
   String get accountCreatedWelcome =>
       'Account created! Welcome to Kinder World.';
 
@@ -2461,6 +2620,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contactSupportToResetPin =>
       'Please contact support to reset your PIN';
 
+  @override
+  String get parentPinCreateTitle => 'Create Parent PIN';
+
+  @override
+  String get parentPinCreateSubtitle =>
+      'Create a 4-digit PIN to protect sensitive parent areas.';
+
+  @override
+  String get parentPinConfirmSubtitle => 'Re-enter the same PIN to confirm it.';
+
+  @override
+  String get parentPinChangeTitle => 'Change Parent PIN';
+
+  @override
+  String get parentPinEnterCurrent => 'Enter your current 4-digit PIN.';
+
+  @override
+  String get parentPinEnterNew => 'Enter your new 4-digit PIN.';
+
+  @override
+  String get parentPinConfirmNew => 'Confirm the new 4-digit PIN.';
+
+  @override
+  String get parentPinCreatedSuccess => 'Parent PIN created successfully';
+
+  @override
+  String get parentPinChangedSuccess => 'Parent PIN changed successfully';
+
+  @override
+  String get parentPinResetRequested =>
+      'A support request was created to reset your PIN.';
+
+  @override
+  String parentPinLockedUntil(String time) =>
+      'Too many attempts. Try again after $time.';
+
+  @override
+  String get manageParentPin => 'Parent PIN';
+
+  @override
+  String get manageParentPinSubtitle =>
+      'Create or change the PIN used for sensitive parent screens.';
+
   // ── Child Header ──
   @override
   String get friendFallback => 'Friend';
@@ -2486,7 +2688,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noInternetConnection => 'No internet connection';
 
   @override
-  String get pleaseTryAgain => 'Please try again';
+  String get pleaseTryAgain => 'Check your connection and try again';
+
+  @override
+  String get checkYourConnection => 'Quick tips';
+
+  @override
+  String get checkWifiConnection => 'Check your Wi-Fi or mobile data';
+
+  @override
+  String get checkMobileData => 'Toggle airplane mode off and on';
+
+  @override
+  String get restartRouter => 'Restart your router if on Wi-Fi';
 
   // ── Error Screen ──
   @override
@@ -3521,6 +3735,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminChildrenTitle => 'Children management';
+  @override
+  String get adminChildrenNoChildren =>
+      'No children found for the selected filters.';
 
   @override
   String get adminChildrenSubtitle => 'Inspect and maintain child profiles.';
@@ -3636,6 +3853,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminAuditNetworkColumn => 'IP / Agent';
 
   @override
+  String get adminAuditNoLogs =>
+      'No audit logs found for the selected filters.';
+
+  @override
   String adminPaginationSummary(int page, int totalPages, int total) =>
       'Page $page of $totalPages • $total records';
 
@@ -3663,6 +3884,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminSupportStatusInProgress => 'In progress';
+
+  @override
+  String get adminSupportStatusResolved => 'Resolved';
 
   @override
   String get adminSupportStatusClosed => 'Closed';
@@ -3702,6 +3926,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminSupportAssignee => 'Assignee';
 
   @override
+  String get adminSupportCategoryFilter => 'Category';
+
+  @override
+  String get adminSupportCategoryAll => 'All categories';
+
+  @override
+  String get adminSupportCategoryLabel => 'Category';
+
+  @override
   String get adminSupportThread => 'Thread';
 
   @override
@@ -3712,6 +3945,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String adminSupportMessagesCount(int count) => '$count messages';
+
+  @override
+  String get adminSupportResolve => 'Resolve ticket';
+
+  @override
+  String get adminSupportResolveSuccess => 'Ticket marked as resolved';
 
   @override
   String get adminAnalyticsTitle => 'Analytics overview';
@@ -4121,6 +4360,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminSubscriptionsPlanAll => 'All plans';
 
   @override
+  String get adminSubscriptionsNoItems =>
+      'No subscriptions found for the selected filters.';
+
+  @override
   String get adminSubscriptionsNoSelection =>
       'Select a subscription to view details';
 
@@ -4438,4 +4681,180 @@ class AppLocalizationsEn extends AppLocalizations {
   // Generic labels
   @override
   String get labelId => 'ID';
+
+  // ── Gamification ──────────────────────────────────────────────────────────
+  @override
+  String get gamificationTitle => 'My Achievements';
+
+  @override
+  String get gamificationSubtitle => 'Track your progress and earn rewards!';
+
+  @override
+  String get gamificationXpLabel => 'XP';
+
+  @override
+  String get gamificationLevelLabel => 'Level';
+
+  @override
+  String get gamificationStreakLabel => 'Day Streak';
+
+  @override
+  String get gamificationBadgesEarned => 'Badges Earned';
+
+  @override
+  String get gamificationAchievementsUnlocked => 'Achievements Unlocked';
+
+  @override
+  String get gamificationViewAll => 'View All';
+
+  @override
+  String get gamificationParentSnapshot => 'Child Progress Snapshot';
+
+  @override
+  String get gamificationParentSnapshotSubtitle =>
+      'Gamification overview for this child';
+
+  @override
+  String get gamificationNoAchievementsYet =>
+      'No achievements yet — keep exploring!';
+
+  @override
+  String get gamificationNoBadgesYet => 'No badges earned yet — keep going!';
+
+  @override
+  String get gamificationLevelUp => 'Level Up!';
+
+  @override
+  String get gamificationAchievementUnlocked => 'Achievement Unlocked!';
+
+  @override
+  String gamificationXpToNext(int xp) => '$xp XP to next level';
+
+  @override
+  String gamificationLevelTitle(int level) => 'Level $level';
+
+  @override
+  String get gamificationActivitiesCompleted => 'Activities Completed';
+
+  @override
+  String get gamificationCurrentStreak => 'Current Streak';
+
+  @override
+  String get gamificationTotalXp => 'Total XP';
+
+  @override
+  String get gamificationSeeAllAchievements => 'See All Achievements';
+
+  @override
+  String get gamificationRecentBadges => 'Recent Badges';
+
+  @override
+  String get gamificationProgressSection => 'Progress';
+
+  // ── Accessibility ─────────────────────────────────────────────────────────
+  @override
+  String get accessibilitySettings => 'Accessibility';
+
+  @override
+  String get accessibilitySettingsSubtitle => 'Font size, contrast & display';
+
+  @override
+  String get accessibilityMode => 'Accessibility Mode';
+
+  @override
+  String get accessibilityModeSubtitle =>
+      'Improve usability for children with different needs';
+
+  @override
+  String get largeFontMode => 'Large Font';
+
+  @override
+  String get largeFontModeSubtitle =>
+      'Increases text size across the entire child interface';
+
+  @override
+  String get highContrastMode => 'High Contrast';
+
+  @override
+  String get highContrastModeSubtitle =>
+      'Black & white theme with strong borders for better visibility';
+
+  @override
+  String get accessibilityActiveLabel => 'Active';
+
+  @override
+  String get accessibilityInactiveLabel => 'Off';
+
+  @override
+  String get accessibilityParentNote =>
+      'These settings apply to the child\'s interface and are controlled by the parent.';
+
+  @override
+  String get accessibilityResetAll => 'Reset All Accessibility Settings';
+
+  @override
+  String get accessibilityResetConfirm =>
+      'This will turn off all accessibility features. Continue?';
+
+  // ── Mood Tracking ─────────────────────────────────────────────────────────
+  @override
+  String get moodPickerTitle => 'How are you feeling?';
+
+  @override
+  String get moodPickerSubtitle => 'Tap your mood to get started!';
+
+  @override
+  String get moodSaved => '✓ Saved';
+
+  @override
+  String get moodTodayLabel => 'Today\'s Mood';
+
+  @override
+  String get moodWeekLabel => 'This Week\'s Moods';
+
+  @override
+  String get moodNoHistory => 'No mood history yet';
+
+  @override
+  String get moodRecommendationsTitle => 'Just for You 🎯';
+
+  @override
+  String get moodRecommendationsSubtitle =>
+      'Activities picked for how you feel';
+
+  @override
+  String get moodReportTitle => 'Mood Trends';
+
+  @override
+  String get moodReportSubtitle => 'How your child has been feeling';
+
+  @override
+  String get moodMostFrequent => 'Most Frequent Mood';
+
+  @override
+  String moodEntriesCount(int n) => '$n mood entries';
+
+  @override
+  String get moodEncouragementHappy =>
+      'Great! Let\'s make the most of your happy mood!';
+
+  @override
+  String get moodEncouragementExcited =>
+      'You\'re excited! Let\'s channel that energy into something fun!';
+
+  @override
+  String get moodEncouragementCalm =>
+      'You\'re calm and focused. Perfect time for learning!';
+
+  @override
+  String get moodEncouragementTired =>
+      'Feeling tired? Let\'s do something light and fun.';
+
+  @override
+  String get moodEncouragementSad =>
+      'It\'s okay to feel sad. Let\'s do something calming together.';
+
+  @override
+  String get moodEncouragementAngry =>
+      'Let\'s take a deep breath and do something relaxing.';
 }

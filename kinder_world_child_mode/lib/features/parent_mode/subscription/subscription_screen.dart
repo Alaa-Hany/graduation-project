@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
 import 'package:kinder_world/core/providers/plan_provider.dart';
-import 'package:kinder_world/core/providers/subscription_provider.dart';
 import 'package:kinder_world/core/subscription/plan_info.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/parent_design_system.dart';
-import 'package:kinder_world/features/child_mode/paywall/payment_methods_screen.dart';
+import 'package:kinder_world/router.dart';
 
 /// IMPORTANT:
 /// All UI text must use AppLocalizations.
@@ -54,20 +54,10 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
 
     try {
       if (requiresPayment) {
-        await Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const PaymentMethodsScreen()),
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.billingComingSoon)),
         );
-        if (!mounted) return;
-
-        final activated = await ref
-            .read(subscriptionServiceProvider)
-            .activateSubscription(tier);
-        if (!activated) {
-          messenger.showSnackBar(
-            SnackBar(content: Text(l10n.subscriptionActivationFailed)),
-          );
-          return;
-        }
+        return;
       }
 
       await _applyPlan(tier);
@@ -94,7 +84,10 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final colors = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final parent = context.parentTheme;
     final plan = ref.watch(planInfoProvider).asData?.value ??
         PlanInfo.fromTier(PlanTier.free);
     final isPremium = plan.tier != PlanTier.free;
@@ -105,20 +98,13 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
         backgroundColor: colors.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded,
-              size: 20, color: colors.onSurface),
-          onPressed: () {
-            if (Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
-            } else {
-              context.go('/parent/dashboard');
-            }
-          },
+        leading: AppBackButton(
+          fallback: Routes.parentDashboard,
+          color: colors.onSurface,
         ),
         title: Text(
           l10n.subscriptionTitle,
-          style: TextStyle(
+          style: textTheme.titleMedium?.copyWith(
             fontSize: 18,
             fontWeight: FontWeight.w800,
             color: colors.onSurface,
@@ -140,7 +126,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
               // ── Current Plan Banner ─────────────────────────────────────
               ParentCard(
                 backgroundColor: isPremium
-                    ? ParentColors.xpGold.withValues(alpha: 0.08)
+                    ? parent.rewardLight
                     : colors.surfaceContainerHighest,
                 child: Row(
                   children: [
@@ -149,7 +135,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                       height: 52,
                       decoration: BoxDecoration(
                         color: (isPremium
-                                ? ParentColors.xpGold
+                                ? parent.reward
                                 : colors.onSurfaceVariant)
                             .withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(14),
@@ -160,7 +146,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                             : Icons.lock_open_rounded,
                         size: 26,
                         color: isPremium
-                            ? ParentColors.xpGold
+                            ? parent.reward
                             : colors.onSurfaceVariant,
                       ),
                     ),
@@ -171,7 +157,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                         children: [
                           Text(
                             _planTitle(plan.tier, l10n),
-                            style: TextStyle(
+                            style: textTheme.titleSmall?.copyWith(
                               fontSize: 16,
                               fontWeight: FontWeight.w800,
                               color: colors.onSurface,
@@ -182,7 +168,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                             isPremium
                                 ? l10n.subscriptionActiveLabel
                                 : l10n.choosePlanLabel,
-                            style: TextStyle(
+                            style: textTheme.bodySmall?.copyWith(
                               fontSize: 13,
                               color: colors.onSurfaceVariant,
                             ),
@@ -209,17 +195,17 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                     _buildFeatureRow(
                         Icons.people_rounded,
                         l10n.planChildProfiles(plan.maxChildren),
-                        ParentColors.parentGreen),
+                        parent.primary),
                     _buildFeatureRow(Icons.school_rounded,
-                        l10n.unlimitedActivities, ParentColors.infoBlue),
+                        l10n.unlimitedActivities, parent.info),
                     _buildFeatureRow(Icons.bar_chart_rounded,
-                        l10n.advancedReportsLabel, ParentColors.activityPurple),
+                        l10n.advancedReportsLabel, colors.tertiary),
                     _buildFeatureRow(Icons.psychology_rounded, l10n.aiInsights,
-                        ParentColors.parentGreenLight),
+                        parent.success),
                     _buildFeatureRow(Icons.download_rounded,
-                        l10n.offlineDownloadsLabel, ParentColors.streakOrange),
+                        l10n.offlineDownloadsLabel, parent.warning),
                     _buildFeatureRow(Icons.support_agent_rounded,
-                        l10n.prioritySupportLabel, ParentColors.xpGold),
+                        l10n.prioritySupportLabel, parent.reward),
                   ],
                 ),
               ),
@@ -261,7 +247,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                 ],
                 tier: PlanTier.familyPlus,
                 isRecommended: true,
-                accentColor: ParentColors.parentGreen,
+                accentColor: parent.primary,
                 l10n: l10n,
               ),
               const SizedBox(height: 32),
@@ -273,6 +259,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
   }
 
   Widget _buildFeatureRow(IconData icon, String text, Color color) {
+    final textTheme = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -289,7 +276,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
           const SizedBox(width: 12),
           Text(
             text,
-            style: TextStyle(
+            style: textTheme.bodyMedium?.copyWith(
               fontSize: 14,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
@@ -312,8 +299,12 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
     bool isRecommended = false,
   }) {
     final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     final isCurrent = currentPlan.tier == tier;
     final isProcessingThis = _processingTier == tier;
+    final buttonForeground = isCurrent
+        ? colors.onSurface
+        : accentColor.onColor;
 
     return Container(
       decoration: BoxDecoration(
@@ -321,7 +312,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isRecommended
-              ? ParentColors.parentGreen
+              ? accentColor
               : colors.outlineVariant.withValues(alpha: 0.6),
           width: isRecommended ? 2 : 1,
         ),
@@ -344,15 +335,15 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                 decoration: BoxDecoration(
-                  color: ParentColors.parentGreen,
+                  color: accentColor,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   l10n.recommendedLabel.toUpperCase(),
-                  style: const TextStyle(
+                  style: textTheme.labelSmall?.copyWith(
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
-                    color: Colors.white,
+                    color: accentColor.onColor,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -369,7 +360,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                     children: [
                       Text(
                         title,
-                        style: TextStyle(
+                        style: textTheme.titleMedium?.copyWith(
                           fontSize: 17,
                           fontWeight: FontWeight.w800,
                           color: colors.onSurface,
@@ -379,7 +370,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                       const SizedBox(height: 2),
                       Text(
                         subtitle,
-                        style: TextStyle(
+                        style: textTheme.bodySmall?.copyWith(
                           fontSize: 13,
                           color: colors.onSurfaceVariant,
                         ),
@@ -392,7 +383,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                   children: [
                     Text(
                       price,
-                      style: TextStyle(
+                      style: textTheme.headlineSmall?.copyWith(
                         fontSize: 26,
                         fontWeight: FontWeight.w900,
                         color: accentColor,
@@ -401,7 +392,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                     ),
                     Text(
                       priceLabel,
-                      style: TextStyle(
+                      style: textTheme.bodySmall?.copyWith(
                         fontSize: 12,
                         color: colors.onSurfaceVariant,
                       ),
@@ -423,7 +414,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                       Expanded(
                         child: Text(
                           f,
-                          style: TextStyle(
+                          style: textTheme.bodySmall?.copyWith(
                             fontSize: 13,
                             color: colors.onSurfaceVariant,
                           ),
@@ -448,25 +439,25 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                 style: FilledButton.styleFrom(
                   backgroundColor:
                       isCurrent ? colors.surfaceContainerHighest : accentColor,
-                  foregroundColor: isCurrent ? colors.onSurface : Colors.white,
+                  foregroundColor: buttonForeground,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 child: isProcessingThis
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Colors.white,
+                          color: buttonForeground,
                         ),
                       )
                     : Text(
                         isCurrent
                             ? l10n.currentPlanLabel
                             : l10n.choosePlanLabel,
-                        style: const TextStyle(
+                        style: textTheme.labelLarge?.copyWith(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                         ),

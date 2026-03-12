@@ -1,11 +1,12 @@
 import logging
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy.orm import Session
 
 from auth import hash_password, verify_password
 from deps import get_current_user, get_db
-from models import User
+from models import SupportTicket, User
 from serializers import user_to_json
 
 logger = logging.getLogger(__name__)
@@ -19,6 +20,9 @@ PASSWORD_COMPLEXITY_RULES = {
     "require_digit": True,
     "require_special": True,
 }
+PARENT_PIN_LENGTH = 4
+PARENT_PIN_MAX_ATTEMPTS = 5
+PARENT_PIN_LOCKOUT_MINUTES = 5
 
 
 class ProfileUpdate(BaseModel):
@@ -53,6 +57,38 @@ class ChangePasswordResponse(BaseModel):
 ChangePassword = ChangePasswordRequest
 
 
+class ParentPinStatusResponse(BaseModel):
+    has_pin: bool
+    is_locked: bool
+    failed_attempts: int
+    locked_until: str | None = None
+
+
+class ParentPinSetRequest(BaseModel):
+    pin: str = Field(..., min_length=PARENT_PIN_LENGTH, max_length=PARENT_PIN_LENGTH)
+    confirm_pin: str = Field(..., min_length=PARENT_PIN_LENGTH, max_length=PARENT_PIN_LENGTH)
+
+
+class ParentPinVerifyRequest(BaseModel):
+    pin: str = Field(..., min_length=PARENT_PIN_LENGTH, max_length=PARENT_PIN_LENGTH)
+
+
+class ParentPinChangeRequest(BaseModel):
+    current_pin: str = Field(..., min_length=PARENT_PIN_LENGTH, max_length=PARENT_PIN_LENGTH)
+    new_pin: str = Field(..., min_length=PARENT_PIN_LENGTH, max_length=PARENT_PIN_LENGTH)
+    confirm_pin: str = Field(..., min_length=PARENT_PIN_LENGTH, max_length=PARENT_PIN_LENGTH)
+
+
+class ParentPinResetRequest(BaseModel):
+    note: str | None = None
+
+
+class ParentPinActionResponse(BaseModel):
+    success: bool
+    message: str
+    locked_until: str | None = None
+
+
 def validate_password_policy(password: str) -> tuple:
     """
     Validate password against security policy.
@@ -75,6 +111,42 @@ def validate_password_policy(password: str) -> tuple:
             return False, "Password must contain at least one special character (!@#$%^&*)"
     
     return True, ""
+
+
+def _validate_parent_pin_format(pin: str) -> None:
+    if len(pin) != PARENT_PIN_LENGTH or not pin.isdigit():
+        raise HTTPException(
+            status_code=422,
+            detail=f"PIN must be exactly {PARENT_PIN_LENGTH} digits",
+        )
+
+
+def _locked_until_iso(user: User) -> str | None:
+    locked_until = getattr(user, "parent_pin_locked_until", None)
+    if locked_until is None:
+        return None
+    return locked_until.isoformat()
+
+
+def _is_parent_pin_locked(user: User) -> bool:
+    locked_until = getattr(user, "parent_pin_locked_until", None)
+    return locked_until is not None and locked_until > datetime.utcnow()
+
+
+def _reset_parent_pin_failures(user: User) -> None:
+    user.parent_pin_failed_attempts = 0
+    user.parent_pin_locked_until = None
+
+
+def _increment_parent_pin_failures(user: User) -> str | None:
+    failed_attempts = int(getattr(user, "parent_pin_failed_attempts", 0) or 0) + 1
+    user.parent_pin_failed_attempts = failed_attempts
+    if failed_attempts >= PARENT_PIN_MAX_ATTEMPTS:
+        user.parent_pin_locked_until = datetime.utcnow() + timedelta(
+            minutes=PARENT_PIN_LOCKOUT_MINUTES
+        )
+        return _locked_until_iso(user)
+    return None
 
 
 @router.put("/auth/profile")
@@ -195,3 +267,176 @@ def logout(
         db.rollback()
         logger.error(f"Error during logout for user {user.id}: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to logout")
+
+
+@router.get("/auth/parent-pin/status", response_model=ParentPinStatusResponse)
+def get_parent_pin_status(
+    user: User = Depends(get_current_user),
+):
+    return ParentPinStatusResponse(
+        has_pin=bool(getattr(user, "parent_pin_hash", None)),
+        is_locked=_is_parent_pin_locked(user),
+        failed_attempts=int(getattr(user, "parent_pin_failed_attempts", 0) or 0),
+        locked_until=_locked_until_iso(user),
+    )
+
+
+@router.post("/auth/parent-pin/set", response_model=ParentPinActionResponse)
+def set_parent_pin(
+    payload: ParentPinSetRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    if getattr(user, "parent_pin_hash", None):
+        raise HTTPException(
+            status_code=400,
+            detail="Parent PIN already exists. Use change PIN instead.",
+        )
+
+    _validate_parent_pin_format(payload.pin)
+    _validate_parent_pin_format(payload.confirm_pin)
+    if payload.pin != payload.confirm_pin:
+        raise HTTPException(status_code=400, detail="PIN confirmation does not match")
+
+    try:
+        user.parent_pin_hash = hash_password(payload.pin)
+        user.parent_pin_updated_at = datetime.utcnow()
+        _reset_parent_pin_failures(user)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return ParentPinActionResponse(
+            success=True,
+            message="Parent PIN created successfully",
+        )
+    except Exception as exc:
+        db.rollback()
+        logger.error("Error setting parent PIN for user %s: %s", user.id, exc, exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to set parent PIN")
+
+
+@router.post("/auth/parent-pin/verify", response_model=ParentPinActionResponse)
+def verify_parent_pin(
+    payload: ParentPinVerifyRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    _validate_parent_pin_format(payload.pin)
+
+    if not getattr(user, "parent_pin_hash", None):
+        raise HTTPException(status_code=404, detail="Parent PIN is not configured")
+
+    if _is_parent_pin_locked(user):
+        raise HTTPException(
+            status_code=423,
+            detail={
+                "message": "Parent PIN is temporarily locked",
+                "locked_until": _locked_until_iso(user),
+            },
+        )
+
+    try:
+        if verify_password(payload.pin, user.parent_pin_hash):
+            _reset_parent_pin_failures(user)
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+            return ParentPinActionResponse(
+                success=True,
+                message="Parent PIN verified successfully",
+            )
+
+        locked_until = _increment_parent_pin_failures(user)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+        if locked_until is not None:
+            raise HTTPException(
+                status_code=423,
+                detail={
+                    "message": "Too many invalid PIN attempts",
+                    "locked_until": locked_until,
+                },
+            )
+
+        raise HTTPException(status_code=401, detail="Incorrect PIN")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        db.rollback()
+        logger.error("Error verifying parent PIN for user %s: %s", user.id, exc, exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to verify parent PIN")
+
+
+@router.post("/auth/parent-pin/change", response_model=ParentPinActionResponse)
+def change_parent_pin(
+    payload: ParentPinChangeRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    if not getattr(user, "parent_pin_hash", None):
+        raise HTTPException(status_code=404, detail="Parent PIN is not configured")
+
+    _validate_parent_pin_format(payload.current_pin)
+    _validate_parent_pin_format(payload.new_pin)
+    _validate_parent_pin_format(payload.confirm_pin)
+    if payload.new_pin != payload.confirm_pin:
+        raise HTTPException(status_code=400, detail="PIN confirmation does not match")
+    if payload.current_pin == payload.new_pin:
+        raise HTTPException(status_code=400, detail="New PIN must be different")
+    if not verify_password(payload.current_pin, user.parent_pin_hash):
+        raise HTTPException(status_code=401, detail="Current PIN is incorrect")
+
+    try:
+        user.parent_pin_hash = hash_password(payload.new_pin)
+        user.parent_pin_updated_at = datetime.utcnow()
+        _reset_parent_pin_failures(user)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return ParentPinActionResponse(
+            success=True,
+            message="Parent PIN changed successfully",
+        )
+    except Exception as exc:
+        db.rollback()
+        logger.error("Error changing parent PIN for user %s: %s", user.id, exc, exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to change parent PIN")
+
+
+@router.post("/auth/parent-pin/reset-request", response_model=ParentPinActionResponse)
+def request_parent_pin_reset(
+    payload: ParentPinResetRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    note = (payload.note or "").strip()
+    message = "Parent PIN reset requested."
+    if note:
+        message = f"{message}\n\nParent note: {note}"
+
+    try:
+        ticket = SupportTicket(
+            user_id=user.id,
+            subject="Parent PIN reset request",
+            message=message,
+            email=user.email,
+            status="open",
+        )
+        db.add(ticket)
+        db.commit()
+        db.refresh(ticket)
+        return ParentPinActionResponse(
+            success=True,
+            message="Support request created for Parent PIN reset",
+        )
+    except Exception as exc:
+        db.rollback()
+        logger.error(
+            "Error creating parent PIN reset request for user %s: %s",
+            user.id,
+            exc,
+            exc_info=True,
+        )
+        raise HTTPException(status_code=500, detail="Failed to request PIN reset")

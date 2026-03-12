@@ -2,1382 +2,2976 @@
 
 class AppLocalizationsAr extends AppLocalizationsEn {
   // ── Common ──
-  @override String get appTitle => 'عالم كيندر';
-  @override String get welcome => 'مرحبا';
-  @override String get next => 'التالي';
-  @override String get back => 'رجوع';
-  @override String get continueText => 'متابعة';
-  @override String get skip => 'تخطي';
-  @override String get done => 'تم';
-  @override String get cancel => 'إلغاء';
-  @override String get save => 'حفظ';
-  @override String get delete => 'حذف';
-  @override String get edit => 'تعديل';
-  @override String get loading => 'جاري التحميل...';
-  @override String get error => 'خطأ';
-  @override String get connectionError => 'خطأ في الاتصال. حاول مرة أخرى.';
-  @override String get success => 'نجاح';
-  @override String get retry => 'إعادة المحاولة';
-  @override String get noInternet => 'لا يوجد اتصال بالإنترنت';
-  @override String get offlineMode => 'وضع عدم الاتصال';
-  @override String get splashTagline => 'تعلّم. العب. انمو.';
+  @override
+  String get appTitle => 'عالم كيندر';
+  @override
+  String get welcome => 'مرحبا';
+  @override
+  String get next => 'التالي';
+  @override
+  String get back => 'رجوع';
+  @override
+  String get continueText => 'متابعة';
+  @override
+  String get skip => 'تخطي';
+  @override
+  String get done => 'تم';
+  @override
+  String get cancel => 'إلغاء';
+  @override
+  String get save => 'حفظ';
+  @override
+  String get delete => 'حذف';
+  @override
+  String get edit => 'تعديل';
+  @override
+  String get loading => 'جاري التحميل...';
+  @override
+  String get error => 'خطأ';
+  @override
+  String get connectionError => 'خطأ في الاتصال. حاول مرة أخرى.';
+  @override
+  String get success => 'نجاح';
+  @override
+  String get retry => 'إعادة المحاولة';
+  @override
+  String get noInternet => 'لا يوجد اتصال بالإنترنت';
+  @override
+  String get offlineMode => 'وضع عدم الاتصال';
+  @override
+  String get splashTagline => 'تعلّم. العب. انمو.';
 
   // ── Auth ──
-  @override String get login => 'تسجيل الدخول';
-  @override String get register => 'إنشاء حساب';
-  @override String get email => 'البريد الإلكتروني';
-  @override String get emailHint => 'أدخل بريدك الإلكتروني';
-  @override String get emailRequired => 'يرجى إدخال بريدك الإلكتروني';
-  @override String get parentEmail => 'البريد الإلكتروني لولي الأمر';
-  @override String get parentEmailNotFound => 'البريد الإلكتروني لولي الأمر غير موجود. يرجى تسجيل الدخول بولي الأمر أولاً.';
-  @override String get password => 'كلمة المرور';
-  @override String get passwordHint => 'أدخل كلمة المرور';
-  @override String get passwordRequired => 'يرجى إدخال كلمة المرور';
-  @override String get confirmPassword => 'تأكيد كلمة المرور';
-  @override String get forgotPassword => 'نسيت كلمة المرور؟';
-  @override String get parentLogin => 'دخول ولي الأمر';
-  @override String get parentLoginSubtitle => 'مرحباً بعودتك! يرجى تسجيل الدخول للمتابعة.';
-  @override String get orLabel => 'أو';
-  @override String get createAccount => 'إنشاء حساب';
-  @override String get childLogin => 'دخول الطفل';
-  @override String get childId => 'رقم الطفل';
-  @override String get picturePassword => 'كلمة مرور الصور';
-  @override String get selectPicturePassword => 'اختر كلمة مرور الصور';
-  @override String get confirmPicturePassword => 'تأكيد كلمة مرور الصور';
-  @override String get picturePasswordError => 'الصور غير متطابقة. حاول مرة أخرى.';
-  @override String get loginError => 'فشل تسجيل الدخول. يرجى التحقق من بياناتك.';
-  @override String get registerError => 'فشل إنشاء الحساب. يرجى المحاولة مرة أخرى.';
-  @override String get agreeToTermsError => 'يرجى الموافقة على الشروط والأحكام';
-  @override String get registrationSuccess => 'تم التسجيل بنجاح! مرحباً بك في كيندر وورلد!';
-  @override String get registerSubtitle => 'انضم إلى كيندر وورلد وابدأ رحلة تعلم طفلك';
-  @override String get fullNameLabel => 'الاسم الكامل';
-  @override String get fullNameHint => 'أدخل اسمك الكامل';
-  @override String get nameRequired => 'يرجى إدخال اسمك';
-  @override String get phoneNumberOptional => 'رقم الهاتف (اختياري)';
-  @override String get phoneNumberHint => 'أدخل رقم هاتفك';
-  @override String get passwordCreateHint => 'أنشئ كلمة مرور';
-  @override String get passwordCreateRequired => 'يرجى إنشاء كلمة مرور';
-  @override String get passwordUppercaseRequired => 'يجب أن تحتوي كلمة المرور على حرف كبير';
-  @override String get passwordNumberRequired => 'يجب أن تحتوي كلمة المرور على رقم';
-  @override String get passwordSpecialRequired => 'يجب أن تحتوي كلمة المرور على رمز خاص (!@#\$%^&*)';
-  @override String get confirmPasswordHint => 'تأكيد كلمة المرور';
-  @override String get confirmPasswordRequired => 'يرجى تأكيد كلمة المرور';
-  @override String get passwordsDoNotMatch => 'كلمتا المرور غير متطابقتين';
-  @override String get agreeToTermsPrefix => 'أوافق على ';
-  @override String get termsOfService => 'شروط الخدمة';
-  @override String get andLabel => ' و';
-  @override String get privacyPolicy => 'سياسة الخصوصية';
-  @override String get alreadyHaveAccount => 'لديك حساب بالفعل؟ ';
-  @override String get deleteChildTitle => 'حذف ملف الطفل';
-  @override String get deleteChildDescription => 'سيؤدي هذا إلى حذف ملف الطفل وجميع البيانات المرتبطة به بشكل دائم. لا يمكن التراجع عن هذا الإجراء.';
-  @override String get deleteChildSuccess => 'تم حذف ملف الطفل بنجاح';
-  @override String get deleteChildFailed => 'فشل حذف ملف الطفل';
-  @override String get activeLabel => 'نشط';
+  @override
+  String get login => 'تسجيل الدخول';
+  @override
+  String get register => 'إنشاء حساب';
+  @override
+  String get email => 'البريد الإلكتروني';
+  @override
+  String get emailHint => 'أدخل بريدك الإلكتروني';
+  @override
+  String get emailRequired => 'يرجى إدخال بريدك الإلكتروني';
+  @override
+  String get parentEmail => 'البريد الإلكتروني لولي الأمر';
+  @override
+  String get parentEmailNotFound =>
+      'البريد الإلكتروني لولي الأمر غير موجود. يرجى تسجيل الدخول بولي الأمر أولاً.';
+  @override
+  String get password => 'كلمة المرور';
+  @override
+  String get passwordHint => 'أدخل كلمة المرور';
+  @override
+  String get passwordRequired => 'يرجى إدخال كلمة المرور';
+  @override
+  String get confirmPassword => 'تأكيد كلمة المرور';
+  @override
+  String get forgotPassword => 'نسيت كلمة المرور؟';
+  @override
+  String get parentLogin => 'دخول ولي الأمر';
+  @override
+  String get parentLoginSubtitle =>
+      'مرحباً بعودتك! يرجى تسجيل الدخول للمتابعة.';
+  @override
+  String get orLabel => 'أو';
+  @override
+  String get createAccount => 'إنشاء حساب';
+  @override
+  String get childLogin => 'دخول الطفل';
+  @override
+  String get childId => 'رقم الطفل';
+  @override
+  String get picturePassword => 'كلمة مرور الصور';
+  @override
+  String get selectPicturePassword => 'اختر كلمة مرور الصور';
+  @override
+  String get confirmPicturePassword => 'تأكيد كلمة مرور الصور';
+  @override
+  String get picturePasswordError => 'الصور غير متطابقة. حاول مرة أخرى.';
+  @override
+  String get loginError => 'فشل تسجيل الدخول. يرجى التحقق من بياناتك.';
+  @override
+  String get registerError => 'فشل إنشاء الحساب. يرجى المحاولة مرة أخرى.';
+  @override
+  String get agreeToTermsError => 'يرجى الموافقة على الشروط والأحكام';
+  @override
+  String get registrationSuccess =>
+      'تم التسجيل بنجاح! مرحباً بك في كيندر وورلد!';
+  @override
+  String get registerSubtitle => 'انضم إلى كيندر وورلد وابدأ رحلة تعلم طفلك';
+  @override
+  String get fullNameLabel => 'الاسم الكامل';
+  @override
+  String get fullNameHint => 'أدخل اسمك الكامل';
+  @override
+  String get nameRequired => 'يرجى إدخال اسمك';
+  @override
+  String get phoneNumberOptional => 'رقم الهاتف (اختياري)';
+  @override
+  String get phoneNumberHint => 'أدخل رقم هاتفك';
+  @override
+  String get passwordCreateHint => 'أنشئ كلمة مرور';
+  @override
+  String get passwordCreateRequired => 'يرجى إنشاء كلمة مرور';
+  @override
+  String get passwordUppercaseRequired =>
+      'يجب أن تحتوي كلمة المرور على حرف كبير';
+  @override
+  String get passwordNumberRequired => 'يجب أن تحتوي كلمة المرور على رقم';
+  @override
+  String get passwordSpecialRequired =>
+      'يجب أن تحتوي كلمة المرور على رمز خاص (!@#\$%^&*)';
+  @override
+  String get confirmPasswordHint => 'تأكيد كلمة المرور';
+  @override
+  String get confirmPasswordRequired => 'يرجى تأكيد كلمة المرور';
+  @override
+  String get passwordsDoNotMatch => 'كلمتا المرور غير متطابقتين';
+  @override
+  String get agreeToTermsPrefix => 'أوافق على ';
+  @override
+  String get termsOfService => 'شروط الخدمة';
+  @override
+  String get andLabel => ' و';
+  @override
+  String get privacyPolicy => 'سياسة الخصوصية';
+  @override
+  String get alreadyHaveAccount => 'لديك حساب بالفعل؟ ';
+  @override
+  String get deleteChildTitle => 'حذف ملف الطفل';
+  @override
+  String get deleteChildDescription =>
+      'سيؤدي هذا إلى حذف ملف الطفل وجميع البيانات المرتبطة به بشكل دائم. لا يمكن التراجع عن هذا الإجراء.';
+  @override
+  String get deleteChildSuccess => 'تم حذف ملف الطفل بنجاح';
+  @override
+  String get deleteChildFailed => 'فشل حذف ملف الطفل';
+  @override
+  String get activeLabel => 'نشط';
 
   // ── User Type Selection ──
-  @override String get selectUserType => 'اختر نوع المستخدم';
-  @override String get selectUserTypeSubtitle => 'اختر كيف تريد استخدام كيندر وورلد';
-  @override String get childMode => 'وضع الطفل';
-  @override String get parentMode => 'وضع ولي الأمر';
-  @override String get teacherMode => 'وضع المعلم';
-  @override String get parentModeDescription => 'تتبع التقدم، ضبط الإعدادات، إدارة العائلة';
-  @override String get childModeDescription => 'تعلم، العب، واستكشف بأمان';
+  @override
+  String get selectUserType => 'اختر نوع المستخدم';
+  @override
+  String get selectUserTypeSubtitle => 'اختر كيف تريد استخدام كيندر وورلد';
+  @override
+  String get childMode => 'وضع الطفل';
+  @override
+  String get parentMode => 'وضع ولي الأمر';
+  @override
+  String get teacherMode => 'وضع المعلم';
+  @override
+  String get parentModeDescription =>
+      'تتبع التقدم، ضبط الإعدادات، إدارة العائلة';
+  @override
+  String get childModeDescription => 'تعلم، العب، واستكشف بأمان';
 
   // ── Navigation ──
-  @override String get home => 'الرئيسية';
-  @override String get learn => 'تعلم';
-  @override String get play => 'العب';
-  @override String get aiBuddy => 'رفيق الذكاء الاصطناعي';
-  @override String get profile => 'الملف الشخصي';
+  @override
+  String get home => 'الرئيسية';
+  @override
+  String get learn => 'تعلم';
+  @override
+  String get play => 'العب';
+  @override
+  String get aiBuddy => 'رفيق الذكاء الاصطناعي';
+  @override
+  String get profile => 'الملف الشخصي';
 
   // ── Child Home ──
-  @override String get hello => 'مرحباً';
-  @override String get dailyGoal => 'الهدف اليومي';
-  @override String get continueLearning => 'متابعة التعلم';
-  @override String get recommendedForYou => 'موصى به لك';
-  @override String get activityOfTheDay => 'نشاط اليوم';
-  @override String get moodIndicator => 'كيف تشعر؟';
-  @override String get happy => 'سعيد';
-  @override String get sad => 'حزين';
-  @override String get excited => 'متحمس';
-  @override String get tired => 'متعب';
-  @override String get angry => 'غاضب';
-  @override String get calm => 'هادئ';
+  @override
+  String get hello => 'مرحباً';
+  @override
+  String get dailyGoal => 'الهدف اليومي';
+  @override
+  String get continueLearning => 'متابعة التعلم';
+  @override
+  String get recommendedForYou => 'موصى به لك';
+  @override
+  String get activityOfTheDay => 'نشاط اليوم';
+  @override
+  String get moodIndicator => 'كيف تشعر؟';
+  @override
+  String get happy => 'سعيد';
+  @override
+  String get sad => 'حزين';
+  @override
+  String get excited => 'متحمس';
+  @override
+  String get tired => 'متعب';
+  @override
+  String get angry => 'غاضب';
+  @override
+  String get calm => 'هادئ';
 
   // ── Content Categories ──
-  @override String get educationalContent => 'المحتوى التعليمي';
-  @override String get behavioralSkills => 'المهارات السلوكية';
-  @override String get skillfulActivities => 'الأنشطة المهارية';
-  @override String get subjects => 'المواد';
-  @override String get mathematics => 'الرياضيات';
-  @override String get science => 'العلوم';
-  @override String get reading => 'القراءة';
-  @override String get history => 'التاريخ';
-  @override String get geography => 'الجغرافيا';
-  @override String get languages => 'اللغات';
-  @override String get socialStories => 'القصص الاجتماعية';
-  @override String get emotionCards => 'بطاقات المشاعر';
-  @override String get problemSolving => 'حل المشكلات';
-  @override String get drawing => 'الرسم';
-  @override String get music => 'الموسيقى';
-  @override String get crafts => 'الحرف اليدوية';
-  @override String get cooking => 'الطبخ';
-  @override String get quiz => 'اختبار';
-  @override String get lesson => 'درس';
-  @override String get game => 'لعبة';
-  @override String get story => 'قصة';
-  @override String get video => 'فيديو';
-  @override String get complete => 'مكتمل';
-  @override String get start => 'ابدأ';
-  @override String get entertainment => 'الترفيه';
-  @override String get educationalGames => 'الألعاب التعليمية';
-  @override String get puppetShows => 'عروض الدمى';
-  @override String get interactiveStories => 'القصص التفاعلية';
-  @override String get miniChallenges => 'التحديات الصغيرة';
-  @override String get natureVideos => 'فيديوهات الطبيعة';
-  @override String get brainTeasers => 'ألغاز الدماغ';
-  @override String get cartoonMovies => 'أفلام الكرتون';
-  @override String get songs => 'الأغاني';
-  @override String get funnyClips => 'مقاطع مضحكة';
+  @override
+  String get educationalContent => 'المحتوى التعليمي';
+  @override
+  String get behavioralSkills => 'المهارات السلوكية';
+  @override
+  String get skillfulActivities => 'الأنشطة المهارية';
+  @override
+  String get subjects => 'المواد';
+  @override
+  String get mathematics => 'الرياضيات';
+  @override
+  String get science => 'العلوم';
+  @override
+  String get reading => 'القراءة';
+  @override
+  String get history => 'التاريخ';
+  @override
+  String get geography => 'الجغرافيا';
+  @override
+  String get languages => 'اللغات';
+  @override
+  String get socialStories => 'القصص الاجتماعية';
+  @override
+  String get emotionCards => 'بطاقات المشاعر';
+  @override
+  String get problemSolving => 'حل المشكلات';
+  @override
+  String get drawing => 'الرسم';
+  @override
+  String get music => 'الموسيقى';
+  @override
+  String get crafts => 'الحرف اليدوية';
+  @override
+  String get cooking => 'الطبخ';
+  @override
+  String get quiz => 'اختبار';
+  @override
+  String get lesson => 'درس';
+  @override
+  String get game => 'لعبة';
+  @override
+  String get story => 'قصة';
+  @override
+  String get video => 'فيديو';
+  @override
+  String get complete => 'مكتمل';
+  @override
+  String get start => 'ابدأ';
+  @override
+  String get entertainment => 'الترفيه';
+  @override
+  String get educationalGames => 'الألعاب التعليمية';
+  @override
+  String get puppetShows => 'عروض الدمى';
+  @override
+  String get interactiveStories => 'القصص التفاعلية';
+  @override
+  String get miniChallenges => 'التحديات الصغيرة';
+  @override
+  String get natureVideos => 'فيديوهات الطبيعة';
+  @override
+  String get brainTeasers => 'ألغاز الدماغ';
+  @override
+  String get cartoonMovies => 'أفلام الكرتون';
+  @override
+  String get songs => 'الأغاني';
+  @override
+  String get funnyClips => 'مقاطع مضحكة';
 
   // ── AI Buddy ──
-  @override String get askMeAnything => 'اسألني أي شيء!';
-  @override String get quickActions => 'إجراءات سريعة';
-  @override String get recommendLesson => 'اقترح\nدرساً';
-  @override String get suggestGame => 'اقترح\nلعبة';
-  @override String get tellStory => 'احكِ لي\nقصة';
-  @override String get funFact => 'معلومة\nممتعة';
-  @override String get motivation => 'حفّزني';
-  @override String typeMessage(String name) => 'اكتب رسالتك إلى $name...';
-  @override String get voiceChat => 'محادثة صوتية';
-  @override String get textChat => 'محادثة نصية';
-  @override String get aiThinking => 'الذكاء الاصطناعي يفكر...';
-  @override String get aiError => 'عذراً، لم أفهم ذلك. يرجى المحاولة مرة أخرى.';
-  @override String get aiBuddyName => 'كيندر';
-  @override String get aiBuddyOnline => 'متصل';
-  @override String get aiCompanionSubtitle => 'رفيقك الذكي في التعلم ✨';
-  @override String get tapMicToSpeak => 'اضغط على المايك للتحدث...';
-  @override String get askKinderAnything => 'اسأل كيندر أي شيء...';
-  @override String get aiInitialGreeting => 'مرحباً! 👋 أنا كيندر، رفيقك في التعلم! كيف يمكنني مساعدتك اليوم؟';
+  @override
+  String get askMeAnything => 'اسألني أي شيء!';
+  @override
+  String get quickActions => 'إجراءات سريعة';
+  @override
+  String get recommendLesson => 'اقترح\nدرساً';
+  @override
+  String get suggestGame => 'اقترح\nلعبة';
+  @override
+  String get tellStory => 'احكِ لي\nقصة';
+  @override
+  String get funFact => 'معلومة\nممتعة';
+  @override
+  String get motivation => 'حفّزني';
+  @override
+  String typeMessage(String name) => 'اكتب رسالتك إلى $name...';
+  @override
+  String get voiceChat => 'محادثة صوتية';
+  @override
+  String get textChat => 'محادثة نصية';
+  @override
+  String get aiThinking => 'الذكاء الاصطناعي يفكر...';
+  @override
+  String get aiError => 'عذراً، لم أفهم ذلك. يرجى المحاولة مرة أخرى.';
+  @override
+  String get aiBuddyName => 'كيندر';
+  @override
+  String get aiBuddyOnline => 'متصل';
+  @override
+  String get aiCompanionSubtitle => 'رفيقك الذكي في التعلم ✨';
+  @override
+  String get tapMicToSpeak => 'اضغط على المايك للتحدث...';
+  @override
+  String get askKinderAnything => 'اسأل كيندر أي شيء...';
+  @override
+  String get aiInitialGreeting =>
+      'مرحباً! 👋 أنا كيندر، رفيقك في التعلم! كيف يمكنني مساعدتك اليوم؟';
 
   // ── Progress / Profile ──
-  @override String get progress => 'التقدم';
-  @override String get xp => 'نقاط الخبرة';
-  @override String get level => 'المستوى';
-  @override String get streak => 'السلسلة';
-  @override String get achievements => 'الإنجازات';
-  @override String get badges => 'الشارات';
-  @override String get dailyStreak => 'سلسلة يومية';
-  @override String get weeklyProgress => 'التقدم الأسبوعي';
-  @override String get monthlyProgress => 'التقدم الشهري';
-  @override String get yourProgress => 'تقدمك';
-  @override String get yourInterests => 'اهتماماتك';
-  @override String get weeklyChallenge => 'تحدي الأسبوع';
-  @override String get activities => 'الأنشطة';
-  @override String levelExplorer(int level) => 'مستكشف المستوى $level';
-  @override String xpToLevel(int level) => 'نقاط للمستوى $level';
-  @override String helloName(String name) => 'مرحباً، $name';
-  @override String get levelsTitle => 'المستويات';
-  @override String get levelJourneySubtitle => 'تتبع رحلة مستوياتك';
+  @override
+  String get progress => 'التقدم';
+  @override
+  String get xp => 'نقاط الخبرة';
+  @override
+  String get level => 'المستوى';
+  @override
+  String get streak => 'السلسلة';
+  @override
+  String get achievements => 'الإنجازات';
+  @override
+  String get badges => 'الشارات';
+  @override
+  String get dailyStreak => 'سلسلة يومية';
+  @override
+  String get weeklyProgress => 'التقدم الأسبوعي';
+  @override
+  String get monthlyProgress => 'التقدم الشهري';
+  @override
+  String get yourProgress => 'تقدمك';
+  @override
+  String get yourInterests => 'اهتماماتك';
+  @override
+  String get weeklyChallenge => 'تحدي الأسبوع';
+  @override
+  String get activities => 'الأنشطة';
+  @override
+  String levelExplorer(int level) => 'مستكشف المستوى $level';
+  @override
+  String xpToLevel(int level) => 'نقاط للمستوى $level';
+  @override
+  String helloName(String name) => 'مرحباً، $name';
+  @override
+  String get levelsTitle => 'المستويات';
+  @override
+  String get levelJourneySubtitle => 'تتبع رحلة مستوياتك';
 
   // ── Achievements ──
-  @override String get achievementFirstQuizTitle => 'أول اختبار';
-  @override String get achievementFirstQuizDescription => 'أكملت أول اختبار';
-  @override String get achievementFirstQuizSubtitle => 'أكملت أول اختبار';
-  @override String get achievementFiveDayStreakTitle => 'سلسلة 5 أيام';
-  @override String get achievementFiveDayStreakDescription => 'استمر!';
-  @override String get achievementStreakTitle => 'سلسلة 5 أيام';
-  @override String get achievementStreakSubtitle => 'استمر!';
-  @override String get achievementMathMasterTitle => 'بطل الرياضيات';
-  @override String get achievementMathMasterDescription => 'دقة 100%';
-  @override String get achievementMathMasterSubtitle => 'دقة 100%';
+  @override
+  String get achievementFirstQuizTitle => 'أول اختبار';
+  @override
+  String get achievementFirstQuizDescription => 'أكملت أول اختبار';
+  @override
+  String get achievementFirstQuizSubtitle => 'أكملت أول اختبار';
+  @override
+  String get achievementFiveDayStreakTitle => 'سلسلة 5 أيام';
+  @override
+  String get achievementFiveDayStreakDescription => 'استمر!';
+  @override
+  String get achievementStreakTitle => 'سلسلة 5 أيام';
+  @override
+  String get achievementStreakSubtitle => 'استمر!';
+  @override
+  String get achievementMathMasterTitle => 'بطل الرياضيات';
+  @override
+  String get achievementMathMasterDescription => 'دقة 100%';
+  @override
+  String get achievementMathMasterSubtitle => 'دقة 100%';
 
   // ── Levels ──
-  @override String get levels => 'المستويات';
-  @override String get levelsSubtitle => 'أكمل كل مستوى لفتح المستوى التالي.';
-  @override String get open => 'افتح';
-  @override String get currentLabel => 'الحالي';
-  @override String get newLabel => 'جديد';
-  @override String get finishPreviousLevel => 'أكمل المستوى السابق للفتح!';
-  @override String levelNumber(int level) => 'المستوى $level';
-  @override String startLevel(int level) => 'ابدأ المستوى $level';
-  @override String playLevel(int level) => 'العب المستوى $level';
-  @override String levelKeepGoing(int level) => 'المستوى $level - استمر!';
-  @override String get levelLockedMessage => 'عذراً! أكمل المستوى السابق أولاً.';
-  @override String levelStartMessage(int level) => 'عمل رائع! ابدأ المستوى $level!';
+  @override
+  String get levels => 'المستويات';
+  @override
+  String get levelsSubtitle => 'أكمل كل مستوى لفتح المستوى التالي.';
+  @override
+  String get open => 'افتح';
+  @override
+  String get currentLabel => 'الحالي';
+  @override
+  String get newLabel => 'جديد';
+  @override
+  String get finishPreviousLevel => 'أكمل المستوى السابق للفتح!';
+  @override
+  String levelNumber(int level) => 'المستوى $level';
+  @override
+  String startLevel(int level) => 'ابدأ المستوى $level';
+  @override
+  String playLevel(int level) => 'العب المستوى $level';
+  @override
+  String levelKeepGoing(int level) => 'المستوى $level - استمر!';
+  @override
+  String get levelLockedMessage => 'عذراً! أكمل المستوى السابق أولاً.';
+  @override
+  String levelStartMessage(int level) => 'عمل رائع! ابدأ المستوى $level!';
 
   // ── Parent Dashboard ──
-  @override String get parentDashboard => 'لوحة تحكم ولي الأمر';
-  @override String get overview => 'نظرة عامة';
-  @override String get parentDashboardSubtitle => 'مرحباً بعودتك';
-  @override String get noChildrenAddedTitle => 'لم تتم إضافة أطفال بعد';
-  @override String get noChildrenAddedSubtitle => 'أضف ملف طفل للبدء';
-  @override String get todayOverviewTitle => 'نظرة عامة على اليوم';
-  @override String get totalTimeLabel => 'الوقت الإجمالي';
-  @override String get avgXpLabel => 'متوسط الخبرة';
-  @override String get viewDetailedReport => 'عرض التقرير المفصل';
-  @override String get recentActivitiesTitle => 'الأنشطة الأخيرة';
-  @override String get viewAll => 'عرض الكل';
-  @override String get noRecentActivities => 'لا توجد أنشطة حديثة';
-  @override String completedActivity(String childName) => '$childName أكمل نشاطاً';
-  @override String minutesToday(int minutes) => '$minutes دقيقة اليوم';
-  @override String dayStreak(int days) => 'سلسلة $days يوم';
-  @override String insightsSummary(String names, int totalActivities, int childCount) =>
+  @override
+  String get parentDashboard => 'لوحة تحكم ولي الأمر';
+  @override
+  String get overview => 'نظرة عامة';
+  @override
+  String get parentDashboardSubtitle => 'مرحباً بعودتك';
+  @override
+  String get noChildrenAddedTitle => 'لم تتم إضافة أطفال بعد';
+  @override
+  String get noChildrenAddedSubtitle => 'أضف ملف طفل للبدء';
+  @override
+  String get todayOverviewTitle => 'نظرة عامة على اليوم';
+  @override
+  String get totalTimeLabel => 'الوقت الإجمالي';
+  @override
+  String get avgXpLabel => 'متوسط الخبرة';
+  @override
+  String get viewDetailedReport => 'عرض التقرير المفصل';
+  @override
+  String get recentActivitiesTitle => 'الأنشطة الأخيرة';
+  @override
+  String get viewAll => 'عرض الكل';
+  @override
+  String get noRecentActivities => 'لا توجد أنشطة حديثة';
+  @override
+  String completedActivity(String childName) => '$childName أكمل نشاطاً';
+  @override
+  String minutesToday(int minutes) => '$minutes دقيقة اليوم';
+  @override
+  String dayStreak(int days) => 'سلسلة $days يوم';
+  @override
+  String insightsSummary(String names, int totalActivities, int childCount) =>
       '$names أكملوا $totalActivities نشاطاً';
-  @override String get weeklyProgressTitle => 'التقدم الأسبوعي';
-  @override String get timeLabel => 'الوقت';
-  @override String get avgScoreLabel => 'متوسط الدرجات';
-  @override String get achievementPerfectScoreTitle => 'درجة كاملة';
-  @override String get achievementPerfectScoreSubtitle => 'حصلت على 100% في اختبار';
-  @override String get achievementMathMasterReportSubtitle => 'أكملت جميع دروس الرياضيات';
-  @override String get achievementFiveDayStreakSubtitle => 'تعلمت لمدة 5 أيام متتالية';
-  @override String get minutesAgo => 'دقائق مضت';
-  @override String get weekdayMon => 'اثن';
-  @override String get weekdayTue => 'ثلا';
-  @override String get weekdayWed => 'أرب';
-  @override String get weekdayThu => 'خمي';
-  @override String get weekdayFri => 'جمع';
-  @override String get weekdaySat => 'سبت';
-  @override String get weekdaySun => 'أحد';
-  @override String get goodMorningOverview => 'صباح الخير — إليك نظرة عامة على اليوم';
-  @override String get goodAfternoonOverview => 'مساء الخير — إليك ما يحدث';
-  @override String get goodEveningOverview => 'مساء الخير — إليك ملخصك اليومي';
-  @override String get noChildrenAddedSubtitleDashboard =>
+  @override
+  String get weeklyProgressTitle => 'التقدم الأسبوعي';
+  @override
+  String get timeLabel => 'الوقت';
+  @override
+  String get avgScoreLabel => 'متوسط الدرجات';
+  @override
+  String get achievementPerfectScoreTitle => 'درجة كاملة';
+  @override
+  String get achievementPerfectScoreSubtitle => 'حصلت على 100% في اختبار';
+  @override
+  String get achievementMathMasterReportSubtitle => 'أكملت جميع دروس الرياضيات';
+  @override
+  String get achievementFiveDayStreakSubtitle => 'تعلمت لمدة 5 أيام متتالية';
+  @override
+  String get minutesAgo => 'دقائق مضت';
+  @override
+  String get weekdayMon => 'اثن';
+  @override
+  String get weekdayTue => 'ثلا';
+  @override
+  String get weekdayWed => 'أرب';
+  @override
+  String get weekdayThu => 'خمي';
+  @override
+  String get weekdayFri => 'جمع';
+  @override
+  String get weekdaySat => 'سبت';
+  @override
+  String get weekdaySun => 'أحد';
+  @override
+  String get goodMorningOverview => 'صباح الخير — إليك نظرة عامة على اليوم';
+  @override
+  String get goodAfternoonOverview => 'مساء الخير — إليك ما يحدث';
+  @override
+  String get goodEveningOverview => 'مساء الخير — إليك ملخصك اليومي';
+  @override
+  String get noChildrenAddedSubtitleDashboard =>
       'أضف طفلك الأول لبدء تتبع رحلة تعلمه.';
-  @override String childrenLinkedCount(int n) => '$n مرتبط';
-  @override String get manage => 'إدارة';
-  @override String xpProgressDisplay(int current, int max) => '$current/$max نقطة';
-  @override String get aggregatedAcrossChildren => 'مجمّع عبر جميع الأطفال';
-  @override String get minutesLabel => 'دقائق';
-  @override String get premiumAnalysis => 'تحليل مميز';
-  @override String get viewFullReport => 'عرض التقرير الكامل';
-  @override String completedAnActivity(String name) => '$name أكمل نشاطاً';
-  @override String get weeklyActivity => 'النشاط الأسبوعي';
-  @override String get activitiesCompletedPerDay => 'الأنشطة المكتملة يومياً';
+  @override
+  String childrenLinkedCount(int n) => '$n مرتبط';
+  @override
+  String get manage => 'إدارة';
+  @override
+  String xpProgressDisplay(int current, int max) => '$current/$max نقطة';
+  @override
+  String get aggregatedAcrossChildren => 'مجمّع عبر جميع الأطفال';
+  @override
+  String get minutesLabel => 'دقائق';
+  @override
+  String get premiumAnalysis => 'تحليل مميز';
+  @override
+  String get viewFullReport => 'عرض التقرير الكامل';
+  @override
+  String completedAnActivity(String name) => '$name أكمل نشاطاً';
+  @override
+  String get weeklyActivity => 'النشاط الأسبوعي';
+  @override
+  String get activitiesCompletedPerDay => 'الأنشطة المكتملة يومياً';
 
   // ── Child Management ──
-  @override String get childManagement => 'إدارة الأطفال';
-  @override String get childProfiles => 'ملفات الأطفال';
-  @override String get addChild => 'إضافة طفل';
-  @override String get editChild => 'تعديل ملف الطفل';
-  @override String get childName => 'اسم الطفل';
-  @override String get childAge => 'العمر';
-  @override String get childInterests => 'الاهتمامات';
-  @override String get avatar => 'الصورة الرمزية';
-  @override String get saveChanges => 'حفظ التغييرات';
-  @override String get yourChildren => 'أطفالك';
-  @override String get noChildProfilesYet => 'لا توجد ملفات أطفال بعد';
-  @override String get tapToAddChild => 'اضغط + لإضافة ملف طفل.';
-  @override String get addChildProfiles => 'إضافة ملفات أطفال جديدة';
-  @override String get editProfiles => 'تعديل الملفات الموجودة';
-  @override String get picturePasswords => 'تعيين كلمات مرور الصور';
-  @override String get configurePreferences => 'تكوين التفضيلات';
-  @override String get deactivateProfiles => 'تعطيل الملفات';
-  @override String get childProfileAdded => 'تمت إضافة ملف الطفل';
-  @override String get childProfileAddFailed => 'فشل إضافة الطفل';
-  @override String get manageChildProfiles => 'إدارة ملفات الأطفال';
-  @override String get addEditManageChildren => 'إضافة أو تعديل أو إدارة ملفات أطفالك';
+  @override
+  String get childManagement => 'إدارة الأطفال';
+  @override
+  String get childProfiles => 'ملفات الأطفال';
+  @override
+  String get addChild => 'إضافة طفل';
+  @override
+  String get editChild => 'تعديل ملف الطفل';
+  @override
+  String get childName => 'اسم الطفل';
+  @override
+  String get childAge => 'العمر';
+  @override
+  String get childInterests => 'الاهتمامات';
+  @override
+  String get avatar => 'الصورة الرمزية';
+  @override
+  String get saveChanges => 'حفظ التغييرات';
+  @override
+  String get yourChildren => 'أطفالك';
+  @override
+  String get noChildProfilesYet => 'لا توجد ملفات أطفال بعد';
+  @override
+  String get tapToAddChild => 'اضغط + لإضافة ملف طفل.';
+  @override
+  String get addChildProfiles => 'إضافة ملفات أطفال جديدة';
+  @override
+  String get editProfiles => 'تعديل الملفات الموجودة';
+  @override
+  String get picturePasswords => 'تعيين كلمات مرور الصور';
+  @override
+  String get configurePreferences => 'تكوين التفضيلات';
+  @override
+  String get deactivateProfiles => 'تعطيل الملفات';
+  @override
+  String get childProfileAdded => 'تمت إضافة ملف الطفل';
+  @override
+  String get childProfileAddFailed => 'فشل إضافة الطفل';
+  @override
+  String get manageChildProfiles => 'إدارة ملفات الأطفال';
+  @override
+  String get addEditManageChildren => 'إضافة أو تعديل أو إدارة ملفات أطفالك';
 
   // ── Reports ──
-  @override String get reports => 'التقارير';
-  @override String get reportsAndAnalytics => 'التقارير والتحليلات';
-  @override String get activityReports => 'تقارير الأنشطة';
-  @override String get learningProgress => 'تقدم التعلم';
-  @override String get learningProgressReports => 'تقارير تقدم التعلم';
-  @override String get trackChildDevelopment => 'تتبع تطور طفلك وإنجازاته';
-  @override String get skillDevelopment => 'تطوير المهارات';
-  @override String get behavioralProgress => 'التقدم السلوكي';
-  @override String get screenTimeReport => 'تقرير وقت الشاشة';
-  @override String get aiInsights => 'رؤى الذكاء الاصطناعي';
-  @override String get recentActivities => 'الأنشطة الأخيرة';
-  @override String get timeSpent => 'الوقت المستغرق';
-  @override String get completedActivities => 'الأنشطة المكتملة';
-  @override String get averageScore => 'متوسط الدرجات';
-  @override String get strengths => 'نقاط القوة';
-  @override String get areasForImprovement => 'مجالات التحسين';
-  @override String get screenTime => 'وقت الشاشة';
-  @override String get week => 'أسبوع';
-  @override String get month => 'شهر';
-  @override String get year => 'سنة';
-  @override String get yearlyProgress => 'التقدم السنوي';
-  @override String get activityBreakdown => 'تفصيل الأنشطة';
-  @override String get recentAchievements => 'الإنجازات الأخيرة';
-  @override String get noChildSelected => 'لم يتم اختيار طفل';
-  @override String get addChildToViewReports => 'أضف طفلاً لعرض التقارير';
-  @override String ageLabel(int age) => 'العمر $age';
+  @override
+  String get reports => 'التقارير';
+  @override
+  String get reportsAndAnalytics => 'التقارير والتحليلات';
+  @override
+  String get activityReports => 'تقارير الأنشطة';
+  @override
+  String get learningProgress => 'تقدم التعلم';
+  @override
+  String get learningProgressReports => 'تقارير تقدم التعلم';
+  @override
+  String get trackChildDevelopment => 'تتبع تطور طفلك وإنجازاته';
+  @override
+  String get skillDevelopment => 'تطوير المهارات';
+  @override
+  String get behavioralProgress => 'التقدم السلوكي';
+  @override
+  String get screenTimeReport => 'تقرير وقت الشاشة';
+  @override
+  String get aiInsights => 'رؤى الذكاء الاصطناعي';
+  @override
+  String get recentActivities => 'الأنشطة الأخيرة';
+  @override
+  String get timeSpent => 'الوقت المستغرق';
+  @override
+  String get completedActivities => 'الأنشطة المكتملة';
+  @override
+  String get averageScore => 'متوسط الدرجات';
+  @override
+  String get strengths => 'نقاط القوة';
+  @override
+  String get areasForImprovement => 'مجالات التحسين';
+  @override
+  String get screenTime => 'وقت الشاشة';
+  @override
+  String get week => 'أسبوع';
+  @override
+  String get month => 'شهر';
+  @override
+  String get year => 'سنة';
+  @override
+  String get yearlyProgress => 'التقدم السنوي';
+  @override
+  String get activityBreakdown => 'تفصيل الأنشطة';
+  @override
+  String get recentAchievements => 'الإنجازات الأخيرة';
+  @override
+  String get noChildSelected => 'لم يتم اختيار طفل';
+  @override
+  String get addChildToViewReports => 'أضف طفلاً لعرض التقارير';
+  @override
+  String get lessonsCompletedLabel => 'الدروس المكتملة';
+  @override
+  String get mostUsedContentLabel => 'أكثر نوع محتوى استخدامًا';
+  @override
+  String get completionRateLabel => 'معدل الإكمال';
+  @override
+  String get dailyTrendLabel => 'الاتجاه اليومي';
+  @override
+  String get moodTrendLabel => 'اتجاه الحالة المزاجية';
+  @override
+  String get currentMoodLabel => 'الحالة المزاجية الحالية';
+  @override
+  String get recordedSessionsNotice =>
+      'تعتمد هذه البيانات على الجلسات المسجلة فعليًا على هذا الجهاز.';
+  @override
+  String get profileFallbackNotice =>
+      'لا يوجد سجل جلسات كافٍ بعد، لذلك يعتمد التقرير حاليًا على إجماليات ملف الطفل المحفوظة.';
+  @override
+  String get noRecordedActivityYet =>
+      'لا توجد جلسات مسجلة لهذا النطاق الزمني بعد.';
+  @override
+  String ageLabel(int age) => 'العمر $age';
 
   // ── Parental Controls ──
-  @override String get parentalControls => 'الرقابة الأبوية';
-  @override String get contentRestrictions => 'قيود المحتوى';
-  @override String get contentRestrictionsAndScreenTime => 'قيود المحتوى ووقت الشاشة';
-  @override String get manageChildAccess => 'إدارة ما يمكن لطفلك الوصول إليه ولكم من الوقت';
-  @override String get screenTimeLimits => 'حدود وقت الشاشة';
-  @override String get timeRestrictions => 'قيود الوقت';
-  @override String get emergencyControls => 'التحكم الطارئ';
-  @override String get lockAppNow => 'قفل التطبيق الآن';
-  @override String get dailyLimit => 'الحد اليومي';
-  @override String get allowedHours => 'الساعات المسموح بها';
-  @override String get hoursPerDay => 'ساعات في اليوم';
-  @override String get requireApproval => 'طلب الموافقة';
-  @override String get bedtime => 'وقت النوم';
-  @override String get wakeTime => 'وقت الاستيقاظ';
-  @override String get sleepMode => 'وضع النوم';
-  @override String get emergencyLock => 'القفل الطارئ';
-  @override String get contentFiltering => 'تصفية المحتوى';
-  @override String get ageAppropriate => 'مناسب للعمر';
-  @override String get blockContent => 'حظر المحتوى';
-  @override String get allowContent => 'السماح بالمحتوى';
-  @override String get timeLimits => 'حدود الوقت';
-  @override String get breakReminders => 'تذكيرات الاستراحة';
-  @override String get smartControl => 'التحكم الذكي';
-  @override String get aiRecommendations => 'توصيات الذكاء الاصطناعي';
+  @override
+  String get parentalControls => 'الرقابة الأبوية';
+  @override
+  String get contentRestrictions => 'قيود المحتوى';
+  @override
+  String get contentRestrictionsAndScreenTime => 'قيود المحتوى ووقت الشاشة';
+  @override
+  String get manageChildAccess =>
+      'إدارة ما يمكن لطفلك الوصول إليه ولكم من الوقت';
+  @override
+  String get screenTimeLimits => 'حدود وقت الشاشة';
+  @override
+  String get timeRestrictions => 'قيود الوقت';
+  @override
+  String get emergencyControls => 'التحكم الطارئ';
+  @override
+  String get lockAppNow => 'قفل التطبيق الآن';
+  @override
+  String get dailyLimit => 'الحد اليومي';
+  @override
+  String get allowedHours => 'الساعات المسموح بها';
+  @override
+  String get hoursPerDay => 'ساعات في اليوم';
+  @override
+  String get requireApproval => 'طلب الموافقة';
+  @override
+  String get bedtime => 'وقت النوم';
+  @override
+  String get wakeTime => 'وقت الاستيقاظ';
+  @override
+  String get sleepMode => 'وضع النوم';
+  @override
+  String get emergencyLock => 'القفل الطارئ';
+  @override
+  String get contentFiltering => 'تصفية المحتوى';
+  @override
+  String get ageAppropriate => 'مناسب للعمر';
+  @override
+  String get blockContent => 'حظر المحتوى';
+  @override
+  String get allowContent => 'السماح بالمحتوى';
+  @override
+  String get timeLimits => 'حدود الوقت';
+  @override
+  String get breakReminders => 'تذكيرات الاستراحة';
+  @override
+  String get smartControl => 'التحكم الذكي';
+  @override
+  String get aiRecommendations => 'توصيات الذكاء الاصطناعي';
 
   // ── Settings ──
-  @override String get settings => 'الإعدادات';
-  @override String get notifications => 'الإشعارات';
-  @override String get privacySettings => 'إعدادات الخصوصية';
-  @override String get dataSharing => 'مشاركة البيانات';
-  @override String get parentalConsent => 'موافقة ولي الأمر';
-  @override String get accessibility => 'إمكانية الوصول';
-  @override String get fontSize => 'حجم الخط';
-  @override String get contrast => 'التباين';
-  @override String get language => 'اللغة';
-  @override String get english => 'English';
-  @override String get arabic => 'العربية';
-  @override String get theme => 'المظهر';
-  @override String get mode => 'الوضع';
-  @override String get systemMode => 'وضع النظام';
-  @override String get themePalette => 'لوحة الألوان';
-  @override String get themePaletteHint => 'اختر لوحة ووضعاً يناسب عائلتك.';
-  @override String get lightMode => 'الوضع الفاتح';
-  @override String get darkMode => 'الوضع الداكن';
-  @override String get eyeFriendlyMode => 'الوضع المريح للعين';
-  @override String get auto => 'تلقائي';
-  @override String get sound => 'الصوت';
-  @override String get soundEffects => 'المؤثرات الصوتية';
-  @override String get backgroundMusic => 'الموسيقى الخلفية';
-  @override String get voiceGuidance => 'التوجيه الصوتي';
-  @override String get appSettings => 'إعدادات التطبيق';
-  @override String get editProfile => 'تعديل الملف الشخصي';
-  @override String get changeAvatar => 'تغيير الصورة الرمزية';
-  @override String get resetProgress => 'إعادة تعيين التقدم';  @override String get resetProgressTitle => 'إعادة تعيين التقدم؟';
-  @override String get resetProgressMessage => 'سيؤدي هذا إلى حذف جميع نقاط الخبرة والمستويات والإنجازات. لا يمكن التراجع عن هذا الإجراء.';
-  @override String get reset => 'إعادة تعيين';
-  @override String get progressReset => 'تمت إعادة تعيين التقدم';
-  @override String get profileLabel => 'الملف الشخصي';
-  @override String get searchSettingsHint => 'ابحث في الإعدادات...';
-  @override String get appSettingsSection => 'إعدادات التطبيق';
-  @override String get themes => 'المظاهر';
-  @override String get lightAndCalm => 'فاتح وهادئ';
-  @override String get aboutUs => 'من نحن';
-  @override String get noSettingsFound => 'لا توجد إعدادات';
-  @override String get selectLanguage => 'اختر اللغة';
-  @override String languageChanged(String languageName) => 'تم تغيير اللغة إلى $languageName';
-  @override String get englishUs => 'الإنجليزية (الولايات المتحدة)';
-  @override String get chooseAvatar => 'اختر صورة رمزية';
-  @override String get avatarSaved => 'تم حفظ الصورة الرمزية';
-  @override String get pleaseSelectThreePictures => 'يرجى اختيار 3 صور';
-  @override String get failedToUpdatePicturePassword => 'فشل تحديث كلمة مرور الصور';
-  @override String get profileUpdated => 'تم تحديث الملف الشخصي';
-  @override String get changeAvatarFromProfile => 'غيّر صورتك الرمزية من شاشة الملف الشخصي';
-  @override String get nameLabel => 'الاسم';
-  @override String get enterYourName => 'أدخل اسمك';
-  @override String get pleaseEnterName => 'يرجى إدخال اسم';
-  @override String get chooseExactlyThreePictures => 'اختر 3 صور بالضبط';
-  @override String get darkLight => 'داكن / فاتح';
-  @override String get chooseCalmColor => 'اختر لوناً هادئاً';
-  @override String get increaseFontSize => 'تكبير الخط';
-  @override String get decreaseFontSize => 'تصغير الخط';
-  @override String get highContrast => 'تباين عالٍ';
-  @override String get screenReader => 'دعم قارئ الشاشة';
-  @override String get voiceCommands => 'الأوامر الصوتية';
-  @override String get switchAccess => 'وصول التبديل';
-  @override String get clearSelection => 'مسح الاختيار';
+  @override
+  String get settings => 'الإعدادات';
+  @override
+  String get notifications => 'الإشعارات';
+  @override
+  String get privacySettings => 'إعدادات الخصوصية';
+  @override
+  String get dataSharing => 'مشاركة البيانات';
+  @override
+  String get parentalConsent => 'موافقة ولي الأمر';
+  @override
+  String get accessibility => 'إمكانية الوصول';
+  @override
+  String get fontSize => 'حجم الخط';
+  @override
+  String get contrast => 'التباين';
+  @override
+  String get language => 'اللغة';
+  @override
+  String get english => 'English';
+  @override
+  String get arabic => 'العربية';
+  @override
+  String get theme => 'المظهر';
+  @override
+  String get mode => 'الوضع';
+  @override
+  String get systemMode => 'وضع النظام';
+  @override
+  String get themePalette => 'لوحة الألوان';
+  @override
+  String get themePaletteHint => 'اختر لوحة ووضعاً يناسب عائلتك.';
+  @override
+  String get lightMode => 'الوضع الفاتح';
+  @override
+  String get darkMode => 'الوضع الداكن';
+  @override
+  String get eyeFriendlyMode => 'الوضع المريح للعين';
+  @override
+  String get auto => 'تلقائي';
+  @override
+  String get sound => 'الصوت';
+  @override
+  String get soundEffects => 'المؤثرات الصوتية';
+  @override
+  String get backgroundMusic => 'الموسيقى الخلفية';
+  @override
+  String get voiceGuidance => 'التوجيه الصوتي';
+  @override
+  String get appSettings => 'إعدادات التطبيق';
+  @override
+  String get editProfile => 'تعديل الملف الشخصي';
+  @override
+  String get changeAvatar => 'تغيير الصورة الرمزية';
+  @override
+  String get resetProgress => 'إعادة تعيين التقدم';
+  @override
+  String get resetProgressTitle => 'إعادة تعيين التقدم؟';
+  @override
+  String get resetProgressMessage =>
+      'سيؤدي هذا إلى حذف جميع نقاط الخبرة والمستويات والإنجازات. لا يمكن التراجع عن هذا الإجراء.';
+  @override
+  String get reset => 'إعادة تعيين';
+  @override
+  String get progressReset => 'تمت إعادة تعيين التقدم';
+  @override
+  String get profileLabel => 'الملف الشخصي';
+  @override
+  String get searchSettingsHint => 'ابحث في الإعدادات...';
+  @override
+  String get appSettingsSection => 'إعدادات التطبيق';
+  @override
+  String get themes => 'المظاهر';
+  @override
+  String get lightAndCalm => 'فاتح وهادئ';
+  @override
+  String get aboutUs => 'من نحن';
+  @override
+  String get noSettingsFound => 'لا توجد إعدادات';
+  @override
+  String get selectLanguage => 'اختر اللغة';
+  @override
+  String languageChanged(String languageName) =>
+      'تم تغيير اللغة إلى $languageName';
+  @override
+  String get englishUs => 'الإنجليزية (الولايات المتحدة)';
+  @override
+  String get chooseAvatar => 'اختر صورة رمزية';
+  @override
+  String get avatarSaved => 'تم حفظ الصورة الرمزية';
+  @override
+  String get pleaseSelectThreePictures => 'يرجى اختيار 3 صور';
+  @override
+  String get failedToUpdatePicturePassword => 'فشل تحديث كلمة مرور الصور';
+  @override
+  String get profileUpdated => 'تم تحديث الملف الشخصي';
+  @override
+  String get changeAvatarFromProfile =>
+      'غيّر صورتك الرمزية من شاشة الملف الشخصي';
+  @override
+  String get nameLabel => 'الاسم';
+  @override
+  String get enterYourName => 'أدخل اسمك';
+  @override
+  String get pleaseEnterName => 'يرجى إدخال اسم';
+  @override
+  String get chooseExactlyThreePictures => 'اختر 3 صور بالضبط';
+  @override
+  String get darkLight => 'داكن / فاتح';
+  @override
+  String get chooseCalmColor => 'اختر لوناً هادئاً';
+  @override
+  String get increaseFontSize => 'تكبير الخط';
+  @override
+  String get decreaseFontSize => 'تصغير الخط';
+  @override
+  String get highContrast => 'تباين عالٍ';
+  @override
+  String get screenReader => 'دعم قارئ الشاشة';
+  @override
+  String get voiceCommands => 'الأوامر الصوتية';
+  @override
+  String get switchAccess => 'وصول التبديل';
+  @override
+  String get clearSelection => 'مسح الاختيار';
 
   // ── Subscription / Paywall ──
-  @override String get subscription => 'الاشتراك';
-  @override String get freeTrial => 'تجربة مجانية';
-  @override String get familyPlan => 'الخطة العائلية';
-  @override String get manageSubscription => 'إدارة الاشتراك';
-  @override String get paymentMethod => 'طريقة الدفع';
-  @override String get billingInfo => 'معلومات الفوترة';
-  @override String get trialEnds => 'تنتهي التجربة';
-  @override String get subscriptionActive => 'الاشتراك نشط';
-  @override String get subscriptionExpired => 'انتهى الاشتراك';
-  @override String get upgradeNow => 'ترقية الآن';
-  @override String get premiumFeatures => 'الميزات المميزة';
-  @override String get planAiInsightsPro => 'رؤى التعلم بالذكاء الاصطناعي';
-  @override String get planAdvancedReports => 'تقارير التعلم المتقدمة';
-  @override String get planOfflineDownloads => 'الوصول دون اتصال';
-  @override String get planSmartControls => 'الرقابة الأبوية الذكية';
-  @override String get planExclusiveContent => 'محتوى مميز حصري';
-  @override String get planFeatureInPremium => 'متاح في الخطة المميزة';
-  @override String get planFree => 'مجاني';
-  @override String get planBasicReports => 'تقارير التقدم الأساسية';
-  @override String planChildLimit(int count) => 'إدارة حتى $count أطفال';
-  @override String get currentPlan => 'الخطة الحالية';
-  @override String get choosePlan => 'اختر خطتك';
-  @override String get freePlanChildLimit => 'الخطة المجانية تسمح بطفل واحد';
-  @override String get planFamilyPlus => 'عائلي بلس';
-  @override String get planPremium => 'مميز';
-  @override String get planUnlimitedChildren => 'أطفال غير محدودين';
-  @override String get planFamilyDashboard => 'لوحة تحكم العائلة';
-  @override String get paywallTitle => 'الترقية إلى المميز';
-  @override String get paywallPrice => '10\$ / شهر';
-  @override String get paywallSubscribe => 'ترقية الآن';
-  @override String get paywallManagePaymentMethods => 'إدارة طرق الدفع';
-  @override String get paymentMethodsTitle => 'طرق الدفع';
-  @override String get paymentMethodsEmpty => 'لم تتم إضافة طرق دفع بعد.';
-  @override String get addPaymentMethod => 'إضافة طريقة دفع';
-  @override String get removePaymentMethod => 'إزالة';
-  @override String get openPaymentPortal => 'فتح بوابة الدفع';
-  @override String yearsOld(int age) => '$age سنوات';
-  @override String levelXp(int level, int xp) => 'المستوى $level - $xp نقطة';
-  @override String get coppaCompliance => 'الامتثال لـ COPPA';
-  @override String comingSoon(String title) => '$title قادم قريباً';
+  @override
+  String get subscription => 'الاشتراك';
+  @override
+  String get freeTrial => 'تجربة مجانية';
+  @override
+  String get familyPlan => 'الخطة العائلية';
+  @override
+  String get manageSubscription => 'إدارة الاشتراك';
+  @override
+  String get paymentMethod => 'طريقة الدفع';
+  @override
+  String get billingInfo => 'معلومات الفوترة';
+  @override
+  String get trialEnds => 'تنتهي التجربة';
+  @override
+  String get subscriptionActive => 'الاشتراك نشط';
+  @override
+  String get subscriptionExpired => 'انتهى الاشتراك';
+  @override
+  String get upgradeNow => 'ترقية الآن';
+  @override
+  String get premiumFeatures => 'الميزات المميزة';
+  @override
+  String get planAiInsightsPro => 'رؤى التعلم بالذكاء الاصطناعي';
+  @override
+  String get planAdvancedReports => 'تقارير التعلم المتقدمة';
+  @override
+  String get planOfflineDownloads => 'الوصول دون اتصال';
+  @override
+  String get planSmartControls => 'الرقابة الأبوية الذكية';
+  @override
+  String get planExclusiveContent => 'محتوى مميز حصري';
+  @override
+  String get planFeatureInPremium => 'متاح في الخطة المميزة';
+  @override
+  String get planFree => 'مجاني';
+  @override
+  String get planBasicReports => 'تقارير التقدم الأساسية';
+  @override
+  String planChildLimit(int count) => 'إدارة حتى $count أطفال';
+  @override
+  String get currentPlan => 'الخطة الحالية';
+  @override
+  String get choosePlan => 'اختر خطتك';
+  @override
+  String get freePlanChildLimit => 'الخطة المجانية تسمح بطفل واحد';
+  @override
+  String get planFamilyPlus => 'عائلي بلس';
+  @override
+  String get planPremium => 'مميز';
+  @override
+  String get planUnlimitedChildren => 'أطفال غير محدودين';
+  @override
+  String get planFamilyDashboard => 'لوحة تحكم العائلة';
+  @override
+  String get paywallTitle => 'الترقية إلى المميز';
+  @override
+  String get paywallPrice => '10\$ / شهر';
+  @override
+  String get paywallSubscribe => 'ترقية الآن';
+  @override
+  String get paywallManagePaymentMethods => 'إدارة طرق الدفع';
+  @override
+  String get paymentMethodsTitle => 'طرق الدفع';
+  @override
+  String get paymentMethodsEmpty => 'لم تتم إضافة طرق دفع بعد.';
+  @override
+  String get addPaymentMethod => 'إضافة طريقة دفع';
+  @override
+  String get removePaymentMethod => 'إزالة';
+  @override
+  String get openPaymentPortal => 'فتح بوابة الدفع';
+  @override
+  String yearsOld(int age) => '$age سنوات';
+  @override
+  String levelXp(int level, int xp) => 'المستوى $level - $xp نقطة';
+  @override
+  String get coppaCompliance => 'الامتثال لـ COPPA';
+  @override
+  String comingSoon(String title) => '$title قادم قريباً';
 
   // ── Notifications ──
-  @override String get noNotifications => 'لا توجد إشعارات بعد.';
-  @override String get markAllRead => 'تحديد الكل كمقروء';
-  @override String notificationDailyGoal(String name, int activities) =>
+  @override
+  String get noNotifications => 'لا توجد إشعارات بعد.';
+  @override
+  String get markAllRead => 'تحديد الكل كمقروء';
+  @override
+  String notificationDailyGoal(String name, int activities) =>
       '$name أكمل $activities أنشطة اليوم!';
-  @override String notificationScreenTime(String name, int hours) =>
+  @override
+  String notificationScreenTime(String name, int hours) =>
       '$name وصل إلى الحد اليومي البالغ $hours ساعات.';
-  @override String notificationAchievement(String name, String badge) =>
+  @override
+  String notificationAchievement(String name, String badge) =>
       '$name فتح شارة "$badge"!';
-  @override String get notificationWeeklyReport => 'تقرير تقدم طفلك لهذا الأسبوع متاح.';
-  @override String notificationMilestone(String name, int count) =>
+  @override
+  String get notificationWeeklyReport => 'تقرير تقدم طفلك لهذا الأسبوع متاح.';
+  @override
+  String notificationMilestone(String name, int count) =>
       '$name أكمل $count نشاطاً!';
-  @override String notificationRecommendation(String name) =>
+  @override
+  String notificationRecommendation(String name) =>
       'محتوى تعليمي جديد متاح لـ $name بناءً على اهتماماته.';
-  @override String get hoursAgo => 'ساعات مضت';
-  @override String get daysAgo => 'أيام مضت';
-  @override String get justNow => 'الآن';
+  @override
+  String notificationLessonCompleted(String name, String lessonTitle) =>
+      '$name أكمل درس "$lessonTitle".';
+  @override
+  String notificationStreakReached(String name, int streakDays) =>
+      '$name حقق سلسلة تعلم لمدة $streakDays أيام.';
+  @override
+  String notificationInactive(String name, int days) =>
+      '$name لم يستخدم التطبيق منذ $days أيام.';
+  @override
+  String get hoursAgo => 'ساعات مضت';
+  @override
+  String get daysAgo => 'أيام مضت';
+  @override
+  String get justNow => 'الآن';
 
   // ── Safety / Privacy ──
-  @override String get safety => 'الأمان';
-  @override String get privacy => 'الخصوصية';
-  @override String get childProtection => 'حماية الطفل';
-  @override String get dataSecurity => 'أمان البيانات';
-  @override String get parentalConsentRequired => 'موافقة ولي الأمر مطلوبة';
-  @override String get minimalDataCollection => 'جمع بيانات محدود';
-  @override String get encryptedStorage => 'تخزين مشفر';
+  @override
+  String get safety => 'الأمان';
+  @override
+  String get safetyDashboard => 'لوحة الأمان';
+  @override
+  String get safetyDashboardSubtitle =>
+      'الرقابة الأبوية والخصوصية والتنبيهات والدعم في شاشة واحدة.';
+  @override
+  String get privacy => 'الخصوصية';
+  @override
+  String get childProtection => 'حماية الطفل';
+  @override
+  String get dataSecurity => 'أمان البيانات';
+  @override
+  String get parentalConsentRequired => 'موافقة ولي الأمر مطلوبة';
+  @override
+  String get minimalDataCollection => 'جمع بيانات محدود';
+  @override
+  String get encryptedStorage => 'تخزين مشفر';
 
   // ── Help / Support ──
-  @override String get help => 'المساعدة';
-  @override String get support => 'الدعم';
-  @override String get faq => 'الأسئلة الشائعة';
-  @override String get tutorial => 'الدليل التعليمي';
-  @override String get walkthrough => 'الجولة التعريفية';
-  @override String get feedback => 'التغذية الراجعة';
-  @override String get helpFaq => 'المساعدة والأسئلة الشائعة';
-  @override String get contactUs => 'اتصل بنا';
-  @override String get about => 'حول';
-  @override String get logout => 'تسجيل الخروج';
-  @override String get accountSection => 'الحساب';
-  @override String get familySection => 'العائلة';
-  @override String get preferencesSection => 'التفضيلات';
-  @override String get supportSection => 'الدعم';
-  @override String get legalSection => 'قانوني';
-  @override String get searchFaqsHint => 'ابحث في الأسئلة الشائعة...';
-  @override String get noFaqFound => 'لا توجد أسئلة شائعة';
-  @override String get contactUsSubtitle => 'نحن هنا للمساعدة';
-  @override String get contactEmailLabel => 'البريد الإلكتروني';
-  @override String get contactEmailValue => 'support@kinderworld.app';
-  @override String get contactPhoneLabel => 'الهاتف';
-  @override String get contactPhoneValue => '+1 (800) 123-4567';
-  @override String get contactHoursLabel => 'ساعات العمل';
-  @override String get contactHoursValue => 'الاثنين - الجمعة، 9 ص - 6 م';
-  @override String get sendMessageTitle => 'أرسل رسالة';
-  @override String get messageHint => 'اكتب رسالتك هنا...';
-  @override String get sendMessage => 'إرسال الرسالة';
-  @override String get messageSent => 'تم إرسال رسالتك بنجاح!';
+  @override
+  String get help => 'المساعدة';
+  @override
+  String get support => 'الدعم';
+  @override
+  String get faq => 'الأسئلة الشائعة';
+  @override
+  String get tutorial => 'الدليل التعليمي';
+  @override
+  String get walkthrough => 'الجولة التعريفية';
+  @override
+  String get feedback => 'التغذية الراجعة';
+  @override
+  String get helpFaq => 'المساعدة والأسئلة الشائعة';
+  @override
+  String get contactUs => 'اتصل بنا';
+  @override
+  String get about => 'حول';
+  @override
+  String get logout => 'تسجيل الخروج';
+  @override
+  String get accountSection => 'الحساب';
+  @override
+  String get familySection => 'العائلة';
+  @override
+  String get preferencesSection => 'التفضيلات';
+  @override
+  String get supportSection => 'الدعم';
+  @override
+  String get legalSection => 'قانوني';
+  @override
+  String get searchFaqsHint => 'ابحث في الأسئلة الشائعة...';
+  @override
+  String get noFaqFound => 'لا توجد أسئلة شائعة';
+  @override
+  String get contactUsSubtitle => 'نحن هنا للمساعدة';
+  @override
+  String get contactEmailLabel => 'البريد الإلكتروني';
+  @override
+  String get contactEmailValue => 'support@kinderworld.app';
+  @override
+  String get contactPhoneLabel => 'الهاتف';
+  @override
+  String get contactPhoneValue => '+1 (800) 123-4567';
+  @override
+  String get contactHoursLabel => 'ساعات العمل';
+  @override
+  String get contactHoursValue => 'الاثنين - الجمعة، 9 ص - 6 م';
+  @override
+  String get sendMessageTitle => 'أرسل رسالة';
+  @override
+  String get supportCategoryLabel => 'تصنيف التذكرة';
+  @override
+  String get supportCategoryLoginIssue => 'مشكلة تسجيل دخول';
+  @override
+  String get supportCategoryBillingIssue => 'مشكلة فوترة';
+  @override
+  String get supportCategoryChildContentIssue => 'مشكلة في محتوى الطفل';
+  @override
+  String get supportCategoryTechnicalIssue => 'مشكلة تقنية';
+  @override
+  String get supportCategoryGeneralInquiry => 'استفسار عام';
+  @override
+  String get messageHint => 'اكتب رسالتك هنا...';
+  @override
+  String get sendMessage => 'إرسال الرسالة';
+  @override
+  String get messageSent => 'تم إرسال رسالتك بنجاح!';
+  @override
+  String get supportTicketHistoryTitle => 'سجل تذاكر الدعم';
+  @override
+  String get supportTicketHistorySubtitle =>
+      'تابع التحديثات وردود فريق الدعم وحالة كل تذكرة.';
+  @override
+  String get supportTicketNoHistory => 'لم ترسل أي تذاكر دعم بعد.';
+  @override
+  String get supportStatusOpen => 'مفتوحة';
+  @override
+  String get supportStatusInProgress => 'قيد المعالجة';
+  @override
+  String get supportStatusResolved => 'تم حلها';
+  @override
+  String get supportStatusClosed => 'مغلقة';
+  @override
+  String get supportReplyLabel => 'أضف متابعة';
+  @override
+  String get supportReplyHint => 'أضف أي تفاصيل إضافية تساعد فريق الدعم.';
+  @override
+  String get supportReplyAction => 'إرسال المتابعة';
+  @override
+  String get supportReplySentSuccess => 'تم إرسال المتابعة بنجاح.';
+  @override
+  String get supportAgentLabel => 'فريق الدعم';
+  @override
+  String get youLabel => 'أنت';
 
   // ── System / Maintenance ──
-  @override String get maintenanceMode => 'التطبيق تحت الصيانة';
-  @override String get updateRequired => 'تحديث مطلوب';
-  @override String get syncData => 'جاري مزامنة البيانات...';
-  @override String get dataSyncComplete => 'اكتملت مزامنة البيانات';
-  @override String get sessionExpired => 'انتهت الجلسة';
-  @override String get logoutConfirm => 'هل أنت متأكد من تسجيل الخروج؟';
-  @override String get exitConfirm => 'هل أنت متأكد من الخروج؟';
-  @override String get deleteConfirm => 'هل أنت متأكد من الحذف؟';
+  @override
+  String get maintenanceMode => 'التطبيق تحت الصيانة';
+  @override
+  String get updateRequired => 'تحديث مطلوب';
+  @override
+  String get syncData => 'جاري مزامنة البيانات...';
+  @override
+  String get dataSyncComplete => 'اكتملت مزامنة البيانات';
+  @override
+  String get sessionExpired => 'انتهت الجلسة';
+  @override
+  String get logoutConfirm => 'هل أنت متأكد من تسجيل الخروج؟';
+  @override
+  String get exitConfirm => 'هل أنت متأكد من الخروج؟';
+  @override
+  String get deleteConfirm => 'هل أنت متأكد من الحذف؟';
 
   // ── Validation ──
-  @override String get passwordTooShort => 'يجب أن تكون كلمة المرور 6 أحرف على الأقل';
-  @override String get passwordsDontMatch => 'كلمتا المرور غير متطابقتين';
-  @override String get invalidAge => 'يرجى إدخال عمر صحيح (5-12)';
-  @override String get selectAvatar => 'يرجى اختيار صورة رمزية';
-  @override String get incorrectPicturePassword => 'كلمة مرور الصور غير صحيحة. يرجى المحاولة مرة أخرى.';
-  @override String get nameTooShort => 'يجب أن يكون الاسم حرفين على الأقل';
-  @override String get pleaseEnterRealName => 'يرجى إدخال اسم حقيقي';
+  @override
+  String get passwordTooShort => 'يجب أن تكون كلمة المرور 6 أحرف على الأقل';
+  @override
+  String get passwordsDontMatch => 'كلمتا المرور غير متطابقتين';
+  @override
+  String get invalidAge => 'يرجى إدخال عمر صحيح (5-12)';
+  @override
+  String get selectAvatar => 'يرجى اختيار صورة رمزية';
+  @override
+  String get incorrectPicturePassword =>
+      'كلمة مرور الصور غير صحيحة. يرجى المحاولة مرة أخرى.';
+  @override
+  String get nameTooShort => 'يجب أن يكون الاسم حرفين على الأقل';
+  @override
+  String get pleaseEnterRealName => 'يرجى إدخال اسم حقيقي';
 
   // ── Welcome / Onboarding ──
-  @override String get welcomeTitle => 'مرحباً بك في كيندر وورلد!';
-  @override String get welcomeSubtitle => 'بيئة تعلم آمنة وممتعة للأطفال';
-  @override String get chooseLanguageTitle => 'اختر لغتك';
-  @override String get chooseLanguageSubtitle => 'اختر لغتك المفضلة';
-  @override String get languageEnglishShort => 'EN';
-  @override String get languageArabicShort => 'AR';
-  @override String get educational => 'تعليمي';
-  @override String get funGames => 'ألعاب ممتعة';
-  @override String get aiPowered => 'مدعوم بالذكاء الاصطناعي';
-  @override String get safe => 'آمن';
-  @override String get getStarted => 'ابدأ الآن';
-  @override String get coppaGdprNote => 'متوافق مع COPPA و GDPR - آمن للأطفال';
-  @override String get onboardingLearn => 'تعلّم';
-  @override String get onboardingPlay => 'العب';
-  @override String get onboardingGrow => 'انمو';
-  @override String get onboardingLearnSubtitle => 'محتوى تعليمي مخصص لطفلك';
-  @override String get onboardingLearnDescription =>
+  @override
+  String get welcomeTitle => 'مرحباً بك في كيندر وورلد!';
+  @override
+  String get welcomeSubtitle => 'بيئة تعلم آمنة وممتعة للأطفال';
+  @override
+  String get chooseLanguageTitle => 'اختر لغتك';
+  @override
+  String get chooseLanguageSubtitle => 'اختر لغتك المفضلة';
+  @override
+  String get languageEnglishShort => 'EN';
+  @override
+  String get languageArabicShort => 'AR';
+  @override
+  String get educational => 'تعليمي';
+  @override
+  String get funGames => 'ألعاب ممتعة';
+  @override
+  String get aiPowered => 'مدعوم بالذكاء الاصطناعي';
+  @override
+  String get safe => 'آمن';
+  @override
+  String get getStarted => 'ابدأ الآن';
+  @override
+  String get coppaGdprNote => 'متوافق مع COPPA و GDPR - آمن للأطفال';
+  @override
+  String get onboardingLearn => 'تعلّم';
+  @override
+  String get onboardingPlay => 'العب';
+  @override
+  String get onboardingGrow => 'انمو';
+  @override
+  String get onboardingLearnSubtitle => 'محتوى تعليمي مخصص لطفلك';
+  @override
+  String get onboardingLearnDescription =>
       'اكتشف دروساً تفاعلية في الرياضيات والعلوم والقراءة والمزيد. كل نشاط مصمم لجعل التعلم ممتعاً وجذاباً.';
-  @override String get onboardingPlaySubtitle => 'ألعاب ممتعة تطور المهارات';
-  @override String get onboardingPlayDescription =>
+  @override
+  String get onboardingPlaySubtitle => 'ألعاب ممتعة تطور المهارات';
+  @override
+  String get onboardingPlayDescription =>
       'استمتع بالألعاب التعليمية والألغاز والأنشطة الإبداعية التي تساعد طفلك على النمو مع الاستمتاع.';
-  @override String get onboardingGrowSubtitle => 'تعلم مخصص بالذكاء الاصطناعي';
-  @override String get onboardingGrowDescription =>
+  @override
+  String get onboardingGrowSubtitle => 'تعلم مخصص بالذكاء الاصطناعي';
+  @override
+  String get onboardingGrowDescription =>
       'يتكيف مساعدنا الذكي مع أسلوب تعلم طفلك ويقدم توصيات مخصصة للنمو الأمثل.';
-  @override String get interactiveLessons => 'دروس تفاعلية';
-  @override String get interactiveLessonsDesc => 'محتوى تعليمي جذاب ومخصص';
-  @override String get learnThroughPlay => 'التعلم من خلال اللعب';
-  @override String get learnThroughPlayDesc => 'ألعاب ممتعة تطور المهارات';
-  @override String get personalizedForChild => 'مخصص لطفلك';
-  @override String get personalizedForChildDesc => 'تجربة تعلم مكيّفة مع احتياجات طفلك';
-  @override String get coppaGdprCompliant => 'متوافق مع COPPA و GDPR';
-  @override String get coppaGdprCompliantDesc => 'آمن وخاضع للرقابة الأبوية';
+  @override
+  String get interactiveLessons => 'دروس تفاعلية';
+  @override
+  String get interactiveLessonsDesc => 'محتوى تعليمي جذاب ومخصص';
+  @override
+  String get learnThroughPlay => 'التعلم من خلال اللعب';
+  @override
+  String get learnThroughPlayDesc => 'ألعاب ممتعة تطور المهارات';
+  @override
+  String get personalizedForChild => 'مخصص لطفلك';
+  @override
+  String get personalizedForChildDesc => 'تجربة تعلم مكيّفة مع احتياجات طفلك';
+  @override
+  String get coppaGdprCompliant => 'متوافق مع COPPA و GDPR';
+  @override
+  String get coppaGdprCompliantDesc => 'آمن وخاضع للرقابة الأبوية';
 
   // ── About ──
-  @override String get kinderWorldAppTitle => 'تطبيق كيندر وورلد';
-  @override String get aboutAppName => 'كيندر وورلد';
-  @override String appVersionLabel(String version) => 'الإصدار $version';
-  @override String get aboutAppDescription =>
+  @override
+  String get kinderWorldAppTitle => 'تطبيق كيندر وورلد';
+  @override
+  String get aboutAppName => 'كيندر وورلد';
+  @override
+  String appVersionLabel(String version) => 'الإصدار $version';
+  @override
+  String get aboutAppDescription =>
       'كيندر وورلد هو تطبيق ممتع وتعليمي مصمم لمساعدة الأطفال على التعلم من خلال اللعب. نركز على الأنشطة السلوكية والتعليمية والمهارية لتوفير تجربة تعلم شاملة.';
-  @override String get aboutDescription =>
+  @override
+  String get aboutDescription =>
       'كيندر وورلد هو تطبيق ممتع وتعليمي مصمم لمساعدة الأطفال على التعلم من خلال اللعب.';
-  @override String lastUpdated(String date) => 'آخر تحديث: $date';
+  @override
+  String lastUpdated(String date) => 'آخر تحديث: $date';
 
   // ── Privacy ──
-  @override String privacyLastUpdated(String date) => 'آخر تحديث: $date';
-  @override String get privacyIntroTitle => '1. المقدمة';
-  @override String get privacyIntroBody =>
+  @override
+  String privacyLastUpdated(String date) => 'آخر تحديث: $date';
+  @override
+  String get privacyIntroTitle => '1. المقدمة';
+  @override
+  String get privacyIntroBody =>
       'نحترم خصوصيتك ونلتزم بحمايتها من خلال امتثالنا لهذه السياسة.';
-  @override String get privacyDataCollectionTitle => '2. جمع البيانات';
-  @override String get privacyDataCollectionBody =>
+  @override
+  String get privacyDataCollectionTitle => '2. جمع البيانات';
+  @override
+  String get privacyDataCollectionBody =>
       'نجمع المعلومات لتقديم خدمات أفضل لجميع مستخدمينا. يشمل ذلك التفاصيل الشخصية مثل الاسم والصورة الرمزية، وبيانات الاستخدام لتتبع التقدم.';
-  @override String get privacySecurityTitle => '3. الأمان';
-  @override String get privacySecurityBody =>
+  @override
+  String get privacySecurityTitle => '3. الأمان';
+  @override
+  String get privacySecurityBody =>
       'نطبق مجموعة متنوعة من التدابير الأمنية للحفاظ على سلامة معلوماتك الشخصية.';
 
   // ── Parent Profile / Settings ──
-  @override String get parentProfile => 'الملف الشخصي';
-  @override String get parentChangePassword => 'تغيير كلمة المرور';
-  @override String get parentTheme => 'المظهر';
-  @override String get changePassword => 'تغيير كلمة المرور';
-  @override String get currentPassword => 'كلمة المرور الحالية';
-  @override String get newPassword => 'كلمة المرور الجديدة';
-  @override String get confirmNewPassword => 'تأكيد كلمة المرور الجديدة';
-  @override String get passwordChanged => 'تم تغيير كلمة المرور بنجاح';
-  @override String get passwordChangeFailed => 'فشل تغيير كلمة المرور';
-  @override String get currentPasswordRequired => 'يرجى إدخال كلمة المرور الحالية';
-  @override String get newPasswordRequired => 'يرجى إدخال كلمة المرور الجديدة';
-  @override String get confirmNewPasswordRequired => 'يرجى تأكيد كلمة المرور الجديدة';
+  @override
+  String get parentProfile => 'الملف الشخصي';
+  @override
+  String get parentChangePassword => 'تغيير كلمة المرور';
+  @override
+  String get parentTheme => 'المظهر';
+  @override
+  String get changePassword => 'تغيير كلمة المرور';
+  @override
+  String get currentPassword => 'كلمة المرور الحالية';
+  @override
+  String get newPassword => 'كلمة المرور الجديدة';
+  @override
+  String get confirmNewPassword => 'تأكيد كلمة المرور الجديدة';
+  @override
+  String get passwordChanged => 'تم تغيير كلمة المرور بنجاح';
+  @override
+  String get passwordChangeFailed => 'فشل تغيير كلمة المرور';
+  @override
+  String get currentPasswordRequired => 'يرجى إدخال كلمة المرور الحالية';
+  @override
+  String get newPasswordRequired => 'يرجى إدخال كلمة المرور الجديدة';
+  @override
+  String get confirmNewPasswordRequired => 'يرجى تأكيد كلمة المرور الجديدة';
 
   // ── Forgot Password ──
-  @override String get forgotPasswordTitle => 'نسيت كلمة المرور';
-  @override String get forgotPasswordSubtitle =>
+  @override
+  String get forgotPasswordTitle => 'نسيت كلمة المرور';
+  @override
+  String get forgotPasswordSubtitle =>
       'أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة التعيين';
-  @override String get sendResetLink => 'إرسال رابط الإعادة';
-  @override String get resetLinkSent => 'تم إرسال رابط إعادة التعيين إلى بريدك الإلكتروني';
-  @override String get backToLogin => 'العودة إلى تسجيل الدخول';
-  @override String get childForgotPasswordTitle => 'نسيت كلمة المرور';
-  @override String get childForgotPasswordSubtitle =>
+  @override
+  String get sendResetLink => 'إرسال رابط الإعادة';
+  @override
+  String get resetLinkSent =>
+      'تم إرسال رابط إعادة التعيين إلى بريدك الإلكتروني';
+  @override
+  String get backToLogin => 'العودة إلى تسجيل الدخول';
+  @override
+  String get childForgotPasswordTitle => 'نسيت كلمة المرور';
+  @override
+  String get childForgotPasswordSubtitle =>
       'اطلب من والديك مساعدتك في إعادة تعيين كلمة المرور';
-  @override String get askParentForHelp => 'اطلب المساعدة من ولي الأمر';
+  @override
+  String get askParentForHelp => 'اطلب المساعدة من ولي الأمر';
 
   // ── Create Child Profile ──
-  @override String get createChildProfile => 'إنشاء ملف الطفل';
-  @override String get childNameLabel => 'اسم الطفل';
-  @override String get childNameHint => 'أدخل اسم طفلك';
-  @override String get childNameRequired => 'يرجى إدخال اسم الطفل';
-  @override String get childAgeLabel => 'عمر الطفل';
-  @override String get childAgeHint => 'أدخل عمر طفلك (5-12)';
-  @override String get childAgeRequired => 'يرجى إدخال عمر الطفل';
-  @override String get selectAvatarLabel => 'اختر صورة رمزية';
-  @override String get setPicturePassword => 'تعيين كلمة مرور الصور';
-  @override String get createProfile => 'إنشاء الملف';
+  @override
+  String get createChildProfile => 'إنشاء ملف الطفل';
+  @override
+  String get childNameLabel => 'اسم الطفل';
+  @override
+  String get childNameHint => 'أدخل اسم طفلك';
+  @override
+  String get childNameRequired => 'يرجى إدخال اسم الطفل';
+  @override
+  String get childAgeLabel => 'عمر الطفل';
+  @override
+  String get childAgeHint => 'أدخل عمر طفلك (5-12)';
+  @override
+  String get childAgeRequired => 'يرجى إدخال عمر الطفل';
+  @override
+  String get selectAvatarLabel => 'اختر صورة رمزية';
+  @override
+  String get setPicturePassword => 'تعيين كلمة مرور الصور';
+  @override
+  String get createProfile => 'إنشاء الملف';
 
   // ── No Internet ──
-  @override String get noInternetDescription => 'يبدو أنك غير متصل بالإنترنت. تحقق من اتصالك وحاول مرة أخرى.';
-  @override String get availableOffline => 'متاح بدون إنترنت';
-  @override String get offlineDownloadedLessons => 'الدروس المحملة';
-  @override String get offlineSavedGames => 'الألعاب المحفوظة';
-  @override String get offlineStories => 'القصص';
-  @override String get offlineProgressTracking => 'تتبع التقدم';
-  @override String get checkingConnection => 'جاري التحقق من الاتصال...';
-  @override String get stillNoConnection => 'لا يزال لا يوجد اتصال';
-  @override String get tryAgain => 'حاول مرة أخرى';
-  @override String get continueOffline => 'المتابعة بدون إنترنت';
+  @override
+  String get checkYourConnection => 'نصائح سريعة';
+
+  @override
+  String get checkWifiConnection => 'تحقق من شبكة Wi-Fi أو بيانات الجوال';
+
+  @override
+  String get checkMobileData => 'أوقف وضع الطيران ثم أعد تشغيله';
+
+  @override
+  String get restartRouter => 'أعد تشغيل الراوتر إذا كنت على Wi-Fi';
+
+  @override
+  String get noInternetDescription =>
+      'يبدو أنك غير متصل بالإنترنت. تحقق من اتصالك وحاول مرة أخرى.';
+  @override
+  String get availableOffline => 'متاح بدون إنترنت';
+  @override
+  String get offlineDownloadedLessons => 'الدروس المحملة';
+  @override
+  String get offlineSavedGames => 'الألعاب المحفوظة';
+  @override
+  String get offlineStories => 'القصص';
+  @override
+  String get offlineProgressTracking => 'تتبع التقدم';
+  @override
+  String get checkingConnection => 'جاري التحقق من الاتصال...';
+  @override
+  String get stillNoConnection => 'لا يزال لا يوجد اتصال';
+  @override
+  String get tryAgain => 'حاول مرة أخرى';
+  @override
+  String get continueOffline => 'المتابعة بدون إنترنت';
 
   // ── Data Sync ──
-  @override String get dataSyncTitle => 'مزامنة البيانات';
-  @override String get syncReady => 'جاهز للمزامنة';
-  @override String get syncStarting => 'جاري بدء المزامنة...';
-  @override String get syncingChildProfiles => 'جاري مزامنة ملفات الأطفال...';
-  @override String get syncingProgressData => 'جاري مزامنة بيانات التقدم...';
-  @override String get syncingActivities => 'جاري مزامنة الأنشطة...';
-  @override String get syncFinalizing => 'جاري الانتهاء من المزامنة...';
-  @override String get syncCompleted => 'اكتملت المزامنة';
-  @override String get syncNow => 'مزامنة الآن';
-  @override String get syncChildProfilesLabel => 'ملفات الأطفال';
-  @override String get syncProgressDataLabel => 'بيانات التقدم';
-  @override String get syncSettingsLabel => 'الإعدادات';
-  @override String get syncLastSyncLabel => 'آخر مزامنة';
-  @override String get syncedLabel => 'تمت المزامنة';
-  @override String syncedCount(int count) => 'تمت مزامنة $count عنصر';
-  @override String activitiesCount(int count) => '$count نشاط';
+  @override
+  String get dataSyncTitle => 'مزامنة البيانات';
+  @override
+  String get syncReady => 'جاهز للمزامنة';
+  @override
+  String get syncStarting => 'جاري بدء المزامنة...';
+  @override
+  String get syncingChildProfiles => 'جاري مزامنة ملفات الأطفال...';
+  @override
+  String get syncingProgressData => 'جاري مزامنة بيانات التقدم...';
+  @override
+  String get syncingActivities => 'جاري مزامنة الأنشطة...';
+  @override
+  String get syncFinalizing => 'جاري الانتهاء من المزامنة...';
+  @override
+  String get syncCompleted => 'اكتملت المزامنة';
+  @override
+  String get syncNow => 'مزامنة الآن';
+  @override
+  String get syncChildProfilesLabel => 'ملفات الأطفال';
+  @override
+  String get syncProgressDataLabel => 'بيانات التقدم';
+  @override
+  String get syncSettingsLabel => 'الإعدادات';
+  @override
+  String get syncLastSyncLabel => 'آخر مزامنة';
+  @override
+  String get syncedLabel => 'تمت المزامنة';
+  @override
+  String syncedCount(int count) => 'تمت مزامنة $count عنصر';
+  @override
+  String activitiesCount(int count) => '$count نشاط';
 
   // ── Error Screen ──
-  @override String get errorTitle => 'حدث خطأ';
-  @override String get errorDetailsLabel => 'تفاصيل الخطأ';
-  @override String get goBack => 'العودة';
-  @override String get reportIssue => 'الإبلاغ عن مشكلة';
-  @override String get errorReported => 'تم الإبلاغ عن الخطأ';
+  @override
+  String get errorTitle => 'حدث خطأ';
+  @override
+  String get errorDetailsLabel => 'تفاصيل الخطأ';
+  @override
+  String get goBack => 'العودة';
+  @override
+  String get reportIssue => 'الإبلاغ عن مشكلة';
+  @override
+  String get errorReported => 'تم الإبلاغ عن الخطأ';
 
   // ── Legal ──
-  @override String get legalTitle => 'قانوني';
-  @override String get legalTermsTitle => 'شروط الخدمة';
-  @override String get legalPrivacyTitle => 'سياسة الخصوصية';
-  @override String get legalCoppaTitle => 'امتثال COPPA';
-  @override String get legalNoContent => 'لا يوجد محتوى';
-  @override String get legalTermsPlaceholder => 'محتوى شروط الخدمة سيظهر هنا.';
-  @override String get legalPrivacyPlaceholder => 'محتوى سياسة الخصوصية سيظهر هنا.';
-  @override String get legalCoppaPlaceholder => 'محتوى امتثال COPPA سيظهر هنا.';
-  @override String get legalPlaceholder => 'المحتوى القانوني سيظهر هنا.';
+  @override
+  String get legalTitle => 'قانوني';
+  @override
+  String get legalTermsTitle => 'شروط الخدمة';
+  @override
+  String get legalPrivacyTitle => 'سياسة الخصوصية';
+  @override
+  String get legalCoppaTitle => 'امتثال COPPA';
+  @override
+  String get legalNoContent => 'لا يوجد محتوى';
+  @override
+  String get legalTermsPlaceholder => 'محتوى شروط الخدمة سيظهر هنا.';
+  @override
+  String get legalPrivacyPlaceholder => 'محتوى سياسة الخصوصية سيظهر هنا.';
+  @override
+  String get legalCoppaPlaceholder => 'محتوى امتثال COPPA سيظهر هنا.';
+  @override
+  String get legalPlaceholder => 'المحتوى القانوني سيظهر هنا.';
 
   // ── Maintenance ──
-  @override String get maintenanceTitle => 'نحن نُحسّن الأمور!';
-  @override String get maintenanceDescription =>
+  @override
+  String get maintenanceTitle => 'نحن نُحسّن الأمور!';
+  @override
+  String get maintenanceDescription =>
       'كيندر وورلد يخضع حالياً للصيانة المجدولة. سنعود قريباً بتجربة أفضل!';
-  @override String get maintenanceEtaTitle => 'الوقت المتوقع للعودة';
-  @override String get maintenanceEtaDuration => 'حوالي 2 ساعة';
-  @override String get maintenanceEtaWindow => '10:00 ص - 12:00 م بتوقيت UTC';
-  @override String get maintenanceWhatsComing => 'ما الجديد القادم';
-  @override String get maintenanceFeatureAi => 'ميزات الذكاء الاصطناعي المحسّنة';
-  @override String get maintenanceFeatureGames => 'ألعاب تعليمية جديدة';
-  @override String get maintenanceFeatureSafety => 'أدوات أمان محسّنة';
-  @override String get maintenanceFeaturePerformance => 'تحسينات الأداء';
-  @override String get maintenanceFollowUs => 'تابعنا للحصول على التحديثات';
+  @override
+  String get maintenanceEtaTitle => 'الوقت المتوقع للعودة';
+  @override
+  String get maintenanceEtaDuration => 'حوالي 2 ساعة';
+  @override
+  String get maintenanceEtaWindow => '10:00 ص - 12:00 م بتوقيت UTC';
+  @override
+  String get maintenanceWhatsComing => 'ما الجديد القادم';
+  @override
+  String get maintenanceFeatureAi => 'ميزات الذكاء الاصطناعي المحسّنة';
+  @override
+  String get maintenanceFeatureGames => 'ألعاب تعليمية جديدة';
+  @override
+  String get maintenanceFeatureSafety => 'أدوات أمان محسّنة';
+  @override
+  String get maintenanceFeaturePerformance => 'تحسينات الأداء';
+  @override
+  String get maintenanceFollowUs => 'تابعنا للحصول على التحديثات';
 
   // ── Help Support ──
-  @override String get helpSupportTitle => 'المساعدة والدعم';
-  @override String openingLink(String target) => 'جاري فتح $target...';
+  @override
+  String get helpSupportTitle => 'المساعدة والدعم';
+  @override
+  String openingLink(String target) => 'جاري فتح $target...';
 
   // ── Parent PIN ──
-  @override String get parentPinTitle => 'منطقة ولي الأمر';
-  @override String get parentPinSubtitle => 'أدخل رمز PIN للوصول إلى إعدادات ولي الأمر';
-  @override String get parentPinHint => 'أدخل رمز PIN المكون من 4 أرقام';
-  @override String get parentPinError => 'رمز PIN غير صحيح. يرجى المحاولة مرة أخرى.';
-  @override String get parentPinSuccess => 'تم التحقق بنجاح';
-  @override String get parentPinVerify => 'تحقق';
-  @override String get parentPinForgot => 'نسيت رمز PIN؟';
+  @override
+  String get parentPinTitle => 'منطقة ولي الأمر';
+  @override
+  String get parentPinSubtitle => 'أدخل رمز PIN للوصول إلى إعدادات ولي الأمر';
+  @override
+  String get parentPinHint => 'أدخل رمز PIN المكون من 4 أرقام';
+  @override
+  String get parentPinError => 'رمز PIN غير صحيح. يرجى المحاولة مرة أخرى.';
+  @override
+  String get parentPinSuccess => 'تم التحقق بنجاح';
+  @override
+  String get parentPinVerify => 'تحقق';
+  @override
+  String get parentPinForgot => 'نسيت رمز PIN؟';
+  @override
+  String get parentPinCreateTitle => 'إنشاء رمز PIN لولي الأمر';
+  @override
+  String get parentPinCreateSubtitle =>
+      'أنشئ رمز PIN مكونًا من 4 أرقام لحماية الشاشات الحساسة.';
+  @override
+  String get parentPinConfirmSubtitle => 'أعد إدخال نفس الرمز لتأكيده.';
+  @override
+  String get parentPinChangeTitle => 'تغيير رمز PIN لولي الأمر';
+  @override
+  String get parentPinEnterCurrent => 'أدخل رمز PIN الحالي المكون من 4 أرقام.';
+  @override
+  String get parentPinEnterNew => 'أدخل رمز PIN الجديد المكون من 4 أرقام.';
+  @override
+  String get parentPinConfirmNew => 'أكد رمز PIN الجديد.';
+  @override
+  String get parentPinCreatedSuccess => 'تم إنشاء رمز PIN بنجاح';
+  @override
+  String get parentPinChangedSuccess => 'تم تغيير رمز PIN بنجاح';
+  @override
+  String get parentPinResetRequested =>
+      'تم إنشاء طلب دعم لإعادة تعيين رمز PIN.';
+  @override
+  String parentPinLockedUntil(String time) =>
+      'تم قفل رمز PIN مؤقتًا. حاول مرة أخرى بعد $time.';
+  @override
+  String get manageParentPin => 'رمز PIN لولي الأمر';
+  @override
+  String get manageParentPinSubtitle =>
+      'أنشئ أو غيّر رمز PIN المستخدم لحماية الشاشات الحساسة.';
 
   // ── Child Header ──
-  @override String get childHeaderGreeting => 'مرحباً';
-  @override String get childHeaderSubtitle => 'ماذا تريد أن تتعلم اليوم؟';
-  @override String levelLabel(int level) => 'المستوى $level';
+  @override
+  String get childHeaderGreeting => 'مرحباً';
+  @override
+  String get childHeaderSubtitle => 'ماذا تريد أن تتعلم اليوم؟';
+  @override
+  String levelLabel(int level) => 'المستوى $level';
 
   // ── Learn Screen ──
-  @override String get searchPages => 'ابحث عن الصفحات...';
-  @override String get letsExploreAndLearn => 'هيا نستكشف ونتعلم!';
-  @override String get noPagesFound => 'لا توجد صفحات';
-  @override String get categoryBehavioral => 'السلوكي';
-  @override String get categoryEducational => 'التعليمي';
-  @override String get categorySkillful => 'المهاري';
-  @override String get categoryEntertaining => 'الترفيهي';
-  @override String get foundSomethingFun => 'وجدنا شيئاً ممتعاً لك!';
-  @override String get letsPracticeKindness => 'لنتمرّن على اللطف!';
-  @override String get letsTryNewSkill => 'لنجرّب مهارة جديدة!';
-  @override String get letsCreateSomethingFun => 'لنصنع شيئاً ممتعاً!';
-  @override String get searchActivities => 'ابحث عن الأنشطة...';
-  @override String get noActivitiesFound => 'لا توجد أنشطة';
-  @override String get watchNow => 'شاهد الآن';
-  @override String get letsCreate => 'لنبدع!';
-  @override String followStepsInVideo(String title) => 'اتبع الخطوات في فيديو $title';
-  @override String get imDone => 'أنهيت!';
-  @override String get letsLearnSomethingNew => 'لنتعلم شيئاً جديداً!';
-  @override String get searchLessons => 'ابحث عن الدروس...';
-  @override String get noLessonsFound => 'لا توجد دروس';
-  @override String get readyForFunQuiz => 'مستعد لاختبار ممتع؟';
-  @override String get playQuizToEarnStars => 'العب الاختبار لتحصل على النجوم!';
-  @override String get startQuiz => 'ابدأ الاختبار';
-  @override String get quizTime => 'وقت الاختبار';
-  @override String get youCompletedQuiz => 'أكملت الاختبار!';
-  @override String get awesome => 'رائع!';
-  @override String get nextQuestion => 'السؤال التالي';
-  @override String get lessonFinish => 'إنهاء الدرس';
-  @override String questionOf(int current, int total) => 'السؤال $current من $total';
+  @override
+  String get searchPages => 'ابحث عن الصفحات...';
+  @override
+  String get letsExploreAndLearn => 'هيا نستكشف ونتعلم!';
+  @override
+  String get noPagesFound => 'لا توجد صفحات';
+  @override
+  String get categoryBehavioral => 'السلوكي';
+  @override
+  String get categoryEducational => 'التعليمي';
+  @override
+  String get categorySkillful => 'المهاري';
+  @override
+  String get categoryEntertaining => 'الترفيهي';
+  @override
+  String get foundSomethingFun => 'وجدنا شيئاً ممتعاً لك!';
+  @override
+  String get letsPracticeKindness => 'لنتمرّن على اللطف!';
+  @override
+  String get letsTryNewSkill => 'لنجرّب مهارة جديدة!';
+  @override
+  String get letsCreateSomethingFun => 'لنصنع شيئاً ممتعاً!';
+  @override
+  String get searchActivities => 'ابحث عن الأنشطة...';
+  @override
+  String get noActivitiesFound => 'لا توجد أنشطة';
+  @override
+  String get watchNow => 'شاهد الآن';
+  @override
+  String get letsCreate => 'لنبدع!';
+  @override
+  String followStepsInVideo(String title) => 'اتبع الخطوات في فيديو $title';
+  @override
+  String get imDone => 'أنهيت!';
+  @override
+  String get letsLearnSomethingNew => 'لنتعلم شيئاً جديداً!';
+  @override
+  String get searchLessons => 'ابحث عن الدروس...';
+  @override
+  String get noLessonsFound => 'لا توجد دروس';
+  @override
+  String get readyForFunQuiz => 'مستعد لاختبار ممتع؟';
+  @override
+  String get playQuizToEarnStars => 'العب الاختبار لتحصل على النجوم!';
+  @override
+  String get startQuiz => 'ابدأ الاختبار';
+  @override
+  String get quizTime => 'وقت الاختبار';
+  @override
+  String get youCompletedQuiz => 'أكملت الاختبار!';
+  @override
+  String get awesome => 'رائع!';
+  @override
+  String get nextQuestion => 'السؤال التالي';
+  @override
+  String get lessonFinish => 'إنهاء الدرس';
+  @override
+  String questionOf(int current, int total) => 'السؤال $current من $total';
 
   // ── Coloring ──
-  @override String get coloringTitle => 'التلوين';
-  @override String get all => 'الكل';
-  @override String get noColoringPages => 'لا توجد صفحات تلوين';
-  @override String get tapToColor => 'اضغط للتلوين';
-  @override String coloringPageN(int n) => 'صفحة التلوين $n';
+  @override
+  String get coloringTitle => 'التلوين';
+  @override
+  String get all => 'الكل';
+  @override
+  String get noColoringPages => 'لا توجد صفحات تلوين';
+  @override
+  String get tapToColor => 'اضغط للتلوين';
+  @override
+  String coloringPageN(int n) => 'صفحة التلوين $n';
 
   // ── Subject ──
-  @override String get availableLessons => 'الدروس المتاحة';
-  @override String lessonDurationMin(int minutes) => '$minutes دقيقة';
+  @override
+  String get availableLessons => 'الدروس المتاحة';
+  @override
+  String lessonDurationMin(int minutes) => '$minutes دقيقة';
 
   // ── Theme Mode Toggle ──
-  @override String get darkLabel => 'داكن';
-  @override String get lightLabel => 'فاتح';
+  @override
+  String get darkLabel => 'داكن';
+  @override
+  String get lightLabel => 'فاتح';
 
   // ── Extra ──
-  @override String get freePlan => 'مجاني';
-  @override String get freePlanPrice => '0\$ / شهر';
-  @override String get familyPlanLabel => 'العائلة';
-  @override String get familyPlanPrice => '10\$ / شهر';
-  @override String get parentAccount => 'حساب ولي الأمر';
-  @override String get personalInformation => 'المعلومات الشخصية';
-  @override String get securitySection => 'الأمان';
- @override String get joinKinderWorld => 'انضم إلى كيندر وورلد';
-  @override String get passwordVeryStrong => 'قوية جدًا';
-  @override String get accountCreatedWelcome => 'تم إنشاء الحساب! أهلاً بك في كيندر وورلد.';
-  @override String get aboutFallbackText => 'يساعد كيندر وورلد أولياء الأمور على توجيه التعلّم في بيئة آمنة.';
-  @override String get aboutSubtitle => 'الإصدار والتراخيص وحقوق النشر';
-  @override String get activityGame1Desc => 'تحديات رياضيات ممتعة';
-  @override String get activityGame1Title => 'ألغاز الرياضيات';
-  @override String get activityGame2Desc => 'اختبر ذاكرتك';
-  @override String get activityGame2Title => 'لعبة مطابقة الذاكرة';
-  @override String get activityGame3Desc => 'كوّن كلمات من الحروف';
-  @override String get activityGame3Title => 'بناء الكلمات';
-  @override String get activityGame4Desc => 'طابق الألوان والأشكال';
-  @override String get activityGame4Title => 'مطابقة الألوان';
-  @override String get activityMusic1Desc => 'أغاني أطفال ممتعة';
-  @override String get activityMusic1Title => 'غنِّ معنا';
-  @override String get activityMusic2Desc => 'تعرّف على الآلات الموسيقية';
-  @override String get activityMusic2Title => 'أصوات الآلات';
-  @override String get activityMusic3Desc => 'صفّق على الإيقاع';
-  @override String get activityMusic3Title => 'وقت الإيقاع';
-  @override String get activityMusic4Desc => 'تحرّك وارقص';
-  @override String get activityMusic4Title => 'حفلة الرقص';
-  @override String get activityRespectSharing => 'الاحترام والمشاركة';
-  @override String get activityStory1Desc => 'قصة عن الشجاعة';
-  @override String get activityStory1Title => 'النملة الصغيرة الشجاعة';
-  @override String get activityStory2Desc => 'الألوان تنبض بالحياة';
-  @override String get activityStory2Title => 'مغامرة قوس قزح';
-  @override String get activityStory3Desc => 'حكاية عن الصداقة';
-  @override String get activityStory3Title => 'الشجرة السحرية';
-  @override String get activityStory4Desc => 'مغامرة تحت الماء';
-  @override String get activityStory4Title => 'أحلام المحيط';
-  @override String get activityVideo1Desc => 'اكتشف العالم الطبيعي';
-  @override String get activityVideo1Title => 'مستكشف الطبيعة';
-  @override String get activityVideo2Desc => 'حقائق علمية مذهلة';
-  @override String get activityVideo2Title => 'روائع العلوم';
-  @override String get activityVideo3Desc => 'تعرّف على حيوانات مختلفة';
-  @override String get activityVideo3Title => 'أصدقاء الحيوانات';
-  @override String get activityVideo4Desc => 'رحلة إلى النجوم';
-  @override String get activityVideo4Title => 'مغامرة الفضاء';
-  @override String get additionalResources => 'موارد إضافية';
-  @override String get adminAccessDenied => 'تم رفض الوصول';
-  @override String get adminAdminsAssignRoleAction => 'تعيين دور';
-  @override String get adminAdminsAssignRoleTitle => 'تعيين دور';
-  @override String get adminAdminsCreateAction => 'إنشاء مسؤول';
-  @override String get adminAdminsCreateRoleAction => 'إنشاء دور';
-  @override String get adminAdminsCreateRoleTitle => 'إنشاء دور';
-  @override String get adminAdminsCreateTitle => 'إنشاء مسؤول';
-  @override String get adminAdminsCreatedMessage => 'تم إنشاء حساب المسؤول بنجاح';
-  @override String get adminAdminsCurrentAdminHint => 'حساب المسؤول الخاص بك محمي من التعطيل الذاتي وإزالة الأدوار من نفسك.';
-  @override String get adminAdminsDisableAction => 'تعطيل';
-  @override String get adminAdminsDisableConfirm => 'هل تريد تعطيل حساب هذا المسؤول؟';
-  @override String get adminAdminsDisableTitle => 'تعطيل المسؤول';
-  @override String get adminAdminsDisabledMessage => 'تم تعطيل حساب المسؤول بنجاح';
-  @override String get adminAdminsEditAction => 'تعديل المسؤول';
-  @override String get adminAdminsEditRoleAction => 'تعديل الدور';
-  @override String get adminAdminsEditRoleTitle => 'تعديل الدور';
-  @override String get adminAdminsEditTitle => 'تعديل المسؤول';
-  @override String get adminAdminsEmailField => 'البريد الإلكتروني';
-  @override String get adminAdminsEnableAction => 'تفعيل';
-  @override String get adminAdminsEnableConfirm => 'هل تريد تفعيل حساب هذا المسؤول؟';
-  @override String get adminAdminsEnableTitle => 'تفعيل المسؤول';
-  @override String get adminAdminsEnabledMessage => 'تم تفعيل حساب المسؤول بنجاح';
-  @override String get adminAdminsIdLabel => 'المعرّف';
-  @override String get adminAdminsInitialRolesLabel => 'الأدوار المبدئية';
-  @override String get adminAdminsNameField => 'الاسم';
-  @override String get adminAdminsNoRoleSelection => 'اختر دورًا لتعديل الصلاحيات';
-  @override String get adminAdminsNoSelection => 'اختر حساب مسؤول لعرض التفاصيل';
-  @override String get adminAdminsPasswordField => 'كلمة المرور';
-  @override String get adminAdminsPasswordHelper => 'اتركه فارغًا للإبقاء على كلمة المرور الحالية';
-  @override String get adminAdminsPermissionsSection => 'الصلاحيات';
-  @override String get adminAdminsPermissionsUpdatedMessage => 'تم تحديث صلاحيات الدور بنجاح';
-  @override String get adminAdminsRemoveRoleAction => 'إزالة الدور';
-  @override String get adminAdminsRemoveRoleTitle => 'إزالة الدور';
-  @override String get adminAdminsRoleAssignedMessage => 'تم تعيين الدور بنجاح';
-  @override String get adminAdminsRoleCreatedMessage => 'تم إنشاء الدور بنجاح';
-  @override String get adminAdminsRoleDescriptionField => 'وصف الدور';
-  @override String get adminAdminsRoleNameField => 'اسم الدور';
-  @override String get adminAdminsRoleRemovedMessage => 'تمت إزالة الدور بنجاح';
-  @override String get adminAdminsRoleUpdatedMessage => 'تم تحديث الدور بنجاح';
-  @override String get adminAdminsRolesSection => 'الأدوار المعيّنة';
-  @override String get adminAdminsRolesTab => 'الأدوار والصلاحيات';
-  @override String get adminAdminsSavePermissionsAction => 'حفظ الصلاحيات';
-  @override String get adminAdminsSearchLabel => 'البحث عن المسؤولين';
-  @override String get adminAdminsStatusFilter => 'الحالة';
-  @override String get adminAdminsSubtitle => 'إدارة حسابات المسؤولين وتعيين الأدوار وربط الصلاحيات.';
-  @override String get adminAdminsTitle => 'إدارة المسؤولين';
-  @override String get adminAdminsUpdatedMessage => 'تم تحديث حساب المسؤول بنجاح';
-  @override String get adminAdminsUsersTab => 'المسؤولون';
-  @override String get adminAnalyticsActiveChildren => 'الأطفال النشطون';
-  @override String get adminAnalyticsActivities => 'الأنشطة';
-  @override String get adminAnalyticsActivitiesToday => 'أنشطة اليوم';
-  @override String get adminAnalyticsFreeSubscriptions => 'الاشتراكات المجانية';
-  @override String get adminAnalyticsNewChildren => 'الأطفال';
-  @override String get adminAnalyticsNewUsers => 'المستخدمون';
-  @override String get adminAnalyticsNoData => 'لا توجد بيانات متاحة';
-  @override String get adminAnalyticsOpenTickets => 'التذاكر المفتوحة';
-  @override String get adminAnalyticsPaidSubscriptions => 'الاشتراكات المدفوعة';
-  @override String get adminAnalyticsRangeMonth => 'شهر';
-  @override String get adminAnalyticsRangeWeek => 'أسبوع';
-  @override String get adminAnalyticsRecentTickets => 'ملخص التذاكر الأخيرة';
-  @override String get adminAnalyticsSubscriptionsTitle => 'ملخص الاشتراكات';
-  @override String get adminAnalyticsSubtitle => 'راقب نمو المنصة واتجاهات النشاط وحالة الدعم.';
-  @override String get adminAnalyticsTickets => 'التذاكر';
-  @override String get adminAnalyticsTitle => 'نظرة عامة على التحليلات';
-  @override String get adminAnalyticsTotalUsers => 'إجمالي المستخدمين';
-  @override String get adminAnalyticsUsageTitle => 'اتجاه الاستخدام';
-  @override String get adminAuditActionColumn => 'الإجراء';
-  @override String get adminAuditActionFilter => 'الإجراء';
-  @override String get adminAuditAdminColumn => 'المسؤول';
-  @override String get adminAuditAdminFilter => 'معرّف المسؤول';
-  @override String get adminAuditApplyFilters => 'تطبيق الفلاتر';
-  @override String get adminAuditDateFromFilter => 'من تاريخ';
-  @override String get adminAuditDateToFilter => 'إلى تاريخ';
-  @override String get adminAuditEntityColumn => 'الكيان';
-  @override String get adminAuditNetworkColumn => 'IP / الجهاز';
-  @override String get adminAuditSubtitle => 'راجع إجراءات المسؤولين الحساسة وتتبع تغييرات النظام.';
-  @override String get adminAuditTimeColumn => 'الوقت';
-  @override String get adminAuditTitle => 'سجلات التدقيق';
-  @override String get adminChildrenActionsColumn => 'الإجراءات';
-  @override String get adminChildrenActivitySection => 'سجل النشاط';
-  @override String get adminChildrenAgeColumn => 'العمر';
-  @override String get adminChildrenAgeField => 'العمر';
-  @override String get adminChildrenAgeFilter => 'العمر';
-  @override String get adminChildrenAvatarField => 'الصورة الرمزية';
-  @override String get adminChildrenDeactivateAction => 'تعطيل';
-  @override String get adminChildrenDeactivateConfirm => 'هل تريد تعطيل ملف هذا الطفل؟';
-  @override String get adminChildrenDeactivateTitle => 'تعطيل الطفل';
-  @override String get adminChildrenDeactivatedMessage => 'تم تعطيل الطفل بنجاح';
-  @override String get adminChildrenEditTitle => 'تعديل الطفل';
-  @override String get adminChildrenMilestonesSection => 'الإنجازات المرحلية';
-  @override String get adminChildrenNameColumn => 'الاسم';
-  @override String get adminChildrenNameField => 'الاسم';
-  @override String get adminChildrenOverviewCard => 'نظرة عامة';
-  @override String get adminChildrenParentColumn => 'ولي الأمر';
-  @override String get adminChildrenParentFilter => 'معرّف ولي الأمر';
-  @override String get adminChildrenProgressCard => 'التقدم';
-  @override String get adminChildrenProgressDaysMetric => 'أيام منذ الإنشاء';
-  @override String get adminChildrenProgressEventsMetric => 'أحداث التدقيق';
-  @override String get adminChildrenStatusColumn => 'الحالة';
-  @override String get adminChildrenStatusFilter => 'الحالة';
-  @override String get adminChildrenSubtitle => 'فحص ملفات الأطفال وصيانتها.';
-  @override String get adminChildrenTitle => 'إدارة الأطفال';
-  @override String get adminChildrenUpdatedMessage => 'تم تحديث الطفل بنجاح';
-  @override String get adminCmsAddCategory => 'إضافة فئة';
-  @override String get adminCmsAddContent => 'إضافة محتوى';
-  @override String get adminCmsAddQuiz => 'إضافة اختبار';
-  @override String get adminCmsAgeGroupLabel => 'الفئة العمرية';
-  @override String get adminCmsAllCategories => 'كل الفئات';
-  @override String get adminCmsBodyArLabel => 'المحتوى العربي';
-  @override String get adminCmsBodyEnLabel => 'المحتوى الإنجليزي';
-  @override String get adminCmsCategoriesTab => 'الفئات';
-  @override String get adminCmsCategoryCreateTitle => 'إنشاء فئة';
-  @override String get adminCmsCategoryEditTitle => 'تعديل الفئة';
-  @override String get adminCmsCategoryLabel => 'الفئة';
-  @override String get adminCmsCategorySaved => 'تم حفظ الفئة';
-  @override String get adminCmsCategorySlug => 'المعرّف النصي';
-  @override String get adminCmsCategoryUsage => 'المحتوى / الاختبارات';
-  @override String get adminCmsContentsTab => 'المحتويات';
-  @override String get adminCmsCreateContentTitle => 'إنشاء محتوى';
-  @override String get adminCmsCreateQuizTitle => 'إنشاء اختبار';
-  @override String get adminCmsDeleteCategoryConfirm => 'هل تريد حذف هذه الفئة؟';
-  @override String get adminCmsDeleteCategoryTitle => 'حذف الفئة';
-  @override String get adminCmsDeleteContentConfirm => 'هل تريد حذف عنصر المحتوى هذا؟';
-  @override String get adminCmsDeleteContentTitle => 'حذف المحتوى';
-  @override String get adminCmsDeleteQuizConfirm => 'هل تريد حذف هذا الاختبار؟';
-  @override String get adminCmsDeleteQuizTitle => 'حذف الاختبار';
-  @override String get adminCmsDescriptionArLabel => 'الوصف العربي';
-  @override String get adminCmsDescriptionEnLabel => 'الوصف الإنجليزي';
-  @override String get adminCmsEditContentTitle => 'تعديل المحتوى';
-  @override String get adminCmsEditQuizTitle => 'تعديل الاختبار';
-  @override String get adminCmsLinkedContentLabel => 'المحتوى المرتبط';
-  @override String get adminCmsLinkedQuizzes => 'الاختبارات المرتبطة';
-  @override String get adminCmsMetadataLabel => 'بيانات وصفية JSON';
-  @override String get adminCmsNoCategory => 'لا توجد فئة';
-  @override String get adminCmsNoLinkedContent => 'لا يوجد محتوى مرتبط';
-  @override String get adminCmsPreviewAction => 'معاينة';
-  @override String get adminCmsPreviewTitle => 'معاينة';
-  @override String get adminCmsPublishAction => 'نشر';
-  @override String get adminCmsQuestionsJsonLabel => 'أسئلة JSON';
-  @override String get adminCmsQuestionsLabel => 'الأسئلة';
-  @override String get adminCmsQuizSaved => 'تم حفظ الاختبار';
-  @override String get adminCmsQuizzesTab => 'الاختبارات';
-  @override String get adminCmsSearchLabel => 'بحث';
-  @override String get adminCmsStatusAll => 'كل الحالات';
-  @override String get adminCmsStatusDraft => 'مسودة';
-  @override String get adminCmsStatusLabel => 'الحالة';
-  @override String get adminCmsStatusPublished => 'منشور';
-  @override String get adminCmsStatusReview => 'قيد المراجعة';
-  @override String get adminCmsSubtitle => 'إدارة الفئات والمحتوى التعليمي والاختبارات.';
-  @override String get adminCmsThumbnailLabel => 'رابط الصورة المصغرة';
-  @override String get adminCmsTitle => 'إدارة المحتوى';
-  @override String get adminCmsTitleArLabel => 'العنوان العربي';
-  @override String get adminCmsTitleEnLabel => 'العنوان الإنجليزي';
-  @override String get adminCmsTypeActivity => 'نشاط';
-  @override String get adminCmsTypeLabel => 'النوع';
-  @override String get adminCmsTypeLesson => 'درس';
-  @override String get adminCmsTypeStory => 'قصة';
-  @override String get adminCmsTypeVideo => 'فيديو';
-  @override String get adminCmsUnpublishAction => 'إلغاء النشر';
-  @override String get adminDashboard => 'لوحة تحكم المسؤول';
-  @override String get adminDashboardPermissionsTitle => 'صلاحياتك';
-  @override String get adminDashboardSubtitle => 'إليك ما يحدث في كيندر وورلد';
-  @override String get adminDashboardWelcome => 'مرحبًا بعودتك';
-  @override String get adminDisabledAccount => 'تم تعطيل حساب المسؤول الخاص بك. يرجى التواصل مع مسؤول النظام.';
-  @override String get adminEmail => 'بريد المسؤول الإلكتروني';
-  @override String get adminEmailInvalid => 'أدخل بريدًا إلكترونيًا صحيحًا';
-  @override String get adminEmailRequired => 'البريد الإلكتروني مطلوب';
-  @override String get adminLoginFooter => 'بوابة إدارة كيندر وورلد — دخول للمصرح لهم فقط';
-  @override String get adminLoginSubtitle => 'سجّل الدخول لإدارة كيندر وورلد';
-  @override String get adminLogout => 'تسجيل الخروج';
-  @override String get adminLogoutConfirm => 'هل أنت متأكد من تسجيل الخروج من بوابة الإدارة؟';
-  @override String get adminMenuTooltip => 'القائمة';
-  @override String get adminPaginationNext => 'التالي';
-  @override String get adminPaginationPrevious => 'السابق';
-  @override String get adminPassword => 'كلمة مرور المسؤول';
-  @override String get adminPasswordRequired => 'كلمة المرور مطلوبة';
-  @override String get adminPermissionDenied => 'تم رفض الصلاحية';
-  @override String get adminPermissionDeniedMessage => 'ليست لديك صلاحية للوصول إلى هذا القسم. تواصل مع مسؤول النظام.';
-  @override String get adminPlanFamilyPlus => 'عائلي بلس';
-  @override String get adminPlanFree => 'مجاني';
-  @override String get adminPlanPremium => 'مميز';
-  @override String get adminRefreshTooltip => 'تحديث';
-  @override String get adminRoleAnalyticsAdmin => 'مسؤول التحليلات';
-  @override String get adminRoleContentAdmin => 'مسؤول المحتوى';
-  @override String get adminRoleFinanceAdmin => 'مسؤول المالية';
-  @override String get adminRoleSuperAdmin => 'المسؤول العام';
-  @override String get adminRoleSupportAdmin => 'مسؤول الدعم';
-  @override String get adminSessionExpired => 'انتهت جلسة المسؤول. يرجى تسجيل الدخول مرة أخرى.';
-  @override String get adminSettingsAiBuddyEnabled => 'تفعيل رفيق الذكاء الاصطناعي';
-  @override String get adminSettingsAiBuddyEnabledHint => 'فعّل رفيق الذكاء الاصطناعي في جميع أنحاء التطبيق.';
-  @override String get adminSettingsDefaultChildLimitLabel => 'الحد الافتراضي للأطفال';
-  @override String get adminSettingsDefaultPlanLabel => 'الخطة الافتراضية';
-  @override String get adminSettingsDefaultsTitle => 'الإعدادات الافتراضية';
-  @override String get adminSettingsFeatureFlagsTitle => 'ميزات التفعيل';
-  @override String get adminSettingsMaintenanceMode => 'وضع الصيانة';
-  @override String get adminSettingsMaintenanceModeHint => 'تعطيل الوصول الطبيعي للتطبيق مؤقتًا.';
-  @override String get adminSettingsRegistrationEnabled => 'السماح بالتسجيل';
-  @override String get adminSettingsRegistrationEnabledHint => 'السماح بتسجيل أولياء الأمور الجدد.';
-  @override String get adminSidebarAdmins => 'المسؤولون';
-  @override String get adminSidebarAudit => 'سجل التدقيق';
-  @override String get adminSidebarChildren => 'الأطفال';
-  @override String get adminSidebarContent => 'المحتوى';
-  @override String get adminSidebarOverview => 'نظرة عامة';
-  @override String get adminSidebarReports => 'التقارير';
-  @override String get adminSidebarSettings => 'الإعدادات';
-  @override String get adminSidebarSubscriptions => 'الاشتراكات';
-  @override String get adminSidebarSupport => 'الدعم';
-  @override String get adminSidebarUsers => 'المستخدمون';
-  @override String get adminSignIn => 'تسجيل الدخول';
-  @override String get adminSubscriptionsCancelAction => 'إلغاء';
-  @override String get adminSubscriptionsCancelConfirm => 'هل تريد إعادة هذا المستخدم إلى الخطة المجانية؟';
-  @override String get adminSubscriptionsCancelTitle => 'إلغاء الاشتراك';
-  @override String get adminSubscriptionsChildrenMetric => 'الأطفال';
-  @override String get adminSubscriptionsFeaturesTitle => 'الميزات المفعلة';
-  @override String get adminSubscriptionsNoSelection => 'اختر اشتراكًا لعرض التفاصيل';
-  @override String get adminSubscriptionsOverrideAction => 'تعديل الخطة';
-  @override String get adminSubscriptionsOverrideTitle => 'تعديل الخطة';
-  @override String get adminSubscriptionsPaymentMethodsMetric => 'طرق الدفع';
-  @override String get adminSubscriptionsPlanAll => 'كل الخطط';
-  @override String get adminSubscriptionsPlanFilter => 'الخطة';
-  @override String get adminSubscriptionsRefundAction => 'استرداد';
-  @override String get adminSubscriptionsRefundNotSupported => 'الاسترداد غير مدعوم في نموذج الدفع الحالي';
-  @override String get adminSubscriptionsSearchLabel => 'بحث';
-  @override String get adminSubscriptionsStatusActive => 'نشط';
-  @override String get adminSubscriptionsStatusAll => 'كل الحالات';
-  @override String get adminSubscriptionsStatusDisabled => 'معطل';
-  @override String get adminSubscriptionsStatusFilter => 'الحالة';
-  @override String get adminSubscriptionsStatusFree => 'مجاني';
-  @override String get adminSubscriptionsStatusLabel => 'الحالة';
-  @override String get adminSubscriptionsSubtitle => 'راجع الخطط والإجراءات المالية وتعديلات الاشتراك.';
-  @override String get adminSubscriptionsTitle => 'الاشتراكات';
-  @override String get adminSubscriptionsUserName => 'الاسم';
-  @override String get adminSupportAssign => 'تعيين';
-  @override String get adminSupportAssignSuccess => 'تم تعيين التذكرة بنجاح';
-  @override String get adminSupportAssignedToMe => 'تعيين لي';
-  @override String get adminSupportAssignee => 'المكلّف';
-  @override String get adminSupportClose => 'إغلاق التذكرة';
-  @override String get adminSupportCloseConfirm => 'هل أنت متأكد من إغلاق هذه التذكرة؟';
-  @override String get adminSupportCloseSuccess => 'تم إغلاق التذكرة بنجاح';
-  @override String get adminSupportNoTicketSelected => 'اختر تذكرة لعرض التفاصيل';
-  @override String get adminSupportNoTickets => 'لا توجد تذاكر';
-  @override String get adminSupportReply => 'رد';
-  @override String get adminSupportReplyHint => 'اكتب ردك';
-  @override String get adminSupportReplySuccess => 'تم إرسال الرد بنجاح';
-  @override String get adminSupportRequester => 'مقدم الطلب';
-  @override String get adminSupportStatusAll => 'كل الحالات';
-  @override String get adminSupportStatusClosed => 'مغلقة';
-  @override String get adminSupportStatusFilter => 'الحالة';
-  @override String get adminSupportStatusInProgress => 'قيد المعالجة';
-  @override String get adminSupportStatusOpen => 'مفتوحة';
-  @override String get adminSupportThread => 'المحادثة';
-  @override String get adminSupportTicketsSubtitle => 'راجع وعيّن وردّ وأغلق طلبات الدعم.';
-  @override String get adminSupportTicketsTitle => 'تذاكر الدعم';
-  @override String get adminSystemSettingsSubtitle => 'تحكم في وضع الصيانة العام وميزات التفعيل والإعدادات الافتراضية.';
-  @override String get adminSystemSettingsTitle => 'إعدادات النظام';
-  @override String get adminUsersActionsColumn => 'الإجراءات';
-  @override String get adminUsersActivityCard => 'ملخص النشاط';
-  @override String get adminUsersChildrenColumn => 'الأطفال';
-  @override String get adminUsersChildrenSection => 'الأطفال';
-  @override String get adminUsersDisableAction => 'تعطيل';
-  @override String get adminUsersDisableConfirm => 'هل تريد تعطيل حساب هذا المستخدم؟';
-  @override String get adminUsersDisableTitle => 'تعطيل المستخدم';
-  @override String get adminUsersDisabledMessage => 'تم تعطيل المستخدم بنجاح';
-  @override String get adminUsersEditTitle => 'تعديل المستخدم';
-  @override String get adminUsersEmailColumn => 'البريد الإلكتروني';
-  @override String get adminUsersEmailField => 'البريد الإلكتروني';
-  @override String get adminUsersEnableAction => 'تفعيل';
-  @override String get adminUsersEnableConfirm => 'هل تريد تفعيل حساب هذا المستخدم؟';
-  @override String get adminUsersEnableTitle => 'تفعيل المستخدم';
-  @override String get adminUsersEnabledMessage => 'تم تفعيل المستخدم بنجاح';
-  @override String get adminUsersLastUpdatedMetric => 'آخر تحديث';
-  @override String get adminUsersNameColumn => 'الاسم';
-  @override String get adminUsersNameField => 'الاسم';
-  @override String get adminUsersNotificationsMetric => 'الإشعارات';
-  @override String get adminUsersNotificationsSection => 'الإشعارات الأخيرة';
-  @override String get adminUsersOverviewCard => 'نظرة عامة';
-  @override String get adminUsersPlanColumn => 'الخطة';
-  @override String get adminUsersPlanField => 'الخطة';
-  @override String get adminUsersSearchLabel => 'البحث عن المستخدمين';
-  @override String get adminUsersStatusActive => 'نشط';
-  @override String get adminUsersStatusAll => 'الكل';
-  @override String get adminUsersStatusColumn => 'الحالة';
-  @override String get adminUsersStatusDisabled => 'معطل';
-  @override String get adminUsersStatusFilter => 'الحالة';
-  @override String get adminUsersSubtitle => 'ابحث وراجع وأدر حسابات أولياء الأمور.';
-  @override String get adminUsersSupportMetric => 'تذاكر الدعم';
-  @override String get adminUsersSupportSection => 'تذاكر الدعم';
-  @override String get adminUsersTitle => 'إدارة المستخدمين';
-  @override String get adminUsersUpdatedMessage => 'تم تحديث المستخدم بنجاح';
-  @override String get adminUsersViewAction => 'عرض';
-  @override String get adminWelcome => 'بوابة الإدارة';
-  @override String get advanced => 'متقدم';
-  @override String get advancedReportsLabel => 'تقارير متقدمة';
-  @override String get allCaughtUp => 'أنت مطّلع على كل شيء! ستظهر هنا التنبيهات الجديدة وملخصات النشاط.';
-  @override String get allVideos => 'كل الفيديوهات';
-  @override String get amountLabel => 'المبلغ';
-  @override String get analyticsSubtitle => 'ساعد في تحسين كيندر وورلد من خلال بيانات الاستخدام';
-  @override String get analyticsTitle => 'التحليلات';
-  @override String get available247 => 'متاح 24/7';
-  @override String get availablePlans => 'الخطط المتاحة';
-  @override String get awesomeColoring => 'تلوين رائع!';
-  @override String get backToChildLogin => 'العودة إلى دخول الطفل';
-  @override String get basicFeaturesOnly => 'ميزات أساسية فقط';
-  @override String get beginner => 'مبتدئ';
-  @override String get bestForFamilies => 'الأفضل للعائلات';
-  @override String get billingComingSoon => 'إدارة الفواتير قريبًا. ستتمكن من تحديث طرق الدفع والفواتير هنا عندما يصبح الباك إند جاهزًا.';
-  @override String get billingInformation => 'معلومات الفوترة';
-  @override String get billingTitle => 'الفواتير';
-  @override String get categoryGames => 'ألعاب ممتعة';
-  @override String get categoryMusic => 'الموسيقى والأغاني';
-  @override String get categoryStories => 'القصص';
-  @override String get categoryVideos => 'فيديوهات تعليمية';
-  @override String get changePasswordSubtitle => 'حدّث بيانات تسجيل الدخول الخاصة بك';
-  @override String get checkYourInbox => 'تحقق من بريدك الوارد!';
-  @override String get childIdHint => 'مثال: Ava123';
-  @override String get childIdRequired => 'يرجى إدخال معرّف الطفل';
-  @override String get childLoginIncorrectPictures => 'صور تسجيل الدخول غير صحيحة';
-  @override String get childLoginMissingData => 'أكمل البيانات المطلوبة';
-  @override String get childLoginNotFound => 'الطفل غير موجود';
-  @override String get childProfileNotFound => 'لم يتم العثور على ملف الطفل.';
-  @override String get childProfilesSubtitle => 'إدارة حسابات أطفالك';
-  @override String get childRegisterForbidden => 'غير مسموح';
-  @override String get childRegisterLimitReached => 'لقد وصلت إلى الحد الأقصى لعدد الأطفال. قم بالترقية الآن مقابل 10 دولارات شهريًا.';
-  @override String get childRegisterParentNotFound => 'لم يتم العثور على بريد ولي الأمر';
-  @override String get childStep1 => 'سيتلقى ولي أمرك رسالة بريد إلكتروني منا';
-  @override String get childStep2 => 'وسيساعدك في تعيين كلمات مرور صور جديدة';
-  @override String get childStep3 => 'وستعود للعب في أسرع وقت!';
-  @override String get chooseActivity => 'اختر نشاطًا';
-  @override String get choosePlanLabel => 'اختر الخطة';
-  @override String get chooseProfileToContinue => 'اختر ملفك الشخصي للمتابعة.';
-  @override String get chooseYourProfile => 'اختر ملفك الشخصي:';
-  @override String get confirmPasswordHintAlt => 'أعد إدخال كلمة المرور الجديدة';
-  @override String get confirmPasswordLabel => 'تأكيد كلمة المرور';
-  @override String get contactSupportToResetPin => 'يرجى التواصل مع الدعم لإعادة تعيين رمز PIN';
-  @override String get contactUsAction => 'تواصل معنا';
-  @override String get contactUsIntro => 'يسعدنا الاستماع إليك. أرسل رسالتك وسنعود إليك قريبًا.';
-  @override String get contentAbcSong => 'أغنية الحروف';
-  @override String get contentAdventureTime => 'وقت المغامرة';
-  @override String get contentBabyShark => 'بيبي شارك';
-  @override String get contentFunnyAnimals => 'حيوانات مضحكة';
-  @override String get contentMagicWorld => 'العالم السحري';
-  @override String get contentPuzzleGame => 'لعبة الألغاز';
-  @override String get contentRacingCars => 'سيارات السباق';
-  @override String get contentSpaceHeroes => 'أبطال الفضاء';
-  @override String get contentTwinkleStar => 'النجمة المتلألئة';
-  @override String get correct => 'صحيح';
-  @override String get countingNumbers => 'عدّ الأرقام من 1 إلى 10';
-  @override String get countingNumbersDesc => 'تعلّم العد من 1 إلى 10';
-  @override String get currentPasswordHint => 'أدخل كلمة المرور الحالية';
-  @override String get currentPasswordLabel => 'كلمة المرور الحالية';
-  @override String get currentPlanLabel => 'الخطة الحالية';
-  @override String get dataCollectionOptOutSubtitle => 'عدم جمع أي بيانات استخدام';
-  @override String get dataCollectionOptOutTitle => 'إلغاء جمع البيانات';
-  @override String get daysLabel => 'أيام';
-  @override String get didntReceiveIt => 'لم تستلمه؟ حاول مرة أخرى';
-  @override String get difficulty => 'الصعوبة';
-  @override String get discoverSomethingAmazing => 'اكتشف شيئًا مذهلًا اليوم!';
-  @override String get emailAddress => 'عنوان البريد الإلكتروني';
-  @override String get emailPlaceholder => 'parent@email.com';
-  @override String get emailSupport => 'الدعم عبر البريد الإلكتروني';
-  @override String get emailValidationEmpty => 'يرجى إدخال عنوان بريدك الإلكتروني';
-  @override String get emailValidationInvalid => 'يرجى إدخال بريد إلكتروني صحيح (Gmail أو Outlook وغيرهما)';
-  @override String get enterPinToContinue => 'أدخل رمز PIN للمتابعة';
-  @override String get entertainmentBrainTeasers => 'ألغاز ذهنية';
-  @override String get entertainmentCartoons => 'رسوم متحركة';
-  @override String get entertainmentGames => 'ألعاب';
-  @override String get eraser => 'ممحاة';
-  @override String get estimatedCompletion => 'الوقت المتوقع للإنهاء';
-  @override String get exploreLessons => 'استكشف الدروس';
-  @override String get exploreNewActivities => 'استكشف أنشطة جديدة';
-  @override String get failedToStartSession => 'فشل بدء الجلسة. يرجى المحاولة مرة أخرى.';
-  @override String get fanFavourite => 'المفضل لدى الجميع';
-  @override String get featured => 'مميز';
-  @override String get fieldRequired => 'هذا الحقل مطلوب';
-  @override String get followUsForUpdates => 'تابعنا للحصول على التحديثات:';
-  @override String get foreverLabel => 'إلى الأبد';
-  @override String get forgotPasswordDescription => 'لا تقلق! أدخل بريدك الإلكتروني وسنرسل لك رابطًا لإعادة تعيين كلمة المرور.';
-  @override String get forgotPicturesDescription => 'لا مشكلة! أخبرنا بمعرّف الطفل وبريد ولي أمرك، وسنرسل له رسالة لمساعدتك على العودة.';
-  @override String get forgotPin => 'نسيت رمز PIN؟';
-  @override String get forgotYourPassword => 'هل نسيت كلمة المرور؟';
-  @override String get forgotYourPictures => 'هل نسيت صورك؟';
-  @override String get friendFallback => 'صديقي';
-  @override String get funAndPlayful => 'مرح وممتع';
-  @override String get funTab => 'مرح';
-  @override String get goLabel => 'هيا!';
-  @override String get goToLogin => 'اذهب إلى تسجيل الدخول';
-  @override String get goalComplete => '🎉 تم إنجاز الهدف!';
-  @override String get greatJob => 'عمل رائع!';
-  @override String get helpAppUpdates => 'تحديثات التطبيق';
-  @override String get helpContactSupportTitle => 'التواصل مع الدعم';
-  @override String get helpEmailSupportTitle => 'الدعم عبر البريد الإلكتروني';
-  @override String get helpFaqA1 => 'اذهب إلى وضع ولي الأمر ← إدارة الأطفال واضغط على "إضافة ملف جديد". اتبع الدليل خطوة بخطوة لإنشاء ملف شخصي مناسب لطفلك.';
-  @override String get helpFaqA2 => 'نعم! في وضع ولي الأمر، اذهب إلى الرقابة الأبوية ← وقت الشاشة لتحديد الحدود اليومية وفترات الاستراحة والساعات المسموح بها.';
-  @override String get helpFaqA3 => 'يستخدم المساعد الذكي عمر طفلك واهتماماته وتقدمه التعليمي لتقديم توصيات وإرشادات مخصصة.';
-  @override String get helpFaqA4 => 'بالتأكيد! نحن نتبع سياسات خصوصية صارمة ونلتزم بلوائح COPPA وGDPR لحماية معلومات طفلك.';
-  @override String get helpFaqA5 => 'نعم، كثير من الأنشطة متاحة دون إنترنت. قم بتنزيل المحتوى مسبقًا لتجربة تعلم مستمرة.';
-  @override String get helpFaqQ1 => 'كيف يمكنني إعداد ملف لطفلي؟';
-  @override String get helpFaqQ2 => 'هل يمكنني تحديد وقت الشاشة لطفلي؟';
-  @override String get helpFaqQ3 => 'كيف يعمل المساعد الذكي؟';
-  @override String get helpFaqQ4 => 'هل بيانات طفلي آمنة؟';
-  @override String get helpFaqQ5 => 'هل يمكن لطفلي استخدام التطبيق دون إنترنت؟';
-  @override String get helpFaqSubtitle => 'أدلة الاستخدام والأسئلة الشائعة';
-  @override String get helpFaqTitle => 'الأسئلة الشائعة';
-  @override String get helpLiveChatSubtitle => 'متاح 24/7';
-  @override String get helpLiveChatTitle => 'الدردشة المباشرة';
-  @override String get helpNeedHelpSubtitle => 'نحن هنا لدعمك';
-  @override String get helpNeedHelpTitle => 'هل تحتاج إلى مساعدة؟';
-  @override String get helpPhoneSupportSubtitle => '1-800-KINDER';
-  @override String get helpPhoneSupportTitle => 'الدعم الهاتفي';
-  @override String get helpPreparingArticles => 'نحن نجهّز لك مقالات مفيدة.';
-  @override String get helpResourcesTitle => 'موارد إضافية';
-  @override String get helpUserGuide => 'دليل المستخدم';
-  @override String get historyColorQuest => 'مغامرة الألوان';
-  @override String get historyDanceParty => 'حفلة الرقص';
-  @override String get historyHelpingHands => 'الأيادي المساعدة';
-  @override String get historyKindWords => 'كلمات طيبة';
-  @override String get historyMagicShow => 'العرض السحري';
-  @override String get historyMemoryGame => 'لعبة الذاكرة';
-  @override String get historyNumbersAdventure => 'مغامرة الأرقام';
-  @override String get historyPuzzleBuilder => 'بناء الألغاز';
-  @override String get historyShapeMatch => 'مطابقة الأشكال';
-  @override String get historySharingStars => 'نجوم المشاركة';
-  @override String get historySingAlong => 'غنِّ معنا';
-  @override String get historyStoryTime => 'وقت القصة';
-  @override String get hoursAgoSync => 'منذ ساعتين';
-  @override String get interactiveActivity => 'نشاط تفاعلي';
-  @override String get intermediate => 'متوسط';
-  @override String get invalidEmail => 'يرجى إدخال بريد إلكتروني صحيح';
-  @override String get kindnessTab => 'اللطف';
-  @override String get languageSubtitle => 'English / العربية';
-  @override String get learningContent => 'المحتوى التعليمي';
-  @override String get learningTab => 'التعلم';
-  @override String get lessonAdvancedConcepts => 'مفاهيم متقدمة';
-  @override String get lessonDeepDive => 'تعمّق';
-  @override String get lessonFunWithMath => 'مرح مع الرياضيات';
-  @override String get lessonIntermediatePractice => 'تدريب متوسط';
-  @override String get lessonIntroductionToBasics => 'مقدمة إلى الأساسيات';
-  @override String get lessonTime => 'الوقت';
-  @override String get letsPractice => 'هيا نتدرّب!';
-  @override String get limitedActivities => 'أنشطة محدودة';
-  @override String get liveChat => 'الدردشة المباشرة';
-  @override String get loadingVersion => 'جارٍ تحميل الإصدار...';
-  @override String get loginFailed => 'فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.';
-  @override String get logoutMessage => 'ستحتاج إلى تسجيل الدخول مرة أخرى للوصول إلى لوحة تحكم ولي الأمر.';
-  @override String get logoutTitle => 'تسجيل الخروج؟';
-  @override String get manageBilling => 'إدارة الفواتير';
-  @override String get messageLabel => 'الرسالة *';
-  @override String get messageRequiredError => 'يرجى إدخال رسالة';
-  @override String get messageSentSuccess => 'تم إرسال الرسالة بنجاح. سنعود إليك قريبًا.';
-  @override String get messageSentTitle => 'تم إرسال الرسالة!';
-  @override String get myActivities => 'أنشطتي';
-  @override String get needHelp => 'هل تحتاج إلى مساعدة؟';
-  @override String get newPasswordHint => 'أدخل كلمة المرور الجديدة (6 أحرف على الأقل)';
-  @override String get newPasswordLabel => 'كلمة المرور الجديدة';
-  @override String get newTopicsAwait => 'مواضيع وأنشطة جديدة بانتظارك!';
-  @override String get nextPayment => 'الدفعة القادمة';
-  @override String get nextPaymentSampleDate => '31 ديسمبر 2024';
-  @override String get noActiveChildSession => 'لا توجد جلسة طفل نشطة';
-  @override String get noChildProfilesFound => 'لم يتم العثور على ملفات أطفال.';
-  @override String get noFaqsYet => 'لا توجد أسئلة شائعة بعد';
-  @override String get noInternetConnection => 'لا يوجد اتصال بالإنترنت';
-  @override String get noResultsFound => 'لا توجد نتائج';
-  @override String get nothingFound => 'لم يتم العثور على شيء';
-  @override String get notificationFallback => 'إشعار';
-  @override String get notificationsSubtitle => 'تنبيهات وتذكيرات وملخصات';
-  @override String get offlineDownloadsLabel => 'التنزيلات دون إنترنت';
-  @override String get oneChildProfile => 'ملف طفل واحد';
-  @override String get oopsSomethingWentWrong => 'عذرًا! حدث خطأ ما';
-  @override String get pageNotFound => 'الصفحة غير موجودة';
-  @override String get paletteDefault => 'الافتراضي';
-  @override String get paletteForestGreen => 'الأخضر الغابي';
-  @override String get paletteOceanBlue => 'الأزرق البحري';
-  @override String get palettePurpleNight => 'البنفسجي الليلي';
-  @override String get paletteSunsetOrange => 'برتقالي الغروب';
-  @override String get parentAbout => 'حول';
-  @override String get parentAccess => 'وصول ولي الأمر';
-  @override String get parentContactUs => 'تواصل معنا';
-  @override String get parentEmailHint => 'parent@email.com';
-  @override String get parentEmailInvalid => 'يرجى إدخال بريد إلكتروني صحيح';
-  @override String get parentEmailRequired => 'يرجى إدخال بريد ولي أمرك';
-  @override String get parentFallback => 'ولي الأمر';
-  @override String get parentHelp => 'المساعدة والأسئلة الشائعة';
-  @override String get parentPortal => 'بوابة ولي الأمر';
-  @override String get parentPrivacySettings => 'إعدادات الخصوصية';
-  @override String get parentWillGetEmail => 'سيتلقى ولي أمرك رسالة بريد إلكتروني ويمكنه مساعدتك في تسجيل الدخول مجددًا!';
-  @override String get parentalControlsSubtitle => 'وقت الشاشة ومرشحات المحتوى والحدود';
-  @override String get parentsEmail => 'بريد ولي الأمر';
-  @override String get passwordFair => 'متوسطة';
-  @override String get passwordStrong => 'قوية';
-  @override String get passwordTooShortRegister => 'يجب أن تكون كلمة المرور 8 أحرف على الأقل';
-  @override String get passwordUpdatedSuccess => 'تم تحديث كلمة المرور بنجاح.';
-  @override String get passwordWeak => 'ضعيفة';
-  @override String get paymentMethodLabel => 'طريقة الدفع';
-  @override String get perMonthLabel => '/ شهريًا';
-  @override String get personalizedRecommendationsSubtitle => 'احصل على اقتراحات محتوى مخصصة';
-  @override String get personalizedRecommendationsTitle => 'توصيات مخصصة';
-  @override String get phoneNumber => '1-800-KINDER';
-  @override String get phoneSupport => 'الدعم الهاتفي';
-  @override String get playEducationalGames => 'ألعاب تعليمية';
-  @override String get playEducationalGamesSubtitle => 'ألعاب ممتعة للتعلّم';
-  @override String get playEducationalVideos => 'فيديوهات تعليمية';
-  @override String get playEducationalVideosSubtitle => 'شاهد وتعلّم';
-  @override String get playInteractiveStories => 'قصص تفاعلية';
-  @override String get playInteractiveStoriesSubtitle => 'اختر مغامرتك';
-  @override String get playMusicSongs => 'الموسيقى والأغاني';
-  @override String get playMusicSongsSubtitle => 'غنِّ وارقص';
-  @override String get playSubtitle => 'استمتع بالألعاب والقصص والترفيه!';
-  @override String get playTime => 'وقت اللعب';
-  @override String get playTitle => 'اللعب والمرح';
-  @override String get pleaseTryAgain => 'يرجى المحاولة مرة أخرى';
-  @override String get premiumActive => 'مميز — نشط';
-  @override String get prioritySupportLabel => 'دعم أولوية';
-  @override String get privacyInfoBody => 'خصوصيتك مهمة بالنسبة لنا. تتحكم هذه الإعدادات في البيانات التي نجمعها وكيفية استخدامها لتحسين تجربتك.';
-  @override String get privacyInfoTitle => 'معلومات الخصوصية';
-  @override String get privacyPolicyResource => 'سياسة الخصوصية';
-  @override String get privacySettingsError => 'خطأ في تحميل إعدادات الخصوصية';
-  @override String get privacySettingsSubtitle => 'مشاركة البيانات والصلاحيات';
-  @override String get processingLabel => 'جارٍ المعالجة...';
-  @override String get quickQuiz => 'اختبار سريع';
-  @override String get readyForAdventure => '🚀 هل أنت مستعد لمغامرة اليوم؟';
-  @override String get recommendedLabel => 'موصى به';
-  @override String get redo => 'إعادة';
-  @override String get registrationFailed => 'فشل التسجيل. يرجى المحاولة مرة أخرى.';
-  @override String get resetPassword => 'إعادة تعيين كلمة المرور';
-  @override String get retryAction => 'إعادة المحاولة';
-  @override String get safeAndFunVideos => 'فيديوهات آمنة وممتعة لك';
-  @override String get safeMode => 'الوضع الآمن';
-  @override String get sampleAmountPerMonth => '9.99\$ / شهر';
-  @override String get samplePaymentMethod => '**** **** **** 1234';
-  @override String get searchVideos => 'ابحث عن الفيديوهات...';
-  @override String get secureAndStructured => 'آمن ومنظم';
-  @override String get signIn => 'تسجيل الدخول';
-  @override String get signInToContinue => 'يرجى تسجيل الدخول لمتابعة مغامرتك!';
-  @override String get skillColoringDesc => 'استخدم الألوان';
-  @override String get skillCooking => 'الطبخ';
-  @override String get skillCookingDesc => 'طعام شهي';
-  @override String get skillDrawing => 'الرسم';
-  @override String get skillDrawingDesc => 'عبّر بالفن';
-  @override String get skillHandcrafts => 'الأعمال اليدوية';
-  @override String get skillHandcraftsDesc => 'قصّ ولصق';
-  @override String get skillMusicDesc => 'اعزف الآلات';
-  @override String get skillSinging => 'الغناء';
-  @override String get skillSingingDesc => 'تعلّم الأغاني';
-  @override String get skillSports => 'الرياضة';
-  @override String get skillSportsDesc => 'حافظ على لياقتك';
-  @override String get skillsTab => 'المهارات';
-  @override String get songsAndMusic => 'الأغاني والموسيقى';
-  @override String get spamFolderNote => 'تحقق من مجلد الرسائل المزعجة إذا لم تجد البريد خلال بضع دقائق.';
-  @override String get startLearning => 'ابدأ التعلّم!';
-  @override String get step1OpenEmail => 'افتح البريد الإلكتروني من كيندر وورلد';
-  @override String get step2ClickLink => 'اضغط على رابط "إعادة تعيين كلمة المرور"';
-  @override String get step3CreatePassword => 'أنشئ كلمة المرور الجديدة';
-  @override String get subjectHint => 'ما موضوع استفسارك؟';
-  @override String get subjectLabel => 'الموضوع *';
-  @override String get subjectRequiredError => 'يرجى إدخال موضوع';
-  @override String get subscriptionActivationFailed => 'فشل تفعيل الاشتراك.';
-  @override String get subscriptionActiveLabel => 'الاشتراك نشط';
-  @override String get subscriptionTitle => 'الاشتراك';
-  @override String get tapCorrectAnswer => 'اضغط على الإجابة الصحيحة!';
-  @override String get tapShapeToFill => 'اضغط على أي شكل أبيض لملئه!';
-  @override String get termsOfServiceResource => 'شروط الخدمة';
-  @override String get themeSubtitle => 'فاتح أو داكن أو افتراضي النظام';
-  @override String get todayLabel => 'اليوم';
-  @override String get todayWeWillLearn => 'اليوم سنتعلّم عن:';
-  @override String get todaysPick => 'اختيار اليوم';
-  @override String get topRated => 'الأعلى تقييمًا';
-  @override String get tryAgainDifferentInfo => 'حاول مرة أخرى بمعلومات مختلفة';
-  @override String get tryDifferentSearch => 'جرّب بحثًا أو فئة مختلفة!';
-  @override String get undo => 'تراجع';
-  @override String get unexpectedError => 'حدث خطأ غير متوقع';
-  @override String get unlimitedActivities => 'أنشطة غير محدودة';
-  @override String get upToThreeChildren => 'حتى 3 أطفال';
-  @override String get updatePassword => 'تحديث كلمة المرور';
-  @override String get upgradePlan => 'قم بترقية خطتك';
-  @override String get useAllowedEmail => 'استخدم بريد Gmail أو Outlook أو Hotmail أو Live';
-  @override String get useGmailOrMicrosoftEmail => 'استخدم بريد Gmail أو Microsoft';
-  @override String get videoAlphabetSong => 'أغنية الحروف';
-  @override String get videoAnimalFriends => 'أصدقاء الحيوانات';
-  @override String get videoBuildAndCreate => 'ابنِ وابتكر';
-  @override String get videoColoringFun => 'مرح التلوين';
-  @override String get videoKindnessChallenge => 'تحدي اللطف';
-  @override String get videoMathBasicsFun => 'أساسيات الرياضيات | مرح';
-  @override String get videoMomoAndMimiArabic => 'مومو وميمي | عربي';
-  @override String get videoPuzzlePlay => 'لعب الألغاز';
-  @override String get videoScienceWonders => 'روائع العلوم';
-  @override String get videoSharingTime => 'وقت المشاركة';
-  @override String get videoTomAndJerryKeepCalm => 'توم وجيري | ابق هادئًا';
-  @override String get weAreHereToSupportYou => 'نحن هنا لدعمك';
-  @override String get wellAskYourParent => 'سنطلب من ولي أمرك!';
-  @override String get whatDidYouLearn => 'ماذا تعلّمت في هذا الدرس؟';
-  @override String get whatHappensNext => 'ماذا يحدث بعد ذلك؟';
-  @override String get whoIsUsingKinderWorld => 'من يستخدم\nكيندر وورلد؟';
-  @override String get xpBonusEarned => '+ 50 نقطة خبرة إضافية!';
-  @override String get xpBonusLabel => '⭐ +50 نقطة خبرة إضافية';
-  @override String get xpEarned => 'نقاط الخبرة المكتسبة';
-  @override String get xpProgress => 'تقدم نقاط الخبرة';
-  @override String get xpReward => 'مكافأة الخبرة';
-  @override String get yesterdayLabel => 'أمس';
-  @override String get youCompletedLesson => 'لقد أكملت الدرس!';
-  @override String get yourChildId => 'معرّف طفلك';
-  @override String get yourPlanIncludes => 'تشمل خطتك:';
-  }
+  @override
+  String get freePlan => 'مجاني';
+  @override
+  String get freePlanPrice => '0\$ / شهر';
+  @override
+  String get familyPlanLabel => 'العائلة';
+  @override
+  String get familyPlanPrice => '10\$ / شهر';
+  @override
+  String get parentAccount => 'حساب ولي الأمر';
+  @override
+  String get personalInformation => 'المعلومات الشخصية';
+  @override
+  String get securitySection => 'الأمان';
+  @override
+  String get noActiveAlerts => 'لا توجد تنبيهات نشطة';
+  @override
+  String get joinKinderWorld => 'انضم إلى كيندر وورلد';
+  @override
+  String get passwordVeryStrong => 'قوية جدًا';
+  @override
+  String get accountCreatedWelcome =>
+      'تم إنشاء الحساب! أهلاً بك في كيندر وورلد.';
+  @override
+  String get aboutFallbackText =>
+      'يساعد كيندر وورلد أولياء الأمور على توجيه التعلّم في بيئة آمنة.';
+  @override
+  String get aboutSubtitle => 'الإصدار والتراخيص وحقوق النشر';
+  @override
+  String get activityGame1Desc => 'تحديات رياضيات ممتعة';
+  @override
+  String get activityGame1Title => 'ألغاز الرياضيات';
+  @override
+  String get activityGame2Desc => 'اختبر ذاكرتك';
+  @override
+  String get activityGame2Title => 'لعبة مطابقة الذاكرة';
+  @override
+  String get activityGame3Desc => 'كوّن كلمات من الحروف';
+  @override
+  String get activityGame3Title => 'بناء الكلمات';
+  @override
+  String get activityGame4Desc => 'طابق الألوان والأشكال';
+  @override
+  String get activityGame4Title => 'مطابقة الألوان';
+  @override
+  String get activityMusic1Desc => 'أغاني أطفال ممتعة';
+  @override
+  String get activityMusic1Title => 'غنِّ معنا';
+  @override
+  String get activityMusic2Desc => 'تعرّف على الآلات الموسيقية';
+  @override
+  String get activityMusic2Title => 'أصوات الآلات';
+  @override
+  String get activityMusic3Desc => 'صفّق على الإيقاع';
+  @override
+  String get activityMusic3Title => 'وقت الإيقاع';
+  @override
+  String get activityMusic4Desc => 'تحرّك وارقص';
+  @override
+  String get activityMusic4Title => 'حفلة الرقص';
+  @override
+  String get activityRespectSharing => 'الاحترام والمشاركة';
+  @override
+  String get activityStory1Desc => 'قصة عن الشجاعة';
+  @override
+  String get activityStory1Title => 'النملة الصغيرة الشجاعة';
+  @override
+  String get activityStory2Desc => 'الألوان تنبض بالحياة';
+  @override
+  String get activityStory2Title => 'مغامرة قوس قزح';
+  @override
+  String get activityStory3Desc => 'حكاية عن الصداقة';
+  @override
+  String get activityStory3Title => 'الشجرة السحرية';
+  @override
+  String get activityStory4Desc => 'مغامرة تحت الماء';
+  @override
+  String get activityStory4Title => 'أحلام المحيط';
+  @override
+  String get activityVideo1Desc => 'اكتشف العالم الطبيعي';
+  @override
+  String get activityVideo1Title => 'مستكشف الطبيعة';
+  @override
+  String get activityVideo2Desc => 'حقائق علمية مذهلة';
+  @override
+  String get activityVideo2Title => 'روائع العلوم';
+  @override
+  String get activityVideo3Desc => 'تعرّف على حيوانات مختلفة';
+  @override
+  String get activityVideo3Title => 'أصدقاء الحيوانات';
+  @override
+  String get activityVideo4Desc => 'رحلة إلى النجوم';
+  @override
+  String get activityVideo4Title => 'مغامرة الفضاء';
+  @override
+  String get additionalResources => 'موارد إضافية';
+  @override
+  String get adminAccessDenied => 'تم رفض الوصول';
+  @override
+  String get adminAdminsAssignRoleAction => 'تعيين دور';
+  @override
+  String get adminAdminsAssignRoleTitle => 'تعيين دور';
+  @override
+  String get adminAdminsCreateAction => 'إنشاء مسؤول';
+  @override
+  String get adminAdminsCreateRoleAction => 'إنشاء دور';
+  @override
+  String get adminAdminsCreateRoleTitle => 'إنشاء دور';
+  @override
+  String get adminAdminsCreateTitle => 'إنشاء مسؤول';
+  @override
+  String get adminAdminsCreatedMessage => 'تم إنشاء حساب المسؤول بنجاح';
+  @override
+  String get adminAdminsCurrentAdminHint =>
+      'حساب المسؤول الخاص بك محمي من التعطيل الذاتي وإزالة الأدوار من نفسك.';
+  @override
+  String get adminAdminsDisableAction => 'تعطيل';
+  @override
+  String get adminAdminsDisableConfirm => 'هل تريد تعطيل حساب هذا المسؤول؟';
+  @override
+  String get adminAdminsDisableTitle => 'تعطيل المسؤول';
+  @override
+  String get adminAdminsDisabledMessage => 'تم تعطيل حساب المسؤول بنجاح';
+  @override
+  String get adminAdminsEditAction => 'تعديل المسؤول';
+  @override
+  String get adminAdminsEditRoleAction => 'تعديل الدور';
+  @override
+  String get adminAdminsEditRoleTitle => 'تعديل الدور';
+  @override
+  String get adminAdminsEditTitle => 'تعديل المسؤول';
+  @override
+  String get adminAdminsEmailField => 'البريد الإلكتروني';
+  @override
+  String get adminAdminsEnableAction => 'تفعيل';
+  @override
+  String get adminAdminsEnableConfirm => 'هل تريد تفعيل حساب هذا المسؤول؟';
+  @override
+  String get adminAdminsEnableTitle => 'تفعيل المسؤول';
+  @override
+  String get adminAdminsEnabledMessage => 'تم تفعيل حساب المسؤول بنجاح';
+  @override
+  String get adminAdminsIdLabel => 'المعرّف';
+  @override
+  String get adminAdminsInitialRolesLabel => 'الأدوار المبدئية';
+  @override
+  String get adminAdminsNameField => 'الاسم';
+  @override
+  String get adminAdminsNoRoleSelection => 'اختر دورًا لتعديل الصلاحيات';
+  @override
+  String get adminAdminsNoSelection => 'اختر حساب مسؤول لعرض التفاصيل';
+  @override
+  String get adminAdminsPasswordField => 'كلمة المرور';
+  @override
+  String get adminAdminsPasswordHelper =>
+      'اتركه فارغًا للإبقاء على كلمة المرور الحالية';
+  @override
+  String get adminAdminsPermissionsSection => 'الصلاحيات';
+  @override
+  String get adminAdminsPermissionsUpdatedMessage =>
+      'تم تحديث صلاحيات الدور بنجاح';
+  @override
+  String get adminAdminsRemoveRoleAction => 'إزالة الدور';
+  @override
+  String get adminAdminsRemoveRoleTitle => 'إزالة الدور';
+  @override
+  String get adminAdminsRoleAssignedMessage => 'تم تعيين الدور بنجاح';
+  @override
+  String get adminAdminsRoleCreatedMessage => 'تم إنشاء الدور بنجاح';
+  @override
+  String get adminAdminsRoleDescriptionField => 'وصف الدور';
+  @override
+  String get adminAdminsRoleNameField => 'اسم الدور';
+  @override
+  String get adminAdminsRoleRemovedMessage => 'تمت إزالة الدور بنجاح';
+  @override
+  String get adminAdminsRoleUpdatedMessage => 'تم تحديث الدور بنجاح';
+  @override
+  String get adminAdminsRolesSection => 'الأدوار المعيّنة';
+  @override
+  String get adminAdminsRolesTab => 'الأدوار والصلاحيات';
+  @override
+  String get adminAdminsSavePermissionsAction => 'حفظ الصلاحيات';
+  @override
+  String get adminAdminsSearchLabel => 'البحث عن المسؤولين';
+  @override
+  String get adminAdminsStatusFilter => 'الحالة';
+  @override
+  String get adminAdminsSubtitle =>
+      'إدارة حسابات المسؤولين وتعيين الأدوار وربط الصلاحيات.';
+  @override
+  String get adminAdminsTitle => 'إدارة المسؤولين';
+  @override
+  String get adminAdminsUpdatedMessage => 'تم تحديث حساب المسؤول بنجاح';
+  @override
+  String get adminAdminsUsersTab => 'المسؤولون';
+  @override
+  String get adminAnalyticsActiveChildren => 'الأطفال النشطون';
+  @override
+  String get adminAnalyticsActivities => 'الأنشطة';
+  @override
+  String get adminAnalyticsActivitiesToday => 'أنشطة اليوم';
+  @override
+  String get adminAnalyticsFreeSubscriptions => 'الاشتراكات المجانية';
+  @override
+  String get adminAnalyticsNewChildren => 'الأطفال';
+  @override
+  String get adminAnalyticsNewUsers => 'المستخدمون';
+  @override
+  String get adminAnalyticsNoData => 'لا توجد بيانات متاحة';
+  @override
+  String get adminAnalyticsOpenTickets => 'التذاكر المفتوحة';
+  @override
+  String get adminAnalyticsPaidSubscriptions => 'الاشتراكات المدفوعة';
+  @override
+  String get adminAnalyticsRangeMonth => 'شهر';
+  @override
+  String get adminAnalyticsRangeWeek => 'أسبوع';
+  @override
+  String get adminAnalyticsRecentTickets => 'ملخص التذاكر الأخيرة';
+  @override
+  String get adminAnalyticsSubscriptionsTitle => 'ملخص الاشتراكات';
+  @override
+  String get adminAnalyticsSubtitle =>
+      'راقب نمو المنصة واتجاهات النشاط وحالة الدعم.';
+  @override
+  String get adminAnalyticsTickets => 'التذاكر';
+  @override
+  String get adminAnalyticsTitle => 'نظرة عامة على التحليلات';
+  @override
+  String get adminAnalyticsTotalUsers => 'إجمالي المستخدمين';
+  @override
+  String get adminAnalyticsUsageTitle => 'اتجاه الاستخدام';
+  @override
+  String get adminAuditActionColumn => 'الإجراء';
+  @override
+  String get adminAuditActionFilter => 'الإجراء';
+  @override
+  String get adminAuditAdminColumn => 'المسؤول';
+  @override
+  String get adminAuditAdminFilter => 'معرّف المسؤول';
+  @override
+  String get adminAuditApplyFilters => 'تطبيق الفلاتر';
+  @override
+  String get adminAuditDateFromFilter => 'من تاريخ';
+  @override
+  String get adminAuditDateToFilter => 'إلى تاريخ';
+  @override
+  String get adminAuditEntityColumn => 'الكيان';
+  @override
+  String get adminAuditNetworkColumn => 'IP / الجهاز';
+  @override
+  String get adminAuditSubtitle =>
+      'راجع إجراءات المسؤولين الحساسة وتتبع تغييرات النظام.';
+  @override
+  String get adminAuditTimeColumn => 'الوقت';
+  @override
+  String get adminAuditTitle => 'سجلات التدقيق';
+  @override
+  String get adminAuditNoLogs => 'لا توجد سجلات تدقيق للفلاتر المحددة.';
+  @override
+  String get adminChildrenNoChildren => 'لا يوجد أطفال للفلاتر المحددة.';
+  @override
+  String get adminSubscriptionsNoItems => 'لا توجد اشتراكات للفلاتر المحددة.';
+  @override
+  String get adminChildrenActionsColumn => 'الإجراءات';
+  @override
+  String get adminChildrenActivitySection => 'سجل النشاط';
+  @override
+  String get adminChildrenAgeColumn => 'العمر';
+  @override
+  String get adminChildrenAgeField => 'العمر';
+  @override
+  String get adminChildrenAgeFilter => 'العمر';
+  @override
+  String get adminChildrenAvatarField => 'الصورة الرمزية';
+  @override
+  String get adminChildrenDeactivateAction => 'تعطيل';
+  @override
+  String get adminChildrenDeactivateConfirm => 'هل تريد تعطيل ملف هذا الطفل؟';
+  @override
+  String get adminChildrenDeactivateTitle => 'تعطيل الطفل';
+  @override
+  String get adminChildrenDeactivatedMessage => 'تم تعطيل الطفل بنجاح';
+  @override
+  String get adminChildrenEditTitle => 'تعديل الطفل';
+  @override
+  String get adminChildrenMilestonesSection => 'الإنجازات المرحلية';
+  @override
+  String get adminChildrenNameColumn => 'الاسم';
+  @override
+  String get adminChildrenNameField => 'الاسم';
+  @override
+  String get adminChildrenOverviewCard => 'نظرة عامة';
+  @override
+  String get adminChildrenParentColumn => 'ولي الأمر';
+  @override
+  String get adminChildrenParentFilter => 'معرّف ولي الأمر';
+  @override
+  String get adminChildrenProgressCard => 'التقدم';
+  @override
+  String get adminChildrenProgressDaysMetric => 'أيام منذ الإنشاء';
+  @override
+  String get adminChildrenProgressEventsMetric => 'أحداث التدقيق';
+  @override
+  String get adminChildrenStatusColumn => 'الحالة';
+  @override
+  String get adminChildrenStatusFilter => 'الحالة';
+  @override
+  String get adminChildrenSubtitle => 'فحص ملفات الأطفال وصيانتها.';
+  @override
+  String get adminChildrenTitle => 'إدارة الأطفال';
+  @override
+  String get adminChildrenUpdatedMessage => 'تم تحديث الطفل بنجاح';
+  @override
+  String get adminCmsAddCategory => 'إضافة فئة';
+  @override
+  String get adminCmsAddContent => 'إضافة محتوى';
+  @override
+  String get adminCmsAddQuiz => 'إضافة اختبار';
+  @override
+  String get adminCmsAgeGroupLabel => 'الفئة العمرية';
+  @override
+  String get adminCmsAllCategories => 'كل الفئات';
+  @override
+  String get adminCmsBodyArLabel => 'المحتوى العربي';
+  @override
+  String get adminCmsBodyEnLabel => 'المحتوى الإنجليزي';
+  @override
+  String get adminCmsCategoriesTab => 'الفئات';
+  @override
+  String get adminCmsCategoryCreateTitle => 'إنشاء فئة';
+  @override
+  String get adminCmsCategoryEditTitle => 'تعديل الفئة';
+  @override
+  String get adminCmsCategoryLabel => 'الفئة';
+  @override
+  String get adminCmsCategorySaved => 'تم حفظ الفئة';
+  @override
+  String get adminCmsCategorySlug => 'المعرّف النصي';
+  @override
+  String get adminCmsCategoryUsage => 'المحتوى / الاختبارات';
+  @override
+  String get adminCmsContentsTab => 'المحتويات';
+  @override
+  String get adminCmsCreateContentTitle => 'إنشاء محتوى';
+  @override
+  String get adminCmsCreateQuizTitle => 'إنشاء اختبار';
+  @override
+  String get adminCmsDeleteCategoryConfirm => 'هل تريد حذف هذه الفئة؟';
+  @override
+  String get adminCmsDeleteCategoryTitle => 'حذف الفئة';
+  @override
+  String get adminCmsDeleteContentConfirm => 'هل تريد حذف عنصر المحتوى هذا؟';
+  @override
+  String get adminCmsDeleteContentTitle => 'حذف المحتوى';
+  @override
+  String get adminCmsDeleteQuizConfirm => 'هل تريد حذف هذا الاختبار؟';
+  @override
+  String get adminCmsDeleteQuizTitle => 'حذف الاختبار';
+  @override
+  String get adminCmsDescriptionArLabel => 'الوصف العربي';
+  @override
+  String get adminCmsDescriptionEnLabel => 'الوصف الإنجليزي';
+  @override
+  String get adminCmsEditContentTitle => 'تعديل المحتوى';
+  @override
+  String get adminCmsEditQuizTitle => 'تعديل الاختبار';
+  @override
+  String get adminCmsLinkedContentLabel => 'المحتوى المرتبط';
+  @override
+  String get adminCmsLinkedQuizzes => 'الاختبارات المرتبطة';
+  @override
+  String get adminCmsMetadataLabel => 'بيانات وصفية JSON';
+  @override
+  String get adminCmsNoCategory => 'لا توجد فئة';
+  @override
+  String get adminCmsNoLinkedContent => 'لا يوجد محتوى مرتبط';
+  @override
+  String get adminCmsPreviewAction => 'معاينة';
+  @override
+  String get adminCmsPreviewTitle => 'معاينة';
+  @override
+  String get adminCmsPublishAction => 'نشر';
+  @override
+  String get adminCmsQuestionsJsonLabel => 'أسئلة JSON';
+  @override
+  String get adminCmsQuestionsLabel => 'الأسئلة';
+  @override
+  String get adminCmsQuizSaved => 'تم حفظ الاختبار';
+  @override
+  String get adminCmsQuizzesTab => 'الاختبارات';
+  @override
+  String get adminCmsSearchLabel => 'بحث';
+  @override
+  String get adminCmsStatusAll => 'كل الحالات';
+  @override
+  String get adminCmsStatusDraft => 'مسودة';
+  @override
+  String get adminCmsStatusLabel => 'الحالة';
+  @override
+  String get adminCmsStatusPublished => 'منشور';
+  @override
+  String get adminCmsStatusReview => 'قيد المراجعة';
+  @override
+  String get adminCmsSubtitle => 'إدارة الفئات والمحتوى التعليمي والاختبارات.';
+  @override
+  String get adminCmsThumbnailLabel => 'رابط الصورة المصغرة';
+  @override
+  String get adminCmsTitle => 'إدارة المحتوى';
+  @override
+  String get adminCmsTitleArLabel => 'العنوان العربي';
+  @override
+  String get adminCmsTitleEnLabel => 'العنوان الإنجليزي';
+  @override
+  String get adminCmsTypeActivity => 'نشاط';
+  @override
+  String get adminCmsTypeLabel => 'النوع';
+  @override
+  String get adminCmsTypeLesson => 'درس';
+  @override
+  String get adminCmsTypeStory => 'قصة';
+  @override
+  String get adminCmsTypeVideo => 'فيديو';
+  @override
+  String get adminCmsUnpublishAction => 'إلغاء النشر';
+  @override
+  String get adminDashboard => 'لوحة تحكم المسؤول';
+  @override
+  String get adminDashboardPermissionsTitle => 'صلاحياتك';
+  @override
+  String get adminDashboardSubtitle => 'إليك ما يحدث في كيندر وورلد';
+  @override
+  String get adminDashboardWelcome => 'مرحبًا بعودتك';
+  @override
+  String get adminDisabledAccount =>
+      'تم تعطيل حساب المسؤول الخاص بك. يرجى التواصل مع مسؤول النظام.';
+  @override
+  String get adminEmail => 'بريد المسؤول الإلكتروني';
+  @override
+  String get adminEmailInvalid => 'أدخل بريدًا إلكترونيًا صحيحًا';
+  @override
+  String get adminEmailRequired => 'البريد الإلكتروني مطلوب';
+  @override
+  String get adminLoginFooter =>
+      'بوابة إدارة كيندر وورلد — دخول للمصرح لهم فقط';
+  @override
+  String get adminLoginSubtitle => 'سجّل الدخول لإدارة كيندر وورلد';
+  @override
+  String get adminLogout => 'تسجيل الخروج';
+  @override
+  String get adminLogoutConfirm =>
+      'هل أنت متأكد من تسجيل الخروج من بوابة الإدارة؟';
+  @override
+  String get adminMenuTooltip => 'القائمة';
+  @override
+  String get adminPaginationNext => 'التالي';
+  @override
+  String get adminPaginationPrevious => 'السابق';
+  @override
+  String get adminPassword => 'كلمة مرور المسؤول';
+  @override
+  String get adminPasswordRequired => 'كلمة المرور مطلوبة';
+  @override
+  String get adminPermissionDenied => 'تم رفض الصلاحية';
+  @override
+  String get adminPermissionDeniedMessage =>
+      'ليست لديك صلاحية للوصول إلى هذا القسم. تواصل مع مسؤول النظام.';
+  @override
+  String get adminPlanFamilyPlus => 'عائلي بلس';
+  @override
+  String get adminPlanFree => 'مجاني';
+  @override
+  String get adminPlanPremium => 'مميز';
+  @override
+  String get adminRefreshTooltip => 'تحديث';
+  @override
+  String get adminRoleAnalyticsAdmin => 'مسؤول التحليلات';
+  @override
+  String get adminRoleContentAdmin => 'مسؤول المحتوى';
+  @override
+  String get adminRoleFinanceAdmin => 'مسؤول المالية';
+  @override
+  String get adminRoleSuperAdmin => 'المسؤول العام';
+  @override
+  String get adminRoleSupportAdmin => 'مسؤول الدعم';
+  @override
+  String get adminSessionExpired =>
+      'انتهت جلسة المسؤول. يرجى تسجيل الدخول مرة أخرى.';
+  @override
+  String get adminSettingsAiBuddyEnabled => 'تفعيل رفيق الذكاء الاصطناعي';
+  @override
+  String get adminSettingsAiBuddyEnabledHint =>
+      'فعّل رفيق الذكاء الاصطناعي في جميع أنحاء التطبيق.';
+  @override
+  String get adminSettingsDefaultChildLimitLabel => 'الحد الافتراضي للأطفال';
+  @override
+  String get adminSettingsDefaultPlanLabel => 'الخطة الافتراضية';
+  @override
+  String get adminSettingsDefaultsTitle => 'الإعدادات الافتراضية';
+  @override
+  String get adminSettingsFeatureFlagsTitle => 'ميزات التفعيل';
+  @override
+  String get adminSettingsMaintenanceMode => 'وضع الصيانة';
+  @override
+  String get adminSettingsMaintenanceModeHint =>
+      'تعطيل الوصول الطبيعي للتطبيق مؤقتًا.';
+  @override
+  String get adminSettingsRegistrationEnabled => 'السماح بالتسجيل';
+  @override
+  String get adminSettingsRegistrationEnabledHint =>
+      'السماح بتسجيل أولياء الأمور الجدد.';
+  @override
+  String get adminSidebarAdmins => 'المسؤولون';
+  @override
+  String get adminSidebarAudit => 'سجل التدقيق';
+  @override
+  String get adminSidebarChildren => 'الأطفال';
+  @override
+  String get adminSidebarContent => 'المحتوى';
+  @override
+  String get adminSidebarOverview => 'نظرة عامة';
+  @override
+  String get adminSidebarReports => 'التقارير';
+  @override
+  String get adminSidebarSettings => 'الإعدادات';
+  @override
+  String get adminSidebarSubscriptions => 'الاشتراكات';
+  @override
+  String get adminSidebarSupport => 'الدعم';
+  @override
+  String get adminSidebarUsers => 'المستخدمون';
+  @override
+  String get adminSignIn => 'تسجيل الدخول';
+  @override
+  String get adminSubscriptionsCancelAction => 'إلغاء';
+  @override
+  String get adminSubscriptionsCancelConfirm =>
+      'هل تريد إعادة هذا المستخدم إلى الخطة المجانية؟';
+  @override
+  String get adminSubscriptionsCancelTitle => 'إلغاء الاشتراك';
+  @override
+  String get adminSubscriptionsChildrenMetric => 'الأطفال';
+  @override
+  String get adminSubscriptionsFeaturesTitle => 'الميزات المفعلة';
+  @override
+  String get adminSubscriptionsNoSelection => 'اختر اشتراكًا لعرض التفاصيل';
+  @override
+  String get adminSubscriptionsOverrideAction => 'تعديل الخطة';
+  @override
+  String get adminSubscriptionsOverrideTitle => 'تعديل الخطة';
+  @override
+  String get adminSubscriptionsPaymentMethodsMetric => 'طرق الدفع';
+  @override
+  String get adminSubscriptionsPlanAll => 'كل الخطط';
+  @override
+  String get adminSubscriptionsPlanFilter => 'الخطة';
+  @override
+  String get adminSubscriptionsRefundAction => 'استرداد';
+  @override
+  String get adminSubscriptionsRefundNotSupported =>
+      'الاسترداد غير مدعوم في نموذج الدفع الحالي';
+  @override
+  String get adminSubscriptionsSearchLabel => 'بحث';
+  @override
+  String get adminSubscriptionsStatusActive => 'نشط';
+  @override
+  String get adminSubscriptionsStatusAll => 'كل الحالات';
+  @override
+  String get adminSubscriptionsStatusDisabled => 'معطل';
+  @override
+  String get adminSubscriptionsStatusFilter => 'الحالة';
+  @override
+  String get adminSubscriptionsStatusFree => 'مجاني';
+  @override
+  String get adminSubscriptionsStatusLabel => 'الحالة';
+  @override
+  String get adminSubscriptionsSubtitle =>
+      'راجع الخطط والإجراءات المالية وتعديلات الاشتراك.';
+  @override
+  String get adminSubscriptionsTitle => 'الاشتراكات';
+  @override
+  String get adminSubscriptionsUserName => 'الاسم';
+  @override
+  String get adminSupportAssign => 'تعيين';
+  @override
+  String get adminSupportAssignSuccess => 'تم تعيين التذكرة بنجاح';
+  @override
+  String get adminSupportAssignedToMe => 'تعيين لي';
+  @override
+  String get adminSupportAssignee => 'المكلّف';
+  @override
+  String get adminSupportClose => 'إغلاق التذكرة';
+  @override
+  String get adminSupportCloseConfirm => 'هل أنت متأكد من إغلاق هذه التذكرة؟';
+  @override
+  String get adminSupportCloseSuccess => 'تم إغلاق التذكرة بنجاح';
+  @override
+  String get adminSupportNoTicketSelected => 'اختر تذكرة لعرض التفاصيل';
+  @override
+  String get adminSupportNoTickets => 'لا توجد تذاكر';
+  @override
+  String get adminSupportReply => 'رد';
+  @override
+  String get adminSupportReplyHint => 'اكتب ردك';
+  @override
+  String get adminSupportReplySuccess => 'تم إرسال الرد بنجاح';
+  @override
+  String get adminSupportRequester => 'مقدم الطلب';
+  @override
+  String get adminSupportStatusAll => 'كل الحالات';
+  @override
+  String get adminSupportStatusClosed => 'مغلقة';
+  @override
+  String get adminSupportStatusFilter => 'الحالة';
+  @override
+  String get adminSupportStatusInProgress => 'قيد المعالجة';
+  @override
+  String get adminSupportStatusOpen => 'مفتوحة';
+  @override
+  String get adminSupportStatusResolved => 'تم الحل';
+  @override
+  String get adminSupportCategoryFilter => 'التصنيف';
+  @override
+  String get adminSupportCategoryAll => 'كل التصنيفات';
+  @override
+  String get adminSupportCategoryLabel => 'التصنيف';
+  @override
+  String get adminSupportThread => 'المحادثة';
+  @override
+  String get adminSupportTicketsSubtitle =>
+      'راجع وعيّن وردّ وأغلق طلبات الدعم.';
+  @override
+  String get adminSupportTicketsTitle => 'تذاكر الدعم';
+  @override
+  String get adminSupportResolve => 'حل التذكرة';
+  @override
+  String get adminSupportResolveSuccess => 'تم تعليم التذكرة كمحلولة';
+  @override
+  String get adminSystemSettingsSubtitle =>
+      'تحكم في وضع الصيانة العام وميزات التفعيل والإعدادات الافتراضية.';
+  @override
+  String get adminSystemSettingsTitle => 'إعدادات النظام';
+  @override
+  String get adminUsersActionsColumn => 'الإجراءات';
+  @override
+  String get adminUsersActivityCard => 'ملخص النشاط';
+  @override
+  String get adminUsersChildrenColumn => 'الأطفال';
+  @override
+  String get adminUsersChildrenSection => 'الأطفال';
+  @override
+  String get adminUsersDisableAction => 'تعطيل';
+  @override
+  String get adminUsersDisableConfirm => 'هل تريد تعطيل حساب هذا المستخدم؟';
+  @override
+  String get adminUsersDisableTitle => 'تعطيل المستخدم';
+  @override
+  String get adminUsersDisabledMessage => 'تم تعطيل المستخدم بنجاح';
+  @override
+  String get adminUsersEditTitle => 'تعديل المستخدم';
+  @override
+  String get adminUsersEmailColumn => 'البريد الإلكتروني';
+  @override
+  String get adminUsersEmailField => 'البريد الإلكتروني';
+  @override
+  String get adminUsersEnableAction => 'تفعيل';
+  @override
+  String get adminUsersEnableConfirm => 'هل تريد تفعيل حساب هذا المستخدم؟';
+  @override
+  String get adminUsersEnableTitle => 'تفعيل المستخدم';
+  @override
+  String get adminUsersEnabledMessage => 'تم تفعيل المستخدم بنجاح';
+  @override
+  String get adminUsersLastUpdatedMetric => 'آخر تحديث';
+  @override
+  String get adminUsersNameColumn => 'الاسم';
+  @override
+  String get adminUsersNameField => 'الاسم';
+  @override
+  String get adminUsersNotificationsMetric => 'الإشعارات';
+  @override
+  String get adminUsersNotificationsSection => 'الإشعارات الأخيرة';
+  @override
+  String get adminUsersOverviewCard => 'نظرة عامة';
+  @override
+  String get adminUsersPlanColumn => 'الخطة';
+  @override
+  String get adminUsersPlanField => 'الخطة';
+  @override
+  String get adminUsersSearchLabel => 'البحث عن المستخدمين';
+  @override
+  String get adminUsersStatusActive => 'نشط';
+  @override
+  String get adminUsersStatusAll => 'الكل';
+  @override
+  String get adminUsersStatusColumn => 'الحالة';
+  @override
+  String get adminUsersStatusDisabled => 'معطل';
+  @override
+  String get adminUsersStatusFilter => 'الحالة';
+  @override
+  String get adminUsersSubtitle => 'ابحث وراجع وأدر حسابات أولياء الأمور.';
+  @override
+  String get adminUsersSupportMetric => 'تذاكر الدعم';
+  @override
+  String get adminUsersSupportSection => 'تذاكر الدعم';
+  @override
+  String get adminUsersTitle => 'إدارة المستخدمين';
+  @override
+  String get adminUsersUpdatedMessage => 'تم تحديث المستخدم بنجاح';
+  @override
+  String get adminUsersViewAction => 'عرض';
+  @override
+  String get adminWelcome => 'بوابة الإدارة';
+  @override
+  String get advanced => 'متقدم';
+  @override
+  String get advancedReportsLabel => 'تقارير متقدمة';
+  @override
+  String get allCaughtUp =>
+      'أنت مطّلع على كل شيء! ستظهر هنا التنبيهات الجديدة وملخصات النشاط.';
+  @override
+  String get allVideos => 'كل الفيديوهات';
+  @override
+  String get amountLabel => 'المبلغ';
+  @override
+  String get analyticsSubtitle =>
+      'ساعد في تحسين كيندر وورلد من خلال بيانات الاستخدام';
+  @override
+  String get analyticsTitle => 'التحليلات';
+  @override
+  String get available247 => 'متاح 24/7';
+  @override
+  String get availablePlans => 'الخطط المتاحة';
+  @override
+  String get awesomeColoring => 'تلوين رائع!';
+  @override
+  String get backToChildLogin => 'العودة إلى دخول الطفل';
+  @override
+  String get basicFeaturesOnly => 'ميزات أساسية فقط';
+  @override
+  String get beginner => 'مبتدئ';
+  @override
+  String get bestForFamilies => 'الأفضل للعائلات';
+  @override
+  String get billingComingSoon =>
+      'إدارة الفواتير قريبًا. ستتمكن من تحديث طرق الدفع والفواتير هنا عندما يصبح الباك إند جاهزًا.';
+  @override
+  String get billingInformation => 'معلومات الفوترة';
+  @override
+  String get billingTitle => 'الفواتير';
+  @override
+  String get categoryGames => 'ألعاب ممتعة';
+  @override
+  String get categoryMusic => 'الموسيقى والأغاني';
+  @override
+  String get categoryStories => 'القصص';
+  @override
+  String get categoryVideos => 'فيديوهات تعليمية';
+  @override
+  String get changePasswordSubtitle => 'حدّث بيانات تسجيل الدخول الخاصة بك';
+  @override
+  String get checkYourInbox => 'تحقق من بريدك الوارد!';
+  @override
+  String get childIdHint => 'مثال: Ava123';
+  @override
+  String get childIdRequired => 'يرجى إدخال معرّف الطفل';
+  @override
+  String get childLoginIncorrectPictures => 'صور تسجيل الدخول غير صحيحة';
+  @override
+  String get childLoginMissingData => 'أكمل البيانات المطلوبة';
+  @override
+  String get childLoginNotFound => 'الطفل غير موجود';
+  @override
+  String get childProfileNotFound => 'لم يتم العثور على ملف الطفل.';
+  @override
+  String get childProfilesSubtitle => 'إدارة حسابات أطفالك';
+  @override
+  String get childRegisterForbidden => 'غير مسموح';
+  @override
+  String get childRegisterLimitReached =>
+      'لقد وصلت إلى الحد الأقصى لعدد الأطفال. قم بالترقية الآن مقابل 10 دولارات شهريًا.';
+  @override
+  String get childRegisterParentNotFound => 'لم يتم العثور على بريد ولي الأمر';
+  @override
+  String get childStep1 => 'سيتلقى ولي أمرك رسالة بريد إلكتروني منا';
+  @override
+  String get childStep2 => 'وسيساعدك في تعيين كلمات مرور صور جديدة';
+  @override
+  String get childStep3 => 'وستعود للعب في أسرع وقت!';
+  @override
+  String get chooseActivity => 'اختر نشاطًا';
+  @override
+  String get choosePlanLabel => 'اختر الخطة';
+  @override
+  String get chooseProfileToContinue => 'اختر ملفك الشخصي للمتابعة.';
+  @override
+  String get chooseYourProfile => 'اختر ملفك الشخصي:';
+  @override
+  String get confirmPasswordHintAlt => 'أعد إدخال كلمة المرور الجديدة';
+  @override
+  String get confirmPasswordLabel => 'تأكيد كلمة المرور';
+  @override
+  String get contactSupportToResetPin =>
+      'يرجى التواصل مع الدعم لإعادة تعيين رمز PIN';
+  @override
+  String get contactUsAction => 'تواصل معنا';
+  @override
+  String get contactUsIntro =>
+      'يسعدنا الاستماع إليك. أرسل رسالتك وسنعود إليك قريبًا.';
+  @override
+  String get contentAbcSong => 'أغنية الحروف';
+  @override
+  String get contentAdventureTime => 'وقت المغامرة';
+  @override
+  String get contentBabyShark => 'بيبي شارك';
+  @override
+  String get contentFunnyAnimals => 'حيوانات مضحكة';
+  @override
+  String get contentMagicWorld => 'العالم السحري';
+  @override
+  String get contentPuzzleGame => 'لعبة الألغاز';
+  @override
+  String get contentRacingCars => 'سيارات السباق';
+  @override
+  String get contentSpaceHeroes => 'أبطال الفضاء';
+  @override
+  String get contentTwinkleStar => 'النجمة المتلألئة';
+  @override
+  String get correct => 'صحيح';
+  @override
+  String get countingNumbers => 'عدّ الأرقام من 1 إلى 10';
+  @override
+  String get countingNumbersDesc => 'تعلّم العد من 1 إلى 10';
+  @override
+  String get currentPasswordHint => 'أدخل كلمة المرور الحالية';
+  @override
+  String get currentPasswordLabel => 'كلمة المرور الحالية';
+  @override
+  String get currentPlanLabel => 'الخطة الحالية';
+  @override
+  String get dataCollectionOptOutSubtitle => 'عدم جمع أي بيانات استخدام';
+  @override
+  String get dataCollectionOptOutTitle => 'إلغاء جمع البيانات';
+  @override
+  String get daysLabel => 'أيام';
+  @override
+  String get didntReceiveIt => 'لم تستلمه؟ حاول مرة أخرى';
+  @override
+  String get difficulty => 'الصعوبة';
+  @override
+  String get discoverSomethingAmazing => 'اكتشف شيئًا مذهلًا اليوم!';
+  @override
+  String get emailAddress => 'عنوان البريد الإلكتروني';
+  @override
+  String get emailPlaceholder => 'parent@email.com';
+  @override
+  String get emailSupport => 'الدعم عبر البريد الإلكتروني';
+  @override
+  String get emailValidationEmpty => 'يرجى إدخال عنوان بريدك الإلكتروني';
+  @override
+  String get emailValidationInvalid =>
+      'يرجى إدخال بريد إلكتروني صحيح (Gmail أو Outlook وغيرهما)';
+  @override
+  String get enterPinToContinue => 'أدخل رمز PIN للمتابعة';
+  @override
+  String get entertainmentBrainTeasers => 'ألغاز ذهنية';
+  @override
+  String get entertainmentCartoons => 'رسوم متحركة';
+  @override
+  String get entertainmentGames => 'ألعاب';
+  @override
+  String get eraser => 'ممحاة';
+  @override
+  String get estimatedCompletion => 'الوقت المتوقع للإنهاء';
+  @override
+  String get exploreLessons => 'استكشف الدروس';
+  @override
+  String get exploreNewActivities => 'استكشف أنشطة جديدة';
+  @override
+  String get failedToStartSession => 'فشل بدء الجلسة. يرجى المحاولة مرة أخرى.';
+  @override
+  String get fanFavourite => 'المفضل لدى الجميع';
+  @override
+  String get featured => 'مميز';
+  @override
+  String get fieldRequired => 'هذا الحقل مطلوب';
+  @override
+  String get followUsForUpdates => 'تابعنا للحصول على التحديثات:';
+  @override
+  String get foreverLabel => 'إلى الأبد';
+  @override
+  String get forgotPasswordDescription =>
+      'لا تقلق! أدخل بريدك الإلكتروني وسنرسل لك رابطًا لإعادة تعيين كلمة المرور.';
+  @override
+  String get forgotPicturesDescription =>
+      'لا مشكلة! أخبرنا بمعرّف الطفل وبريد ولي أمرك، وسنرسل له رسالة لمساعدتك على العودة.';
+  @override
+  String get forgotPin => 'نسيت رمز PIN؟';
+  @override
+  String get forgotYourPassword => 'هل نسيت كلمة المرور؟';
+  @override
+  String get forgotYourPictures => 'هل نسيت صورك؟';
+  @override
+  String get friendFallback => 'صديقي';
+  @override
+  String get funAndPlayful => 'مرح وممتع';
+  @override
+  String get funTab => 'مرح';
+  @override
+  String get goLabel => 'هيا!';
+  @override
+  String get goToLogin => 'اذهب إلى تسجيل الدخول';
+  @override
+  String get goalComplete => '🎉 تم إنجاز الهدف!';
+  @override
+  String get greatJob => 'عمل رائع!';
+  @override
+  String get helpAppUpdates => 'تحديثات التطبيق';
+  @override
+  String get helpContactSupportTitle => 'التواصل مع الدعم';
+  @override
+  String get helpEmailSupportTitle => 'الدعم عبر البريد الإلكتروني';
+  @override
+  String get helpFaqA1 =>
+      'اذهب إلى وضع ولي الأمر ← إدارة الأطفال واضغط على "إضافة ملف جديد". اتبع الدليل خطوة بخطوة لإنشاء ملف شخصي مناسب لطفلك.';
+  @override
+  String get helpFaqA2 =>
+      'نعم! في وضع ولي الأمر، اذهب إلى الرقابة الأبوية ← وقت الشاشة لتحديد الحدود اليومية وفترات الاستراحة والساعات المسموح بها.';
+  @override
+  String get helpFaqA3 =>
+      'يستخدم المساعد الذكي عمر طفلك واهتماماته وتقدمه التعليمي لتقديم توصيات وإرشادات مخصصة.';
+  @override
+  String get helpFaqA4 =>
+      'بالتأكيد! نحن نتبع سياسات خصوصية صارمة ونلتزم بلوائح COPPA وGDPR لحماية معلومات طفلك.';
+  @override
+  String get helpFaqA5 =>
+      'نعم، كثير من الأنشطة متاحة دون إنترنت. قم بتنزيل المحتوى مسبقًا لتجربة تعلم مستمرة.';
+  @override
+  String get helpFaqQ1 => 'كيف يمكنني إعداد ملف لطفلي؟';
+  @override
+  String get helpFaqQ2 => 'هل يمكنني تحديد وقت الشاشة لطفلي؟';
+  @override
+  String get helpFaqQ3 => 'كيف يعمل المساعد الذكي؟';
+  @override
+  String get helpFaqQ4 => 'هل بيانات طفلي آمنة؟';
+  @override
+  String get helpFaqQ5 => 'هل يمكن لطفلي استخدام التطبيق دون إنترنت؟';
+  @override
+  String get helpFaqSubtitle => 'أدلة الاستخدام والأسئلة الشائعة';
+  @override
+  String get helpFaqTitle => 'الأسئلة الشائعة';
+  @override
+  String get helpLiveChatSubtitle => 'متاح 24/7';
+  @override
+  String get helpLiveChatTitle => 'الدردشة المباشرة';
+  @override
+  String get helpNeedHelpSubtitle => 'نحن هنا لدعمك';
+  @override
+  String get helpNeedHelpTitle => 'هل تحتاج إلى مساعدة؟';
+  @override
+  String get helpPhoneSupportSubtitle => '1-800-KINDER';
+  @override
+  String get helpPhoneSupportTitle => 'الدعم الهاتفي';
+  @override
+  String get helpPreparingArticles => 'نحن نجهّز لك مقالات مفيدة.';
+  @override
+  String get helpResourcesTitle => 'موارد إضافية';
+  @override
+  String get helpUserGuide => 'دليل المستخدم';
+  @override
+  String get historyColorQuest => 'مغامرة الألوان';
+  @override
+  String get historyDanceParty => 'حفلة الرقص';
+  @override
+  String get historyHelpingHands => 'الأيادي المساعدة';
+  @override
+  String get historyKindWords => 'كلمات طيبة';
+  @override
+  String get historyMagicShow => 'العرض السحري';
+  @override
+  String get historyMemoryGame => 'لعبة الذاكرة';
+  @override
+  String get historyNumbersAdventure => 'مغامرة الأرقام';
+  @override
+  String get historyPuzzleBuilder => 'بناء الألغاز';
+  @override
+  String get historyShapeMatch => 'مطابقة الأشكال';
+  @override
+  String get historySharingStars => 'نجوم المشاركة';
+  @override
+  String get historySingAlong => 'غنِّ معنا';
+  @override
+  String get historyStoryTime => 'وقت القصة';
+  @override
+  String get hoursAgoSync => 'منذ ساعتين';
+  @override
+  String get interactiveActivity => 'نشاط تفاعلي';
+  @override
+  String get intermediate => 'متوسط';
+  @override
+  String get invalidEmail => 'يرجى إدخال بريد إلكتروني صحيح';
+  @override
+  String get kindnessTab => 'اللطف';
+  @override
+  String get languageSubtitle => 'English / العربية';
+  @override
+  String get learningContent => 'المحتوى التعليمي';
+  @override
+  String get learningTab => 'التعلم';
+  @override
+  String get lessonAdvancedConcepts => 'مفاهيم متقدمة';
+  @override
+  String get lessonDeepDive => 'تعمّق';
+  @override
+  String get lessonFunWithMath => 'مرح مع الرياضيات';
+  @override
+  String get lessonIntermediatePractice => 'تدريب متوسط';
+  @override
+  String get lessonIntroductionToBasics => 'مقدمة إلى الأساسيات';
+  @override
+  String get lessonTime => 'الوقت';
+  @override
+  String get letsPractice => 'هيا نتدرّب!';
+  @override
+  String get limitedActivities => 'أنشطة محدودة';
+  @override
+  String get liveChat => 'الدردشة المباشرة';
+  @override
+  String get loadingVersion => 'جارٍ تحميل الإصدار...';
+  @override
+  String get loginFailed => 'فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.';
+  @override
+  String get logoutMessage =>
+      'ستحتاج إلى تسجيل الدخول مرة أخرى للوصول إلى لوحة تحكم ولي الأمر.';
+  @override
+  String get logoutTitle => 'تسجيل الخروج؟';
+  @override
+  String get manageBilling => 'إدارة الفواتير';
+  @override
+  String get messageLabel => 'الرسالة *';
+  @override
+  String get messageRequiredError => 'يرجى إدخال رسالة';
+  @override
+  String get messageSentSuccess => 'تم إرسال الرسالة بنجاح. سنعود إليك قريبًا.';
+  @override
+  String get messageSentTitle => 'تم إرسال الرسالة!';
+  @override
+  String get myActivities => 'أنشطتي';
+  @override
+  String get needHelp => 'هل تحتاج إلى مساعدة؟';
+  @override
+  String get newPasswordHint => 'أدخل كلمة المرور الجديدة (6 أحرف على الأقل)';
+  @override
+  String get newPasswordLabel => 'كلمة المرور الجديدة';
+  @override
+  String get newTopicsAwait => 'مواضيع وأنشطة جديدة بانتظارك!';
+  @override
+  String get nextPayment => 'الدفعة القادمة';
+  @override
+  String get nextPaymentSampleDate => '31 ديسمبر 2024';
+  @override
+  String get noActiveChildSession => 'لا توجد جلسة طفل نشطة';
+  @override
+  String get noChildProfilesFound => 'لم يتم العثور على ملفات أطفال.';
+  @override
+  String get noFaqsYet => 'لا توجد أسئلة شائعة بعد';
+  @override
+  String get noInternetConnection => 'لا يوجد اتصال بالإنترنت';
+  @override
+  String get noResultsFound => 'لا توجد نتائج';
+  @override
+  String get nothingFound => 'لم يتم العثور على شيء';
+  @override
+  String get notificationFallback => 'إشعار';
+  @override
+  String get notificationsSubtitle => 'تنبيهات وتذكيرات وملخصات';
+  @override
+  String get offlineDownloadsLabel => 'التنزيلات دون إنترنت';
+  @override
+  String get oneChildProfile => 'ملف طفل واحد';
+  @override
+  String get oopsSomethingWentWrong => 'عذرًا! حدث خطأ ما';
+  @override
+  String get pageNotFound => 'الصفحة غير موجودة';
+  @override
+  String get paletteDefault => 'الافتراضي';
+  @override
+  String get paletteForestGreen => 'الأخضر الغابي';
+  @override
+  String get paletteOceanBlue => 'الأزرق البحري';
+  @override
+  String get palettePurpleNight => 'البنفسجي الليلي';
+  @override
+  String get paletteSunsetOrange => 'برتقالي الغروب';
+  @override
+  String get parentAbout => 'حول';
+  @override
+  String get parentAccess => 'وصول ولي الأمر';
+  @override
+  String get parentContactUs => 'تواصل معنا';
+  @override
+  String get parentEmailHint => 'parent@email.com';
+  @override
+  String get parentEmailInvalid => 'يرجى إدخال بريد إلكتروني صحيح';
+  @override
+  String get parentEmailRequired => 'يرجى إدخال بريد ولي أمرك';
+  @override
+  String get parentFallback => 'ولي الأمر';
+  @override
+  String get parentHelp => 'المساعدة والأسئلة الشائعة';
+  @override
+  String get parentPortal => 'بوابة ولي الأمر';
+  @override
+  String get parentPrivacySettings => 'إعدادات الخصوصية';
+  @override
+  String get parentWillGetEmail =>
+      'سيتلقى ولي أمرك رسالة بريد إلكتروني ويمكنه مساعدتك في تسجيل الدخول مجددًا!';
+  @override
+  String get parentalControlsSubtitle => 'وقت الشاشة ومرشحات المحتوى والحدود';
+  @override
+  String get parentsEmail => 'بريد ولي الأمر';
+  @override
+  String get passwordFair => 'متوسطة';
+  @override
+  String get passwordStrong => 'قوية';
+  @override
+  String get passwordTooShortRegister =>
+      'يجب أن تكون كلمة المرور 8 أحرف على الأقل';
+  @override
+  String get passwordUpdatedSuccess => 'تم تحديث كلمة المرور بنجاح.';
+  @override
+  String get passwordWeak => 'ضعيفة';
+  @override
+  String get paymentMethodLabel => 'طريقة الدفع';
+  @override
+  String get perMonthLabel => '/ شهريًا';
+  @override
+  String get personalizedRecommendationsSubtitle =>
+      'احصل على اقتراحات محتوى مخصصة';
+  @override
+  String get personalizedRecommendationsTitle => 'توصيات مخصصة';
+  @override
+  String get phoneNumber => '1-800-KINDER';
+  @override
+  String get phoneSupport => 'الدعم الهاتفي';
+  @override
+  String get playEducationalGames => 'ألعاب تعليمية';
+  @override
+  String get playEducationalGamesSubtitle => 'ألعاب ممتعة للتعلّم';
+  @override
+  String get playEducationalVideos => 'فيديوهات تعليمية';
+  @override
+  String get playEducationalVideosSubtitle => 'شاهد وتعلّم';
+  @override
+  String get playInteractiveStories => 'قصص تفاعلية';
+  @override
+  String get playInteractiveStoriesSubtitle => 'اختر مغامرتك';
+  @override
+  String get playMusicSongs => 'الموسيقى والأغاني';
+  @override
+  String get playMusicSongsSubtitle => 'غنِّ وارقص';
+  @override
+  String get playSubtitle => 'استمتع بالألعاب والقصص والترفيه!';
+  @override
+  String get playTime => 'وقت اللعب';
+  @override
+  String get playTitle => 'اللعب والمرح';
+  @override
+  String get pleaseTryAgain => 'يرجى المحاولة مرة أخرى';
+  @override
+  String get premiumActive => 'مميز — نشط';
+  @override
+  String get prioritySupportLabel => 'دعم أولوية';
+  @override
+  String get privacyInfoBody =>
+      'خصوصيتك مهمة بالنسبة لنا. تتحكم هذه الإعدادات في البيانات التي نجمعها وكيفية استخدامها لتحسين تجربتك.';
+  @override
+  String get privacyInfoTitle => 'معلومات الخصوصية';
+  @override
+  String get privacyPolicyResource => 'سياسة الخصوصية';
+  @override
+  String get privacySettingsError => 'خطأ في تحميل إعدادات الخصوصية';
+  @override
+  String get privacySettingsSubtitle => 'مشاركة البيانات والصلاحيات';
+  @override
+  String get processingLabel => 'جارٍ المعالجة...';
+  @override
+  String get quickQuiz => 'اختبار سريع';
+  @override
+  String get readyForAdventure => '🚀 هل أنت مستعد لمغامرة اليوم؟';
+  @override
+  String get recommendedLabel => 'موصى به';
+  @override
+  String get redo => 'إعادة';
+  @override
+  String get registrationFailed => 'فشل التسجيل. يرجى المحاولة مرة أخرى.';
+  @override
+  String get resetPassword => 'إعادة تعيين كلمة المرور';
+  @override
+  String get retryAction => 'إعادة المحاولة';
+  @override
+  String get safeAndFunVideos => 'فيديوهات آمنة وممتعة لك';
+  @override
+  String get safeMode => 'الوضع الآمن';
+  @override
+  String get sampleAmountPerMonth => '9.99\$ / شهر';
+  @override
+  String get samplePaymentMethod => '**** **** **** 1234';
+  @override
+  String get searchVideos => 'ابحث عن الفيديوهات...';
+  @override
+  String get secureAndStructured => 'آمن ومنظم';
+  @override
+  String get signIn => 'تسجيل الدخول';
+  @override
+  String get signInToContinue => 'يرجى تسجيل الدخول لمتابعة مغامرتك!';
+  @override
+  String get skillColoringDesc => 'استخدم الألوان';
+  @override
+  String get skillCooking => 'الطبخ';
+  @override
+  String get skillCookingDesc => 'طعام شهي';
+  @override
+  String get skillDrawing => 'الرسم';
+  @override
+  String get skillDrawingDesc => 'عبّر بالفن';
+  @override
+  String get skillHandcrafts => 'الأعمال اليدوية';
+  @override
+  String get skillHandcraftsDesc => 'قصّ ولصق';
+  @override
+  String get skillMusicDesc => 'اعزف الآلات';
+  @override
+  String get skillSinging => 'الغناء';
+  @override
+  String get skillSingingDesc => 'تعلّم الأغاني';
+  @override
+  String get skillSports => 'الرياضة';
+  @override
+  String get skillSportsDesc => 'حافظ على لياقتك';
+  @override
+  String get skillsTab => 'المهارات';
+  @override
+  String get songsAndMusic => 'الأغاني والموسيقى';
+  @override
+  String get spamFolderNote =>
+      'تحقق من مجلد الرسائل المزعجة إذا لم تجد البريد خلال بضع دقائق.';
+  @override
+  String get startLearning => 'ابدأ التعلّم!';
+  @override
+  String get step1OpenEmail => 'افتح البريد الإلكتروني من كيندر وورلد';
+  @override
+  String get step2ClickLink => 'اضغط على رابط "إعادة تعيين كلمة المرور"';
+  @override
+  String get step3CreatePassword => 'أنشئ كلمة المرور الجديدة';
+  @override
+  String get subjectHint => 'ما موضوع استفسارك؟';
+  @override
+  String get subjectLabel => 'الموضوع *';
+  @override
+  String get subjectRequiredError => 'يرجى إدخال موضوع';
+  @override
+  String get subscriptionActivationFailed => 'فشل تفعيل الاشتراك.';
+  @override
+  String get subscriptionActiveLabel => 'الاشتراك نشط';
+  @override
+  String get subscriptionTitle => 'الاشتراك';
+  @override
+  String get tapCorrectAnswer => 'اضغط على الإجابة الصحيحة!';
+  @override
+  String get tapShapeToFill => 'اضغط على أي شكل أبيض لملئه!';
+  @override
+  String get termsOfServiceResource => 'شروط الخدمة';
+  @override
+  String get themeSubtitle => 'فاتح أو داكن أو افتراضي النظام';
+  @override
+  String get todayLabel => 'اليوم';
+  @override
+  String get todayWeWillLearn => 'اليوم سنتعلّم عن:';
+  @override
+  String get todaysPick => 'اختيار اليوم';
+  @override
+  String get topRated => 'الأعلى تقييمًا';
+  @override
+  String get tryAgainDifferentInfo => 'حاول مرة أخرى بمعلومات مختلفة';
+  @override
+  String get tryDifferentSearch => 'جرّب بحثًا أو فئة مختلفة!';
+  @override
+  String get undo => 'تراجع';
+  @override
+  String get unexpectedError => 'حدث خطأ غير متوقع';
+  @override
+  String get unlimitedActivities => 'أنشطة غير محدودة';
+  @override
+  String get upToThreeChildren => 'حتى 3 أطفال';
+  @override
+  String get updatePassword => 'تحديث كلمة المرور';
+  @override
+  String get upgradePlan => 'قم بترقية خطتك';
+  @override
+  String get useAllowedEmail =>
+      'استخدم بريد Gmail أو Outlook أو Hotmail أو Live';
+  @override
+  String get useGmailOrMicrosoftEmail => 'استخدم بريد Gmail أو Microsoft';
+  @override
+  String get videoAlphabetSong => 'أغنية الحروف';
+  @override
+  String get videoAnimalFriends => 'أصدقاء الحيوانات';
+  @override
+  String get videoBuildAndCreate => 'ابنِ وابتكر';
+  @override
+  String get videoColoringFun => 'مرح التلوين';
+  @override
+  String get videoKindnessChallenge => 'تحدي اللطف';
+  @override
+  String get videoMathBasicsFun => 'أساسيات الرياضيات | مرح';
+  @override
+  String get videoMomoAndMimiArabic => 'مومو وميمي | عربي';
+  @override
+  String get videoPuzzlePlay => 'لعب الألغاز';
+  @override
+  String get videoScienceWonders => 'روائع العلوم';
+  @override
+  String get videoSharingTime => 'وقت المشاركة';
+  @override
+  String get videoTomAndJerryKeepCalm => 'توم وجيري | ابق هادئًا';
+  @override
+  String get weAreHereToSupportYou => 'نحن هنا لدعمك';
+  @override
+  String get wellAskYourParent => 'سنطلب من ولي أمرك!';
+  @override
+  String get whatDidYouLearn => 'ماذا تعلّمت في هذا الدرس؟';
+  @override
+  String get whatHappensNext => 'ماذا يحدث بعد ذلك؟';
+  @override
+  String get whoIsUsingKinderWorld => 'من يستخدم\nكيندر وورلد؟';
+  @override
+  String get xpBonusEarned => '+ 50 نقطة خبرة إضافية!';
+  @override
+  String get xpBonusLabel => '⭐ +50 نقطة خبرة إضافية';
+  @override
+  String get xpEarned => 'نقاط الخبرة المكتسبة';
+  @override
+  String get xpProgress => 'تقدم نقاط الخبرة';
+  @override
+  String get xpReward => 'مكافأة الخبرة';
+  @override
+  String get yesterdayLabel => 'أمس';
+  @override
+  String get youCompletedLesson => 'لقد أكملت الدرس!';
+  @override
+  String get yourChildId => 'معرّف طفلك';
+  @override
+  String get yourPlanIncludes => 'تشمل خطتك:';
+
+  // ── Accessibility ─────────────────────────────────────────────────────────
+  @override
+  String get accessibilitySettings => 'إمكانية الوصول';
+
+  @override
+  String get accessibilitySettingsSubtitle => 'حجم الخط والتباين والعرض';
+
+  @override
+  String get accessibilityMode => 'وضع إمكانية الوصول';
+
+  @override
+  String get accessibilityModeSubtitle =>
+      'تحسين سهولة الاستخدام للأطفال ذوي الاحتياجات المختلفة';
+
+  @override
+  String get largeFontMode => 'خط كبير';
+
+  @override
+  String get largeFontModeSubtitle =>
+      'يكبّر حجم النص في واجهة الطفل بالكامل';
+
+  @override
+  String get highContrastMode => 'تباين عالٍ';
+
+  @override
+  String get highContrastModeSubtitle =>
+      'ثيم أبيض وأسود بحدود واضحة لرؤية أفضل';
+
+  @override
+  String get accessibilityActiveLabel => 'مفعّل';
+
+  @override
+  String get accessibilityInactiveLabel => 'معطّل';
+
+  @override
+  String get accessibilityParentNote =>
+      'هذه الإعدادات تُطبَّق على واجهة الطفل ويتحكم بها ولي الأمر.';
+
+  @override
+  String get accessibilityResetAll => 'إعادة تعيين إعدادات إمكانية الوصول';
+
+  @override
+  String get accessibilityResetConfirm =>
+      'سيؤدي هذا إلى إيقاف جميع ميزات إمكانية الوصول. هل تريد المتابعة؟';
+
+  // ── Mood Tracking ─────────────────────────────────────────────────────────
+  @override
+  String get moodPickerTitle => 'كيف تشعر الآن؟';
+  @override
+  String get moodPickerSubtitle => 'اضغط على مزاجك للبدء!';
+  @override
+  String get moodSaved => 'تم الحفظ';
+  @override
+  String get moodTodayLabel => 'مزاج اليوم';
+  @override
+  String get moodWeekLabel => 'مزاج هذا الاسبوع';
+  @override
+  String get moodNoHistory => 'لا يوجد سجل مزاج بعد';
+  @override
+  String get moodRecommendationsTitle => 'خصيصاً لك';
+  @override
+  String get moodRecommendationsSubtitle => 'أنشطة مختارة بناءً على مزاجك';
+  @override
+  String get moodReportTitle => 'اتجاهات المزاج';
+  @override
+  String get moodReportSubtitle => 'كيف كان مزاج طفلك';
+  @override
+  String get moodMostFrequent => 'المزاج الأكثر شيوعاً';
+  @override
+  String moodEntriesCount(int n) => '$n سجل مزاج';
+  @override
+  String get moodEncouragementHappy => 'رائع! لنستفيد من مزاجك السعيد!';
+  @override
+  String get moodEncouragementExcited =>
+      'انت متحمس! لنوجه هذه الطاقة نحو شيء ممتع!';
+  @override
+  String get moodEncouragementCalm => 'انت هادئ ومركز. وقت مثالي للتعلم!';
+  @override
+  String get moodEncouragementTired =>
+      'تشعر بالتعب؟ لنفعل شيئاً خفيفاً وممتعاً.';
+  @override
+  String get moodEncouragementSad =>
+      'لا بأس بالشعور بالحزن. لنفعل شيئاً مريحاً معاً.';
+  @override
+  String get moodEncouragementAngry => 'لنأخذ نفساً عميقاً ونفعل شيئاً مريحاً.';
+  @override
+  String get customizeProfile => 'تخصيص الملف الشخصي';
+  @override
+  String get customizeProfileSubtitle =>
+      'اختر صورة رمزية ولونًا وإطارًا مناسبًا لك.';
+  @override
+  String get frameColors => 'ألوان الإطار';
+  @override
+  String get frameStyles => 'أنماط الإطار';
+  @override
+  String get profileStyle => 'شكل الملف الشخصي';
+  @override
+  String get frameStyleClassic => 'كلاسيكي';
+  @override
+  String get frameStyleGlow => 'متوهج';
+  @override
+  String get frameStyleStars => 'نجوم';
+  @override
+  String get frameStyleShield => 'درع';
+  @override
+  String get customizationSaved => 'تم حفظ التخصيص';
+  @override
+  String get lockedLabel => 'مغلق';
+  @override
+  String get unlockedLabel => 'مفتوح';
+  @override
+  String unlockAtLevel(int level) => 'يفتح عند المستوى $level';
+  @override
+  String unlockWithStreak(int streak) => 'يفتح عند سلسلة $streak أيام';
+  @override
+  String unlockWithActivities(int count) => 'يفتح بعد إكمال $count أنشطة';
+}

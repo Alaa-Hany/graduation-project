@@ -5,8 +5,10 @@ import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/router.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/app.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
@@ -422,8 +424,8 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: isError
-                      ? ParentColors.alertRed
-                      : ParentColors.parentGreenLight,
+                      ? context.parentTheme.danger
+                      : context.parentTheme.success,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
@@ -561,7 +563,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                           }
                         },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: ParentColors.alertRed,
+                    backgroundColor: context.parentTheme.danger,
                     foregroundColor: Theme.of(context).colorScheme.onPrimary,
                   ),
                   child: isDeleting
@@ -607,7 +609,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
   }) {
     final option = _avatarForValue(avatarId ?? avatarPath);
     final resolvedBackground = option?.backgroundColor ??
-        ParentColors.parentGreen.withValues(alpha: 0.1);
+        context.parentTheme.primary.withValues(alpha: 0.1);
     final resolvedPath =
         option?.assetPath.isNotEmpty == true ? option!.assetPath : avatarPath;
 
@@ -636,7 +638,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop) {
-          context.go(Routes.parentSettings);
+          context.appBack(fallback: Routes.parentDashboard);
         }
       },
       child: Scaffold(
@@ -648,7 +650,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
           leading: IconButton(
             icon: Icon(Icons.arrow_back_ios_new_rounded,
                 size: 20, color: Theme.of(context).colorScheme.onSurface),
-            onPressed: () => context.go(Routes.parentSettings),
+            onPressed: () => context.appBack(fallback: Routes.parentDashboard),
           ),
           title: Text(
             l10n.childManagement,
@@ -899,7 +901,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                                       height: 64,
                                       decoration: BoxDecoration(
                                         color: isSelected
-                                            ? ParentColors.parentGreen
+                                            ? context.parentTheme.primary
                                                 .withValues(alpha: 0.2)
                                             : Theme.of(context)
                                                 .colorScheme
@@ -907,7 +909,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
                                           color: isSelected
-                                              ? ParentColors.parentGreen
+                                              ? context.parentTheme.primary
                                               : Theme.of(context)
                                                   .colorScheme
                                                   .surfaceContainerHighest,
@@ -938,7 +940,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                               Text(
                                 l10n.picturePasswordError,
                                 style: TextStyle(
-                                  color: ParentColors.alertRed,
+                                  color: context.parentTheme.danger,
                                   fontSize: 12,
                                 ),
                               ),
@@ -952,6 +954,9 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                                 children: picturePasswordOptions.map((option) {
                                   final isSelected =
                                       picturePassword.contains(option.id);
+                                  final optionColor =
+                                      resolvePicturePasswordColor(
+                                          context, option);
                                   return InkWell(
                                     onTap: () => togglePicture(option.id),
                                     borderRadius: BorderRadius.circular(12),
@@ -960,7 +965,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                                       height: 64,
                                       decoration: BoxDecoration(
                                         color: isSelected
-                                            ? option.color
+                                            ? optionColor
                                                 .withValues(alpha: 0.2)
                                             : Theme.of(context)
                                                 .colorScheme
@@ -968,7 +973,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
                                           color: isSelected
-                                              ? option.color
+                                              ? optionColor
                                               : Theme.of(context)
                                                   .colorScheme
                                                   .surfaceContainerHighest,
@@ -978,7 +983,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                                       child: Icon(
                                         option.icon,
                                         size: 24,
-                                        color: option.color,
+                                        color: optionColor,
                                       ),
                                     ),
                                   );
@@ -1139,7 +1144,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
               },
             );
           },
-          backgroundColor: ParentColors.parentGreen,
+          backgroundColor: context.parentTheme.primary,
           child: const Icon(Icons.add),
         ),
       ),
@@ -1160,7 +1165,10 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: ParentCard(
-        onTap: () => context.push('/parent/child-profile', extra: child),
+        onTap: () => context.push(
+          Routes.parentChildProfileById(child.id),
+          extra: child,
+        ),
         child: Row(
           children: [
             Column(
@@ -1243,15 +1251,15 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                     children: [
                       _buildInfoChip(
                         '${child.activitiesCompleted} ${l10n.activities}',
-                        ParentColors.parentGreenLight,
+                        context.parentTheme.success,
                       ),
                       _buildInfoChip(
                         '${child.totalTimeSpent} ${l10n.timeSpent}',
-                        ParentColors.infoBlue,
+                        context.parentTheme.info,
                       ),
                       _buildInfoChip(
                         '${child.streak} ${l10n.dailyStreak}',
-                        ParentColors.streakOrange,
+                        context.parentTheme.warning,
                       ),
                     ],
                   ),
@@ -1280,7 +1288,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                     onPressed: () =>
                         context.push('/parent/reports', extra: child.id),
                     icon: const Icon(Icons.pie_chart),
-                    color: ParentColors.parentGreen,
+                    color: context.parentTheme.primary,
                     iconSize: 20,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints.tightFor(
@@ -1296,7 +1304,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                   child: IconButton(
                     onPressed: () => _confirmDeleteChild(child),
                     icon: const Icon(Icons.delete_outline),
-                    color: ParentColors.alertRed,
+                    color: context.parentTheme.danger,
                     iconSize: 20,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints.tightFor(
@@ -1337,7 +1345,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         children: [
-          Icon(icon, color: ParentColors.parentGreen, size: 20),
+          Icon(icon, color: context.parentTheme.primary, size: 20),
           const SizedBox(width: 12),
           Text(
             text,

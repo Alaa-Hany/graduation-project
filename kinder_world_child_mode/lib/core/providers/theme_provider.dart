@@ -24,6 +24,19 @@ class ThemeState {
   }
 }
 
+extension ThemeModeResolutionX on ThemeMode {
+  bool resolvesToDark(Brightness platformBrightness) {
+    switch (this) {
+      case ThemeMode.system:
+        return platformBrightness == Brightness.dark;
+      case ThemeMode.light:
+        return false;
+      case ThemeMode.dark:
+        return true;
+    }
+  }
+}
+
 class ThemeController extends StateNotifier<ThemeState> {
   static const _paletteKey = 'theme_palette_id';
   static const _modeKey = 'theme_mode';

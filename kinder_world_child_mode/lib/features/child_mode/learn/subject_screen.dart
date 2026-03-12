@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
+import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
+import 'package:kinder_world/router.dart';
 
 class SubjectScreen extends ConsumerWidget {
   final String subject;
@@ -18,6 +20,8 @@ class SubjectScreen extends ConsumerWidget {
     final lessons = _getMockLessons(subject);
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final subjectColor = _getSubjectColor(context, subject);
+    final onSubjectColor = subjectColor.onColor;
     
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -26,7 +30,7 @@ class SubjectScreen extends ConsumerWidget {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: colors.onSurface),
-          onPressed: () => context.go('/child/learn'),
+          onPressed: () => context.appBack(fallback: Routes.childLearn),
         ),
         title: Text(
           _getSubjectDisplayName(subject),
@@ -46,7 +50,7 @@ class SubjectScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: _getSubjectColor(subject),
+                  color: subjectColor,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -55,13 +59,13 @@ class SubjectScreen extends ConsumerWidget {
                       width: 60,
                       height: 60,
                       decoration: BoxDecoration(
-                        color: colors.onPrimary.withValues(alpha: 0.2),
+                        color: onSubjectColor.withValues(alpha: 0.16),
                         borderRadius: BorderRadius.circular(30),
                       ),
                       child: Icon(
                         _getSubjectIcon(subject),
                         size: 30,
-                        color: colors.onPrimary,
+                        color: onSubjectColor,
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -74,14 +78,14 @@ class SubjectScreen extends ConsumerWidget {
                             style: textTheme.titleLarge?.copyWith(
                               fontSize: AppConstants.largeFontSize,
                               fontWeight: FontWeight.bold,
-                              color: colors.onPrimary,
+                              color: onSubjectColor,
                             ),
                           ),
                           Text(
                             '${lessons.length} lessons available',
                             style: TextStyle(
                               fontSize: 16,
-                              color: colors.onPrimary.withValues(alpha: 0.8),
+                              color: onSubjectColor.withValues(alpha: 0.8),
                             ),
                           ),
                         ],
@@ -111,7 +115,7 @@ class SubjectScreen extends ConsumerWidget {
                     return _LessonCard(
                       lesson: lesson,
                       onTap: () {
-                        context.go('/child/learn/lesson/${lesson['id']}');
+                        context.go('${Routes.childLearn}/lesson/${lesson['id']}');
                       },
                     );
                   },
@@ -235,20 +239,22 @@ class SubjectScreen extends ConsumerWidget {
     }
   }
 
-  Color _getSubjectColor(String subject) {
+  Color _getSubjectColor(BuildContext context, String subject) {
+    final childTheme = context.childTheme;
+    final colors = Theme.of(context).colorScheme;
     switch (subject) {
       case 'math':
-        return AppColors.educational;
+        return childTheme.learning;
       case 'science':
-        return AppColors.skillful;
+        return childTheme.skill;
       case 'reading':
-        return AppColors.behavioral;
+        return childTheme.kindness;
       case 'history':
-        return AppColors.entertaining;
+        return childTheme.fun;
       case 'geography':
-        return AppColors.secondary;
+        return colors.secondary;
       default:
-        return AppColors.primary;
+        return colors.primary;
     }
   }
 
@@ -283,6 +289,8 @@ class _LessonCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final childTheme = context.childTheme;
+    final iconColor = lesson['completed'] ? context.successColor : colors.primary;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -306,13 +314,13 @@ class _LessonCard extends StatelessWidget {
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
+                color: iconColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 lesson['completed'] ? Icons.check_circle : Icons.play_circle,
                 size: 30,
-                color: lesson['completed'] ? AppColors.success : AppColors.primary,
+                color: iconColor,
               ),
             ),
             const SizedBox(width: 16),
@@ -354,17 +362,17 @@ class _LessonCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 16),
-                      const Icon(
+                      Icon(
                         Icons.star,
                         size: 16,
-                        color: AppColors.xpColor,
+                        color: childTheme.xp,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         '${lesson['xp']} XP',
-                        style: const TextStyle(
+                        style: textTheme.bodySmall?.copyWith(
                           fontSize: 14,
-                          color: AppColors.xpColor,
+                          color: childTheme.xp,
                         ),
                       ),
                     ],

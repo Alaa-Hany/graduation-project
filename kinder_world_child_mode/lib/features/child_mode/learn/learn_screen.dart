@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/providers/content_controller.dart';
-import 'package:kinder_world/core/theme/app_colors.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/features/child_mode/learn/coloring_gallery_screen.dart';
@@ -50,32 +50,35 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
     super.dispose();
   }
 
-  final List<Map<String, dynamic>> _categories = const [
-    {
-      'title': 'Behavioral',
-      'image': 'assets/images/behavioral_main.png',
-      'color': AppColors.behavioral,
-      'route': 'behavioral',
-    },
-    {
-      'title': 'Educational',
-      'image': 'assets/images/educational_main.png',
-      'color': AppColors.educational,
-      'route': 'educational',
-    },
-    {
-      'title': 'Skillful',
-      'image': 'assets/images/skillful_main.png',
-      'color': AppColors.skillful,
-      'route': 'skillful',
-    },
-    {
-      'title': 'Entertaining',
-      'image': 'assets/images/entertaining_main.png',
-      'color': AppColors.entertaining,
-      'route': 'entertaining',
-    },
-  ];
+  List<Map<String, dynamic>> get _categories {
+    final childTheme = context.childTheme;
+    return [
+      {
+        'title': 'Behavioral',
+        'image': 'assets/images/behavioral_main.png',
+        'color': childTheme.kindness,
+        'route': 'behavioral',
+      },
+      {
+        'title': 'Educational',
+        'image': 'assets/images/educational_main.png',
+        'color': childTheme.learning,
+        'route': 'educational',
+      },
+      {
+        'title': 'Skillful',
+        'image': 'assets/images/skillful_main.png',
+        'color': childTheme.skill,
+        'route': 'skillful',
+      },
+      {
+        'title': 'Entertaining',
+        'image': 'assets/images/entertaining_main.png',
+        'color': childTheme.fun,
+        'route': 'entertaining',
+      },
+    ];
+  }
 
   final List<Map<String, String>> _searchItems = const [
     {'title': 'Behavioral', 'route': 'behavioral'},
@@ -113,7 +116,7 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
         );
       },
       child: Scaffold(
-        backgroundColor: Color(0xFFFAFAFA),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(20.0),
@@ -157,7 +160,7 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 16),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
+                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.only(
                         topRight: Radius.circular(20),
                         bottomLeft: Radius.circular(20),
@@ -167,16 +170,16 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.wb_sunny_outlined,
-                            color: AppColors.primary, size: 24),
+                        Icon(Icons.wb_sunny_outlined,
+                            color: Theme.of(context).colorScheme.primary, size: 24),
                         const SizedBox(width: 12),
                         Flexible(
                           child: Text(
                             l10n.letsExploreAndLearn,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.primary,
+                              color: Theme.of(context).colorScheme.primary,
                             ),
                           ),
                         ),
@@ -474,16 +477,16 @@ class EntertainingScreen extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.sentiment_satisfied_alt,
-                      color: AppColors.entertaining, size: 28),
+                  Icon(Icons.sentiment_satisfied_alt,
+                      color: context.childTheme.fun, size: 28),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       l10n.foundSomethingFun,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.entertaining,
+                        color: context.childTheme.fun,
                       ),
                     ),
                   ),
@@ -652,7 +655,7 @@ class EntertainmentDetailScreen extends StatelessWidget {
         title: Text(
           _localizedCategoryTitle(l10n),
           style: TextStyle(
-              color: AppColors.entertaining, fontWeight: FontWeight.bold),
+              color: context.childTheme.fun, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -824,7 +827,7 @@ class BehavioralScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: AppColors.behavioral,
+                color: context.childTheme.kindness,
               ),
             ),
             const SizedBox(height: 24),
@@ -868,7 +871,7 @@ class BehavioralScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: AppColors.behavioral.withValues(alpha: 0.15),
+              color: context.childTheme.kindness.withValues(alpha: 0.15),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -937,7 +940,7 @@ class ValueDetailsScreen extends StatelessWidget {
         title: Text(
           valueTitle,
           style: TextStyle(
-              color: AppColors.behavioral, fontWeight: FontWeight.bold),
+              color: context.childTheme.kindness, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -1064,11 +1067,11 @@ class MethodContentScreen extends ConsumerWidget {
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.behavioral.withValues(alpha: 0.1),
+                          color: context.childTheme.kindness.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
                         child:
-                            Icon(Icons.arrow_back, color: AppColors.behavioral),
+                            Icon(Icons.arrow_back, color: context.childTheme.kindness),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -1089,16 +1092,16 @@ class MethodContentScreen extends ConsumerWidget {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.lightbulb_outline,
-                          color: AppColors.behavioral, size: 24),
+                      Icon(Icons.lightbulb_outline,
+                          color: context.childTheme.kindness, size: 24),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           l10n.letsTryNewSkill,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.behavioral,
+                            color: context.childTheme.kindness,
                           ),
                         ),
                       ),
@@ -1160,13 +1163,13 @@ class MethodContentScreen extends ConsumerWidget {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: AppColors.behavioral.withValues(alpha: 0.1),
+                  color: context.childTheme.kindness.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
                   child: Icon(
                     Icons.extension,
-                    color: AppColors.behavioral,
+                    color: context.childTheme.kindness,
                     size: 32,
                   ),
                 ),
@@ -1253,7 +1256,7 @@ class SkillfulScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: AppColors.skillful,
+                color: context.childTheme.skill,
               ),
             ),
             const SizedBox(height: 24),
@@ -1301,7 +1304,7 @@ class SkillfulScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: AppColors.skillful.withValues(alpha: 0.1),
+              color: context.childTheme.skill.withValues(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -1322,8 +1325,8 @@ class SkillfulScreen extends StatelessWidget {
                 errorBuilder: (c, e, s) => Container(
                   width: 120,
                   height: 120,
-                  color: AppColors.skillful.withValues(alpha: 0.2),
-                  child: Icon(Icons.brush, color: AppColors.skillful),
+                  color: context.childTheme.skill.withValues(alpha: 0.2),
+                  child: Icon(Icons.brush, color: context.childTheme.skill),
                 ),
               ),
             ),
@@ -1358,7 +1361,7 @@ class SkillfulScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(12.0),
               child: Icon(Icons.arrow_forward_ios,
-                  color: AppColors.skillful, size: 18),
+                  color: context.childTheme.skill, size: 18),
             ),
           ],
         ),
@@ -1460,17 +1463,17 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new,
-                        color: AppColors.skillful),
+                    icon: Icon(Icons.arrow_back_ios_new,
+                        color: context.childTheme.skill),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                   const SizedBox(width: 10),
                   Text(
                     _localizedSkillTitle(widget.skillTitle, l10n),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.skillful,
+                      color: context.childTheme.skill,
                     ),
                   ),
                 ],
@@ -1535,11 +1538,11 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: isSelected ? AppColors.skillful : Colors.white,
+                          color: isSelected ? context.childTheme.skill : Colors.white,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: isSelected
-                                ? AppColors.skillful
+                                ? context.childTheme.skill
                                 : Colors.grey[300]!,
                           ),
                         ),
@@ -1618,7 +1621,7 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
               child: Center(
                 child: Icon(
                   Icons.play_circle_fill,
-                  color: AppColors.skillful,
+                  color: context.childTheme.skill,
                   size: 50,
                 ),
               ),
@@ -1644,13 +1647,13 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.skillful.withValues(alpha: 0.1),
+                        color: context.childTheme.skill.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         l10n.watchNow,
-                        style: const TextStyle(
-                          color: AppColors.skillful,
+                        style: TextStyle(
+                          color: context.childTheme.skill,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
@@ -1664,10 +1667,10 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
               padding: const EdgeInsets.all(12.0),
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppColors.skillful.withValues(alpha: 0.1),
+                  color: context.childTheme.skill.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.play_arrow, color: AppColors.skillful),
+                child: Icon(Icons.play_arrow, color: context.childTheme.skill),
               ),
             ),
           ],
@@ -1718,17 +1721,17 @@ class SkillVideoScreen extends StatelessWidget {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_ios,
-                        color: AppColors.skillful),
+                    icon: Icon(Icons.arrow_back_ios,
+                        color: context.childTheme.skill),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                   Expanded(
                     child: Text(
                       videoTitle,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.skillful,
+                        color: context.childTheme.skill,
                       ),
                       textAlign: TextAlign.center,
                       overflow: TextOverflow.ellipsis,
@@ -1758,7 +1761,7 @@ class SkillVideoScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(25),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.skillful.withValues(alpha: 0.2),
+                              color: context.childTheme.skill.withValues(alpha: 0.2),
                               blurRadius: 20,
                               offset: const Offset(0, 10),
                             ),
@@ -1779,11 +1782,11 @@ class SkillVideoScreen extends StatelessWidget {
                               width: 80,
                               height: 80,
                               decoration: BoxDecoration(
-                                color: AppColors.skillful,
+                                color: context.childTheme.skill,
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppColors.skillful
+                                    color: context.childTheme.skill
                                         .withValues(alpha: 0.4),
                                     blurRadius: 15,
                                     offset: const Offset(0, 5),
@@ -1850,7 +1853,7 @@ class SkillVideoScreen extends StatelessWidget {
                               child: ElevatedButton(
                                 onPressed: () => Navigator.of(context).pop(),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.skillful,
+                                  backgroundColor: context.childTheme.skill,
                                   foregroundColor: Colors.white,
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 18),
@@ -1957,15 +1960,15 @@ class EducationalScreen extends StatelessWidget {
                   final l10n = AppLocalizations.of(ctx)!;
                   return Row(
                     children: [
-                      const Icon(Icons.lightbulb,
-                          color: AppColors.educational, size: 32),
+                      Icon(Icons.lightbulb,
+                          color: context.childTheme.learning, size: 32),
                       const SizedBox(width: 16),
                       Text(
                         l10n.letsLearnSomethingNew,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.educational,
+                          color: context.childTheme.learning,
                         ),
                       ),
                     ],
@@ -2114,17 +2117,17 @@ class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new,
-                        color: AppColors.educational),
+                    icon: Icon(Icons.arrow_back_ios_new,
+                        color: context.childTheme.learning),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                   const SizedBox(width: 10),
                   Text(
                     _localizedSubjectTitle(widget.subjectTitle, l10n),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.educational,
+                      color: context.childTheme.learning,
                     ),
                   ),
                 ],
@@ -2190,11 +2193,11 @@ class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
                             horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
                           color:
-                              isSelected ? AppColors.educational : Colors.white,
+                              isSelected ? context.childTheme.learning : Colors.white,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: isSelected
-                                ? AppColors.educational
+                                ? context.childTheme.learning
                                 : Colors.grey[300]!,
                           ),
                         ),
@@ -2275,7 +2278,7 @@ class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
               child: Center(
                 child: Icon(
                   Icons.play_circle_outline,
-                  color: AppColors.educational,
+                  color: context.childTheme.learning,
                   size: 50,
                 ),
               ),
@@ -2300,13 +2303,13 @@ class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.educational.withValues(alpha: 0.1),
+                        color: context.childTheme.learning.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         lesson['level'],
-                        style: const TextStyle(
-                          color: AppColors.educational,
+                        style: TextStyle(
+                          color: context.childTheme.learning,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
@@ -2319,7 +2322,7 @@ class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
             Padding(
               padding: const EdgeInsets.all(12.0),
               child: Icon(Icons.play_circle_outline,
-                  color: AppColors.educational, size: 32),
+                  color: context.childTheme.learning, size: 32),
             ),
           ],
         ),
@@ -2376,17 +2379,17 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_ios,
-                        color: AppColors.educational),
+                    icon: Icon(Icons.arrow_back_ios,
+                        color: context.childTheme.learning),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                   Expanded(
                     child: Text(
                       widget.lessonTitle,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.educational,
+                        color: context.childTheme.learning,
                       ),
                       textAlign: TextAlign.center,
                       overflow: TextOverflow.ellipsis,
@@ -2442,8 +2445,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                                 color: Colors.white.withValues(alpha: 0.9),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.play_arrow,
-                                  color: AppColors.educational, size: 40),
+                              child: Icon(Icons.play_arrow,
+                                  color: context.childTheme.learning, size: 40),
                             ),
                           ],
                         ),
@@ -2471,12 +2474,12 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                                   width: 44,
                                   height: 44,
                                   decoration: BoxDecoration(
-                                    color: AppColors.educational
+                                    color: context.childTheme.learning
                                         .withValues(alpha: 0.15),
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(Icons.quiz,
-                                      color: AppColors.educational),
+                                  child: Icon(Icons.quiz,
+                                      color: context.childTheme.learning),
                                 ),
                                 const SizedBox(width: 10),
                                 Text(
@@ -2518,7 +2521,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                                       fontWeight: FontWeight.bold),
                                 ),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.educational,
+                                  backgroundColor: context.childTheme.learning,
                                   foregroundColor: Colors.white,
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 14),
@@ -2633,13 +2636,13 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
         elevation: 0,
         title: Text(
           '${widget.lessonTitle} Quiz',
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: AppColors.educational,
+            color: context.childTheme.learning,
           ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.educational),
+          icon: Icon(Icons.arrow_back_ios, color: context.childTheme.learning),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -2667,11 +2670,11 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
                       width: 42,
                       height: 42,
                       decoration: BoxDecoration(
-                        color: AppColors.educational.withValues(alpha: 0.15),
+                        color: context.childTheme.learning.withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
                       child:
-                          const Icon(Icons.star, color: AppColors.educational),
+                          Icon(Icons.star, color: context.childTheme.learning),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -2703,8 +2706,8 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
                 child: LinearProgressIndicator(
                   value: (_currentQuestionIndex + 1) / _quizData.length,
                   backgroundColor: Colors.orange[100],
-                  valueColor: const AlwaysStoppedAnimation<Color>(
-                      AppColors.educational),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                      context.childTheme.learning),
                   minHeight: 8,
                 ),
               ),
@@ -2751,8 +2754,8 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
                         textColor = Colors.red[900]!;
                       }
                     } else if (isSelected) {
-                      bgColor = AppColors.educational.withValues(alpha: 0.1);
-                      borderColor = AppColors.educational;
+                      bgColor = context.childTheme.learning.withValues(alpha: 0.1);
+                      borderColor = context.childTheme.learning;
                     }
 
                     return InkWell(
@@ -2786,7 +2789,7 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
                 child: ElevatedButton(
                   onPressed: _showResult ? _nextQuestion : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.educational,
+                    backgroundColor: context.childTheme.learning,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -2809,3 +2812,4 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
     );
   }
 }
+

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
 import 'package:kinder_world/core/providers/profile_controller.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/parent_design_system.dart';
+import 'package:kinder_world/router.dart';
 
 class ParentProfileScreen extends ConsumerStatefulWidget {
   const ParentProfileScreen({super.key});
@@ -51,10 +54,9 @@ class _ParentProfileScreenState extends ConsumerState<ParentProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.profileUpdated),
-            backgroundColor: ParentColors.parentGreen,
+            backgroundColor: context.parentTheme.success,
           ),
         );
-        await Future.delayed(const Duration(milliseconds: 500));
         if (mounted) context.pop();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -71,6 +73,8 @@ class _ParentProfileScreenState extends ConsumerState<ParentProfileScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
+    final parent = context.parentTheme;
+    final avatarAccent = Color.lerp(parent.primary, parent.info, 0.35)!;
     final meState = ref.watch(meProvider);
     final profileState = ref.watch(profileControllerProvider);
     final isLoading = profileState.isLoading;
@@ -81,16 +85,9 @@ class _ParentProfileScreenState extends ConsumerState<ParentProfileScreen> {
         backgroundColor: colors.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded,
-              size: 20, color: colors.onSurface),
-          onPressed: () {
-            if (Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
-            } else {
-              context.go('/parent/settings');
-            }
-          },
+        leading: AppBackButton(
+          fallback: Routes.parentDashboard,
+          color: colors.onSurface,
         ),
         title: Text(
           l10n.editProfile,
@@ -104,8 +101,7 @@ class _ParentProfileScreenState extends ConsumerState<ParentProfileScreen> {
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Divider(
-              height: 1,
-              color: colors.outlineVariant.withValues(alpha: 0.4)),
+              height: 1, color: colors.outlineVariant.withValues(alpha: 0.4)),
         ),
       ),
       body: SafeArea(
@@ -115,16 +111,14 @@ class _ParentProfileScreenState extends ConsumerState<ParentProfileScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.error_outline_rounded,
-                    size: 48, color: ParentColors.alertRed),
+                Icon(Icons.error_outline_rounded, size: 48, color: parent.danger),
                 const SizedBox(height: 16),
                 Text(l10n.error,
                     style: TextStyle(color: colors.onSurfaceVariant)),
                 const SizedBox(height: 16),
                 FilledButton(
                   onPressed: () => ref.invalidate(meProvider),
-                  style: FilledButton.styleFrom(
-                      backgroundColor: ParentColors.parentGreen),
+                  style: FilledButton.styleFrom(backgroundColor: parent.primary),
                   child: Text(l10n.retry),
                 ),
               ],
@@ -139,8 +133,7 @@ class _ParentProfileScreenState extends ConsumerState<ParentProfileScreen> {
             }
 
             return SingleChildScrollView(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
               child: Column(
                 children: [
                   // ── Avatar header ─────────────────────────────────────
@@ -150,11 +143,11 @@ class _ParentProfileScreenState extends ConsumerState<ParentProfileScreen> {
                         Container(
                           width: 88,
                           height: 88,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                ParentColors.parentGreen,
-                                ParentColors.parentGreenLight,
+                                parent.primary,
+                                avatarAccent,
                               ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
@@ -189,8 +182,7 @@ class _ParentProfileScreenState extends ConsumerState<ParentProfileScreen> {
                           Text(
                             user.email,
                             style: TextStyle(
-                                fontSize: 13,
-                                color: colors.onSurfaceVariant),
+                                fontSize: 13, color: colors.onSurfaceVariant),
                           ),
                         ],
                       ],
@@ -210,8 +202,8 @@ class _ParentProfileScreenState extends ConsumerState<ParentProfileScreen> {
                           enabled: !isLoading,
                           decoration: InputDecoration(
                             hintText: l10n.enterYourName,
-                            prefixIcon: const Icon(Icons.person_rounded,
-                                color: ParentColors.parentGreen, size: 20),
+                            prefixIcon: Icon(Icons.person_rounded,
+                                color: parent.primary, size: 20),
                             filled: true,
                             fillColor: colors.surfaceContainerLowest,
                             contentPadding: const EdgeInsets.symmetric(
@@ -228,8 +220,8 @@ class _ParentProfileScreenState extends ConsumerState<ParentProfileScreen> {
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
-                                  color: ParentColors.parentGreen, width: 2),
+                              borderSide:
+                                  BorderSide(color: parent.primary, width: 2),
                             ),
                             disabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -251,8 +243,7 @@ class _ParentProfileScreenState extends ConsumerState<ParentProfileScreen> {
                         ParentSectionHeader(title: l10n.email),
                         const SizedBox(height: 12),
                         TextField(
-                          controller:
-                              TextEditingController(text: user.email),
+                          controller: TextEditingController(text: user.email),
                           enabled: false,
                           decoration: InputDecoration(
                             prefixIcon: Icon(Icons.email_rounded,
@@ -283,16 +274,16 @@ class _ParentProfileScreenState extends ConsumerState<ParentProfileScreen> {
                     child: FilledButton(
                       onPressed: isLoading ? null : () => _handleSave(l10n),
                       style: FilledButton.styleFrom(
-                        backgroundColor: ParentColors.parentGreen,
+                        backgroundColor: parent.primary,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14)),
                       ),
                       child: isLoading
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 20,
                               height: 20,
                               child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.white),
+                                  strokeWidth: 2, color: colors.onPrimary),
                             )
                           : Text(
                               l10n.save,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/features/admin/admins/admin_admin_management_screen.dart';
 import 'package:kinder_world/features/admin/audit/admin_audit_logs_screen.dart';
@@ -62,62 +63,168 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop || !mounted) return;
-        context.go(Routes.selectUserType);
+        context.appBack(
+          fallback: _selectedRoute == Routes.adminDashboard
+              ? Routes.selectUserType
+              : Routes.adminDashboard,
+        );
       },
-      child: Scaffold(
-        key: _scaffoldKey,
-        backgroundColor: colorScheme.surfaceContainerLowest,
-        appBar: AppBar(
-          backgroundColor: colorScheme.surface,
-          elevation: 0,
-          scrolledUnderElevation: 1,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_rounded),
-            onPressed: () => context.go(Routes.selectUserType),
-            tooltip: l10n.goBack,
-          ),
-          title: Row(
-            children: [
-              Icon(
-                Icons.admin_panel_settings_outlined,
-                color: colorScheme.primary,
-                size: 22,
-              ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  l10n.adminDashboard,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+      child: Theme(
+        data: _adminTheme(theme),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final wide = constraints.maxWidth >= 1180;
+            final compact = constraints.maxWidth < 720;
+            final bodyContent = KeyedSubtree(
+              key: ValueKey(_selectedRoute),
+              child: _buildBody(),
+            );
+
+            return Scaffold(
+              key: _scaffoldKey,
+              backgroundColor: colorScheme.surfaceContainerLowest,
+              appBar: AppBar(
+                backgroundColor: colorScheme.surface,
+                elevation: 0,
+                scrolledUnderElevation: 1,
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back_rounded),
+                  onPressed: () => context.appBack(
+                    fallback: _selectedRoute == Routes.adminDashboard
+                        ? Routes.selectUserType
+                        : Routes.adminDashboard,
                   ),
+                  tooltip: l10n.goBack,
                 ),
+                titleSpacing: compact ? 8 : NavigationToolbar.kMiddleSpacing,
+                title: Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        Icons.admin_panel_settings_outlined,
+                        color: colorScheme.primary,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.adminDashboard,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              fontSize: compact ? 18 : 20,
+                              color: colorScheme.onSurface,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          if (!compact)
+                            Text(
+                              'Manage your platform',
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontSize: 12,
+                                color: colorScheme.onSurfaceVariant,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                actions: [
+                  if (!wide)
+                    IconButton(
+                      icon: const Icon(Icons.menu),
+                      onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                      tooltip: l10n.adminMenuTooltip,
+                    ),
+                  IconButton(
+                    icon: const Icon(Icons.refresh_outlined),
+                    tooltip: l10n.adminRefreshTooltip,
+                    onPressed: () =>
+                        ref.read(adminAuthProvider.notifier).refreshProfile(),
+                  ),
+                  _AdminAvatarButton(
+                    onLogout: () => _handleLogout(context, l10n),
+                  ),
+                  const SizedBox(width: 8),
+                ],
               ),
-            ],
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-              tooltip: l10n.adminMenuTooltip,
-            ),
-            IconButton(
-              icon: const Icon(Icons.refresh_outlined),
-              tooltip: l10n.adminRefreshTooltip,
-              onPressed: () =>
-                  ref.read(adminAuthProvider.notifier).refreshProfile(),
-            ),
-            _AdminAvatarButton(
-              onLogout: () => _handleLogout(context, l10n),
-            ),
-            const SizedBox(width: 8),
-          ],
+              drawer: wide
+                  ? null
+                  : AdminSidebar(
+                      selectedRoute: _selectedRoute,
+                      onClose: () => _scaffoldKey.currentState?.closeDrawer(),
+                    ),
+              body: SafeArea(
+                top: false,
+                child: wide
+                    ? Row(
+                        children: [
+                          AdminSidebar(
+                            embedded: true,
+                            selectedRoute: _selectedRoute,
+                          ),
+                          Expanded(child: bodyContent),
+                        ],
+                      )
+                    : bodyContent,
+              ),
+            );
+          },
         ),
-        drawer: AdminSidebar(
-          selectedRoute: _selectedRoute,
-          onClose: () => _scaffoldKey.currentState?.closeDrawer(),
-        ),
-        body: _buildBody(),
+      ),
+    );
+  }
+
+  ThemeData _adminTheme(ThemeData baseTheme) {
+    return baseTheme.copyWith(
+      filledButtonTheme: FilledButtonThemeData(
+        style: baseTheme.filledButtonTheme.style?.copyWith(
+              minimumSize: const WidgetStatePropertyAll(Size(0, 44)),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+            ) ??
+            FilledButton.styleFrom(
+              minimumSize: const Size(0, 44),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+            ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: baseTheme.outlinedButtonTheme.style?.copyWith(
+              minimumSize: const WidgetStatePropertyAll(Size(0, 44)),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+            ) ??
+            OutlinedButton.styleFrom(
+              minimumSize: const Size(0, 44),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+            ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: baseTheme.elevatedButtonTheme.style?.copyWith(
+              minimumSize: const WidgetStatePropertyAll(Size(0, 44)),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+            ) ??
+            ElevatedButton.styleFrom(
+              minimumSize: const Size(0, 44),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+            ),
       ),
     );
   }
@@ -128,7 +235,10 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     if (path.startsWith('${Routes.adminUsers}/')) {
       final id = int.tryParse(path.split('/').last);
       if (id != null) {
-        return AdminUserDetailsScreen(userId: id);
+        return AdminUserDetailsScreen(
+          key: ValueKey('admin-user-$id'),
+          userId: id,
+        );
       }
     }
     if (path == Routes.adminUsers) return const AdminUsersScreen();
@@ -136,7 +246,10 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     if (path.startsWith('${Routes.adminChildren}/')) {
       final id = int.tryParse(path.split('/').last);
       if (id != null) {
-        return AdminChildDetailsScreen(childId: id);
+        return AdminChildDetailsScreen(
+          key: ValueKey('admin-child-$id'),
+          childId: id,
+        );
       }
     }
     if (path == Routes.adminChildren) return const AdminChildrenScreen();

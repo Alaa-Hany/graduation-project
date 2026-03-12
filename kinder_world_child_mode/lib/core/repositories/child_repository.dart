@@ -7,6 +7,8 @@ import 'package:logger/logger.dart';
 class ChildRepository {
   final Box _childBox;
   final Logger _logger;
+  final Map<String, ChildProfile> _profileCache = <String, ChildProfile>{};
+  bool _didWarmAllProfiles = false;
 
   ChildRepository({
     required Box childBox,
@@ -14,11 +16,49 @@ class ChildRepository {
   })  : _childBox = childBox,
         _logger = logger;
 
+  ChildProfile? _decodeProfile(dynamic data) {
+    if (data == null) return null;
+    final Map<String, dynamic> json = data is String
+        ? jsonDecode(data) as Map<String, dynamic>
+        : Map<String, dynamic>.from(data as Map);
+    return ChildProfile.fromJson(json);
+  }
+
+  void _cacheProfile(ChildProfile profile) {
+    _profileCache[profile.id] = profile;
+  }
+
+  Future<List<ChildProfile>> _loadAllProfiles() async {
+    if (_didWarmAllProfiles) {
+      return _profileCache.values.toList(growable: false);
+    }
+
+    final children = <ChildProfile>[];
+    for (final key in _childBox.keys) {
+      final data = _childBox.get(key);
+      if (data == null) continue;
+      try {
+        final profile = _decodeProfile(data);
+        if (profile == null) continue;
+        children.add(profile);
+        _cacheProfile(profile);
+      } catch (e) {
+        _logger.e('Error parsing child: $key, $e');
+      }
+    }
+    _didWarmAllProfiles = true;
+    return children;
+  }
+
   // ==================== CRUD OPERATIONS ====================
 
   /// Get child profile by ID
   Future<ChildProfile?> getChildProfile(String childId) async {
     try {
+      final cached = _profileCache[childId];
+      if (cached != null) {
+        return cached;
+      }
       final data = _childBox.get(childId);
       
       if (data == null) {
@@ -26,12 +66,11 @@ class ChildRepository {
         return null;
       }
 
-      // Handle both Map and JSON string
-      final Map<String, dynamic> json = data is String
-          ? jsonDecode(data)
-          : Map<String, dynamic>.from(data);
-
-      return ChildProfile.fromJson(json);
+      final profile = _decodeProfile(data);
+      if (profile != null) {
+        _cacheProfile(profile);
+      }
+      return profile;
     } catch (e) {
       _logger.e('Error getting child profile: $childId, $e');
       return null;
@@ -41,27 +80,9 @@ class ChildRepository {
   /// Get all child profiles for a parent
   Future<List<ChildProfile>> getChildrenForParent(String parentId) async {
     try {
-      final children = <ChildProfile>[];
-
-      for (var key in _childBox.keys) {
-        final data = _childBox.get(key);
-        if (data != null) {
-          try {
-            final json = data is String
-                ? jsonDecode(data)
-                : Map<String, dynamic>.from(data);
-            
-            final child = ChildProfile.fromJson(json);
-            
-            if (child.parentId == parentId) {
-              children.add(child);
-            }
-          } catch (e) {
-            _logger.e('Error parsing child: $key, $e');
-          }
-        }
-      }
-
+      final children = (await _loadAllProfiles())
+          .where((child) => child.parentId == parentId)
+          .toList(growable: false);
       _logger.d('Found ${children.length} children for parent: $parentId');
       return children;
     } catch (e) {
@@ -87,6 +108,7 @@ class ChildRepository {
           if (child.parentEmail == parentEmail && child.parentId != parentId) {
             final updated = child.copyWith(parentId: parentId);
             await _childBox.put(updated.id, updated.toJson());
+            _cacheProfile(updated);
           }
         } catch (e) {
           _logger.e('Error linking child to parent: $key, $e');
@@ -102,6 +124,7 @@ class ChildRepository {
     try {
       final json = profile.toJson();
       await _childBox.put(profile.id, json);
+      _cacheProfile(profile);
       
       _logger.d('Child profile created: ${profile.id}');
       return profile;
@@ -120,6 +143,7 @@ class ChildRepository {
       
       final json = updated.toJson();
       await _childBox.put(updated.id, json);
+      _cacheProfile(updated);
       
       _logger.d('Child profile updated: ${updated.id}');
       return updated;
@@ -133,6 +157,7 @@ class ChildRepository {
   Future<bool> deleteChildProfile(String childId) async {
     try {
       await _childBox.delete(childId);
+      _profileCache.remove(childId);
       _logger.d('Child profile deleted: $childId');
       return true;
     } catch (e) {
@@ -389,25 +414,9 @@ class ChildRepository {
   /// Get all child profiles (unfiltered)
   Future<List<ChildProfile>> getAllChildProfiles() async {
     try {
-      final children = <ChildProfile>[];
-
-      for (var key in _childBox.keys) {
-        final data = _childBox.get(key);
-        if (data != null) {
-          try {
-            final json = data is String
-                ? jsonDecode(data)
-                : Map<String, dynamic>.from(data);
-
-            children.add(ChildProfile.fromJson(json));
-          } catch (e) {
-            _logger.e('Error parsing child: $key, $e');
-          }
-        }
-      }
-
+      final children = await _loadAllProfiles();
       _logger.d('Found ${children.length} children');
-      return children;
+      return List<ChildProfile>.unmodifiable(children);
     } catch (e) {
       _logger.e('Error getting all children: $e');
       return [];

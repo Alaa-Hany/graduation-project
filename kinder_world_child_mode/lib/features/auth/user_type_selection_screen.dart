@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kinder_world/app.dart';
+import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/router.dart';
@@ -81,10 +82,21 @@ class _UserTypeSelectionScreenState
       curve: const Interval(0.25, 1.0, curve: Curves.easeOut),
     ));
 
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (mounted) {
-        _headerController.forward();
-        _panelsController.forward();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _headerController.forward();
+      _panelsController.forward();
+    });
+    Future<void>.microtask(() async {
+      try {
+        final secureStorage = ref.read(secureStorageProvider);
+        if (secureStorage.hasCachedParentPinVerification &&
+            !secureStorage.cachedSessionSnapshot.parentPinVerified) {
+          return;
+        }
+        await secureStorage.clearParentPinVerification();
+      } catch (_) {
+        // Some isolated widget tests render this screen without app-level overrides.
       }
     });
   }
@@ -96,16 +108,44 @@ class _UserTypeSelectionScreenState
     super.dispose();
   }
 
-  void _selectUserType(String userType) {
+  Future<void> _selectUserType(String userType) async {
+    if (_pressedPanel != null) {
+      return;
+    }
     setState(() => _pressedPanel = userType);
-    Future.delayed(const Duration(milliseconds: 180), () {
-      if (!mounted) return;
-      if (userType == 'parent') {
-        context.push('/parent/login');
-      } else {
-        context.push('/child/login');
-      }
-    });
+    await Future<void>.delayed(const Duration(milliseconds: 60));
+    if (!mounted) return;
+
+    final secureStorage = ref.read(secureStorageProvider);
+    final authToken = secureStorage.hasCachedSessionSnapshot
+        ? secureStorage.cachedSessionSnapshot.authToken
+        : await secureStorage.getAuthToken();
+    final userRole = secureStorage.hasCachedSessionSnapshot
+        ? secureStorage.cachedSessionSnapshot.userRole
+        : await secureStorage.getUserRole();
+    final childSession = userType == 'child'
+        ? (secureStorage.hasCachedSessionSnapshot
+            ? secureStorage.cachedSessionSnapshot.childSession
+            : await secureStorage.getChildSession())
+        : null;
+
+    if (!mounted) return;
+
+    final isAuthenticated = authToken != null && authToken.isNotEmpty;
+    if (userType == 'parent') {
+      context.go(
+        isAuthenticated && userRole == 'parent'
+            ? Routes.parentDashboard
+            : Routes.parentLogin,
+      );
+      return;
+    }
+
+    context.go(
+      isAuthenticated && userRole == 'child' && childSession != null
+          ? Routes.childHome
+          : Routes.childLogin,
+    );
   }
 
   @override
@@ -119,7 +159,10 @@ class _UserTypeSelectionScreenState
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
-        await SystemNavigator.pop();
+        final container = ProviderScope.containerOf(context, listen: false);
+        await container
+            .read(appNavigationControllerProvider)
+            .handleSystemBack(context);
       },
       child: Scaffold(
         backgroundColor: auth.pageBackground,
@@ -139,7 +182,7 @@ class _UserTypeSelectionScreenState
                       Row(
                         children: [
                           _CircleBackButton(
-                            onTap: () => SystemNavigator.pop(),
+                            onTap: () => context.appBack(fallback: Routes.welcome),
                           ),
                         ],
                       ),

@@ -12,6 +12,7 @@ import 'package:kinder_world/core/widgets/child_header.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/features/child_mode/profile/child_profile_screen.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/features/child_mode/mood/mood_picker_widget.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NAVIGATION SHELL — wraps all child tabs with the premium bottom nav bar
@@ -97,6 +98,7 @@ class _ChildBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isCompact = MediaQuery.sizeOf(context).width < 380;
     final items = [
       _NavItem(icon: Icons.home_rounded, label: l10n.home),
       _NavItem(icon: Icons.auto_stories_rounded, label: l10n.learn),
@@ -118,7 +120,7 @@ class _ChildBottomNav extends StatelessWidget {
       ),
       child: SafeArea(
         child: SizedBox(
-          height: 64,
+          height: isCompact ? 72 : 76,
           child: Row(
             children: List.generate(items.length, (i) {
               return _NavItemWidget(
@@ -126,6 +128,7 @@ class _ChildBottomNav extends StatelessWidget {
                 isSelected: currentIndex == i,
                 onTap: () => onTap(i),
                 colors: colors,
+                isCompact: isCompact,
               );
             }),
           ),
@@ -146,12 +149,14 @@ class _NavItemWidget extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
   final ColorScheme colors;
+  final bool isCompact;
 
   const _NavItemWidget({
     required this.item,
     required this.isSelected,
     required this.onTap,
     required this.colors,
+    required this.isCompact,
   });
 
   @override
@@ -168,8 +173,9 @@ class _NavItemWidget extends StatelessWidget {
               duration: const Duration(milliseconds: 220),
               curve: Curves.easeOutCubic,
               padding: EdgeInsets.symmetric(
-                horizontal: isSelected ? 14 : 8,
-                vertical: 5,
+                horizontal:
+                    isSelected ? (isCompact ? 10 : 14) : (isCompact ? 6 : 8),
+                vertical: isCompact ? 4 : 5,
               ),
               decoration: BoxDecoration(
                 color: isSelected
@@ -177,17 +183,32 @@ class _NavItemWidget extends StatelessWidget {
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(item.icon, size: 22, color: color),
+              child: Icon(item.icon, size: isCompact ? 20 : 22, color: color),
             ),
-            const SizedBox(height: 3),
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 220),
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: color,
+            SizedBox(height: isCompact ? 2 : 3),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: Center(
+                  child: AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 220),
+                    style: TextStyle(
+                      fontSize: isCompact ? 8.5 : 10,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: color,
+                    ),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        item.label,
+                        maxLines: 1,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                ),
               ),
-              child: Text(item.label),
             ),
           ],
         ),
@@ -279,7 +300,9 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
           actions: [
             Consumer(builder: (context, ref, _) {
               final themeState = ref.watch(themeControllerProvider);
-              final isDark = themeState.mode == ThemeMode.dark;
+              final isDark = themeState.mode.resolvesToDark(
+                Theme.of(context).brightness,
+              );
               return IconButton(
                 visualDensity: VisualDensity.compact,
                 iconSize: 20,
@@ -342,19 +365,26 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                 _buildStatsRow(childProfile),
                 const SizedBox(height: 24),
 
-                // 3. Continue Learning
+                // 3. Mood Picker
+                const MoodPickerSection(),
+                const SizedBox(height: 16),
+
+                // 4. Mood Recommendations (shown only after mood is picked)
+                const MoodRecommendationsSection(),
+
+                // 5. Continue Learning
                 _buildContinueLearning(),
                 const SizedBox(height: 24),
 
-                // 4. Daily Goal
+                // 6. Daily Goal
                 _buildDailyGoal(childProfile),
                 const SizedBox(height: 24),
 
-                // 5. My Activities History
+                // 7. My Activities History
                 _buildMyActivitiesHistory(),
                 const SizedBox(height: 24),
 
-                // 6. Activity of the Day
+                // 8. Activity of the Day
                 _buildActivityOfTheDay(),
                 const SizedBox(height: 48),
               ],
@@ -378,10 +408,10 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
     final currentXpInLevel = child.xp % 1000;
 
     return KinderCard(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       gradientColors: [
         colors.primary,
-        colors.primary.withValues(alpha: 0.75),
+        Color.lerp(colors.primary, colors.secondary, 0.35)!,
       ],
       gradientBegin: Alignment.topLeft,
       gradientEnd: Alignment.bottomRight,
@@ -398,29 +428,31 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                   children: [
                     Text(
                       greeting,
-                      style: textTheme.bodySmall?.copyWith(
-                        fontSize: 13,
-                        color: colors.onPrimary.withValues(alpha: 0.78),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      firstName,
-                      style: textTheme.headlineMedium?.copyWith(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                        color: colors.onPrimary,
-                        letterSpacing: -0.5,
-                        height: 1.1,
+                      style: textTheme.bodyLarge?.copyWith(
+                        fontSize: 15,
+                        color: colors.onPrimary.withValues(alpha: 0.85),
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.2,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
+                      firstName,
+                      style: textTheme.headlineMedium?.copyWith(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w900,
+                        color: colors.onPrimary,
+                        letterSpacing: -0.6,
+                        height: 1.0,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
                       _motivationalLine(child, l10n),
-                      style: textTheme.bodySmall?.copyWith(
-                        fontSize: 13,
-                        color: colors.onPrimary.withValues(alpha: 0.78),
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontSize: 14,
+                        color: colors.onPrimary.withValues(alpha: 0.85),
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -430,39 +462,39 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
             ],
           ),
 
-          const SizedBox(height: 18),
+          const SizedBox(height: 24),
 
           // XP bar
           Row(
             children: [
               Text(
                 l10n.levelBubble(child.level),
-                style: textTheme.labelMedium?.copyWith(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: colors.onPrimary.withValues(alpha: 0.78),
+                style: textTheme.labelLarge?.copyWith(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: colors.onPrimary.withValues(alpha: 0.9),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(10),
                   child: LinearProgressIndicator(
                     value: child.xpProgress.clamp(0.0, 1.0),
-                    backgroundColor: colors.onPrimary.withValues(alpha: 0.2),
+                    backgroundColor: colors.onPrimary.withValues(alpha: 0.25),
                     valueColor: AlwaysStoppedAnimation<Color>(
                       childTheme.xp,
                     ),
-                    minHeight: 8,
+                    minHeight: 10,
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Text(
                 l10n.xpDisplay(currentXpInLevel),
-                style: textTheme.labelMedium?.copyWith(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
+                style: textTheme.labelLarge?.copyWith(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
                   color: childTheme.xp,
                 ),
               ),
@@ -720,7 +752,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
         index: 0,
         label: l10n.kindnessTab,
         emoji: '💖',
-        color: ChildColors.kindnessPink,
+        color: context.childTheme.kindness,
         icon: Icons.favorite_rounded,
         items: [
           _HistoryItem(
@@ -744,7 +776,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
         index: 1,
         label: l10n.learningTab,
         emoji: '📚',
-        color: ChildColors.learningBlue,
+        color: context.childTheme.learning,
         icon: Icons.school_rounded,
         items: [
           _HistoryItem(
@@ -768,7 +800,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
         index: 2,
         label: l10n.skillsTab,
         emoji: '🧩',
-        color: ChildColors.skillPurple,
+        color: context.childTheme.skill,
         icon: Icons.extension_rounded,
         items: [
           _HistoryItem(
@@ -792,7 +824,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
         index: 3,
         label: l10n.funTab,
         emoji: '🎵',
-        color: ChildColors.funCyan,
+        color: context.childTheme.fun,
         icon: Icons.music_note_rounded,
         items: [
           _HistoryItem(
@@ -935,6 +967,10 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
 
   Widget _buildActivityOfTheDay() {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final childTheme = context.childTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -942,9 +978,9 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
         const SizedBox(height: 12),
         KinderCard(
           onTap: () => context.go('/child/home/activity-of-day'),
-          gradientColors: const [
-            Color(0xFFFF9800),
-            Color(0xFFFF6B35),
+          gradientColors: [
+            Color.lerp(colors.secondary, childTheme.streakLight, 0.35)!,
+            childTheme.streak,
           ],
           gradientBegin: Alignment.topLeft,
           gradientEnd: Alignment.bottomRight,
@@ -956,7 +992,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                 width: 72,
                 height: 72,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.22),
+                  color: colors.onPrimary.withValues(alpha: 0.22),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Center(
@@ -972,28 +1008,28 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                   children: [
                     Text(
                       l10n.exploreNewActivities,
-                      style: const TextStyle(
+                      style: textTheme.titleMedium?.copyWith(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
-                        color: Colors.white,
+                        color: colors.onPrimary,
                         height: 1.2,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       l10n.discoverSomethingAmazing,
-                      style: TextStyle(
+                      style: textTheme.bodyMedium?.copyWith(
                         fontSize: 13,
-                        color: Colors.white.withValues(alpha: 0.85),
+                        color: colors.onPrimary.withValues(alpha: 0.85),
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       l10n.xpBonusLabel,
-                      style: const TextStyle(
+                      style: textTheme.labelLarge?.copyWith(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: ChildColors.xpGold,
+                        color: childTheme.xp,
                       ),
                     ),
                   ],
@@ -1008,11 +1044,11 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: colors.surface,
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
+                      color: colors.shadow.withValues(alpha: 0.1),
                       blurRadius: 6,
                       offset: const Offset(0, 3),
                     ),
@@ -1020,10 +1056,10 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                 ),
                 child: Text(
                   l10n.start,
-                  style: const TextStyle(
+                  style: textTheme.labelLarge?.copyWith(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFFFF6B35),
+                    color: childTheme.streak,
                   ),
                 ),
               ),

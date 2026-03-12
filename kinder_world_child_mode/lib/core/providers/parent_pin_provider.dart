@@ -1,195 +1,213 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/app.dart';
-import 'package:kinder_world/core/storage/secure_storage.dart';
+import 'package:kinder_world/core/providers/auth_controller.dart';
+import 'package:kinder_world/core/repositories/auth_repository.dart';
 import 'package:logger/logger.dart';
 
-// Parent PIN State
+enum ParentPinFlowMode {
+  auto,
+  verify,
+  setup,
+  change,
+}
+
 class ParentPinState {
-  final String? pin;
-  final bool isRequired;
+  final bool hasPin;
   final bool isVerified;
   final bool isLoading;
+  final bool isLocked;
+  final int failedAttempts;
+  final DateTime? lockedUntil;
   final String? error;
+  final String? successMessage;
 
   const ParentPinState({
-    this.pin,
-    this.isRequired = false,
+    this.hasPin = false,
     this.isVerified = false,
     this.isLoading = false,
+    this.isLocked = false,
+    this.failedAttempts = 0,
+    this.lockedUntil,
     this.error,
+    this.successMessage,
   });
 
   ParentPinState copyWith({
-    String? pin,
-    bool? isRequired,
+    bool? hasPin,
     bool? isVerified,
     bool? isLoading,
+    bool? isLocked,
+    int? failedAttempts,
+    DateTime? lockedUntil,
+    bool clearLockedUntil = false,
     String? error,
+    bool clearError = false,
+    String? successMessage,
+    bool clearSuccess = false,
   }) {
     return ParentPinState(
-      pin: pin ?? this.pin,
-      isRequired: isRequired ?? this.isRequired,
+      hasPin: hasPin ?? this.hasPin,
       isVerified: isVerified ?? this.isVerified,
       isLoading: isLoading ?? this.isLoading,
-      error: error ?? this.error,
+      isLocked: isLocked ?? this.isLocked,
+      failedAttempts: failedAttempts ?? this.failedAttempts,
+      lockedUntil: clearLockedUntil ? null : (lockedUntil ?? this.lockedUntil),
+      error: clearError ? null : (error ?? this.error),
+      successMessage:
+          clearSuccess ? null : (successMessage ?? this.successMessage),
     );
   }
 }
 
-// Parent PIN Provider
 class ParentPinNotifier extends StateNotifier<ParentPinState> {
-  final SecureStorage _secureStorage;
-  final Logger _logger;
-
   ParentPinNotifier({
-    required SecureStorage secureStorage,
+    required AuthRepository authRepository,
     required Logger logger,
-  })  : _secureStorage = secureStorage,
+  })  : _authRepository = authRepository,
         _logger = logger,
         super(const ParentPinState()) {
-    _loadPinState();
+    refreshStatus();
   }
 
-  Future<void> _loadPinState() async {
+  final AuthRepository _authRepository;
+  final Logger _logger;
+
+  Future<void> refreshStatus() async {
+    state = state.copyWith(isLoading: true, clearError: true, clearSuccess: true);
     try {
-      final pin = await _secureStorage.getParentPin();
-      
+      final status = await _authRepository.getParentPinStatus();
+      final isVerified = await _authRepository.isParentPinVerified();
       state = state.copyWith(
-        pin: pin,
-        isRequired: pin != null,
-        isVerified: false,
+        isLoading: false,
+        hasPin: status.hasPin,
+        isLocked: status.isLocked,
+        failedAttempts: status.failedAttempts,
+        lockedUntil: status.lockedUntil,
+        isVerified: status.hasPin ? isVerified : false,
+        clearError: true,
       );
-      
-      _logger.d('Parent PIN state loaded');
     } catch (e) {
-      _logger.e('Error loading parent PIN state: $e');
-      state = state.copyWith(error: 'Failed to load PIN state');
+      _logger.e('Error refreshing parent PIN status: $e');
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Failed to load PIN status',
+      );
     }
   }
 
-  Future<bool> setParentPin(String pin) async {
-    state = state.copyWith(isLoading: true, error: null);
-    
-    try {
-      // Validate PIN
-      if (pin.length < 4) {
-        state = state.copyWith(
-          isLoading: false,
-          error: 'PIN must be at least 4 characters',
-        );
-        return false;
-      }
-      
-      await _secureStorage.saveParentPin(pin);
-      
-      state = ParentPinState(
-        pin: pin,
-        isRequired: true,
-        isVerified: false,
-        isLoading: false,
+  Future<bool> setPin({
+    required String pin,
+    required String confirmPin,
+  }) async {
+    state = state.copyWith(isLoading: true, clearError: true, clearSuccess: true);
+    final result = await _authRepository.setParentPin(pin, confirmPin);
+    if (result.success) {
+      await refreshStatus();
+      state = state.copyWith(
+        isVerified: true,
+        successMessage: result.message,
       );
-      
-      _logger.d('Parent PIN set successfully');
       return true;
-    } catch (e) {
-      _logger.e('Error setting parent PIN: $e');
-      state = state.copyWith(
-        isLoading: false,
-        error: 'Failed to set PIN',
-      );
-      return false;
     }
+
+    state = state.copyWith(
+      isLoading: false,
+      error: result.error,
+    );
+    return false;
   }
 
-  Future<bool> verifyPin(String enteredPin) async {
-    state = state.copyWith(isLoading: true, error: null);
-    
-    try {
-      final storedPin = await _secureStorage.getParentPin();
-      final isValid = storedPin != null && storedPin == enteredPin;
-      
-      if (isValid) {
-        state = state.copyWith(
-          isVerified: true,
-          isLoading: false,
-        );
-        _logger.d('Parent PIN verified successfully');
-      } else {
-        state = state.copyWith(
-          isVerified: false,
-          isLoading: false,
-          error: 'Incorrect PIN',
-        );
-        _logger.w('Parent PIN verification failed');
-      }
-      
-      return isValid;
-    } catch (e) {
-      _logger.e('Error verifying PIN: $e');
+  Future<bool> verifyPin(String pin) async {
+    state = state.copyWith(isLoading: true, clearError: true, clearSuccess: true);
+    final result = await _authRepository.verifyParentPin(pin);
+    if (result.success) {
+      await refreshStatus();
       state = state.copyWith(
-        isLoading: false,
-        error: 'Failed to verify PIN',
+        isVerified: true,
+        successMessage: result.message,
+        clearError: true,
       );
-      return false;
+      return true;
     }
+
+    await refreshStatus();
+    state = state.copyWith(
+      isLoading: false,
+      isVerified: false,
+      error: result.error,
+      lockedUntil: result.lockedUntil ?? state.lockedUntil,
+      isLocked: result.lockedUntil != null || state.isLocked,
+    );
+    return false;
   }
 
-  Future<void> clearPin() async {
-    state = state.copyWith(isLoading: true, error: null);
-    
-    try {
-      await _secureStorage.deleteParentPin();
-      
-      state = const ParentPinState(
-        pin: null,
-        isRequired: false,
-        isVerified: false,
-        isLoading: false,
-      );
-      
-      _logger.d('Parent PIN cleared');
-    } catch (e) {
-      _logger.e('Error clearing PIN: $e');
+  Future<bool> changePin({
+    required String currentPin,
+    required String newPin,
+    required String confirmPin,
+  }) async {
+    state = state.copyWith(isLoading: true, clearError: true, clearSuccess: true);
+    final result = await _authRepository.changeParentPin(
+      currentPin: currentPin,
+      newPin: newPin,
+      confirmPin: confirmPin,
+    );
+    if (result.success) {
+      await refreshStatus();
       state = state.copyWith(
-        isLoading: false,
-        error: 'Failed to clear PIN',
+        isVerified: true,
+        successMessage: result.message,
       );
+      return true;
     }
+
+    state = state.copyWith(
+      isLoading: false,
+      error: result.error,
+    );
+    return false;
   }
 
-  void requirePinVerification() {
-    state = state.copyWith(isRequired: true, isVerified: false);
+  Future<bool> requestReset({String? note}) async {
+    state = state.copyWith(isLoading: true, clearError: true, clearSuccess: true);
+    final result = await _authRepository.requestParentPinReset(note: note);
+    state = state.copyWith(
+      isLoading: false,
+      successMessage: result.success ? result.message : null,
+      error: result.success ? null : result.error,
+    );
+    return result.success;
   }
 
-  void markAsVerified() {
-    state = state.copyWith(isVerified: true);
-  }
-
-  void clearVerification() {
+  Future<void> clearVerification() async {
+    await _authRepository.clearParentPinVerification();
     state = state.copyWith(isVerified: false);
   }
 
-  void clearError() {
-    state = state.copyWith(error: null);
+  ParentPinFlowMode resolveMode(ParentPinFlowMode preferredMode) {
+    if (preferredMode == ParentPinFlowMode.change) {
+      return state.hasPin ? ParentPinFlowMode.change : ParentPinFlowMode.setup;
+    }
+    if (preferredMode == ParentPinFlowMode.auto) {
+      return state.hasPin ? ParentPinFlowMode.verify : ParentPinFlowMode.setup;
+    }
+    if (preferredMode == ParentPinFlowMode.verify && !state.hasPin) {
+      return ParentPinFlowMode.setup;
+    }
+    return preferredMode;
+  }
+
+  void clearMessages() {
+    state = state.copyWith(clearError: true, clearSuccess: true);
   }
 }
 
-// Provider
-final parentPinProvider = StateNotifierProvider.autoDispose<ParentPinNotifier, ParentPinState>((ref) {
-  final secureStorage = ref.watch(secureStorageProvider);
+final parentPinProvider =
+    StateNotifierProvider<ParentPinNotifier, ParentPinState>((ref) {
+  final authRepository = ref.watch(authRepositoryProvider);
   final logger = ref.watch(loggerProvider);
-  
   return ParentPinNotifier(
-    secureStorage: secureStorage,
+    authRepository: authRepository,
     logger: logger,
   );
-});
-
-// Helper providers
-final isPinRequiredProvider = Provider<bool>((ref) {
-  return ref.watch(parentPinProvider).isRequired;
-});
-
-final isPinVerifiedProvider = Provider<bool>((ref) {
-  return ref.watch(parentPinProvider).isVerified;
 });

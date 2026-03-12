@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
-import 'package:kinder_world/core/theme/app_colors.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
 import 'package:kinder_world/core/widgets/auth_widgets.dart';
 
@@ -122,10 +122,16 @@ class _ParentRegisterScreenState extends ConsumerState<ParentRegisterScreen>
                 const Icon(Icons.check_circle_rounded,
                     color: Colors.white, size: 18),
                 const SizedBox(width: 10),
-                Text(l10n.accountCreatedWelcome),
+                Expanded(
+                  child: Text(
+                    l10n.accountCreatedWelcome,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             ),
-            backgroundColor: AppColors.success,
+            backgroundColor: context.successColor,
             behavior: SnackBarBehavior.floating,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -153,7 +159,7 @@ class _ParentRegisterScreenState extends ConsumerState<ParentRegisterScreen>
             Expanded(child: Text(_localizeErrorMessage(message, l10n))),
           ],
         ),
-        backgroundColor: AppColors.error,
+        backgroundColor: Theme.of(context).colorScheme.error,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -179,9 +185,12 @@ class _ParentRegisterScreenState extends ConsumerState<ParentRegisterScreen>
     final authState = ref.watch(authControllerProvider);
     final isLoading = _isLoading || authState.isLoading;
     final size = MediaQuery.of(context).size;
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final auth = context.authTheme;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: auth.pageBackground,
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: Column(
@@ -211,19 +220,19 @@ class _ParentRegisterScreenState extends ConsumerState<ParentRegisterScreen>
                           // Title
                           Text(
                             l10n.createAccount,
-                            style: const TextStyle(
+                            style: textTheme.headlineSmall?.copyWith(
                               fontSize: 26,
                               fontWeight: FontWeight.w900,
-                              color: Color(0xFF111827),
+                              color: auth.textPrimary,
                               letterSpacing: -0.6,
                             ),
                           ),
                           const SizedBox(height: 6),
                           Text(
                             l10n.registerSubtitle,
-                            style: const TextStyle(
+                            style: textTheme.bodyMedium?.copyWith(
                               fontSize: 14,
-                              color: Color(0xFF6B7280),
+                              color: auth.textMuted,
                             ),
                           ),
                           const SizedBox(height: 24),
@@ -361,9 +370,9 @@ class _ParentRegisterScreenState extends ConsumerState<ParentRegisterScreen>
                             label: l10n.createAccount,
                             isLoading: isLoading,
                             onPressed: isLoading ? null : _register,
-                            gradientColors: const [
-                              Color(0xFF1565C0),
-                              Color(0xFF42A5F5),
+                            gradientColors: [
+                              auth.brandDeep,
+                              auth.brandLight,
                             ],
                           ),
                           const SizedBox(height: 20),
@@ -374,17 +383,19 @@ class _ParentRegisterScreenState extends ConsumerState<ParentRegisterScreen>
                               onPressed: () => context.go('/parent/login'),
                               child: RichText(
                                 text: TextSpan(
-                                  style: const TextStyle(fontSize: 14),
+                                  style: textTheme.bodyMedium?.copyWith(fontSize: 14),
                                   children: [
                                     TextSpan(
                                       text: l10n.alreadyHaveAccount,
-                                      style: const TextStyle(
-                                          color: Color(0xFF6B7280)),
+                                      style: textTheme.bodyMedium?.copyWith(
+                                        fontSize: 14,
+                                        color: auth.textMuted,
+                                      ),
                                     ),
                                     TextSpan(
                                       text: l10n.login,
-                                      style: const TextStyle(
-                                        color: AppColors.primary,
+                                      style: textTheme.bodyMedium?.copyWith(
+                                        color: colors.primary,
                                         fontWeight: FontWeight.w700,
                                       ),
                                     ),
@@ -399,9 +410,9 @@ class _ParentRegisterScreenState extends ConsumerState<ParentRegisterScreen>
                           Center(
                             child: Text(
                               l10n.coppaGdprNote,
-                              style: const TextStyle(
+                              style: textTheme.bodySmall?.copyWith(
                                 fontSize: 12,
-                                color: Color(0xFF9CA3AF),
+                                color: auth.textHint,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -430,20 +441,21 @@ class _RegisterHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final headerHeight = screenHeight * 0.20;
+    final auth = context.authTheme;
     return Container(
       height: headerHeight,
       width: double.infinity,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFF1565C0),
-            Color(0xFF1976D2),
-            Color(0xFF1E88E5),
+            auth.brandDeep,
+            auth.brand,
+            auth.brandLight,
           ],
         ),
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
       ),
       child: Stack(
         children: [
@@ -549,31 +561,33 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return Row(
       children: [
         Container(
           width: 28,
           height: 28,
           decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.10),
+            color: colors.primary.withValues(alpha: 0.10),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, size: 15, color: AppColors.primary),
+          child: Icon(icon, size: 15, color: colors.primary),
         ),
         const SizedBox(width: 8),
         Text(
           label,
-          style: const TextStyle(
+          style: textTheme.labelLarge?.copyWith(
             fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF374151),
+            color: colors.onSurface,
             letterSpacing: 0.2,
           ),
         ),
         const SizedBox(width: 10),
-        const Expanded(
+        Expanded(
           child: Divider(
-            color: Color(0xFFE5E7EB),
+            color: colors.outlineVariant,
             thickness: 1,
           ),
         ),
@@ -592,19 +606,21 @@ class _TermsCheckbox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return GestureDetector(
       onTap: () => onChanged(!value),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: value
-              ? AppColors.primary.withValues(alpha: 0.05)
-              : const Color(0xFFF9FAFB),
+              ? colors.primary.withValues(alpha: 0.05)
+              : colors.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: value
-                ? AppColors.primary.withValues(alpha: 0.3)
-                : const Color(0xFFE5E7EB),
+                ? colors.primary.withValues(alpha: 0.3)
+                : colors.outlineVariant,
             width: 1.2,
           ),
         ),
@@ -616,10 +632,10 @@ class _TermsCheckbox extends StatelessWidget {
               width: 22,
               height: 22,
               decoration: BoxDecoration(
-                color: value ? AppColors.primary : Colors.transparent,
+                color: value ? colors.primary : Colors.transparent,
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
-                  color: value ? AppColors.primary : const Color(0xFFD1D5DB),
+                  color: value ? colors.primary : colors.outline,
                   width: 1.8,
                 ),
               ),
@@ -632,9 +648,9 @@ class _TermsCheckbox extends StatelessWidget {
             Expanded(
               child: RichText(
                 text: TextSpan(
-                  style: const TextStyle(
+                  style: textTheme.bodySmall?.copyWith(
                     fontSize: 13,
-                    color: Color(0xFF6B7280),
+                    color: colors.onSurfaceVariant,
                     height: 1.5,
                   ),
                   children: [
@@ -642,8 +658,8 @@ class _TermsCheckbox extends StatelessWidget {
                         text: AppLocalizations.of(context)!.agreeToTermsPrefix),
                     TextSpan(
                       text: AppLocalizations.of(context)!.termsOfService,
-                      style: const TextStyle(
-                        color: AppColors.primary,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colors.primary,
                         fontWeight: FontWeight.w600,
                         decoration: TextDecoration.underline,
                       ),
@@ -651,8 +667,8 @@ class _TermsCheckbox extends StatelessWidget {
                     const TextSpan(text: ' & '),
                     TextSpan(
                       text: AppLocalizations.of(context)!.privacyPolicy,
-                      style: const TextStyle(
-                        color: AppColors.primary,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colors.primary,
                         fontWeight: FontWeight.w600,
                         decoration: TextDecoration.underline,
                       ),

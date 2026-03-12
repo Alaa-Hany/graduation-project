@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/app.dart';
+import 'package:kinder_world/core/providers/app_launch_provider.dart';
 import 'package:kinder_world/router.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -47,23 +48,26 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   Future<void> _navigateNext() async {
     if (!mounted) return;
 
-    final storage = ref.read(secureStorageProvider);
-    final token = await storage.getAuthToken();
-    final role = await storage.getUserRole();
-    final childSession = await storage.getChildSession();
-
+    final appLaunch = ref.read(appLaunchProvider);
+    if (!appLaunch.hasSavedLocale || !appLaunch.hasCompletedOnboarding) {
+      final secureStorage = ref.read(secureStorageProvider);
+      final hasExistingSession = secureStorage.hasCachedAuthToken
+          ? (secureStorage.cachedAuthToken?.isNotEmpty ?? false)
+          : ((await secureStorage.getAuthToken())?.isNotEmpty ?? false);
+      if (hasExistingSession) {
+        if (!mounted) return;
+        context.go(Routes.selectUserType);
+        return;
+      }
+    }
     if (!mounted) return;
 
-    if (token == null || token.isEmpty) {
+    if (!appLaunch.hasSavedLocale) {
       context.go(Routes.language);
       return;
     }
-    if (role == 'parent') {
-      context.go(Routes.parentDashboard);
-      return;
-    }
-    if (role == 'child') {
-      context.go(childSession != null ? Routes.childHome : Routes.childLogin);
+    if (!appLaunch.hasCompletedOnboarding) {
+      context.go(Routes.onboarding);
       return;
     }
     context.go(Routes.selectUserType);
@@ -600,8 +604,8 @@ class _SplashAssets {
 }
 
 class _SplashDurations {
-  static const screenFadeIn = Duration(milliseconds: 900);
-  static const navigationDelay = Duration(milliseconds: 2900);
+  static const screenFadeIn = Duration(milliseconds: 260);
+  static const navigationDelay = Duration(seconds: 3);
   static const backgroundStarsFloat = Duration(milliseconds: 4200);
   static const starFloat = Duration(milliseconds: 2600);
   static const bookFloat = Duration(milliseconds: 3000);

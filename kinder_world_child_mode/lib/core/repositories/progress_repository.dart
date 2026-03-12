@@ -9,12 +9,65 @@ class ProgressRepository {
   final Box _progressBox;
   final Logger _logger;
   final _uuid = const Uuid();
+  final Map<String, ProgressRecord> _recordCache = <String, ProgressRecord>{};
+  final Map<String, List<ProgressRecord>> _recordsByChild =
+      <String, List<ProgressRecord>>{};
+  bool _didWarmRecords = false;
 
   ProgressRepository({
     required Box progressBox,
     required Logger logger,
   })  : _progressBox = progressBox,
         _logger = logger;
+
+  ProgressRecord? _decodeRecord(dynamic data) {
+    if (data == null) return null;
+    final Map<String, dynamic> json = data is String
+        ? jsonDecode(data) as Map<String, dynamic>
+        : Map<String, dynamic>.from(data as Map);
+    return ProgressRecord.fromJson(json);
+  }
+
+  void _cacheRecord(ProgressRecord record) {
+    _recordCache[record.id] = record;
+    final records =
+        _recordsByChild.putIfAbsent(record.childId, () => <ProgressRecord>[]);
+    final index = records.indexWhere((item) => item.id == record.id);
+    if (index >= 0) {
+      records[index] = record;
+    } else {
+      records.add(record);
+    }
+    records.sort((a, b) => b.date.compareTo(a.date));
+  }
+
+  void _removeCachedRecord(String recordId) {
+    final removed = _recordCache.remove(recordId);
+    if (removed == null) return;
+    final records = _recordsByChild[removed.childId];
+    if (records == null) return;
+    records.removeWhere((item) => item.id == recordId);
+    if (records.isEmpty) {
+      _recordsByChild.remove(removed.childId);
+    }
+  }
+
+  Future<void> _warmRecords() async {
+    if (_didWarmRecords) return;
+
+    for (final key in _progressBox.keys) {
+      final data = _progressBox.get(key);
+      if (data == null) continue;
+      try {
+        final record = _decodeRecord(data);
+        if (record == null) continue;
+        _cacheRecord(record);
+      } catch (e) {
+        _logger.e('Error parsing progress record: $key, $e');
+      }
+    }
+    _didWarmRecords = true;
+  }
 
   // ==================== CRUD OPERATIONS ====================
 
@@ -61,6 +114,7 @@ class ProgressRepository {
 
       final json = record.toJson();
       await _progressBox.put(record.id, json);
+      _cacheRecord(record);
       
       _logger.d('Progress record created: ${record.id}');
       return record;
@@ -73,6 +127,11 @@ class ProgressRepository {
   /// Get progress record by ID
   Future<ProgressRecord?> getProgressRecord(String recordId) async {
     try {
+      final cached = _recordCache[recordId];
+      if (cached != null) {
+        return cached;
+      }
+
       final data = _progressBox.get(recordId);
       
       if (data == null) {
@@ -80,11 +139,11 @@ class ProgressRepository {
         return null;
       }
 
-      final json = data is String
-          ? jsonDecode(data)
-          : Map<String, dynamic>.from(data);
-
-      return ProgressRecord.fromJson(json);
+      final record = _decodeRecord(data);
+      if (record != null) {
+        _cacheRecord(record);
+      }
+      return record;
     } catch (e) {
       _logger.e('Error getting progress record: $recordId, $e');
       return null;
@@ -100,6 +159,7 @@ class ProgressRepository {
       
       final json = updated.toJson();
       await _progressBox.put(updated.id, json);
+      _cacheRecord(updated);
       
       _logger.d('Progress record updated: ${updated.id}');
       return updated;
@@ -113,6 +173,7 @@ class ProgressRepository {
   Future<bool> deleteProgressRecord(String recordId) async {
     try {
       await _progressBox.delete(recordId);
+      _removeCachedRecord(recordId);
       _logger.d('Progress record deleted: $recordId');
       return true;
     } catch (e) {
@@ -126,34 +187,33 @@ class ProgressRepository {
   /// Get all progress records for a child
   Future<List<ProgressRecord>> getProgressForChild(String childId) async {
     try {
-      final records = <ProgressRecord>[];
-
-      for (var key in _progressBox.keys) {
-        final data = _progressBox.get(key);
-        if (data != null) {
-          try {
-            final json = data is String
-                ? jsonDecode(data)
-                : Map<String, dynamic>.from(data);
-            
-            final record = ProgressRecord.fromJson(json);
-            
-            if (record.childId == childId) {
-              records.add(record);
-            }
-          } catch (e) {
-            _logger.e('Error parsing progress record: $key, $e');
-          }
-        }
-      }
-
-      // Sort by date descending
-      records.sort((a, b) => b.date.compareTo(a.date));
+      await _warmRecords();
+      final records = List<ProgressRecord>.from(
+        _recordsByChild[childId] ?? const <ProgressRecord>[],
+        growable: false,
+      );
       
       _logger.d('Retrieved ${records.length} records for child: $childId');
       return records;
     } catch (e) {
       _logger.e('Error getting progress for child: $childId, $e');
+      return [];
+    }
+  }
+
+  Future<List<ProgressRecord>> getProgressForChildren(
+    Iterable<String> childIds,
+  ) async {
+    try {
+      await _warmRecords();
+      final records = <ProgressRecord>[];
+      for (final childId in childIds) {
+        records.addAll(_recordsByChild[childId] ?? const <ProgressRecord>[]);
+      }
+      records.sort((a, b) => b.date.compareTo(a.date));
+      return records;
+    } catch (e) {
+      _logger.e('Error getting progress for children: $e');
       return [];
     }
   }
@@ -446,26 +506,10 @@ class ProgressRepository {
   /// Get records needing sync
   Future<List<ProgressRecord>> getRecordsNeedingSync() async {
     try {
-      final allRecords = <ProgressRecord>[];
-
-      for (var key in _progressBox.keys) {
-        final data = _progressBox.get(key);
-        if (data != null) {
-          try {
-            final json = data is String
-                ? jsonDecode(data)
-                : Map<String, dynamic>.from(data);
-            
-            final record = ProgressRecord.fromJson(json);
-            
-            if (record.needsSync) {
-              allRecords.add(record);
-            }
-          } catch (e) {
-            _logger.e('Error parsing progress record: $key, $e');
-          }
-        }
-      }
+      await _warmRecords();
+      final allRecords = _recordCache.values
+          .where((record) => record.needsSync)
+          .toList(growable: false);
 
       _logger.d('Found ${allRecords.length} records needing sync');
       return allRecords;

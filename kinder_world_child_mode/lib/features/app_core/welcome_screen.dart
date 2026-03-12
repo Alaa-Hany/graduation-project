@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
-import 'package:kinder_world/core/theme/app_colors.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/auth_widgets.dart';
 
 class WelcomeScreen extends ConsumerStatefulWidget {
@@ -69,9 +69,12 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final size = MediaQuery.of(context).size;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
           // ── Hero Header ──
@@ -97,32 +100,42 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                       // Title
                       Text(
                         l10n.welcomeTitle,
-                        style: const TextStyle(
-                          fontSize: 28,
+                        style: textTheme.headlineMedium?.copyWith(
+                          fontSize: 32,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xFF111827),
+                          color: colors.onSurface,
                           letterSpacing: -0.8,
-                          height: 1.2,
+                          height: 1.1,
                         ),
                       ),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 8),
+                      Text(
+                        l10n.welcomeSubtitle,
+                        style: textTheme.bodyLarge?.copyWith(
+                          fontSize: 16,
+                          color: colors.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 28),
 
                       // Feature grid
                       _FeatureGrid(l10n: l10n),
-                      const SizedBox(height: 26),
+                      const SizedBox(height: 32),
 
                       // Get Started button
                       GradientButton(
                         label: l10n.getStarted,
                         onPressed: () => context.push('/select-user-type'),
-                        gradientColors: const [
-                          Color(0xFF1565C0),
-                          Color(0xFF42A5F5),
+                        gradientColors: [
+                          colors.primary,
+                          Color.lerp(colors.primary, colors.secondary, 0.45)!,
                         ],
                         height: 58,
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.rocket_launch_rounded,
-                          color: Colors.white,
+                          color: colors.onPrimary,
                           size: 18,
                         ),
                       ),
@@ -134,18 +147,18 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                           onPressed: () => context.push('/parent/login'),
                           child: RichText(
                             text: TextSpan(
-                              style: const TextStyle(fontSize: 14),
+                              style: textTheme.bodyMedium?.copyWith(fontSize: 14),
                               children: [
                                 TextSpan(
                                   text: l10n.alreadyHaveAccount,
-                                  style: const TextStyle(
-                                    color: Color(0xFF6B7280),
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    color: colors.onSurfaceVariant,
                                   ),
                                 ),
                                 TextSpan(
                                   text: l10n.login,
-                                  style: const TextStyle(
-                                    color: AppColors.primary,
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    color: colors.primary,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
@@ -159,9 +172,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                       Center(
                         child: Text(
                           l10n.coppaGdprNote,
-                          style: const TextStyle(
+                          style: textTheme.bodySmall?.copyWith(
                             fontSize: 12,
-                            color: Color(0xFF9CA3AF),
+                            color: colors.onSurfaceVariant,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -187,21 +200,25 @@ class _HeroHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     final headerHeight = screenHeight * 0.30;
+    final gradientColors = [
+      colors.primary,
+      Color.lerp(colors.primary, colors.secondary, 0.35)!,
+      Color.lerp(colors.primary, colors.tertiary, 0.5)!,
+    ];
+
     return Container(
       height: headerHeight,
       width: double.infinity,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF1565C0),
-            Color(0xFF1E88E5),
-            Color(0xFF42A5F5),
-          ],
+          colors: gradientColors,
         ),
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(36)),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(36)),
       ),
       child: Stack(
         children: [
@@ -214,7 +231,7 @@ class _HeroHeader extends StatelessWidget {
               height: 140,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.07),
+                color: colors.onPrimary.withValues(alpha: 0.07),
               ),
             ),
           ),
@@ -226,7 +243,7 @@ class _HeroHeader extends StatelessWidget {
               height: 100,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.06),
+                color: colors.onPrimary.withValues(alpha: 0.06),
               ),
             ),
           ),
@@ -241,11 +258,11 @@ class _HeroHeader extends StatelessWidget {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: colors.surface,
                       borderRadius: BorderRadius.circular(22),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.15),
+                          color: colors.shadow.withValues(alpha: 0.15),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                         ),
@@ -256,10 +273,10 @@ class _HeroHeader extends StatelessWidget {
                       child: Image.asset(
                         'assets/icons/kinderworld-logo.png',
                         fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => const Icon(
+                        errorBuilder: (_, __, ___) => Icon(
                           Icons.child_care_rounded,
                           size: 44,
-                          color: AppColors.primary,
+                          color: colors.primary,
                         ),
                       ),
                     ),
@@ -267,16 +284,16 @@ class _HeroHeader extends StatelessWidget {
                   const SizedBox(height: 14),
                   Text(
                     AppLocalizations.of(context)!.appTitle,
-                    style: const TextStyle(
+                    style: theme.textTheme.headlineMedium?.copyWith(
                       fontSize: 26,
                       fontWeight: FontWeight.w900,
-                      color: Colors.white,
+                      color: colors.onPrimary,
                       letterSpacing: -0.5,
                       shadows: [
                         Shadow(
-                          color: Colors.black26,
+                          color: colors.shadow.withValues(alpha: 0.3),
                           blurRadius: 8,
-                          offset: Offset(0, 3),
+                          offset: const Offset(0, 3),
                         ),
                       ],
                     ),
@@ -284,10 +301,10 @@ class _HeroHeader extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     AppLocalizations.of(context)!.splashTagline,
-                    style: TextStyle(
+                    style: theme.textTheme.bodySmall?.copyWith(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: Colors.white.withValues(alpha: 0.85),
+                      color: colors.onPrimary.withValues(alpha: 0.85),
                       letterSpacing: 1.5,
                     ),
                   ),
@@ -310,34 +327,48 @@ class _FeatureGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final childTheme = context.childTheme;
     final features = [
       _FeatureItem(
         icon: Icons.school_rounded,
         label: l10n.educational,
         description: l10n.interactiveLessons,
-        color: AppColors.educational,
-        gradientColors: const [Color(0xFF3F51B5), Color(0xFF7986CB)],
+        color: colors.primary,
+        gradientColors: [
+          colors.primary,
+          Color.lerp(colors.primary, colors.tertiary, 0.35)!,
+        ],
       ),
       _FeatureItem(
         icon: Icons.sports_esports_rounded,
         label: l10n.funGames,
         description: l10n.learnThroughPlay,
-        color: AppColors.entertaining,
-        gradientColors: const [Color(0xFF00ACC1), Color(0xFF4DD0E1)],
+        color: childTheme.fun,
+        gradientColors: [
+          childTheme.fun,
+          Color.lerp(childTheme.fun, colors.secondary, 0.45)!,
+        ],
       ),
       _FeatureItem(
         icon: Icons.psychology_rounded,
         label: l10n.aiPowered,
         description: l10n.personalizedForChild,
-        color: AppColors.behavioral,
-        gradientColors: const [Color(0xFFE91E63), Color(0xFFF48FB1)],
+        color: childTheme.kindness,
+        gradientColors: [
+          childTheme.kindness,
+          Color.lerp(childTheme.kindness, colors.tertiary, 0.35)!,
+        ],
       ),
       _FeatureItem(
         icon: Icons.shield_rounded,
         label: l10n.safe,
         description: l10n.coppaGdprCompliant,
-        color: AppColors.success,
-        gradientColors: const [Color(0xFF388E3C), Color(0xFF81C784)],
+        color: childTheme.success,
+        gradientColors: [
+          childTheme.success,
+          Color.lerp(childTheme.success, colors.primary, 0.35)!,
+        ],
       ),
     ];
 
@@ -387,6 +418,13 @@ class _FeatureCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final iconColor =
+        ThemeData.estimateBrightnessForColor(item.gradientColors.first) ==
+                Brightness.dark
+            ? colors.onPrimary
+            : colors.onSurface;
     return Container(
       padding: EdgeInsets.fromLTRB(
         compact ? 12 : 14,
@@ -424,13 +462,13 @@ class _FeatureCard extends StatelessWidget {
                 ),
               ],
             ),
-            child: Icon(item.icon, size: compact ? 20 : 22, color: Colors.white),
+            child: Icon(item.icon, size: compact ? 20 : 22, color: iconColor),
           ),
           SizedBox(height: compact ? 10 : 10),
           Text(
             item.label,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: theme.textTheme.labelLarge?.copyWith(
               fontSize: compact ? 11.5 : 12.5,
               fontWeight: FontWeight.w700,
               color: item.color,
@@ -441,9 +479,9 @@ class _FeatureCard extends StatelessWidget {
           Text(
             item.description,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: theme.textTheme.bodySmall?.copyWith(
               fontSize: compact ? 9.8 : 10.5,
-              color: const Color(0xFF9CA3AF),
+              color: colors.onSurfaceVariant,
               height: 1.22,
             ),
             maxLines: compact ? 3 : 2,

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/models/user.dart';
 import 'package:kinder_world/core/repositories/auth_repository.dart';
 import 'package:kinder_world/core/services/auth_service.dart';
@@ -47,13 +48,16 @@ class AuthState {
 class AuthController extends StateNotifier<AuthState> {
   final AuthRepository _authRepository;
   final Logger _logger;
+  final AppNavigationController _navigationController;
   static const String _premiumEmail = 'w@w.w';
 
   AuthController({
     required AuthRepository authRepository,
     required Logger logger,
+    required AppNavigationController navigationController,
   })  : _authRepository = authRepository,
         _logger = logger,
+        _navigationController = navigationController,
         super(const AuthState()) {
     _initialize();
   }
@@ -61,6 +65,7 @@ class AuthController extends StateNotifier<AuthState> {
   /// Initialize authentication state
   Future<void> _initialize() async {
     _logger.d('Initializing auth controller');
+    await _authRepository.clearParentPinVerification();
     
     final storedIsAuthenticated = await _authRepository.isAuthenticated();
     final user = await _authRepository.getCurrentUser();
@@ -277,6 +282,7 @@ class AuthController extends StateNotifier<AuthState> {
     
     try {
       await _authRepository.logout();
+      _navigationController.clearHistory(seedLocation: '/select-user-type');
       
       state = const AuthState(
         user: null,
@@ -300,7 +306,8 @@ class AuthController extends StateNotifier<AuthState> {
   /// Set parent PIN
   Future<bool> setParentPin(String pin) async {
     try {
-      return await _authRepository.setParentPin(pin);
+      final result = await _authRepository.setParentPin(pin, pin);
+      return result.success;
     } catch (e) {
       _logger.e('Error setting parent PIN: $e');
       return false;
@@ -310,7 +317,8 @@ class AuthController extends StateNotifier<AuthState> {
   /// Verify parent PIN
   Future<bool> verifyParentPin(String enteredPin) async {
     try {
-      return await _authRepository.verifyParentPin(enteredPin);
+      final result = await _authRepository.verifyParentPin(enteredPin);
+      return result.success;
     } catch (e) {
       _logger.e('Error verifying PIN: $e');
       return false;
@@ -453,10 +461,12 @@ final authServiceProvider = Provider<AuthService>((ref) {
 final authControllerProvider = StateNotifierProvider<AuthController, AuthState>((ref) {
   final authRepository = ref.watch(authRepositoryProvider);
   final logger = ref.watch(loggerProvider);
+  final navigationController = ref.watch(appNavigationControllerProvider);
   
   return AuthController(
     authRepository: authRepository,
     logger: logger,
+    navigationController: navigationController,
   );
 });
 

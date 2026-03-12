@@ -15,6 +15,10 @@ class User(Base):
     plan = Column(String, nullable=False, default="FREE", server_default=text("'FREE'"))
 
     token_version = Column(Integer, default=0, nullable=False, server_default=text("0"))
+    parent_pin_hash = Column(String, nullable=True)
+    parent_pin_failed_attempts = Column(Integer, default=0, nullable=False, server_default=text("0"))
+    parent_pin_locked_until = Column(DateTime, nullable=True)
+    parent_pin_updated_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
 
@@ -78,6 +82,13 @@ class SupportTicket(Base):
     subject = Column(String, nullable=False)
     message = Column(String, nullable=False)
     email = Column(String, nullable=True)
+    category = Column(
+        String,
+        nullable=False,
+        default="general_inquiry",
+        server_default=text("'general_inquiry'"),
+        index=True,
+    )
     status = Column(String, nullable=False, default="open", server_default=text("'open'"), index=True)
     assigned_admin_id = Column(Integer, ForeignKey("admin_users.id", ondelete="SET NULL"), nullable=True, index=True)
     closed_at = Column(DateTime, nullable=True)

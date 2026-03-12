@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/subscription/plan_info.dart';
 import 'package:kinder_world/core/providers/plan_provider.dart';
@@ -9,6 +9,7 @@ import 'package:kinder_world/core/widgets/plan_status_banner.dart';
 import 'package:kinder_world/core/widgets/premium_badge.dart';
 import 'package:kinder_world/core/widgets/premium_section_upsell.dart';
 import 'package:kinder_world/app.dart';
+import 'package:kinder_world/router.dart';
 
 class ParentalControlsScreen extends ConsumerStatefulWidget {
   const ParentalControlsScreen({super.key});
@@ -101,8 +102,8 @@ class _ParentalControlsScreenState
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final plan =
-        ref.watch(planInfoProvider).asData?.value ?? PlanInfo.fromTier(PlanTier.free);
+    final plan = ref.watch(planInfoProvider).asData?.value ??
+        PlanInfo.fromTier(PlanTier.free);
     final isAdvancedLocked = !plan.hasSmartControls;
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -110,16 +111,9 @@ class _ParentalControlsScreenState
         backgroundColor: colors.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded,
-              size: 20, color: colors.onSurface),
-          onPressed: () {
-            if (Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
-            } else {
-              context.go('/parent/dashboard');
-            }
-          },
+        leading: AppBackButton(
+          fallback: Routes.parentDashboard,
+          color: colors.onSurface,
         ),
         title: Text(
           l10n.parentalControls,
@@ -133,8 +127,7 @@ class _ParentalControlsScreenState
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Divider(
-              height: 1,
-              color: colors.outlineVariant.withValues(alpha: 0.4)),
+              height: 1, color: colors.outlineVariant.withValues(alpha: 0.4)),
         ),
       ),
       body: SafeArea(
@@ -453,7 +446,8 @@ class _ParentalControlsScreenState
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: colors.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
@@ -481,7 +475,8 @@ class _ParentalControlsScreenState
     );
   }
 
-  Widget _buildTimeSetting(String title, String time, {required bool isBedtime}) {
+  Widget _buildTimeSetting(String title, String time,
+      {required bool isBedtime}) {
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     return Padding(

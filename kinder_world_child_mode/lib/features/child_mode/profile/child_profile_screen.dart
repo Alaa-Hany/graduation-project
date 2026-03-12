@@ -4,19 +4,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
+import 'package:kinder_world/core/models/child_avatar_customization.dart';
+import 'package:kinder_world/core/providers/child_avatar_customization_provider.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
 import 'package:kinder_world/core/providers/avatar_picker_provider.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/providers/theme_provider.dart';
 import 'package:kinder_world/core/theme/theme_palette.dart';
-import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/avatar_view.dart';
+import 'package:kinder_world/core/widgets/child_customizable_avatar.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
 import 'package:kinder_world/core/widgets/picture_password_row.dart';
 import 'package:kinder_world/core/providers/locale_provider.dart';
 import 'package:kinder_world/app.dart';
+import 'package:kinder_world/core/widgets/gamification_widgets.dart';
+import 'package:kinder_world/features/child_mode/store/reward_store_screen.dart';
+import 'package:kinder_world/router.dart' show Routes;
 
 // ==========================================
 // 1. Child Profile Screen (Main Screen)
@@ -33,7 +39,8 @@ class ChildProfileScreen extends ConsumerWidget {
     final textTheme = theme.textTheme;
     final childTheme = context.childTheme;
     final child = ref.watch(currentChildProvider);
-    final childName = (child?.name.isNotEmpty ?? false) ? child!.name : child?.id;
+    final childName =
+        (child?.name.isNotEmpty ?? false) ? child!.name : child?.id;
 
     if (child == null) {
       return Scaffold(
@@ -77,15 +84,10 @@ class ChildProfileScreen extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
-            } else {
-              context.go('/child/home');
-            }
-          },
+        leading: const AppBackButton(
+          fallback: Routes.childHome,
+          icon: Icons.arrow_back,
+          iconSize: 24,
         ),
       ),
       body: SafeArea(
@@ -131,9 +133,8 @@ class ChildProfileScreen extends ConsumerWidget {
                               shape: BoxShape.circle,
                               color: colors.surface,
                             ),
-                            child: AvatarView(
-                              avatarId: child.avatar,
-                              avatarPath: child.avatarPath,
+                            child: ChildCustomizableAvatar(
+                              child: child,
                               radius: 56,
                               backgroundColor:
                                   colors.primary.withValues(alpha: 0.15),
@@ -161,8 +162,8 @@ class ChildProfileScreen extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: childTheme.buddyStart
-                                  .withValues(alpha: 0.4),
+                              color:
+                                  childTheme.buddyStart.withValues(alpha: 0.4),
                               blurRadius: 8,
                               offset: const Offset(0, 3),
                             ),
@@ -196,6 +197,20 @@ class ChildProfileScreen extends ConsumerWidget {
                 style: textTheme.bodyMedium?.copyWith(
                   fontSize: AppConstants.fontSize,
                   color: colors.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const SettingsAvatarSelectionScreen(),
+                    ),
+                  ),
+                  icon: const Icon(Icons.auto_awesome_rounded),
+                  label: Text(l10n.customizeProfile),
                 ),
               ),
               const SizedBox(height: 24),
@@ -244,7 +259,7 @@ class ChildProfileScreen extends ConsumerWidget {
                       context,
                       l10n.dailyGoal,
                       0.7,
-                      AppColors.success,
+                      childTheme.success,
                       '7/10 ${l10n.activities}',
                     ),
                     const SizedBox(height: 16),
@@ -252,7 +267,7 @@ class ChildProfileScreen extends ConsumerWidget {
                       context,
                       l10n.weeklyChallenge,
                       0.5,
-                      AppColors.secondary,
+                      colors.secondary,
                       '3/6',
                     ),
                   ],
@@ -286,7 +301,10 @@ class ChildProfileScreen extends ConsumerWidget {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: child.interests.map((interest) => _buildInterestChip(context, interest)).toList(),
+                      children: child.interests
+                          .map((interest) =>
+                              _buildInterestChip(context, interest))
+                          .toList(),
                     ),
                   ],
                 ),
@@ -319,9 +337,21 @@ class ChildProfileScreen extends ConsumerWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        _buildAchievementBadge(context, '🏆', l10n.achievementFirstQuizTitle, l10n.achievementFirstQuizSubtitle),
-                        _buildAchievementBadge(context, '🔥', l10n.achievementStreakTitle, l10n.achievementStreakSubtitle),
-                        _buildAchievementBadge(context, '⭐', l10n.achievementMathMasterTitle, l10n.achievementMathMasterSubtitle),
+                        _buildAchievementBadge(
+                            context,
+                            '🏆',
+                            l10n.achievementFirstQuizTitle,
+                            l10n.achievementFirstQuizSubtitle),
+                        _buildAchievementBadge(
+                            context,
+                            '🔥',
+                            l10n.achievementStreakTitle,
+                            l10n.achievementStreakSubtitle),
+                        _buildAchievementBadge(
+                            context,
+                            '⭐',
+                            l10n.achievementMathMasterTitle,
+                            l10n.achievementMathMasterSubtitle),
                       ],
                     ),
                   ],
@@ -347,7 +377,7 @@ class ChildProfileScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                    Text(
+                          Text(
                             l10n.levels,
                             style: textTheme.titleMedium?.copyWith(
                               fontSize: AppConstants.fontSize,
@@ -398,9 +428,111 @@ class ChildProfileScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 24),
+
+              // ── Gamification Summary Bar ──────────────────────────────────
+              const GamificationSummaryBar(),
+              const SizedBox(height: 12),
+
+              // ── Equipped Rewards from Store ───────────────────────────────
+              Consumer(
+                builder: (context, ref, _) {
+                  final storeState = ref.watch(rewardStoreProvider);
+                  final equipped = rewardCatalog
+                      .where((i) => storeState.equippedByType[i.type] == i.id)
+                      .toList();
+                  if (equipped.isEmpty) return const SizedBox.shrink();
+                  final xpColor = context.childTheme.xp;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: xpColor.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                            color: xpColor.withValues(alpha: 0.40), width: 1.5),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '✨ My Equipped Items',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 14,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 6,
+                            children: equipped
+                                .map((item) => Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 5),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            item.color.withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                            color: item.color, width: 1.5),
+                                      ),
+                                      child: Text(
+                                        '${item.emoji} ${item.name}',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w700,
+                                          color: item.color,
+                                        ),
+                                      ),
+                                    ))
+                                .toList(),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+
+              // ── View Achievements Button ──────────────────────────────────
+              ElevatedButton.icon(
+                onPressed: () => context.push(Routes.childAchievements),
+                icon: const Text('🏆', style: TextStyle(fontSize: 18)),
+                label: Text(l10n.gamificationSeeAllAchievements),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: childTheme.skill,
+                  foregroundColor: childTheme.skill.onColor,
+                  minimumSize: const Size(double.infinity, 56),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // ── Reward Store Button ───────────────────────────────────────
+              ElevatedButton.icon(
+                onPressed: () => context.push(Routes.childStore),
+                icon: const Text('🛍️', style: TextStyle(fontSize: 18)),
+                label: const Text('Reward Store'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: childTheme.fun,
+                  foregroundColor: childTheme.fun.onColor,
+                  minimumSize: const Size(double.infinity, 56),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // ── Settings Button ───────────────────────────────────────────
               ElevatedButton.icon(
                 onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ChildSettingsScreen()));
+                  Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => const ChildSettingsScreen()));
                 },
                 icon: const Icon(Icons.settings),
                 label: Text(l10n.settings),
@@ -408,7 +540,8 @@ class ChildProfileScreen extends ConsumerWidget {
                   backgroundColor: colors.surfaceContainerHighest,
                   foregroundColor: colors.onSurface,
                   minimumSize: const Size(double.infinity, 56),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                 ),
               ),
               const SizedBox(height: 16),
@@ -420,7 +553,8 @@ class ChildProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildProgressBar(BuildContext context, String label, double value, Color color, String valueText) {
+  Widget _buildProgressBar(BuildContext context, String label, double value,
+      Color color, String valueText) {
     final textTheme = Theme.of(context).textTheme;
     final colors = Theme.of(context).colorScheme;
     return Column(
@@ -429,8 +563,12 @@ class ChildProfileScreen extends ConsumerWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: textTheme.bodyMedium?.copyWith(fontSize: 14, fontWeight: FontWeight.w600)),
-            Text(valueText, style: textTheme.bodySmall?.copyWith(fontSize: 12, color: colors.onSurfaceVariant)),
+            Text(label,
+                style: textTheme.bodyMedium
+                    ?.copyWith(fontSize: 14, fontWeight: FontWeight.w600)),
+            Text(valueText,
+                style: textTheme.bodySmall
+                    ?.copyWith(fontSize: 12, color: colors.onSurfaceVariant)),
           ],
         ),
         const SizedBox(height: 8),
@@ -456,11 +594,16 @@ class ChildProfileScreen extends ConsumerWidget {
         color: colors.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(interest, style: textTheme.bodyMedium?.copyWith(fontSize: 14, color: colors.primary, fontWeight: FontWeight.w600)),
+      child: Text(interest,
+          style: textTheme.bodyMedium?.copyWith(
+              fontSize: 14,
+              color: colors.primary,
+              fontWeight: FontWeight.w600)),
     );
   }
 
-  Widget _buildAchievementBadge(BuildContext context, String emoji, String title, String description) {
+  Widget _buildAchievementBadge(
+      BuildContext context, String emoji, String title, String description) {
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final childTheme = context.childTheme;
@@ -473,11 +616,17 @@ class ChildProfileScreen extends ConsumerWidget {
             color: childTheme.xp.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Center(child: Text(emoji, style: const TextStyle(fontSize: 24))),
+          child:
+              Center(child: Text(emoji, style: const TextStyle(fontSize: 24))),
         ),
         const SizedBox(height: 8),
-        Text(title, style: textTheme.bodySmall?.copyWith(fontSize: 12, fontWeight: FontWeight.bold)),
-        Text(description, style: textTheme.labelSmall?.copyWith(fontSize: 10, color: colors.onSurfaceVariant), textAlign: TextAlign.center),
+        Text(title,
+            style: textTheme.bodySmall
+                ?.copyWith(fontSize: 12, fontWeight: FontWeight.bold)),
+        Text(description,
+            style: textTheme.labelSmall
+                ?.copyWith(fontSize: 10, color: colors.onSurfaceVariant),
+            textAlign: TextAlign.center),
       ],
     );
   }
@@ -547,7 +696,8 @@ class ChildLevelsScreen extends StatelessWidget {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 child: Row(
                   children: [
                     _buildStatPill(
@@ -570,8 +720,10 @@ class ChildLevelsScreen extends StatelessWidget {
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final width = constraints.maxWidth;
-                    final contentHeight = (displayLevels.length * 95).toDouble() + 220;
-                    final height = math.max(contentHeight, constraints.maxHeight + 40);
+                    final contentHeight =
+                        (displayLevels.length * 95).toDouble() + 220;
+                    final height =
+                        math.max(contentHeight, constraints.maxHeight + 40);
                     final points = <Offset>[];
                     for (var i = 0; i < displayLevels.length; i++) {
                       final x = i.isEven ? width * 0.28 : width * 0.72;
@@ -599,29 +751,37 @@ class ChildLevelsScreen extends StatelessWidget {
                                 child: _LevelBadge(
                                   node: node,
                                   onTap: () {
-                                    final messenger = ScaffoldMessenger.of(context);
+                                    final messenger =
+                                        ScaffoldMessenger.of(context);
                                     messenger.hideCurrentSnackBar();
                                     if (!node.isUnlocked) {
                                       messenger.showSnackBar(
                                         SnackBar(
                                           content: Row(
                                             children: [
-                                              const Icon(Icons.lock_rounded, color: Colors.white),
+                                              const Icon(Icons.lock_rounded,
+                                                  color: Colors.white),
                                               const SizedBox(width: 10),
                                               Expanded(
                                                 child: Text(
-                                                  AppLocalizations.of(context)!.levelLockedMessage,
-                                                  style: const TextStyle(fontWeight: FontWeight.w600),
+                                                  AppLocalizations.of(context)!
+                                                      .levelLockedMessage,
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600),
                                                 ),
                                               ),
                                             ],
                                           ),
-                                          backgroundColor: const Color(0xFFFF8AB3),
+                                          backgroundColor:
+                                              const Color(0xFFFF8AB3),
                                           behavior: SnackBarBehavior.floating,
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(16),
+                                            borderRadius:
+                                                BorderRadius.circular(16),
                                           ),
-                                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                          margin: const EdgeInsets.symmetric(
+                                              horizontal: 16, vertical: 12),
                                         ),
                                       );
                                       return;
@@ -630,22 +790,30 @@ class ChildLevelsScreen extends StatelessWidget {
                                       SnackBar(
                                         content: Row(
                                           children: [
-                                            const Icon(Icons.play_circle_fill, color: Colors.white),
+                                            const Icon(Icons.play_circle_fill,
+                                                color: Colors.white),
                                             const SizedBox(width: 10),
                                             Expanded(
-                                          child: Text(
-                                            AppLocalizations.of(context)!.levelStartMessage(node.level),
-                                            style: const TextStyle(fontWeight: FontWeight.w600),
-                                          ),
+                                              child: Text(
+                                                AppLocalizations.of(context)!
+                                                    .levelStartMessage(
+                                                        node.level),
+                                                style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.w600),
+                                              ),
                                             ),
                                           ],
                                         ),
-                                        backgroundColor: const Color(0xFF7ED6FF),
+                                        backgroundColor:
+                                            const Color(0xFF7ED6FF),
                                         behavior: SnackBarBehavior.floating,
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(16),
+                                          borderRadius:
+                                              BorderRadius.circular(16),
                                         ),
-                                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                        margin: const EdgeInsets.symmetric(
+                                            horizontal: 16, vertical: 12),
                                       ),
                                     );
                                     context.go('/child/learn');
@@ -760,7 +928,9 @@ class _LevelBadge extends StatelessWidget {
               final active = index < node.stars;
               return Icon(
                 active ? Icons.star : Icons.star_border,
-                color: active ? const Color(0xFFFFD36A) : Colors.white.withValues(alpha: 0.45),
+                color: active
+                    ? const Color(0xFFFFD36A)
+                    : Colors.white.withValues(alpha: 0.45),
                 size: 16,
               );
             }),
@@ -786,7 +956,8 @@ class _LevelBadge extends StatelessWidget {
                   offset: const Offset(0, 10),
                 ),
               ],
-              border: Border.all(color: Colors.white.withValues(alpha: 0.65), width: 3),
+              border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.65), width: 3),
             ),
             child: Center(
               child: Text(
@@ -826,7 +997,8 @@ class _PathPainter extends CustomPainter {
     for (var i = 1; i < points.length; i++) {
       final prev = points[i - 1];
       final current = points[i];
-      final mid = Offset((prev.dx + current.dx) / 2, (prev.dy + current.dy) / 2);
+      final mid =
+          Offset((prev.dx + current.dx) / 2, (prev.dy + current.dy) / 2);
       path.quadraticBezierTo(prev.dx, mid.dy, mid.dx, mid.dy);
       path.quadraticBezierTo(current.dx, mid.dy, current.dx, current.dy);
     }
@@ -847,7 +1019,8 @@ class ChildSettingsScreen extends ConsumerStatefulWidget {
   const ChildSettingsScreen({super.key});
 
   @override
-  ConsumerState<ChildSettingsScreen> createState() => _ChildSettingsScreenState();
+  ConsumerState<ChildSettingsScreen> createState() =>
+      _ChildSettingsScreenState();
 }
 
 class _ChildSettingsScreenState extends ConsumerState<ChildSettingsScreen> {
@@ -866,9 +1039,13 @@ class _ChildSettingsScreenState extends ConsumerState<ChildSettingsScreen> {
       backgroundColor: colors.surfaceContainerLow,
       appBar: AppBar(
         backgroundColor: colors.surface,
-        title: Text(l10n.settings, style: TextStyle(fontWeight: FontWeight.bold, color: colors.onSurface)),
+        title: Text(l10n.settings,
+            style: TextStyle(
+                fontWeight: FontWeight.bold, color: colors.onSurface)),
         centerTitle: true,
-        leading: IconButton(icon: Icon(Icons.arrow_back, color: colors.onSurface), onPressed: () => Navigator.of(context).pop()),
+        leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: colors.onSurface),
+            onPressed: () => Navigator.of(context).pop()),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
@@ -878,7 +1055,7 @@ class _ChildSettingsScreenState extends ConsumerState<ChildSettingsScreen> {
             onChanged: (value) => setState(() => _settingsQuery = value),
             onSubmitted: (value) => _openSettingByQuery(value, locale),
             decoration: InputDecoration(
-            hintText: l10n.searchSettingsHint,
+              hintText: l10n.searchSettingsHint,
               prefixIcon: const Icon(Icons.search),
               filled: true,
               fillColor: colors.surfaceContainerHighest,
@@ -893,7 +1070,9 @@ class _ChildSettingsScreenState extends ConsumerState<ChildSettingsScreen> {
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: () async {
-              await ref.read(childSessionControllerProvider.notifier).endChildSession();
+              await ref
+                  .read(childSessionControllerProvider.notifier)
+                  .endChildSession();
               await ref.read(authControllerProvider.notifier).logout();
               if (!context.mounted) return;
               context.go('/welcome');
@@ -928,12 +1107,22 @@ class _ChildSettingsScreenState extends ConsumerState<ChildSettingsScreen> {
       sections.add(_buildSettingsCard(
         context,
         children: [
-          _buildListTile(context, title: l10n.editProfile, icon: Icons.person_outline, onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsEditProfileScreen()));
+          _buildListTile(context,
+              title: l10n.editProfile, icon: Icons.person_outline, onTap: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const SettingsEditProfileScreen()));
           }),
           _buildDivider(),
-          _buildListTile(context, title: l10n.changeAvatar, icon: Icons.face_retouching_natural_outlined, onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsAvatarSelectionScreen()));
+          _buildListTile(context,
+              title: l10n.changeAvatar,
+              icon: Icons.face_retouching_natural_outlined, onTap: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) =>
+                        const SettingsAvatarSelectionScreen()));
           }),
         ],
       ));
@@ -946,34 +1135,66 @@ class _ChildSettingsScreenState extends ConsumerState<ChildSettingsScreen> {
       sections.add(_buildSettingsCard(
         context,
         children: [
-          _buildSwitchTile(context, title: l10n.soundEffects, icon: Icons.volume_up_outlined, value: _soundEnabled, onChanged: (val) => setState(() => _soundEnabled = val)),
+          _buildSwitchTile(context,
+              title: l10n.soundEffects,
+              icon: Icons.volume_up_outlined,
+              value: _soundEnabled,
+              onChanged: (val) => setState(() => _soundEnabled = val)),
           _buildDivider(),
-          _buildSwitchTile(context, title: l10n.backgroundMusic, icon: Icons.music_note_outlined, value: _musicEnabled, onChanged: (val) => setState(() => _musicEnabled = val)),
+          _buildSwitchTile(context,
+              title: l10n.backgroundMusic,
+              icon: Icons.music_note_outlined,
+              value: _musicEnabled,
+              onChanged: (val) => setState(() => _musicEnabled = val)),
         ],
       ));
       sections.add(const SizedBox(height: 30));
     }
 
-    if (match('app') || match('language') || match('themes') || match('about') || match('privacy')) {
+    if (match('app') ||
+        match('language') ||
+        match('themes') ||
+        match('about') ||
+        match('privacy')) {
       sections.add(_buildSectionHeader(context, l10n.appSettingsSection));
       sections.add(const SizedBox(height: 10));
       sections.add(_buildSettingsCard(
         context,
         children: [
-          _buildListTile(context, title: l10n.language, subtitle: _languageLabel(locale), icon: Icons.language_outlined, onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsLanguageScreen()));
+          _buildListTile(context,
+              title: l10n.language,
+              subtitle: _languageLabel(locale),
+              icon: Icons.language_outlined, onTap: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const SettingsLanguageScreen()));
           }),
           _buildDivider(),
-          _buildListTile(context, title: l10n.themes, subtitle: l10n.lightAndCalm, icon: Icons.color_lens_outlined, onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const ChildThemeScreen()));
+          _buildListTile(context,
+              title: l10n.themes,
+              subtitle: l10n.lightAndCalm,
+              icon: Icons.color_lens_outlined, onTap: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const ChildThemeScreen()));
           }),
           _buildDivider(),
-          _buildListTile(context, title: l10n.aboutUs, icon: Icons.info_outline, onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsAboutUsScreen()));
+          _buildListTile(context, title: l10n.aboutUs, icon: Icons.info_outline,
+              onTap: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const SettingsAboutUsScreen()));
           }),
           _buildDivider(),
-          _buildListTile(context, title: l10n.privacyPolicy, icon: Icons.lock_outline, onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsPrivacyPolicyScreen()));
+          _buildListTile(context,
+              title: l10n.privacyPolicy, icon: Icons.lock_outline, onTap: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const SettingsPrivacyPolicyScreen()));
           }),
         ],
       ));
@@ -985,7 +1206,8 @@ class _ChildSettingsScreenState extends ConsumerState<ChildSettingsScreen> {
         Center(
           child: Text(
             l10n.noSettingsFound,
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ),
       ];
@@ -999,37 +1221,56 @@ class _ChildSettingsScreenState extends ConsumerState<ChildSettingsScreen> {
     if (query.isEmpty) return;
 
     if (query == 'edit profile' || query == 'profile') {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (context) => const SettingsEditProfileScreen()));
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => const SettingsEditProfileScreen()));
       return;
     }
     if (query == 'change avatar' || query == 'avatar') {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (context) => const SettingsAvatarSelectionScreen()));
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => const SettingsAvatarSelectionScreen()));
       return;
     }
     if (query == 'language' ||
         query == _languageLabel(locale).toLowerCase() ||
         query == 'اللغة') {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (context) => const SettingsLanguageScreen()));
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => const SettingsLanguageScreen()));
       return;
     }
-    if (query == 'themes' || query == 'theme' || query == 'الثيمات' || query == 'المظهر') {
+    if (query == 'themes' ||
+        query == 'theme' ||
+        query == 'الثيمات' ||
+        query == 'المظهر') {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const ChildThemeScreen()),
       );
       return;
     }
-    if (query == 'about' || query == 'about us' || query == 'حول' || query == 'من نحن') {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (context) => const SettingsAboutUsScreen()));
+    if (query == 'about' ||
+        query == 'about us' ||
+        query == 'حول' ||
+        query == 'من نحن') {
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => const SettingsAboutUsScreen()));
       return;
     }
-    if (query == 'privacy' || query == 'privacy policy' || query == 'الخصوصية' || query == 'سياسة الخصوصية') {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (context) => const SettingsPrivacyPolicyScreen()));
+    if (query == 'privacy' ||
+        query == 'privacy policy' ||
+        query == 'الخصوصية' ||
+        query == 'سياسة الخصوصية') {
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => const SettingsPrivacyPolicyScreen()));
       return;
     }
   }
@@ -1037,36 +1278,60 @@ class _ChildSettingsScreenState extends ConsumerState<ChildSettingsScreen> {
   Widget _buildSectionHeader(BuildContext context, String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10),
-      child: Text(title, style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+      child: Text(title,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2)),
     );
   }
 
-  Widget _buildSettingsCard(BuildContext context, {required List<Widget> children, Color? color}) {
+  Widget _buildSettingsCard(BuildContext context,
+      {required List<Widget> children, Color? color}) {
     return Container(
       decoration: BoxDecoration(
         color: color ?? Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(
+              color:
+                  Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4)),
         ],
       ),
       child: Column(children: children),
     );
   }
 
-  Widget _buildListTile(BuildContext context, {required String title, String? subtitle, required IconData icon, Color? iconColor, Color? titleColor, VoidCallback? onTap}) {
+  Widget _buildListTile(BuildContext context,
+      {required String title,
+      String? subtitle,
+      required IconData icon,
+      Color? iconColor,
+      Color? titleColor,
+      VoidCallback? onTap}) {
     final colors = Theme.of(context).colorScheme;
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
       leading: Container(
         width: 40,
         height: 40,
-        decoration: BoxDecoration(color: (iconColor ?? colors.primary).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+        decoration: BoxDecoration(
+            color: (iconColor ?? colors.primary).withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12)),
         child: Icon(icon, color: iconColor ?? colors.primary, size: 24),
       ),
-      title: Text(title, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600, color: titleColor)),
+      title: Text(title,
+          style: Theme.of(context)
+              .textTheme
+              .bodyLarge
+              ?.copyWith(fontWeight: FontWeight.w600, color: titleColor)),
       subtitle: subtitle != null ? Text(subtitle) : null,
-      trailing: onTap != null ? Icon(Icons.arrow_forward_ios, size: 16, color: colors.onSurfaceVariant) : null,
+      trailing: onTap != null
+          ? Icon(Icons.arrow_forward_ios,
+              size: 16, color: colors.onSurfaceVariant)
+          : null,
       onTap: onTap,
     );
   }
@@ -1081,17 +1346,27 @@ class _ChildSettingsScreenState extends ConsumerState<ChildSettingsScreen> {
     }
   }
 
-  Widget _buildSwitchTile(BuildContext context, {required String title, required IconData icon, required bool value, required ValueChanged<bool> onChanged}) {
+  Widget _buildSwitchTile(BuildContext context,
+      {required String title,
+      required IconData icon,
+      required bool value,
+      required ValueChanged<bool> onChanged}) {
     final colors = Theme.of(context).colorScheme;
     return SwitchListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       secondary: Container(
         width: 40,
         height: 40,
-        decoration: BoxDecoration(color: colors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+        decoration: BoxDecoration(
+            color: colors.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12)),
         child: Icon(icon, color: colors.primary, size: 24),
       ),
-      title: Text(title, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+      title: Text(title,
+          style: Theme.of(context)
+              .textTheme
+              .bodyLarge
+              ?.copyWith(fontWeight: FontWeight.w600)),
       value: value,
       onChanged: onChanged,
       activeThumbColor: colors.primary,
@@ -1099,7 +1374,12 @@ class _ChildSettingsScreenState extends ConsumerState<ChildSettingsScreen> {
   }
 
   Widget _buildDivider() {
-    return Divider(height: 1, thickness: 1, indent: 70, endIndent: 20, color: Theme.of(context).colorScheme.outlineVariant);
+    return Divider(
+        height: 1,
+        thickness: 1,
+        indent: 70,
+        endIndent: 20,
+        color: Theme.of(context).colorScheme.outlineVariant);
   }
 }
 
@@ -1122,8 +1402,11 @@ class SettingsLanguageScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.selectLanguage, style: const TextStyle(fontWeight: FontWeight.bold)),
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context)),
+        title: Text(AppLocalizations.of(context)!.selectLanguage,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+        leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.pop(context)),
       ),
       body: ListView(
         children: [
@@ -1139,11 +1422,14 @@ class SettingsLanguageScreen extends ConsumerWidget {
                     .read(localeProvider.notifier)
                     .setLanguageCode(language['code'] as String);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(AppLocalizations.of(context)!.languageChanged(language['name'] as String))),
+                  SnackBar(
+                      content: Text(AppLocalizations.of(context)!
+                          .languageChanged(language['name'] as String))),
                 );
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? colors.primary.withValues(alpha: 0.1)
@@ -1198,6 +1484,10 @@ class SettingsAvatarSelectionScreen extends ConsumerStatefulWidget {
 class _SettingsAvatarSelectionScreenState
     extends ConsumerState<SettingsAvatarSelectionScreen> {
   String? _selectedAvatarPath;
+  String _selectedFrameColorId = ChildAvatarFrameCatalog.skyColorId;
+  String _selectedFrameStyleId = ChildAvatarFrameCatalog.classicStyleId;
+  bool _isLoadingCustomization = true;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -1206,92 +1496,356 @@ class _SettingsAvatarSelectionScreenState
     _selectedAvatarPath = child?.avatarPath.isNotEmpty == true
         ? child!.avatarPath
         : (child?.avatar.isNotEmpty == true ? child!.avatar : null);
+    Future.microtask(_loadCustomization);
+  }
+
+  Future<void> _loadCustomization() async {
+    final child = ref.read(currentChildProvider);
+    if (child == null) return;
+    final customization =
+        await ref.read(childAvatarCustomizationServiceProvider).load(child.id);
+    if (!mounted) return;
+    setState(() {
+      _selectedAvatarPath = customization.avatarPath ?? _selectedAvatarPath;
+      _selectedFrameColorId = customization.frameColorId;
+      _selectedFrameStyleId = customization.frameStyleId;
+      _isLoadingCustomization = false;
+    });
+  }
+
+  Future<void> _saveCustomization() async {
+    final child = ref.read(currentChildProvider);
+    if (child == null || _isSaving) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final selectedPath = _selectedAvatarPath ?? AppConstants.defaultChildAvatar;
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    final updatedChild = child.copyWith(
+      avatar: selectedPath,
+      avatarPath: selectedPath,
+    );
+    await ref
+        .read(childSessionControllerProvider.notifier)
+        .updateChildProfile(updatedChild);
+    await ref.read(childAvatarCustomizationProvider(child.id).notifier).save(
+          ChildAvatarCustomization(
+            avatarPath: selectedPath,
+            frameColorId: _selectedFrameColorId,
+            frameStyleId: _selectedFrameStyleId,
+          ),
+        );
+    if (!mounted) return;
+    setState(() {
+      _isSaving = false;
+    });
+    navigator.pop();
+    messenger.showSnackBar(
+      SnackBar(content: Text(l10n.customizationSaved)),
+    );
+  }
+
+  String _unlockHint(
+    AppLocalizations l10n,
+    ChildAvatarFrameStyleOption style,
+  ) {
+    final rule = style.unlockRule;
+    if (rule.level != null) {
+      return l10n.unlockAtLevel(rule.level!);
+    }
+    if (rule.streak != null) {
+      return l10n.unlockWithStreak(rule.streak!);
+    }
+    if (rule.activities != null) {
+      return l10n.unlockWithActivities(rule.activities!);
+    }
+    return l10n.unlockedLabel;
+  }
+
+  String _styleLabel(AppLocalizations l10n, String styleId) {
+    switch (styleId) {
+      case ChildAvatarFrameCatalog.glowStyleId:
+        return '${l10n.profileStyle} ${l10n.frameStyleGlow}';
+      case ChildAvatarFrameCatalog.starsStyleId:
+        return '${l10n.profileStyle} ${l10n.frameStyleStars}';
+      case ChildAvatarFrameCatalog.shieldStyleId:
+        return '${l10n.profileStyle} ${l10n.frameStyleShield}';
+      default:
+        return '${l10n.profileStyle} ${l10n.frameStyleClassic}';
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final avatars = ref.watch(availableAvatarsProvider);
     final child = ref.watch(currentChildProvider);
+    final l10n = AppLocalizations.of(context)!;
     final selectedPath = _selectedAvatarPath ??
         (avatars.isNotEmpty ? avatars.first : AppConstants.defaultChildAvatar);
+    final previewCustomization = ChildAvatarCustomization(
+      avatarPath: selectedPath,
+      frameColorId: _selectedFrameColorId,
+      frameStyleId: _selectedFrameStyleId,
+    );
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.chooseAvatar, style: const TextStyle(fontWeight: FontWeight.bold)),
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context)),
+        title: Text(
+          l10n.customizeProfile,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.pop(context)),
         actions: [
           TextButton(
-            onPressed: child == null
+            onPressed: child == null || _isLoadingCustomization
                 ? null
-                : () async {
-                    final navigator = Navigator.of(context);
-                    final messenger = ScaffoldMessenger.of(context);
-                    final l10n = AppLocalizations.of(context)!;
-                    final updated = child.copyWith(
-                      avatar: selectedPath,
-                      avatarPath: selectedPath,
-                    );
-                    await ref
-                        .read(childSessionControllerProvider.notifier)
-                        .updateChildProfile(updated);
-                    if (!mounted) return;
-                    navigator.pop();
-                    messenger.showSnackBar(
-                      SnackBar(content: Text(l10n.avatarSaved)),
-                    );
-                  },
-            child: Text(AppLocalizations.of(context)!.save, style: const TextStyle(fontWeight: FontWeight.bold)),
+                : _saveCustomization,
+            child: Text(
+              l10n.save,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
-      body: Column(
+      body: ListView(
+        padding: const EdgeInsets.all(20),
         children: [
-          const Padding(
-            padding: EdgeInsets.all(20),
-            child: ChildHeader(compact: true),
+          const ChildHeader(compact: true),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .shadow
+                      .withValues(alpha: 0.08),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                if (child != null)
+                  ChildAvatarFrame(
+                    child: child,
+                    customization: previewCustomization,
+                    radius: 46,
+                  ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.customizeProfileSubtitle,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ],
+            ),
           ),
-          Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.all(20),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 20,
-                mainAxisSpacing: 20,
-                childAspectRatio: 1.0,
-              ),
-              itemCount: avatars.length,
-              itemBuilder: (context, index) {
-                final avatarPath = avatars[index];
-                final isSelected = selectedPath == avatarPath;
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedAvatarPath = avatarPath;
-                    });
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isSelected
-                            ? Theme.of(context).colorScheme.primary
-                            : Colors.transparent,
-                        width: 4,
-                      ),
+          const SizedBox(height: 20),
+          Text(
+            l10n.chooseAvatar,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+          const SizedBox(height: 12),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 1.0,
+            ),
+            itemCount: avatars.length,
+            itemBuilder: (context, index) {
+              final avatarPath = avatars[index];
+              final isSelected = selectedPath == avatarPath;
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedAvatarPath = avatarPath;
+                  });
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.outlineVariant,
+                      width: isSelected ? 3 : 1.5,
                     ),
-                    child: CircleAvatar(
-                      backgroundColor: Colors.grey[200],
-                      child: AvatarView(
-                        avatarPath: avatarPath,
-                        radius: 28,
-                        backgroundColor: Colors.transparent,
+                  ),
+                  child: Center(
+                    child: AvatarView(
+                      avatarPath: avatarPath,
+                      radius: 28,
+                      backgroundColor: Colors.transparent,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 20),
+          Text(
+            l10n.frameColors,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: ChildAvatarFrameCatalog.colors.map((option) {
+              final isSelected = option.id == _selectedFrameColorId;
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedFrameColorId = option.id;
+                  });
+                },
+                child: Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: option.color,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.onSurface
+                          : Colors.white,
+                      width: isSelected ? 3 : 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: option.color.withValues(alpha: 0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            l10n.frameStyles,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+          const SizedBox(height: 12),
+          if (child != null)
+            ...ChildAvatarFrameCatalog.styles.map((style) {
+              final unlocked = style.unlockRule.isUnlockedFor(child);
+              final selected = style.id == _selectedFrameStyleId;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: InkWell(
+                  onTap: unlocked
+                      ? () {
+                          setState(() {
+                            _selectedFrameStyleId = style.id;
+                          });
+                        }
+                      : null,
+                  borderRadius: BorderRadius.circular(18),
+                  child: Opacity(
+                    opacity: unlocked ? 1 : 0.55,
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: selected
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).colorScheme.outlineVariant,
+                          width: selected ? 2 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .primary
+                                  .withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Icon(
+                              style.icon,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _styleLabel(l10n, style.id),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  unlocked
+                                      ? l10n.unlockedLabel
+                                      : _unlockHint(l10n, style),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Text(
+                            unlocked ? l10n.unlockedLabel : l10n.lockedLabel,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: unlocked
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                );
-              },
+                ),
+              );
+            }),
+          if (_isSaving)
+            const Padding(
+              padding: EdgeInsets.only(top: 12),
+              child: LinearProgressIndicator(),
             ),
-          ),
         ],
       ),
     );
@@ -1358,8 +1912,8 @@ class _SettingsEditProfileScreenState
     }
 
     final newPassword = List<String>.from(_selectedPictures);
-    final hasPasswordChange =
-        child.picturePassword.length == 3 && child.picturePassword != newPassword;
+    final hasPasswordChange = child.picturePassword.length == 3 &&
+        child.picturePassword != newPassword;
 
     if (hasPasswordChange) {
       try {
@@ -1402,8 +1956,11 @@ class _SettingsEditProfileScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.editProfile, style: const TextStyle(fontWeight: FontWeight.bold)),
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context)),
+        title: Text(AppLocalizations.of(context)!.editProfile,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+        leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.pop(context)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
@@ -1416,21 +1973,24 @@ class _SettingsEditProfileScreenState
               const SizedBox(height: 16),
               Row(
                 children: [
-                  AvatarView(
-                    avatarId: ref.watch(currentChildProvider)?.avatar,
-                    avatarPath: ref.watch(currentChildProvider)?.avatarPath,
-                    radius: 24,
-                    backgroundColor: Colors.transparent,
-                  ),
+                  if (ref.watch(currentChildProvider) != null)
+                    ChildCustomizableAvatar(
+                      child: ref.watch(currentChildProvider)!,
+                      radius: 24,
+                      backgroundColor: Colors.transparent,
+                    ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(AppLocalizations.of(context)!.changeAvatarFromProfile,
+                    child: Text(
+                        AppLocalizations.of(context)!.changeAvatarFromProfile,
                         style: theme.textTheme.bodySmall),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
-              Text(AppLocalizations.of(context)!.nameLabel, style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+              Text(AppLocalizations.of(context)!.nameLabel,
+                  style: theme.textTheme.bodyLarge
+                      ?.copyWith(fontWeight: FontWeight.w600)),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _nameController,
@@ -1438,17 +1998,25 @@ class _SettingsEditProfileScreenState
                   hintText: AppLocalizations.of(context)!.enterYourName,
                   filled: true,
                   fillColor: colors.surfaceContainerHighest,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none),
                 ),
                 validator: (value) {
-                  if (value == null || value.trim().isEmpty) return AppLocalizations.of(context)!.pleaseEnterName;
+                  if (value == null || value.trim().isEmpty) {
+                    return AppLocalizations.of(context)!.pleaseEnterName;
+                  }
                   return null;
                 },
               ),
               const SizedBox(height: 24),
-              Text(AppLocalizations.of(context)!.picturePassword, style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+              Text(AppLocalizations.of(context)!.picturePassword,
+                  style: theme.textTheme.bodyLarge
+                      ?.copyWith(fontWeight: FontWeight.w600)),
               const SizedBox(height: 4),
-              Text(AppLocalizations.of(context)!.chooseExactlyThreePictures, style: theme.textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant)),
+              Text(AppLocalizations.of(context)!.chooseExactlyThreePictures,
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: colors.onSurfaceVariant)),
               const SizedBox(height: 8),
               PicturePasswordRow(
                 picturePassword: _selectedPictures,
@@ -1468,18 +2036,20 @@ class _SettingsEditProfileScreenState
                 itemBuilder: (context, index) {
                   final option = picturePasswordOptions[index];
                   final isSelected = _selectedPictures.contains(option.id);
+                  final optionColor =
+                      resolvePicturePasswordColor(context, option);
                   return InkWell(
                     onTap: () => _togglePicture(option.id),
                     borderRadius: BorderRadius.circular(16),
                     child: Container(
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? option.color.withValues(alpha: 0.2)
+                            ? optionColor.withValues(alpha: 0.2)
                             : colors.surface,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: isSelected
-                              ? option.color
+                              ? optionColor
                               : colors.surfaceContainerHighest,
                           width: 2,
                         ),
@@ -1487,7 +2057,7 @@ class _SettingsEditProfileScreenState
                       child: Icon(
                         option.icon,
                         size: 28,
-                        color: option.color,
+                        color: optionColor,
                       ),
                     ),
                   );
@@ -1502,9 +2072,12 @@ class _SettingsEditProfileScreenState
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colors.primary,
                     foregroundColor: colors.onPrimary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
                   ),
-                  child: Text(AppLocalizations.of(context)!.saveChanges, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  child: Text(AppLocalizations.of(context)!.saveChanges,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 16)),
                 ),
               ),
               const SizedBox(height: 20),
@@ -1525,18 +2098,14 @@ class ChildThemeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final themeSettings = ref.watch(themeControllerProvider);
     final colors = Theme.of(context).colorScheme;
 
-    const palettes = [
-      ThemePalettes.blue,
-      ThemePalettes.green,
-      ThemePalettes.sunset,
-    ];
-
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.themes, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(l10n.theme,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -1547,6 +2116,13 @@ class ChildThemeScreen extends ConsumerWidget {
         children: [
           const ChildHeader(compact: true),
           const SizedBox(height: 8),
+          Text(
+            l10n.mode,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
@@ -1563,31 +2139,57 @@ class ChildThemeScreen extends ConsumerWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.dark_mode),
-                const SizedBox(width: 12),
                 Expanded(
-                  child: Text(AppLocalizations.of(context)!.darkLight),
+                  child: _ChildThemeModeButton(
+                    icon: Icons.light_mode_rounded,
+                    label: l10n.lightMode,
+                    isSelected: themeSettings.mode == ThemeMode.light,
+                    onTap: () => ref
+                        .read(themeControllerProvider.notifier)
+                        .setMode(ThemeMode.light),
+                  ),
                 ),
-                Switch(
-                  value: themeSettings.mode == ThemeMode.dark,
-                  onChanged: (value) {
-                    ref.read(themeControllerProvider.notifier).setMode(
-                          value ? ThemeMode.dark : ThemeMode.light,
-                        );
-                  },
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _ChildThemeModeButton(
+                    icon: Icons.dark_mode_rounded,
+                    label: l10n.darkMode,
+                    isSelected: themeSettings.mode == ThemeMode.dark,
+                    onTap: () => ref
+                        .read(themeControllerProvider.notifier)
+                        .setMode(ThemeMode.dark),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _ChildThemeModeButton(
+                    icon: Icons.auto_mode_rounded,
+                    label: l10n.systemMode,
+                    isSelected: themeSettings.mode == ThemeMode.system,
+                    onTap: () => ref
+                        .read(themeControllerProvider.notifier)
+                        .setMode(ThemeMode.system),
+                  ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 20),
           Text(
-            AppLocalizations.of(context)!.chooseCalmColor,
+            l10n.themePalette,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
           ),
+          const SizedBox(height: 4),
+          Text(
+            l10n.themePaletteHint,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
+          ),
           const SizedBox(height: 12),
-          ...palettes.map((palette) {
+          ...ThemePalettes.all.map((palette) {
             final isSelected = themeSettings.paletteId == palette.id;
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
@@ -1603,7 +2205,8 @@ class ChildThemeScreen extends ConsumerWidget {
                     color: colors.surface,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isSelected ? colors.primary : colors.outlineVariant,
+                      color:
+                          isSelected ? colors.primary : colors.outlineVariant,
                       width: isSelected ? 2 : 1,
                     ),
                     boxShadow: [
@@ -1628,9 +2231,10 @@ class ChildThemeScreen extends ConsumerWidget {
                       Expanded(
                         child: Text(
                           palette.name,
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
                         ),
                       ),
                       if (isSelected)
@@ -1642,6 +2246,65 @@ class ChildThemeScreen extends ConsumerWidget {
             );
           }),
         ],
+      ),
+    );
+  }
+}
+
+class _ChildThemeModeButton extends StatelessWidget {
+  const _ChildThemeModeButton({
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? colors.primary.withValues(alpha: 0.12)
+              : colors.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected ? colors.primary : Colors.transparent,
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 22,
+              color: isSelected ? colors.primary : colors.onSurfaceVariant,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    color:
+                        isSelected ? colors.primary : colors.onSurfaceVariant,
+                  ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1659,19 +2322,28 @@ class SettingsAboutUsScreen extends StatelessWidget {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.aboutUs, style: const TextStyle(fontWeight: FontWeight.bold)),
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context)),
+        title: Text(AppLocalizations.of(context)!.aboutUs,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+        leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.pop(context)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
             const ChildHeader(compact: true),
-            Center(child: Icon(Icons.child_care, size: 80, color: theme.colorScheme.primary)),
+            Center(
+                child: Icon(Icons.child_care,
+                    size: 80, color: theme.colorScheme.primary)),
             const SizedBox(height: 20),
-            Text(AppLocalizations.of(context)!.kinderWorldAppTitle, style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.kinderWorldAppTitle,
+                style: theme.textTheme.headlineMedium
+                    ?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
-            Text(AppLocalizations.of(context)!.versionLabel('1.0.0'), style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey)),
+            Text(AppLocalizations.of(context)!.versionLabel('1.0.0'),
+                style:
+                    theme.textTheme.bodyMedium?.copyWith(color: Colors.grey)),
             const SizedBox(height: 30),
             Text(
               AppLocalizations.of(context)!.aboutAppDescription,
@@ -1681,7 +2353,9 @@ class SettingsAboutUsScreen extends StatelessWidget {
             const SizedBox(height: 20),
             const Divider(),
             const SizedBox(height: 20),
-            Text(AppLocalizations.of(context)!.contactUs, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.contactUs,
+                style: theme.textTheme.titleLarge
+                    ?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             _buildContactRow(Icons.email, "support@kinderworld.com"),
             const SizedBox(height: 10),
@@ -1715,8 +2389,11 @@ class SettingsPrivacyPolicyScreen extends StatelessWidget {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.privacyPolicy, style: const TextStyle(fontWeight: FontWeight.bold)),
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context)),
+        title: Text(AppLocalizations.of(context)!.privacyPolicy,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+        leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.pop(context)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -1724,23 +2401,32 @@ class SettingsPrivacyPolicyScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const ChildHeader(compact: true),
-            Text(AppLocalizations.of(context)!.privacyLastUpdated('October 2023'), style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey)),
+            Text(
+                AppLocalizations.of(context)!
+                    .privacyLastUpdated('October 2023'),
+                style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey)),
             const SizedBox(height: 20),
-            Text(AppLocalizations.of(context)!.privacyIntroTitle, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.privacyIntroTitle,
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text(
               AppLocalizations.of(context)!.privacyIntroBody,
               style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
             ),
             const SizedBox(height: 20),
-            Text(AppLocalizations.of(context)!.privacyDataCollectionTitle, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.privacyDataCollectionTitle,
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text(
               AppLocalizations.of(context)!.privacyDataCollectionBody,
               style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
             ),
             const SizedBox(height: 20),
-            Text(AppLocalizations.of(context)!.privacySecurityTitle, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.privacySecurityTitle,
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text(
               AppLocalizations.of(context)!.privacySecurityBody,

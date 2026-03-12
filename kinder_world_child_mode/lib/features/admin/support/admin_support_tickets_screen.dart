@@ -11,10 +11,6 @@ import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.
 import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
 import 'package:kinder_world/features/admin/shared/admin_table_widgets.dart';
 
-/// IMPORTANT:
-/// All UI text must use AppLocalizations.
-/// Hardcoded strings are NOT allowed.
-
 class AdminSupportTicketsScreen extends ConsumerStatefulWidget {
   const AdminSupportTicketsScreen({super.key});
 
@@ -26,9 +22,12 @@ class AdminSupportTicketsScreen extends ConsumerStatefulWidget {
 class _AdminSupportTicketsScreenState
     extends ConsumerState<AdminSupportTicketsScreen> {
   String _status = '';
+  String _category = '';
   int _page = 1;
   bool _loading = true;
+  bool _detailLoading = false;
   String? _error;
+  String? _detailError;
   List<AdminSupportTicket> _tickets = const [];
   Map<String, dynamic> _pagination = const {};
   AdminSupportTicket? _selectedTicket;
@@ -43,11 +42,13 @@ class _AdminSupportTicketsScreenState
     setState(() {
       _loading = true;
       _error = null;
+      _detailError = null;
     });
     try {
       final response =
           await ref.read(adminManagementRepositoryProvider).fetchSupportTickets(
                 status: _status,
+                category: _category,
                 page: _page,
               );
       AdminSupportTicket? selected = _selectedTicket;
@@ -58,28 +59,41 @@ class _AdminSupportTicketsScreenState
               orElse: () => _selectedTicket,
             );
       }
+      if (!mounted) return;
       setState(() {
         _tickets = response.items;
         _pagination = response.pagination;
         _selectedTicket =
             selected ?? (_tickets.isNotEmpty ? _tickets.first : null);
         _loading = false;
+        _detailLoading = false;
       });
       if (_selectedTicket != null) {
         await _loadTicketDetails(_selectedTicket!.id, quiet: true);
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e.toString();
         _loading = false;
+        _detailLoading = false;
       });
     }
   }
 
   Future<void> _loadTicketDetails(int ticketId, {bool quiet = false}) async {
-    if (!quiet) {
-      setState(() => _loading = true);
-    }
+    final placeholder = _tickets.cast<AdminSupportTicket?>().firstWhere(
+          (item) => item?.id == ticketId,
+          orElse: () => _selectedTicket,
+        );
+    setState(() {
+      _selectedTicket = placeholder;
+      _detailLoading = true;
+      _detailError = null;
+      if (!quiet) {
+        _error = null;
+      }
+    });
     try {
       final ticket = await ref
           .read(adminManagementRepositoryProvider)
@@ -87,13 +101,13 @@ class _AdminSupportTicketsScreenState
       if (!mounted) return;
       setState(() {
         _selectedTicket = ticket;
-        _loading = false;
+        _detailLoading = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
-        _loading = false;
+        _detailError = e.toString();
+        _detailLoading = false;
       });
     }
   }
@@ -131,9 +145,7 @@ class _AdminSupportTicketsScreenState
         .replySupportTicket(_selectedTicket!.id, controller.text.trim());
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(l10n.adminSupportReplySuccess),
-      ),
+      SnackBar(content: Text(l10n.adminSupportReplySuccess)),
     );
     await _loadTickets(selectTicketId: _selectedTicket!.id);
   }
@@ -147,9 +159,21 @@ class _AdminSupportTicketsScreenState
         .assignSupportTicket(ticket.id);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(l10n.adminSupportAssignSuccess),
-      ),
+      SnackBar(content: Text(l10n.adminSupportAssignSuccess)),
+    );
+    await _loadTickets(selectTicketId: ticket.id);
+  }
+
+  Future<void> _resolveTicket() async {
+    final l10n = AppLocalizations.of(context)!;
+    final ticket = _selectedTicket;
+    if (ticket == null) return;
+    await ref
+        .read(adminManagementRepositoryProvider)
+        .resolveSupportTicket(ticket.id);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.adminSupportResolveSuccess)),
     );
     await _loadTickets(selectTicketId: ticket.id);
   }
@@ -170,9 +194,7 @@ class _AdminSupportTicketsScreenState
         .closeSupportTicket(ticket.id);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(l10n.adminSupportCloseSuccess),
-      ),
+      SnackBar(content: Text(l10n.adminSupportCloseSuccess)),
     );
     await _loadTickets(selectTicketId: ticket.id);
   }
@@ -193,13 +215,16 @@ class _AdminSupportTicketsScreenState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                l10n.adminSupportTicketsTitle,
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                l10n.adminSupportTicketsSubtitle,
+              AdminPageHeader(
+                title: l10n.adminSupportTicketsTitle,
+                subtitle: l10n.adminSupportTicketsSubtitle,
+                actions: [
+                  OutlinedButton.icon(
+                    onPressed: _loadTickets,
+                    icon: const Icon(Icons.refresh_rounded, size: 18),
+                    label: Text(l10n.retry),
+                  ),
+                ],
               ),
               const SizedBox(height: 20),
               AdminFilterBar(
@@ -208,8 +233,16 @@ class _AdminSupportTicketsScreenState
                     width: 220,
                     child: DropdownButtonFormField<String>(
                       initialValue: _status,
+                      isExpanded: true,
+                      isDense: true,
                       decoration: InputDecoration(
                         labelText: l10n.adminSupportStatusFilter,
+                        prefixIcon:
+                            const Icon(Icons.filter_list_rounded, size: 18),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8)),
                       ),
                       items: [
                         DropdownMenuItem(
@@ -225,6 +258,10 @@ class _AdminSupportTicketsScreenState
                           child: Text(l10n.adminSupportStatusInProgress),
                         ),
                         DropdownMenuItem(
+                          value: 'resolved',
+                          child: Text(l10n.adminSupportStatusResolved),
+                        ),
+                        DropdownMenuItem(
                           value: 'closed',
                           child: Text(l10n.adminSupportStatusClosed),
                         ),
@@ -238,10 +275,55 @@ class _AdminSupportTicketsScreenState
                       },
                     ),
                   ),
-                  OutlinedButton.icon(
-                    onPressed: _loadTickets,
-                    icon: const Icon(Icons.refresh),
-                    label: Text(l10n.retry),
+                  SizedBox(
+                    width: 240,
+                    child: DropdownButtonFormField<String>(
+                      initialValue: _category,
+                      isExpanded: true,
+                      isDense: true,
+                      decoration: InputDecoration(
+                        labelText: l10n.adminSupportCategoryFilter,
+                        prefixIcon:
+                            const Icon(Icons.category_outlined, size: 18),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                      ),
+                      items: [
+                        DropdownMenuItem(
+                          value: '',
+                          child: Text(l10n.adminSupportCategoryAll),
+                        ),
+                        DropdownMenuItem(
+                          value: 'general_inquiry',
+                          child: Text(l10n.supportCategoryGeneralInquiry),
+                        ),
+                        DropdownMenuItem(
+                          value: 'login_issue',
+                          child: Text(l10n.supportCategoryLoginIssue),
+                        ),
+                        DropdownMenuItem(
+                          value: 'billing_issue',
+                          child: Text(l10n.supportCategoryBillingIssue),
+                        ),
+                        DropdownMenuItem(
+                          value: 'child_content_issue',
+                          child: Text(l10n.supportCategoryChildContentIssue),
+                        ),
+                        DropdownMenuItem(
+                          value: 'technical_issue',
+                          child: Text(l10n.supportCategoryTechnicalIssue),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          _category = value ?? '';
+                          _page = 1;
+                        });
+                        _loadTickets();
+                      },
+                    ),
                   ),
                 ],
               ),
@@ -299,44 +381,90 @@ class _AdminSupportTicketsScreenState
 
   Widget _buildTicketsList(BuildContext context, AppLocalizations l10n) {
     if (_tickets.isEmpty) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(l10n.adminSupportNoTickets),
-        ),
+      return AdminEmptyState(
+        message: l10n.adminSupportNoTickets,
+        icon: Icons.support_agent_outlined,
       );
     }
 
     return Column(
       children: _tickets.map((ticket) {
         final selected = _selectedTicket?.id == ticket.id;
+        final cs = Theme.of(context).colorScheme;
         return Card(
-          color: selected
-              ? Theme.of(
-                  context,
-                ).colorScheme.primaryContainer.withValues(alpha: 0.35)
+          elevation: selected ? 0 : null,
+          color: selected ? cs.primaryContainer.withValues(alpha: 0.35) : null,
+          shape: selected
+              ? RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: cs.primary.withValues(alpha: 0.4)),
+                )
               : null,
-          child: ListTile(
+          child: InkWell(
             onTap: () => _loadTicketDetails(ticket.id),
-            title: Text(ticket.subject),
-            subtitle: Text(
-              '${_statusLabel(ticket.status, l10n)} • ${ticket.requester?['email'] ?? ticket.email ?? '—'}\n${ticket.preview ?? ticket.message}',
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            trailing: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                _StatusChip(
-                    status: ticket.status,
-                    label: _statusLabel(ticket.status, l10n)),
-                const SizedBox(height: 4),
-                Text(
-                  l10n.adminSupportMessagesCount(ticket.replyCount),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          ticket.subject,
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${_categoryLabel(ticket.category, l10n)} • ${ticket.requester?['email'] ?? ticket.email ?? '—'}',
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: cs.onSurface.withValues(alpha: 0.6),
+                                  ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if ((ticket.preview ?? ticket.message).isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            ticket.preview ?? ticket.message,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(
+                                  color: cs.onSurface.withValues(alpha: 0.45),
+                                ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      _StatusChip(
+                        status: ticket.status,
+                        label: _statusLabel(ticket.status, l10n),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        l10n.adminSupportMessagesCount(ticket.replyCount),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -347,11 +475,25 @@ class _AdminSupportTicketsScreenState
   Widget _buildDetailsCard(BuildContext context, AppLocalizations l10n) {
     final ticket = _selectedTicket;
     if (ticket == null) {
+      return AdminEmptyState(
+        message: l10n.adminSupportNoTicketSelected,
+        icon: Icons.inbox_outlined,
+      );
+    }
+
+    if (_detailLoading) {
+      return const Card(
+        child: AdminLoadingState(padding: EdgeInsets.all(24)),
+      );
+    }
+
+    if (_detailError != null) {
       return Card(
         child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            l10n.adminSupportNoTicketSelected,
+          padding: const EdgeInsets.all(20),
+          child: AdminErrorState(
+            message: _detailError!,
+            onRetry: () => _loadTicketDetails(ticket.id),
           ),
         ),
       );
@@ -374,8 +516,9 @@ class _AdminSupportTicketsScreenState
                   ),
                 ),
                 _StatusChip(
-                    status: ticket.status,
-                    label: _statusLabel(ticket.status, l10n)),
+                  status: ticket.status,
+                  label: _statusLabel(ticket.status, l10n),
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -384,12 +527,18 @@ class _AdminSupportTicketsScreenState
               runSpacing: 8,
               children: [
                 Text(
-                    '${l10n.adminSupportRequester}: ${ticket.requester?['email'] ?? ticket.email ?? '—'}'),
+                  '${l10n.adminSupportRequester}: ${ticket.requester?['email'] ?? ticket.email ?? '—'}',
+                ),
                 Text(
-                    '${l10n.adminSupportAssignee}: ${ticket.assignedAdmin?['email'] ?? '—'}'),
+                  '${l10n.adminSupportAssignee}: ${ticket.assignedAdmin?['email'] ?? '—'}',
+                ),
+                Text(
+                  '${l10n.adminSupportCategoryLabel}: ${_categoryLabel(ticket.category, l10n)}',
+                ),
                 if (ticket.updatedAt != null)
                   Text(
-                      '${l10n.adminUsersLastUpdatedMetric}: ${_formatDate(ticket.updatedAt!)}'),
+                    '${l10n.adminUsersLastUpdatedMetric}: ${_formatDate(ticket.updatedAt!)}',
+                  ),
               ],
             ),
             const SizedBox(height: 16),
@@ -406,6 +555,14 @@ class _AdminSupportTicketsScreenState
                   onPressed: ticket.status == 'closed' ? null : _assignToMe,
                   icon: const Icon(Icons.person_add_alt_outlined),
                   label: Text(l10n.adminSupportAssignedToMe),
+                ),
+                OutlinedButton.icon(
+                  onPressed:
+                      ticket.status == 'closed' || ticket.status == 'resolved'
+                          ? null
+                          : _resolveTicket,
+                  icon: const Icon(Icons.task_alt_outlined),
+                  label: Text(l10n.adminSupportResolve),
                 ),
                 OutlinedButton.icon(
                   onPressed: ticket.status == 'closed' ? null : _closeTicket,
@@ -469,10 +626,27 @@ class _AdminSupportTicketsScreenState
         return l10n.adminSupportStatusOpen;
       case 'in_progress':
         return l10n.adminSupportStatusInProgress;
+      case 'resolved':
+        return l10n.adminSupportStatusResolved;
       case 'closed':
         return l10n.adminSupportStatusClosed;
       default:
         return status;
+    }
+  }
+
+  String _categoryLabel(String category, AppLocalizations l10n) {
+    switch (category) {
+      case 'login_issue':
+        return l10n.supportCategoryLoginIssue;
+      case 'billing_issue':
+        return l10n.supportCategoryBillingIssue;
+      case 'child_content_issue':
+        return l10n.supportCategoryChildContentIssue;
+      case 'technical_issue':
+        return l10n.supportCategoryTechnicalIssue;
+      default:
+        return l10n.supportCategoryGeneralInquiry;
     }
   }
 
@@ -507,8 +681,12 @@ class _StatusChip extends StatelessWidget {
     Color foreground;
     switch (status) {
       case 'closed':
-        background = scheme.primaryContainer;
-        foreground = scheme.primary;
+        background = scheme.surfaceContainerHighest;
+        foreground = scheme.onSurfaceVariant;
+        break;
+      case 'resolved':
+        background = scheme.secondaryContainer;
+        foreground = scheme.secondary;
         break;
       case 'in_progress':
         background = scheme.tertiaryContainer;

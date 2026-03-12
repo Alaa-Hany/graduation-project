@@ -193,10 +193,12 @@ class ParentStatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final parent = context.parentTheme;
+    final compact = MediaQuery.sizeOf(context).width < 420;
     return ParentCard(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(compact ? 14 : 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -232,7 +234,7 @@ class ParentStatCard extends StatelessWidget {
                       Text(
                         trend!,
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: compact ? 9 : 10,
                           fontWeight: FontWeight.w700,
                           color: trendUp ? parent.primary : parent.alert,
                         ),
@@ -246,7 +248,7 @@ class ParentStatCard extends StatelessWidget {
           Text(
             value,
             style: TextStyle(
-              fontSize: 22,
+              fontSize: compact ? 18 : 22,
               fontWeight: FontWeight.w800,
               color: colors.onSurface,
               letterSpacing: -0.5,
@@ -256,10 +258,12 @@ class ParentStatCard extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: compact ? 11 : 12,
               color: colors.onSurfaceVariant,
               fontWeight: FontWeight.w500,
             ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -520,20 +524,27 @@ class ParentEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final horizontalPadding = screenHeight < 700 ? 24.0 : 40.0;
+    final verticalPadding = screenHeight < 700 ? 24.0 : 40.0;
+    final iconSize = screenHeight < 700 ? 72.0 : 80.0;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(40),
+        padding: EdgeInsets.symmetric(
+          horizontal: horizontalPadding,
+          vertical: verticalPadding,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 80,
-              height: 80,
+              width: iconSize,
+              height: iconSize,
               decoration: BoxDecoration(
                 color: colors.surfaceContainerHighest,
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 36, color: colors.onSurfaceVariant),
+              child: Icon(icon, size: 34, color: colors.onSurfaceVariant),
             ),
             const SizedBox(height: 20),
             Text(

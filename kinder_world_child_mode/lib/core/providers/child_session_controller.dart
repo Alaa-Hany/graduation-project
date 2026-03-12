@@ -62,8 +62,12 @@ class ChildSessionController extends StateNotifier<ChildSessionState> {
 
   Future<void> _restorePersistedSession() async {
     try {
-      final role = await _secureStorage.getUserRole();
-      final childId = await _secureStorage.getChildSession();
+      final role = _secureStorage.hasCachedSessionSnapshot
+          ? _secureStorage.cachedSessionSnapshot.userRole
+          : await _secureStorage.getUserRole();
+      final childId = _secureStorage.hasCachedSessionSnapshot
+          ? _secureStorage.cachedSessionSnapshot.childSession
+          : await _secureStorage.getChildSession();
 
       if (role != 'child' || childId == null || childId.isEmpty) {
         state = const ChildSessionState();
@@ -444,7 +448,7 @@ final childRepositoryProvider = Provider<ChildRepository>((ref) {
 
 /// Main child session controller provider - SINGLE SOURCE OF TRUTH
 final childSessionControllerProvider =
-    StateNotifierProvider.autoDispose<ChildSessionController, ChildSessionState>((ref) {
+    StateNotifierProvider<ChildSessionController, ChildSessionState>((ref) {
   final childRepository = ref.watch(childRepositoryProvider);
   final secureStorage = ref.watch(secureStorageProvider);
   final logger = ref.watch(loggerProvider);

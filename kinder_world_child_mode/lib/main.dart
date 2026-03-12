@@ -12,6 +12,8 @@ const _startupHiveBoxes = <String>[
   'child_profiles',
   'activities',
   'progress_records',
+  'gamification_data',
+  'mood_entries',
 ];
 
 Future<void> main() async {
@@ -25,10 +27,11 @@ Future<void> main() async {
   // so we store as JSON maps and serialize/deserialize in repositories
   await Future.wait(_startupHiveBoxes.map(Hive.openBox));
 
-  final sharedPreferences = await SharedPreferences.getInstance();
-
   // Initialize secure storage
   final secureStorage = SecureStorage();
+  final sharedPreferencesFuture = SharedPreferences.getInstance();
+  await secureStorage.preloadSessionState();
+  final sharedPreferences = await sharedPreferencesFuture;
 
   // Initialize logger
   final logger = Logger(
@@ -44,7 +47,8 @@ Future<void> main() async {
 
   // Set error handler
   FlutterError.onError = (FlutterErrorDetails details) {
-    logger.e('Flutter Error: ${details.exception}');
+    FlutterError.presentError(details);
+    logger.e('Flutter Error: ${details.exceptionAsString()}');
   };
 
   runApp(

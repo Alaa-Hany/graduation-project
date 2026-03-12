@@ -175,22 +175,25 @@ class _ParentLoginScreenState extends ConsumerState<ParentLoginScreen>
                           // Section title
                           Text(
                             l10n.signIn,
-                            style: text.displayMedium?.copyWith(
-                              fontSize: 26,
+                            style: text.headlineMedium?.copyWith(
+                              fontSize: 28,
                               fontWeight: FontWeight.w900,
                               color: auth.textPrimary,
                               letterSpacing: -0.6,
+                              height: 1.1,
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 8),
                           Text(
                             l10n.parentLoginSubtitle,
-                            style: text.bodyMedium?.copyWith(
-                              fontSize: 14,
+                            style: text.bodyLarge?.copyWith(
+                              fontSize: 16,
                               color: auth.textMuted,
+                              fontWeight: FontWeight.w500,
+                              height: 1.4,
                             ),
                           ),
-                          const SizedBox(height: 28),
+                          const SizedBox(height: 32),
 
                           // Email field
                           AuthInputField(

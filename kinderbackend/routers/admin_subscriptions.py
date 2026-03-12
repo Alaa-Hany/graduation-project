@@ -11,6 +11,7 @@ from admin_deps import require_permission
 from admin_utils import build_pagination_payload, serialize_subscription_record, write_audit_log
 from deps import get_db
 from models import User
+from notification_service import notify_subscription_changed
 from plan_service import PLAN_FREE, validate_plan_value
 
 router = APIRouter(prefix="/admin/subscriptions", tags=["Admin Subscriptions"])
@@ -108,10 +109,18 @@ def override_subscription_plan(
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid plan")
 
+    previous_plan = before["plan"]
     user.plan = plan
     user.updated_at = datetime.utcnow()
     db.add(user)
     db.flush()
+    notify_subscription_changed(
+        db,
+        user=user,
+        old_plan=previous_plan,
+        new_plan=plan,
+        source="admin_override",
+    )
     after = serialize_subscription_record(user)
     write_audit_log(
         db=db,
@@ -136,10 +145,18 @@ def cancel_admin_subscription(
 ):
     user = _get_subscription_or_404(subscription_id, db)
     before = serialize_subscription_record(user)
+    previous_plan = before["plan"]
     user.plan = PLAN_FREE
     user.updated_at = datetime.utcnow()
     db.add(user)
     db.flush()
+    notify_subscription_changed(
+        db,
+        user=user,
+        old_plan=previous_plan,
+        new_plan=PLAN_FREE,
+        source="admin_cancel",
+    )
     after = serialize_subscription_record(user)
     write_audit_log(
         db=db,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/providers/locale_provider.dart';
+import 'package:kinder_world/core/providers/app_launch_provider.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/auth_design_system.dart';
@@ -47,6 +48,15 @@ class _LanguageSelectionScreenState
 
   void _selectLanguage(String code) {
     ref.read(localeProvider.notifier).setLanguageCode(code);
+  }
+
+  Future<void> _continue() async {
+    final currentLocale = ref.read(localeProvider);
+    await ref
+        .read(appLaunchProvider)
+        .ensureLocaleSaved(currentLocale.languageCode);
+    if (!mounted) return;
+    context.go(Routes.onboarding);
   }
 
   @override
@@ -138,7 +148,7 @@ class _LanguageSelectionScreenState
                   // Continue button
                   AuthPrimaryButton(
                     label: l10n.continueText,
-                    onPressed: () => context.push(Routes.onboarding),
+                    onPressed: _continue,
                   ),
 
                   const SizedBox(height: 32),

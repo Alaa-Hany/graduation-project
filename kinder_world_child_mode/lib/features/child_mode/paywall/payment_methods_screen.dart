@@ -82,13 +82,21 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
     });
   }
 
-  void _openPaymentPortal(AppLocalizations l10n) {
-    ref.read(networkServiceProvider).post<Map<String, dynamic>>(
-      '/billing/portal',
-    );
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.openPaymentPortal)),
-    );
+  Future<void> _openPaymentPortal(AppLocalizations l10n) async {
+    try {
+      await ref.read(networkServiceProvider).post<Map<String, dynamic>>(
+        '/billing/portal',
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.openPaymentPortal)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.billingComingSoon)),
+      );
+    }
   }
 
   @override

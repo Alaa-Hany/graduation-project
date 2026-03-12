@@ -267,6 +267,7 @@ def serialize_support_ticket(ticket: SupportTicket, *, include_thread: bool = Fa
         "subject": ticket.subject,
         "message": ticket.message,
         "email": ticket.email,
+        "category": ticket.category,
         "status": ticket.status,
         "assigned_admin_id": ticket.assigned_admin_id,
         "assigned_admin": _ticket_assignee_payload(ticket),

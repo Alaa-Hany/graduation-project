@@ -187,6 +187,12 @@ abstract class AppLocalizations {
   String get contactHoursLabel;
   String get contactHoursValue;
   String get sendMessageTitle;
+  String get supportCategoryLabel;
+  String get supportCategoryLoginIssue;
+  String get supportCategoryBillingIssue;
+  String get supportCategoryChildContentIssue;
+  String get supportCategoryTechnicalIssue;
+  String get supportCategoryGeneralInquiry;
   String get subjectLabel;
   String get subjectHint;
   String get messageLabel;
@@ -196,6 +202,19 @@ abstract class AppLocalizations {
   String get messageSent;
   String get messageSentSuccess;
   String get sendMessage;
+  String get supportTicketHistoryTitle;
+  String get supportTicketHistorySubtitle;
+  String get supportTicketNoHistory;
+  String get supportStatusOpen;
+  String get supportStatusInProgress;
+  String get supportStatusResolved;
+  String get supportStatusClosed;
+  String get supportReplyLabel;
+  String get supportReplyHint;
+  String get supportReplyAction;
+  String get supportReplySentSuccess;
+  String get supportAgentLabel;
+  String get youLabel;
   String get subscriptionTitle;
   String get subscriptionActiveLabel;
   String get activeLabel;
@@ -570,6 +589,15 @@ abstract class AppLocalizations {
   String get reportsAndAnalytics;
   String get noChildSelected;
   String get addChildToViewReports;
+  String get lessonsCompletedLabel;
+  String get mostUsedContentLabel;
+  String get completionRateLabel;
+  String get dailyTrendLabel;
+  String get moodTrendLabel;
+  String get currentMoodLabel;
+  String get recordedSessionsNotice;
+  String get profileFallbackNotice;
+  String get noRecordedActivityYet;
 
   // Parental Controls (extended)
   String get contentRestrictionsAndScreenTime;
@@ -606,6 +634,9 @@ abstract class AppLocalizations {
   String get notificationWeeklyReport;
   String notificationMilestone(String name, int count);
   String notificationRecommendation(String name);
+  String notificationLessonCompleted(String name, String lessonTitle);
+  String notificationStreakReached(String name, int streakDays);
+  String notificationInactive(String name, int days);
   String get hoursAgo;
   String get daysAgo;
   String get justNow;
@@ -663,6 +694,21 @@ abstract class AppLocalizations {
   String languageChanged(String languageName);
   String get englishUs;
   String get chooseAvatar;
+  String get customizeProfile;
+  String get customizeProfileSubtitle;
+  String get frameColors;
+  String get frameStyles;
+  String get profileStyle;
+  String get frameStyleClassic;
+  String get frameStyleGlow;
+  String get frameStyleStars;
+  String get frameStyleShield;
+  String get customizationSaved;
+  String get lockedLabel;
+  String get unlockedLabel;
+  String unlockAtLevel(int level);
+  String unlockWithStreak(int streak);
+  String unlockWithActivities(int count);
   String get avatarSaved;
   String get pleaseSelectThreePictures;
   String get failedToUpdatePicturePassword;
@@ -733,6 +779,8 @@ abstract class AppLocalizations {
 
   // Safety & Privacy
   String get safety;
+  String get safetyDashboard;
+  String get safetyDashboardSubtitle;
   String get privacy;
   String get childProtection;
   String get dataSecurity;
@@ -857,6 +905,7 @@ abstract class AppLocalizations {
   // ── Parent Register Screen ──
   String get personalInformation;
   String get securitySection;
+  String get noActiveAlerts;
   String get accountCreatedWelcome;
 
   // ── UI Redesign — Role Selection / Login / Register / Widgets ──
@@ -889,6 +938,19 @@ abstract class AppLocalizations {
   String get enterPinToContinue;
   String get forgotPin;
   String get contactSupportToResetPin;
+  String get parentPinCreateTitle;
+  String get parentPinCreateSubtitle;
+  String get parentPinConfirmSubtitle;
+  String get parentPinChangeTitle;
+  String get parentPinEnterCurrent;
+  String get parentPinEnterNew;
+  String get parentPinConfirmNew;
+  String get parentPinCreatedSuccess;
+  String get parentPinChangedSuccess;
+  String get parentPinResetRequested;
+  String parentPinLockedUntil(String time);
+  String get manageParentPin;
+  String get manageParentPinSubtitle;
 
   // ── Child Header ──
   String get friendFallback;
@@ -903,6 +965,10 @@ abstract class AppLocalizations {
   // ── No Internet Screen (specific) ──
   String get noInternetConnection;
   String get pleaseTryAgain;
+  String get checkYourConnection;
+  String get checkWifiConnection;
+  String get checkMobileData;
+  String get restartRouter;
 
   // ── Error Screen ──
   String get oopsSomethingWentWrong;
@@ -1336,6 +1402,7 @@ abstract class AppLocalizations {
   String get adminSubscriptionsStatusDisabled;
   String get adminSubscriptionsPlanFilter;
   String get adminSubscriptionsPlanAll;
+  String get adminSubscriptionsNoItems;
   String get adminSubscriptionsNoSelection;
   String get adminSubscriptionsUserName;
   String get adminSubscriptionsStatusLabel;
@@ -1390,6 +1457,7 @@ abstract class AppLocalizations {
 
   // Children Management
   String get adminChildrenTitle;
+  String get adminChildrenNoChildren;
   String get adminChildrenSubtitle;
   String get adminChildrenParentFilter;
   String get adminChildrenAgeFilter;
@@ -1429,6 +1497,7 @@ abstract class AppLocalizations {
   String get adminAuditAdminColumn;
   String get adminAuditTimeColumn;
   String get adminAuditNetworkColumn;
+  String get adminAuditNoLogs;
 
   // Support Tickets
   String get adminSupportReply;
@@ -1444,15 +1513,21 @@ abstract class AppLocalizations {
   String get adminSupportStatusAll;
   String get adminSupportStatusOpen;
   String get adminSupportStatusInProgress;
+  String get adminSupportStatusResolved;
   String get adminSupportStatusClosed;
   String get adminSupportNoTickets;
   String adminSupportMessagesCount(int count);
   String get adminSupportNoTicketSelected;
   String get adminSupportRequester;
   String get adminSupportAssignee;
+  String get adminSupportCategoryFilter;
+  String get adminSupportCategoryAll;
+  String get adminSupportCategoryLabel;
   String get adminSupportAssignedToMe;
   String get adminSupportThread;
   String get adminSupportAssign;
+  String get adminSupportResolve;
+  String get adminSupportResolveSuccess;
 
   // Content Management System (CMS)
   String get adminCmsTypeLesson;
@@ -1599,6 +1674,65 @@ abstract class AppLocalizations {
 
   // Generic labels
   String get labelId;
+
+  // ── Gamification ──────────────────────────────────────────────────────────
+  String get gamificationTitle;
+  String get gamificationSubtitle;
+  String get gamificationXpLabel;
+  String get gamificationLevelLabel;
+  String get gamificationStreakLabel;
+  String get gamificationBadgesEarned;
+  String get gamificationAchievementsUnlocked;
+  String get gamificationViewAll;
+  String get gamificationParentSnapshot;
+  String get gamificationParentSnapshotSubtitle;
+  String get gamificationNoAchievementsYet;
+  String get gamificationNoBadgesYet;
+  String get gamificationLevelUp;
+  String get gamificationAchievementUnlocked;
+  String gamificationXpToNext(int xp);
+  String gamificationLevelTitle(int level);
+  String get gamificationActivitiesCompleted;
+  String get gamificationCurrentStreak;
+  String get gamificationTotalXp;
+  String get gamificationSeeAllAchievements;
+  String get gamificationRecentBadges;
+  String get gamificationProgressSection;
+
+  // ── Accessibility ─────────────────────────────────────────────────────────
+  String get accessibilitySettings;
+  String get accessibilitySettingsSubtitle;
+  String get accessibilityMode;
+  String get accessibilityModeSubtitle;
+  String get largeFontMode;
+  String get largeFontModeSubtitle;
+  String get highContrastMode;
+  String get highContrastModeSubtitle;
+  String get accessibilityActiveLabel;
+  String get accessibilityInactiveLabel;
+  String get accessibilityParentNote;
+  String get accessibilityResetAll;
+  String get accessibilityResetConfirm;
+
+  // ── Mood Tracking ─────────────────────────────────────────────────────────
+  String get moodPickerTitle;
+  String get moodPickerSubtitle;
+  String get moodSaved;
+  String get moodTodayLabel;
+  String get moodWeekLabel;
+  String get moodNoHistory;
+  String get moodRecommendationsTitle;
+  String get moodRecommendationsSubtitle;
+  String get moodReportTitle;
+  String get moodReportSubtitle;
+  String get moodMostFrequent;
+  String moodEntriesCount(int n);
+  String get moodEncouragementHappy;
+  String get moodEncouragementExcited;
+  String get moodEncouragementCalm;
+  String get moodEncouragementTired;
+  String get moodEncouragementSad;
+  String get moodEncouragementAngry;
 }
 
 class _AppLocalizationsDelegate

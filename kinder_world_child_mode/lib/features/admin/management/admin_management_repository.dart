@@ -230,12 +230,14 @@ class AdminManagementRepository {
 
   Future<AdminPagedResponse<AdminSupportTicket>> fetchSupportTickets({
     String status = '',
+    String category = '',
     int page = 1,
   }) async {
     final response = await _network.get(
       '/admin/support/tickets',
       queryParameters: {
         'status': status,
+        'category': category,
         'page': page,
       },
       options: await _adminOptions(),
@@ -289,6 +291,16 @@ class AdminManagementRepository {
   Future<AdminSupportTicket> closeSupportTicket(int ticketId) async {
     final response = await _network.post(
       '/admin/support/tickets/$ticketId/close',
+      options: await _adminOptions(),
+    );
+    final body = Map<String, dynamic>.from(response.data as Map);
+    return AdminSupportTicket.fromJson(
+        Map<String, dynamic>.from(body['item'] as Map));
+  }
+
+  Future<AdminSupportTicket> resolveSupportTicket(int ticketId) async {
+    final response = await _network.post(
+      '/admin/support/tickets/$ticketId/resolve',
       options: await _adminOptions(),
     );
     final body = Map<String, dynamic>.from(response.data as Map);

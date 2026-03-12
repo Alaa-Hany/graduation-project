@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -6,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from deps import get_db, get_current_user
 from models import User
+from notification_service import notify_subscription_changed
 from plan_service import (
     PLAN_FREE,
     get_plan_catalog,
@@ -61,6 +61,15 @@ class SubscriptionSelectResponse(SubscriptionStatus):
     session_id: Optional[str] = None
 
 
+def _build_mock_checkout(plan: str, user_id: int) -> dict[str, str]:
+    normalized_plan = plan.lower()
+    session_id = f"mock_session_{user_id}_{normalized_plan}"
+    return {
+        "session_id": session_id,
+        "payment_intent_url": f"https://example.invalid/mock-checkout/{session_id}",
+    }
+
+
 @router.get("/me", response_model=SubscriptionInfo)
 def get_subscription(user: User = Depends(get_current_user)):
     plan = get_user_plan(user)
@@ -77,6 +86,7 @@ def upgrade_subscription(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    previous_plan = get_user_plan(user)
     try:
         plan = validate_plan_value(payload.plan)
     except ValueError:
@@ -86,6 +96,14 @@ def upgrade_subscription(
     db.add(user)
     db.commit()
     db.refresh(user)
+    notify_subscription_changed(
+        db,
+        user=user,
+        old_plan=previous_plan,
+        new_plan=plan,
+        source="parent_upgrade",
+    )
+    db.commit()
 
     return {
         "plan": plan,
@@ -99,10 +117,19 @@ def cancel_subscription(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    previous_plan = get_user_plan(user)
     user.plan = PLAN_FREE
     db.add(user)
     db.commit()
     db.refresh(user)
+    notify_subscription_changed(
+        db,
+        user=user,
+        old_plan=previous_plan,
+        new_plan=PLAN_FREE,
+        source="parent_cancel",
+    )
+    db.commit()
 
     return {
         "plan": PLAN_FREE,
@@ -153,28 +180,29 @@ def select_subscription(
         raise HTTPException(status_code=400, detail=f"Invalid plan '{requested}'. Valid: {list(catalog.keys())}")
 
     plan = requested
-    # Demo mode: immediately activate the plan (no real payment gateway)
+    previous_plan = get_user_plan(user)
     user.plan = plan
     db.add(user)
     db.commit()
     db.refresh(user)
+    notify_subscription_changed(
+        db,
+        user=user,
+        old_plan=previous_plan,
+        new_plan=plan,
+        source="parent_select",
+    )
+    db.commit()
 
-    if plan == PLAN_FREE:
-        return {
-            "current_plan_id": PLAN_FREE,
-            "is_active": True,
-            "expires_at": None,
-            "will_renew": False,
-        }
-
-    session_id = f"mock_session_{user.id}_{plan}_{int(datetime.utcnow().timestamp())}"
-    return {
+    response = {
         "current_plan_id": plan,
         "is_active": True,
         "expires_at": None,
-        "will_renew": True,
-        "session_id": session_id,
+        "will_renew": False,
     }
+    if plan != PLAN_FREE:
+        response.update(_build_mock_checkout(plan, user.id))
+    return response
 
 
 @router.post("/activate", response_model=SubscriptionSelectResponse)

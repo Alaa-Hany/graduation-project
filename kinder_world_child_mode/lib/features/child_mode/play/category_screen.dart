@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
+import 'package:kinder_world/router.dart';
 
 class CategoryScreen extends ConsumerWidget {
   final String category;
@@ -18,8 +19,10 @@ class CategoryScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final activities = _getMockActivities(category, l10n);
-    final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final headerColor = _getCategoryColor(context, category);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -28,7 +31,7 @@ class CategoryScreen extends ConsumerWidget {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: colors.onSurface),
-          onPressed: () => context.go('/child/play'),
+          onPressed: () => context.appBack(fallback: Routes.childPlay),
         ),
         title: Text(
           _getCategoryDisplayName(category, l10n),
@@ -49,7 +52,7 @@ class CategoryScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: _getCategoryColor(category),
+                  color: headerColor,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -58,13 +61,13 @@ class CategoryScreen extends ConsumerWidget {
                       width: 60,
                       height: 60,
                       decoration: BoxDecoration(
-                        color: colors.onPrimary.withValues(alpha: 0.2),
+                        color: headerColor.onColor.withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(30),
                       ),
                       child: Icon(
                         _getCategoryIcon(category),
                         size: 30,
-                        color: colors.onPrimary,
+                        color: headerColor.onColor,
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -77,14 +80,14 @@ class CategoryScreen extends ConsumerWidget {
                             style: textTheme.titleLarge?.copyWith(
                               fontSize: AppConstants.largeFontSize,
                               fontWeight: FontWeight.bold,
-                              color: colors.onPrimary,
+                              color: headerColor.onColor,
                             ),
                           ),
                           Text(
                             l10n.activityCount(activities.length),
-                            style: TextStyle(
+                            style: textTheme.bodyMedium?.copyWith(
                               fontSize: 16,
-                              color: colors.onPrimary.withValues(alpha: 0.8),
+                              color: headerColor.onColor.withValues(alpha: 0.82),
                             ),
                           ),
                         ],
@@ -301,18 +304,20 @@ class CategoryScreen extends ConsumerWidget {
     }
   }
 
-  Color _getCategoryColor(String category) {
+  Color _getCategoryColor(BuildContext context, String category) {
+    final child = context.childTheme;
+    final colors = Theme.of(context).colorScheme;
     switch (category) {
       case 'games':
-        return AppColors.entertaining;
+        return child.fun;
       case 'stories':
-        return AppColors.behavioral;
+        return child.kindness;
       case 'music':
-        return AppColors.secondary;
+        return child.learning;
       case 'videos':
-        return AppColors.skillful;
+        return child.skill;
       default:
-        return AppColors.primary;
+        return colors.primary;
     }
   }
 
@@ -343,8 +348,10 @@ class _ActivityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final child = context.childTheme;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -405,18 +412,18 @@ class _ActivityCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Icon(
+                Icon(
                   Icons.star,
                   size: 16,
-                  color: AppColors.xpColor,
+                  color: child.xp,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   AppLocalizations.of(context)!
                       .activityXp(activity['xp'] as int),
-                  style: const TextStyle(
+                  style: textTheme.bodySmall?.copyWith(
                     fontSize: 12,
-                    color: AppColors.xpColor,
+                    color: child.xp,
                   ),
                 ),
               ],

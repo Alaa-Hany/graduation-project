@@ -9,6 +9,7 @@ import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/management/admin_management_repository.dart';
 import 'package:kinder_world/features/admin/shared/admin_confirm_dialog.dart';
 import 'package:kinder_world/features/admin/shared/admin_filter_bar.dart';
+import 'package:kinder_world/features/admin/shared/admin_form_dialog.dart';
 import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
 import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
 import 'package:kinder_world/features/admin/shared/admin_table_widgets.dart';
@@ -180,14 +181,21 @@ class _AdminContentManagementScreenState
     final titleAr = TextEditingController(text: category?.titleAr ?? '');
     final descEn = TextEditingController(text: category?.descriptionEn ?? '');
     final descAr = TextEditingController(text: category?.descriptionAr ?? '');
-    final confirmed = await showDialog<bool>(
+      final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
+            insetPadding: EdgeInsets.symmetric(
+              horizontal: MediaQuery.sizeOf(context).width < 600 ? 16 : 40,
+              vertical: 24,
+            ),
             title: Text(category == null
                 ? (l10n.adminCmsCategoryCreateTitle)
                 : (l10n.adminCmsCategoryEditTitle)),
             content: SizedBox(
-              width: 520,
+              width: adminResponsiveDialogWidth(
+                context,
+                preferredWidth: 520,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -328,15 +336,22 @@ class _AdminContentManagementScreenState
     String selectedType = content?.contentType ?? 'lesson';
     String selectedStatus = content?.status ?? 'draft';
     bool featured = metadataMap['featured'] == true;
-    final confirmed = await showDialog<bool>(
+      final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => StatefulBuilder(
             builder: (context, setStateDialog) => AlertDialog(
+              insetPadding: EdgeInsets.symmetric(
+                horizontal: MediaQuery.sizeOf(context).width < 600 ? 16 : 40,
+                vertical: 24,
+              ),
               title: Text(content == null
                   ? (l10n.adminCmsCreateContentTitle)
                   : (l10n.adminCmsEditContentTitle)),
               content: SizedBox(
-                width: 700,
+                width: adminResponsiveDialogWidth(
+                  context,
+                  preferredWidth: 700,
+                ),
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -624,9 +639,16 @@ class _AdminContentManagementScreenState
       await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: MediaQuery.sizeOf(context).width < 600 ? 16 : 40,
+            vertical: 24,
+          ),
           title: Text(l10n.adminCmsPreviewTitle),
           content: SizedBox(
-            width: 720,
+            width: adminResponsiveDialogWidth(
+              context,
+              preferredWidth: 720,
+            ),
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -825,15 +847,22 @@ class _AdminContentManagementScreenState
     int? selectedCategoryId = quiz?.categoryId;
     int? selectedContentId = quiz?.contentId;
     String selectedStatus = quiz?.status ?? 'draft';
-    final confirmed = await showDialog<bool>(
+      final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => StatefulBuilder(
             builder: (context, setStateDialog) => AlertDialog(
+              insetPadding: EdgeInsets.symmetric(
+                horizontal: MediaQuery.sizeOf(context).width < 600 ? 16 : 40,
+                vertical: 24,
+              ),
               title: Text(quiz == null
                   ? (l10n.adminCmsCreateQuizTitle)
                   : (l10n.adminCmsEditQuizTitle)),
               content: SizedBox(
-                width: 680,
+                width: adminResponsiveDialogWidth(
+                  context,
+                  preferredWidth: 680,
+                ),
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -1031,9 +1060,16 @@ class _AdminContentManagementScreenState
     await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
+        insetPadding: EdgeInsets.symmetric(
+          horizontal: MediaQuery.sizeOf(context).width < 600 ? 16 : 40,
+          vertical: 24,
+        ),
         title: Text(l10n.adminCmsQuizPreviewAction),
         content: SizedBox(
-          width: 700,
+          width: adminResponsiveDialogWidth(
+            context,
+            preferredWidth: 700,
+          ),
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1129,44 +1165,56 @@ class _AdminContentManagementScreenState
     if (!(admin?.hasPermission('admin.content.view') ?? false)) {
       return const AdminPermissionPlaceholder();
     }
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(l10n.adminCmsTitle,
-              style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: 8),
-          Text(l10n.adminCmsSubtitle),
-          const SizedBox(height: 20),
-          TabBar(
-            controller: _tabs,
-            isScrollable: true,
-            tabs: [
-              Tab(text: l10n.adminCmsCategoriesTab),
-              Tab(text: l10n.adminCmsContentsTab),
-              Tab(text: l10n.adminCmsQuizzesTab),
-            ],
-          ),
-          const SizedBox(height: 20),
-          if (_loading)
-            const AdminLoadingState()
-          else if (_error != null)
-            AdminErrorState(message: _error!, onRetry: _loadAll)
-          else
-            SizedBox(
-              height: 860,
-              child: TabBarView(
-                controller: _tabs,
-                children: [
-                  _buildCategoriesTab(context, l10n, admin),
-                  _buildContentsTab(context, l10n, admin),
-                  _buildQuizzesTab(context, l10n, admin),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 720;
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AdminPageHeader(
+                title: l10n.adminCmsTitle,
+                subtitle: l10n.adminCmsSubtitle,
+                actions: [
+                  OutlinedButton.icon(
+                    onPressed: _loadAll,
+                    icon: const Icon(Icons.refresh_rounded, size: 18),
+                    label: Text(l10n.retry),
+                  ),
                 ],
               ),
-            ),
-        ],
-      ),
+              const SizedBox(height: 20),
+              TabBar(
+                controller: _tabs,
+                isScrollable: true,
+                tabs: [
+                  Tab(text: l10n.adminCmsCategoriesTab),
+                  Tab(text: l10n.adminCmsContentsTab),
+                  Tab(text: l10n.adminCmsQuizzesTab),
+                ],
+              ),
+              const SizedBox(height: 20),
+              if (_loading)
+                const AdminLoadingState()
+              else if (_error != null)
+                AdminErrorState(message: _error!, onRetry: _loadAll)
+              else
+                SizedBox(
+                  height: compact ? 980 : 860,
+                  child: TabBarView(
+                    controller: _tabs,
+                    children: [
+                      _buildCategoriesTab(context, l10n, admin),
+                      _buildContentsTab(context, l10n, admin),
+                      _buildQuizzesTab(context, l10n, admin),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -1177,17 +1225,20 @@ class _AdminContentManagementScreenState
     final canDelete = admin?.hasPermission('admin.content.delete') ?? false;
     return Column(
       children: [
-        Row(children: [
-          FilledButton.icon(
-              onPressed: canCreate ? () => _saveCategory() : null,
-              icon: const Icon(Icons.add),
-              label: Text(l10n.adminCmsAddCategory)),
-          const SizedBox(width: 12),
-          OutlinedButton.icon(
-              onPressed: _loadAll,
-              icon: const Icon(Icons.refresh),
-              label: Text(l10n.retry)),
-        ]),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            FilledButton.icon(
+                onPressed: canCreate ? () => _saveCategory() : null,
+                icon: const Icon(Icons.add),
+                label: Text(l10n.adminCmsAddCategory)),
+            OutlinedButton.icon(
+                onPressed: _loadAll,
+                icon: const Icon(Icons.refresh),
+                label: Text(l10n.retry)),
+          ],
+        ),
         const SizedBox(height: 16),
         Expanded(
           child: ListView.separated(
@@ -1226,256 +1277,271 @@ class _AdminContentManagementScreenState
     final canEdit = admin?.hasPermission('admin.content.edit') ?? false;
     final canPublish = admin?.hasPermission('admin.content.publish') ?? false;
     final canDelete = admin?.hasPermission('admin.content.delete') ?? false;
-    return Column(children: [
-      AdminFilterBar(children: [
-        SizedBox(
-          width: 240,
-          child: TextFormField(
-            initialValue: _contentSearch,
-            decoration: InputDecoration(labelText: l10n.adminCmsSearchLabel),
-            onFieldSubmitted: (value) {
-              setState(() {
-                _contentSearch = value.trim();
-                _contentPage = 1;
-              });
-              _loadAll();
+    return LayoutBuilder(builder: (context, constraints) {
+      final compact = constraints.maxWidth < 720;
+      final fieldWidth = compact ? constraints.maxWidth : 240.0;
+      final dropdownWidth = compact ? constraints.maxWidth : 200.0;
+      final categoryWidth = compact ? constraints.maxWidth : 220.0;
+      return Column(children: [
+        AdminFilterBar(children: [
+          SizedBox(
+            width: fieldWidth,
+            child: TextFormField(
+              initialValue: _contentSearch,
+              decoration: InputDecoration(labelText: l10n.adminCmsSearchLabel),
+              onFieldSubmitted: (value) {
+                setState(() {
+                  _contentSearch = value.trim();
+                  _contentPage = 1;
+                });
+                _loadAll();
+              },
+            ),
+          ),
+          SizedBox(
+            width: dropdownWidth,
+            child: DropdownButtonFormField<String>(
+              initialValue: _contentStatus,
+              decoration: InputDecoration(labelText: l10n.adminCmsStatusLabel),
+              items: [
+                DropdownMenuItem(
+                    value: '', child: Text(l10n.adminCmsStatusAll)),
+                ..._statusOptions(l10n).map((item) => DropdownMenuItem(
+                    value: item.value, child: Text(item.label))),
+              ],
+              onChanged: (value) {
+                setState(() {
+                  _contentStatus = value ?? '';
+                  _contentPage = 1;
+                });
+                _loadAll();
+              },
+            ),
+          ),
+          SizedBox(
+            width: categoryWidth,
+            child: DropdownButtonFormField<int?>(
+              initialValue: _contentCategoryId,
+              decoration:
+                  InputDecoration(labelText: l10n.adminCmsCategoryLabel),
+              items: [
+                DropdownMenuItem<int?>(
+                    value: null, child: Text(l10n.adminCmsAllCategories)),
+                ..._categories.map((item) => DropdownMenuItem<int?>(
+                    value: item.id, child: Text(item.titleEn))),
+              ],
+              onChanged: (value) {
+                setState(() {
+                  _contentCategoryId = value;
+                  _contentPage = 1;
+                });
+                _loadAll();
+              },
+            ),
+          ),
+          FilledButton.icon(
+              onPressed: canCreate ? () => _saveContent() : null,
+              icon: const Icon(Icons.add),
+              label: Text(l10n.adminCmsAddContent)),
+        ]),
+        const SizedBox(height: 16),
+        Expanded(
+          child: ListView.separated(
+            itemCount: _contents.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            itemBuilder: (context, index) {
+              final content = _contents[index];
+              return Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(children: [
+                          Expanded(
+                              child: Text(content.titleEn,
+                                  style:
+                                      Theme.of(context).textTheme.titleMedium)),
+                          _CmsStatusChip(
+                              label: _statusLabel(content.status, l10n),
+                              status: content.status),
+                        ]),
+                        const SizedBox(height: 8),
+                        Text(
+                            (content.descriptionEn ?? '').trim().isEmpty
+                                ? l10n.notAvailable
+                                : content.descriptionEn!,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis),
+                        const SizedBox(height: 10),
+                        Wrap(spacing: 12, runSpacing: 8, children: [
+                          Text(
+                              '${l10n.adminCmsCategoryLabel}: ${content.category?.titleEn ?? l10n.notAvailable}'),
+                          Text(
+                              '${l10n.adminCmsTypeLabel}: ${_contentTypeLabel(content.contentType, l10n)}'),
+                          Text(
+                              '${l10n.adminCmsLinkedQuizzes}: ${content.quizCount}'),
+                        ]),
+                        const SizedBox(height: 12),
+                        Wrap(spacing: 8, runSpacing: 8, children: [
+                          OutlinedButton(
+                              onPressed: () => _previewContent(content),
+                              child: Text(l10n.adminCmsPreviewAction)),
+                          OutlinedButton(
+                              onPressed: canEdit
+                                  ? () => _saveContent(content: content)
+                                  : null,
+                              child: Text(l10n.edit)),
+                          OutlinedButton(
+                              onPressed: canPublish
+                                  ? () => _togglePublish(content)
+                                  : null,
+                              child: Text(content.status == 'published'
+                                  ? l10n.adminCmsUnpublishAction
+                                  : l10n.adminCmsPublishAction)),
+                          OutlinedButton(
+                              onPressed: canDelete
+                                  ? () => _deleteContent(content)
+                                  : null,
+                              child: Text(l10n.delete)),
+                        ]),
+                      ]),
+                ),
+              );
             },
           ),
         ),
-        SizedBox(
-          width: 200,
-          child: DropdownButtonFormField<String>(
-            initialValue: _contentStatus,
-            decoration: InputDecoration(labelText: l10n.adminCmsStatusLabel),
-            items: [
-              DropdownMenuItem(value: '', child: Text(l10n.adminCmsStatusAll)),
-              ..._statusOptions(l10n).map((item) =>
-                  DropdownMenuItem(value: item.value, child: Text(item.label))),
-            ],
-            onChanged: (value) {
-              setState(() {
-                _contentStatus = value ?? '';
-                _contentPage = 1;
-              });
-              _loadAll();
-            },
-          ),
-        ),
-        SizedBox(
-          width: 220,
-          child: DropdownButtonFormField<int?>(
-            initialValue: _contentCategoryId,
-            decoration: InputDecoration(labelText: l10n.adminCmsCategoryLabel),
-            items: [
-              DropdownMenuItem<int?>(
-                  value: null, child: Text(l10n.adminCmsAllCategories)),
-              ..._categories.map((item) => DropdownMenuItem<int?>(
-                  value: item.id, child: Text(item.titleEn))),
-            ],
-            onChanged: (value) {
-              setState(() {
-                _contentCategoryId = value;
-                _contentPage = 1;
-              });
-              _loadAll();
-            },
-          ),
-        ),
-        FilledButton.icon(
-            onPressed: canCreate ? () => _saveContent() : null,
-            icon: const Icon(Icons.add),
-            label: Text(l10n.adminCmsAddContent)),
-      ]),
-      const SizedBox(height: 16),
-      Expanded(
-        child: ListView.separated(
-          itemCount: _contents.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 10),
-          itemBuilder: (context, index) {
-            final content = _contents[index];
-            return Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(children: [
-                        Expanded(
-                            child: Text(content.titleEn,
-                                style:
-                                    Theme.of(context).textTheme.titleMedium)),
-                        _CmsStatusChip(
-                            label: _statusLabel(content.status, l10n),
-                            status: content.status),
-                      ]),
-                      const SizedBox(height: 8),
-                      Text(
-                          (content.descriptionEn ?? '').trim().isEmpty
-                              ? l10n.notAvailable
-                              : content.descriptionEn!,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis),
-                      const SizedBox(height: 10),
-                      Wrap(spacing: 12, children: [
-                        Text(
-                            '${l10n.adminCmsCategoryLabel}: ${content.category?.titleEn ?? l10n.notAvailable}'),
-                        Text(
-                            '${l10n.adminCmsTypeLabel}: ${_contentTypeLabel(content.contentType, l10n)}'),
-                        Text(
-                            '${l10n.adminCmsLinkedQuizzes}: ${content.quizCount}'),
-                      ]),
-                      const SizedBox(height: 12),
-                      Wrap(spacing: 8, runSpacing: 8, children: [
-                        OutlinedButton(
-                            onPressed: () => _previewContent(content),
-                            child: Text(l10n.adminCmsPreviewAction)),
-                        OutlinedButton(
-                            onPressed: canEdit
-                                ? () => _saveContent(content: content)
-                                : null,
-                            child: Text(l10n.edit)),
-                        OutlinedButton(
-                            onPressed: canPublish
-                                ? () => _togglePublish(content)
-                                : null,
-                            child: Text(content.status == 'published'
-                                ? l10n.adminCmsUnpublishAction
-                                : l10n.adminCmsPublishAction)),
-                        OutlinedButton(
-                            onPressed: canDelete
-                                ? () => _deleteContent(content)
-                                : null,
-                            child: Text(l10n.delete)),
-                      ]),
-                    ]),
-              ),
-            );
+        const SizedBox(height: 12),
+        AdminPaginationBar(
+          summary: l10n.adminPaginationSummary(
+              (_contentPagination['page'] as int?) ?? _contentPage,
+              (_contentPagination['total_pages'] as int?) ?? 1,
+              (_contentPagination['total'] as int?) ?? _contents.length),
+          hasPrevious: (_contentPagination['has_previous'] as bool?) ?? false,
+          hasNext: (_contentPagination['has_next'] as bool?) ?? false,
+          previousLabel: l10n.adminPaginationPrevious,
+          nextLabel: l10n.adminPaginationNext,
+          onPrevious: () {
+            setState(() => _contentPage -= 1);
+            _loadAll();
+          },
+          onNext: () {
+            setState(() => _contentPage += 1);
+            _loadAll();
           },
         ),
-      ),
-      const SizedBox(height: 12),
-      AdminPaginationBar(
-        summary: l10n.adminPaginationSummary(
-            (_contentPagination['page'] as int?) ?? _contentPage,
-            (_contentPagination['total_pages'] as int?) ?? 1,
-            (_contentPagination['total'] as int?) ?? _contents.length),
-        hasPrevious: (_contentPagination['has_previous'] as bool?) ?? false,
-        hasNext: (_contentPagination['has_next'] as bool?) ?? false,
-        previousLabel: l10n.adminPaginationPrevious,
-        nextLabel: l10n.adminPaginationNext,
-        onPrevious: () {
-          setState(() => _contentPage -= 1);
-          _loadAll();
-        },
-        onNext: () {
-          setState(() => _contentPage += 1);
-          _loadAll();
-        },
-      ),
-    ]);
+      ]);
+    });
   }
 
   Widget _buildQuizzesTab(BuildContext context, AppLocalizations l10n, admin) {
     final canCreate = admin?.hasPermission('admin.content.create') ?? false;
     final canEdit = admin?.hasPermission('admin.content.edit') ?? false;
     final canDelete = admin?.hasPermission('admin.content.delete') ?? false;
-    return Column(children: [
-      AdminFilterBar(children: [
-        SizedBox(
-          width: 200,
-          child: DropdownButtonFormField<String>(
-            initialValue: _quizStatus,
-            decoration: InputDecoration(labelText: l10n.adminCmsStatusLabel),
-            items: [
-              DropdownMenuItem(value: '', child: Text(l10n.adminCmsStatusAll)),
-              ..._statusOptions(l10n).map((item) =>
-                  DropdownMenuItem(value: item.value, child: Text(item.label))),
-            ],
-            onChanged: (value) {
-              setState(() {
-                _quizStatus = value ?? '';
-                _quizPage = 1;
-              });
-              _loadAll();
+    return LayoutBuilder(builder: (context, constraints) {
+      final compact = constraints.maxWidth < 720;
+      final dropdownWidth = compact ? constraints.maxWidth : 200.0;
+      final categoryWidth = compact ? constraints.maxWidth : 220.0;
+      return Column(children: [
+        AdminFilterBar(children: [
+          SizedBox(
+            width: dropdownWidth,
+            child: DropdownButtonFormField<String>(
+              initialValue: _quizStatus,
+              decoration: InputDecoration(labelText: l10n.adminCmsStatusLabel),
+              items: [
+                DropdownMenuItem(
+                    value: '', child: Text(l10n.adminCmsStatusAll)),
+                ..._statusOptions(l10n).map((item) => DropdownMenuItem(
+                    value: item.value, child: Text(item.label))),
+              ],
+              onChanged: (value) {
+                setState(() {
+                  _quizStatus = value ?? '';
+                  _quizPage = 1;
+                });
+                _loadAll();
+              },
+            ),
+          ),
+          SizedBox(
+            width: categoryWidth,
+            child: DropdownButtonFormField<int?>(
+              initialValue: _quizCategoryId,
+              decoration:
+                  InputDecoration(labelText: l10n.adminCmsCategoryLabel),
+              items: [
+                DropdownMenuItem<int?>(
+                    value: null, child: Text(l10n.adminCmsAllCategories)),
+                ..._categories.map((item) => DropdownMenuItem<int?>(
+                    value: item.id, child: Text(item.titleEn))),
+              ],
+              onChanged: (value) {
+                setState(() {
+                  _quizCategoryId = value;
+                  _quizPage = 1;
+                });
+                _loadAll();
+              },
+            ),
+          ),
+          FilledButton.icon(
+              onPressed: canCreate ? () => _saveQuiz() : null,
+              icon: const Icon(Icons.add),
+              label: Text(l10n.adminCmsAddQuiz)),
+        ]),
+        const SizedBox(height: 16),
+        Expanded(
+          child: ListView.separated(
+            itemCount: _quizzes.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            itemBuilder: (context, index) {
+              final quiz = _quizzes[index];
+              return Card(
+                child: ListTile(
+                  title: Text(quiz.titleEn),
+                  subtitle: Text(
+                      '${quiz.questionCount} ${l10n.adminCmsQuestionsLabel} * ${quiz.category?.titleEn ?? l10n.notAvailable}'),
+                  trailing: Wrap(spacing: 8, children: [
+                    _CmsStatusChip(
+                        label: _statusLabel(quiz.status, l10n),
+                        status: quiz.status),
+                    IconButton(
+                        onPressed: () => _previewQuiz(quiz),
+                        icon: const Icon(Icons.visibility_outlined)),
+                    IconButton(
+                        onPressed: canEdit ? () => _saveQuiz(quiz: quiz) : null,
+                        icon: const Icon(Icons.edit_outlined)),
+                    IconButton(
+                        onPressed: canDelete ? () => _deleteQuiz(quiz) : null,
+                        icon: const Icon(Icons.delete_outline)),
+                  ]),
+                ),
+              );
             },
           ),
         ),
-        SizedBox(
-          width: 220,
-          child: DropdownButtonFormField<int?>(
-            initialValue: _quizCategoryId,
-            decoration: InputDecoration(labelText: l10n.adminCmsCategoryLabel),
-            items: [
-              DropdownMenuItem<int?>(
-                  value: null, child: Text(l10n.adminCmsAllCategories)),
-              ..._categories.map((item) => DropdownMenuItem<int?>(
-                  value: item.id, child: Text(item.titleEn))),
-            ],
-            onChanged: (value) {
-              setState(() {
-                _quizCategoryId = value;
-                _quizPage = 1;
-              });
-              _loadAll();
-            },
-          ),
-        ),
-        FilledButton.icon(
-            onPressed: canCreate ? () => _saveQuiz() : null,
-            icon: const Icon(Icons.add),
-            label: Text(l10n.adminCmsAddQuiz)),
-      ]),
-      const SizedBox(height: 16),
-      Expanded(
-        child: ListView.separated(
-          itemCount: _quizzes.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 10),
-          itemBuilder: (context, index) {
-            final quiz = _quizzes[index];
-            return Card(
-              child: ListTile(
-                title: Text(quiz.titleEn),
-                subtitle: Text(
-                    '${quiz.questionCount} ${l10n.adminCmsQuestionsLabel} * ${quiz.category?.titleEn ?? l10n.notAvailable}'),
-                trailing: Wrap(spacing: 8, children: [
-                  _CmsStatusChip(
-                      label: _statusLabel(quiz.status, l10n),
-                      status: quiz.status),
-                  IconButton(
-                      onPressed: () => _previewQuiz(quiz),
-                      icon: const Icon(Icons.visibility_outlined)),
-                  IconButton(
-                      onPressed: canEdit ? () => _saveQuiz(quiz: quiz) : null,
-                      icon: const Icon(Icons.edit_outlined)),
-                  IconButton(
-                      onPressed: canDelete ? () => _deleteQuiz(quiz) : null,
-                      icon: const Icon(Icons.delete_outline)),
-                ]),
-              ),
-            );
+        const SizedBox(height: 12),
+        AdminPaginationBar(
+          summary: l10n.adminPaginationSummary(
+              (_quizPagination['page'] as int?) ?? _quizPage,
+              (_quizPagination['total_pages'] as int?) ?? 1,
+              (_quizPagination['total'] as int?) ?? _quizzes.length),
+          hasPrevious: (_quizPagination['has_previous'] as bool?) ?? false,
+          hasNext: (_quizPagination['has_next'] as bool?) ?? false,
+          previousLabel: l10n.adminPaginationPrevious,
+          nextLabel: l10n.adminPaginationNext,
+          onPrevious: () {
+            setState(() => _quizPage -= 1);
+            _loadAll();
+          },
+          onNext: () {
+            setState(() => _quizPage += 1);
+            _loadAll();
           },
         ),
-      ),
-      const SizedBox(height: 12),
-      AdminPaginationBar(
-        summary: l10n.adminPaginationSummary(
-            (_quizPagination['page'] as int?) ?? _quizPage,
-            (_quizPagination['total_pages'] as int?) ?? 1,
-            (_quizPagination['total'] as int?) ?? _quizzes.length),
-        hasPrevious: (_quizPagination['has_previous'] as bool?) ?? false,
-        hasNext: (_quizPagination['has_next'] as bool?) ?? false,
-        previousLabel: l10n.adminPaginationPrevious,
-        nextLabel: l10n.adminPaginationNext,
-        onPrevious: () {
-          setState(() => _quizPage -= 1);
-          _loadAll();
-        },
-        onNext: () {
-          setState(() => _quizPage += 1);
-          _loadAll();
-        },
-      ),
-    ]);
+      ]);
+    });
   }
 }
 

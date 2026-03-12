@@ -32,10 +32,12 @@ class AdminSidebar extends ConsumerWidget {
     super.key,
     required this.selectedRoute,
     this.onClose,
+    this.embedded = false,
   });
 
   final String selectedRoute;
   final VoidCallback? onClose;
+  final bool embedded;
 
   static final List<_SidebarItem> _items = [
     _SidebarItem(
@@ -106,9 +108,7 @@ class AdminSidebar extends ConsumerWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Drawer(
-      backgroundColor: colorScheme.surface,
-      child: SafeArea(
+    final content = SafeArea(
         child: Column(
           children: [
             // ── Header ──────────────────────────────────────────────────
@@ -212,12 +212,24 @@ class AdminSidebar extends ConsumerWidget {
                       selectedRoute.startsWith('${item.route}/');
 
                   return ListTile(
-                    leading: Icon(
-                      item.icon,
-                      color: isSelected
-                          ? colorScheme.primary
-                          : colorScheme.onSurface.withValues(alpha: 0.7),
-                    ),
+                    leading: isSelected
+                        ? Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: colorScheme.primary.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              item.icon,
+                              size: 20,
+                              color: colorScheme.primary,
+                            ),
+                          )
+                        : Icon(
+                            item.icon,
+                            size: 20,
+                            color: colorScheme.onSurface.withValues(alpha: 0.6),
+                          ),
                     title: Text(
                       item.label(l10n),
                       style: theme.textTheme.bodyMedium?.copyWith(
@@ -231,12 +243,12 @@ class AdminSidebar extends ConsumerWidget {
                     ),
                     selected: isSelected,
                     selectedTileColor:
-                        colorScheme.primaryContainer.withValues(alpha: 0.5),
+                        colorScheme.primaryContainer.withValues(alpha: 0.6),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 2),
                     onTap: () {
                       onClose?.call();
                       if (!isSelected) context.go(item.route);
@@ -265,7 +277,26 @@ class AdminSidebar extends ConsumerWidget {
             const SizedBox(height: 8),
           ],
         ),
-      ),
+    );
+
+    if (embedded) {
+      return Container(
+        width: 296,
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          border: Border(
+            right: BorderSide(
+              color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+            ),
+          ),
+        ),
+        child: content,
+      );
+    }
+
+    return Drawer(
+      backgroundColor: colorScheme.surface,
+      child: content,
     );
   }
 

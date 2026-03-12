@@ -1,58 +1,171 @@
 import logging
-from fastapi import APIRouter, Depends
+from datetime import date, timedelta
 
-from deps import require_feature
-from models import User
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from deps import get_db, require_feature
+from models import ChildProfile, Notification, PaymentMethod, SupportTicket, User
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["features"])
 FEATURE_ERROR_CODE = "FEATURE_NOT_AVAILABLE_IN_PLAN"
 
 
+def _serialize_child(child: ChildProfile) -> dict:
+    return {
+        "id": child.id,
+        "name": child.name,
+        "age": child.age,
+        "avatar": child.avatar,
+        "is_active": child.is_active,
+        "created_at": child.created_at.isoformat() if child.created_at else None,
+        "updated_at": child.updated_at.isoformat() if child.updated_at else None,
+    }
+
+
+def _build_empty_daily_points(days: int) -> list[dict]:
+    today = date.today()
+    points: list[dict] = []
+    for offset in range(days - 1, -1, -1):
+        point_date = today - timedelta(days=offset)
+        points.append(
+            {
+                "date": point_date.isoformat(),
+                "screen_time_minutes": 0,
+                "activities_completed": 0,
+                "lessons_completed": 0,
+                "data_available": False,
+            }
+        )
+    return points
+
+
+def _data_availability(children: list[ChildProfile]) -> dict[str, bool]:
+    has_children = bool(children)
+    return {
+        "child_profiles": has_children,
+        "screen_time": False,
+        "activities": False,
+        "lessons": False,
+        "mood_trends": False,
+        "achievements": False,
+    }
+
+
+def _basic_summary(db: Session, user_id: int, children: list[ChildProfile]) -> dict:
+    unread_notifications = (
+        db.query(Notification)
+        .filter(Notification.user_id == user_id, Notification.is_read.is_(False))
+        .count()
+    )
+    open_support_tickets = (
+        db.query(SupportTicket)
+        .filter(
+            SupportTicket.user_id == user_id,
+            SupportTicket.status.in_(("open", "in_progress")),
+        )
+        .count()
+    )
+    payment_methods = (
+        db.query(PaymentMethod)
+        .filter(PaymentMethod.user_id == user_id)
+        .count()
+    )
+    return {
+        "child_count": len(children),
+        "active_child_count": sum(1 for child in children if child.is_active),
+        "unread_notifications": unread_notifications,
+        "open_support_tickets": open_support_tickets,
+        "payment_methods_count": payment_methods,
+    }
+
+
 # ===============================
 # REPORTS ENDPOINTS (Free & Premium)
 # ===============================
 
+
 @router.get("/reports/basic")
-def get_basic_reports(user: User = Depends(require_feature("basic_reports"))):
+def get_basic_reports(
+    user: User = Depends(require_feature("basic_reports")),
+    db: Session = Depends(get_db),
+):
     """
-    Get basic reports (available to Free and Premium users).
-    Includes basic activity summaries, daily screen time.
+    Return truthful parent report metadata based on backend data that actually
+    exists today. Session analytics are explicitly marked unavailable until a
+    richer tracking source is synced.
     """
-    logger.info(f"Basic reports requested by user {user.id}")
+    logger.info("Basic reports requested by user %s", user.id)
+    children = (
+        db.query(ChildProfile)
+        .filter(ChildProfile.parent_id == user.id)
+        .order_by(ChildProfile.created_at.desc(), ChildProfile.id.desc())
+        .all()
+    )
     return {
-        "reports": [
-            {"date": "2024-01-18", "screen_time_minutes": 45},
-            {"date": "2024-01-17", "screen_time_minutes": 52},
-        ],
-        "access_level": "basic"
+        "reports": _build_empty_daily_points(7),
+        "summary": _basic_summary(db, user.id, children),
+        "children": [_serialize_child(child) for child in children],
+        "data_availability": _data_availability(children),
+        "data_source": "backend_child_profiles",
+        "access_level": "basic",
     }
 
 
 @router.get("/reports/advanced")
-def advanced_reports(user: User = Depends(require_feature("advanced_reports"))):
+def advanced_reports(
+    user: User = Depends(require_feature("advanced_reports")),
+    db: Session = Depends(get_db),
+):
     """
-    Get advanced analytics (Premium+ only).
-    Includes trends, weekly comparisons, app-level breakdowns.
+    Return advanced report metadata using available backend profile data without
+    claiming unsupported analytics.
     """
-    logger.info(f"Advanced reports requested by user {user.id}")
+    logger.info("Advanced reports requested by user %s", user.id)
+    children = (
+        db.query(ChildProfile)
+        .filter(ChildProfile.parent_id == user.id)
+        .order_by(ChildProfile.created_at.desc(), ChildProfile.id.desc())
+        .all()
+    )
+    newest_child = children[0] if children else None
+    age_distribution = {
+        "5_6": sum(1 for child in children if (child.age or 0) in (5, 6)),
+        "7_9": sum(1 for child in children if 7 <= (child.age or 0) <= 9),
+        "10_12": sum(1 for child in children if 10 <= (child.age or 0) <= 12),
+        "unknown": sum(1 for child in children if child.age is None),
+    }
+
     return {
         "reports": {
-            "weekly_trend": [45, 52, 48, 60, 55, 50, 48],
-            "app_breakdown": {
-                "YouTube": 25,
-                "TikTok": 15,
-                "Educational": 10,
+            "daily_overview": _build_empty_daily_points(30),
+            "children": [_serialize_child(child) for child in children],
+            "account_summary": {
+                **_basic_summary(db, user.id, children),
+                "newest_child_created_at": newest_child.created_at.isoformat()
+                if newest_child and newest_child.created_at
+                else None,
             },
-            "comparison": "↓ 5% from last week",
+            "age_distribution": age_distribution,
+            "data_availability": _data_availability(children),
+            "insight_notes": [
+                "Activity analytics are not yet synced to the backend.",
+                "Child roster summaries are generated from saved parent and child profiles.",
+            ],
+            "comparison": {
+                "status": "not_available",
+                "reason": "No historical backend activity tracking is currently stored.",
+            },
         },
-        "access_level": "advanced"
+        "access_level": "advanced",
     }
 
 
 # ===============================
 # NOTIFICATIONS (Free & Premium)
 # ===============================
+
 
 @router.get("/notifications/basic")
 def get_notifications(user: User = Depends(require_feature("basic_notifications"))):
@@ -112,6 +225,7 @@ def get_smart_notifications(user: User = Depends(require_feature("smart_notifica
 # PARENTAL CONTROLS (Free & Premium)
 # ===============================
 
+
 @router.get("/parental-controls/basic")
 def get_basic_parental_controls(user: User = Depends(require_feature("basic_parental_controls"))):
     """
@@ -151,6 +265,7 @@ def get_advanced_parental_controls(user: User = Depends(require_feature("advance
 # PREMIUM FEATURES
 # ===============================
 
+
 @router.get("/ai/insights")
 def get_ai_insights(user: User = Depends(require_feature("ai_insights"))):
     """Get AI-powered insights (Premium+ only)."""
@@ -177,6 +292,7 @@ def offline_downloads(user: User = Depends(require_feature("offline_downloads"))
 # ===============================
 # FAMILY PLUS ONLY
 # ===============================
+
 
 @router.get("/support/priority")
 def get_priority_support(user: User = Depends(require_feature("priority_support"))):

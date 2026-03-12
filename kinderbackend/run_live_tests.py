@@ -7,8 +7,6 @@ import sys
 import time
 import json
 import subprocess
-import threading
-import signal
 
 # Force UTF-8 output on Windows (cp1256 cannot encode emoji)
 if hasattr(sys.stdout, "reconfigure"):

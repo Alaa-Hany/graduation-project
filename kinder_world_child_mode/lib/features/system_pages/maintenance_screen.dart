@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
+import 'package:kinder_world/router.dart';
 
 class MaintenanceScreen extends ConsumerStatefulWidget {
   const MaintenanceScreen({super.key});
@@ -12,7 +13,7 @@ class MaintenanceScreen extends ConsumerStatefulWidget {
   ConsumerState<MaintenanceScreen> createState() => _MaintenanceScreenState();
 }
 
-class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> 
+class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _rotationAnimation;
@@ -24,7 +25,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen>
       vsync: this,
       duration: const Duration(seconds: 10),
     );
-    
+
     _rotationAnimation = Tween<double>(
       begin: 0.0,
       end: 2.0 * 3.14159,
@@ -32,7 +33,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen>
       parent: _controller,
       curve: Curves.linear,
     ));
-    
+
     _controller.repeat();
   }
 
@@ -52,15 +53,10 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen>
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         automaticallyImplyLeading: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
-            } else {
-              context.go('/welcome');
-            }
-          },
+        leading: const AppBackButton(
+          fallback: Routes.welcome,
+          icon: Icons.arrow_back,
+          iconSize: 24,
         ),
       ),
       body: SafeArea(
@@ -93,7 +89,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen>
                 ),
               ),
               const SizedBox(height: 40),
-              
+
               // Title
               Text(
                 AppLocalizations.of(context)!.maintenanceTitle,
@@ -104,7 +100,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen>
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
-              
+
               // Description
               Text(
                 AppLocalizations.of(context)!.maintenanceDescription,
@@ -116,7 +112,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen>
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
-              
+
               // Estimated Time
               Container(
                 padding: const EdgeInsets.all(20),
@@ -155,7 +151,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen>
                 ),
               ),
               const SizedBox(height: 32),
-              
+
               // What's New
               Container(
                 padding: const EdgeInsets.all(20),
@@ -175,19 +171,24 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen>
                       ),
                     ),
                     const SizedBox(height: 16),
-                    
-                    _buildFeatureItem(Icons.star, AppLocalizations.of(context)!.maintenanceFeatureAi),
+                    _buildFeatureItem(Icons.star,
+                        AppLocalizations.of(context)!.maintenanceFeatureAi),
                     const SizedBox(height: 12),
-                    _buildFeatureItem(Icons.games, AppLocalizations.of(context)!.maintenanceFeatureGames),
+                    _buildFeatureItem(Icons.games,
+                        AppLocalizations.of(context)!.maintenanceFeatureGames),
                     const SizedBox(height: 12),
-                    _buildFeatureItem(Icons.security, AppLocalizations.of(context)!.maintenanceFeatureSafety),
+                    _buildFeatureItem(Icons.security,
+                        AppLocalizations.of(context)!.maintenanceFeatureSafety),
                     const SizedBox(height: 12),
-                    _buildFeatureItem(Icons.speed, AppLocalizations.of(context)!.maintenanceFeaturePerformance),
+                    _buildFeatureItem(
+                        Icons.speed,
+                        AppLocalizations.of(context)!
+                            .maintenanceFeaturePerformance),
                   ],
                 ),
               ),
               const SizedBox(height: 32),
-              
+
               // Social Media Links
               Text(
                 AppLocalizations.of(context)!.followUsForUpdates,
@@ -197,7 +198,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen>
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -261,7 +262,8 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen>
           // Placeholder for social media links
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(AppLocalizations.of(context)!.openingLink(icon.toString())),
+              content: Text(
+                  AppLocalizations.of(context)!.openingLink(icon.toString())),
               backgroundColor: color,
             ),
           );

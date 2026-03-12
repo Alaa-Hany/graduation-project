@@ -4,8 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/models/progress_record.dart';
+import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
-import 'package:kinder_world/core/theme/app_colors.dart';
+import 'package:kinder_world/core/providers/progress_controller.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
+import 'package:kinder_world/router.dart';
 
 class LessonFlowScreen extends ConsumerStatefulWidget {
   final String lessonId;
@@ -22,6 +26,7 @@ class LessonFlowScreen extends ConsumerStatefulWidget {
 class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
     with SingleTickerProviderStateMixin {
   int _currentStep = 0;
+  bool _isCompleting = false;
   late final AnimationController _controller;
   late final Animation<double> _progressAnimation;
 
@@ -66,17 +71,26 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
   }
 
   Future<void> _completeLesson() async {
+    if (_isCompleting) return;
     final childProfile = ref.read(currentChildProvider);
-    if (childProfile != null) {
-      final updatedProfile = childProfile.copyWith(
-        xp: childProfile.xp + 50,
-        activitiesCompleted: childProfile.activitiesCompleted + 1,
-      );
+    if (childProfile == null) return;
+    final l10n = AppLocalizations.of(context)!;
+    final lesson = _getMockLesson(l10n, widget.lessonId);
 
-      await ref
-          .read(childSessionControllerProvider.notifier)
-          .updateChildProfile(updatedProfile);
-    }
+    setState(() {
+      _isCompleting = true;
+    });
+
+    await ref.read(progressControllerProvider.notifier).recordActivityCompletion(
+          childId: childProfile.id,
+          activityId: 'lesson_${widget.lessonId}',
+          score: 100,
+          duration: lesson['duration'] as int,
+          xpEarned: lesson['xp'] as int,
+          notes: lesson['title'] as String,
+          completionStatus: CompletionStatus.completed,
+          moodAfter: childProfile.currentMood,
+        );
 
     if (mounted) {
       context.go('/child/home');
@@ -98,7 +112,7 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
             Icons.close,
             color: Theme.of(context).colorScheme.onSurface,
           ),
-          onPressed: () => context.go('/child/learn'),
+          onPressed: () => context.appBack(fallback: Routes.childLearn),
         ),
         title: AnimatedBuilder(
           animation: _progressAnimation,
@@ -108,7 +122,7 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
               backgroundColor:
                   Theme.of(context).colorScheme.surfaceContainerHighest,
               valueColor:
-                  const AlwaysStoppedAnimation<Color>(AppColors.success),
+                  AlwaysStoppedAnimation<Color>(context.successColor),
             );
           },
         ),
@@ -117,10 +131,10 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
             onPressed: _nextStep,
             child: Text(
               _currentStep == 4 ? l10n.lessonFinish : l10n.next,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
           ),
@@ -165,13 +179,13 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(60),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.school,
               size: 60,
-              color: AppColors.primary,
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
           const SizedBox(height: 32),
@@ -221,7 +235,7 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
             child: ElevatedButton(
               onPressed: _nextStep,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: Theme.of(context).colorScheme.primary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -293,15 +307,15 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
                   width: double.infinity,
                   height: 200,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
                     child: Text(
                       '📚\n${l10n.lessonContentPlaceholder}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 24,
-                        color: AppColors.primary,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -375,18 +389,18 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
                   width: double.infinity,
                   height: 150,
                   decoration: BoxDecoration(
-                    color: AppColors.secondary.withValues(alpha: 0.1),
+                    color: context.childTheme.fun.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: AppColors.secondary.withValues(alpha: 0.3),
+                      color: context.childTheme.fun.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Center(
                     child: Text(
                       '🎯\n${l10n.tapCorrectAnswer}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 20,
-                        color: AppColors.secondary,
+                        color: context.childTheme.fun,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -498,13 +512,13 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: AppColors.success.withValues(alpha: 0.1),
+              color: context.successColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(60),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.celebration,
               size: 60,
-              color: AppColors.success,
+              color: context.successColor,
             ),
           ),
           const SizedBox(height: 32),
@@ -548,19 +562,19 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
                   icon: Icons.check_circle,
                   label: l10n.correct,
                   value: '3/3',
-                  color: AppColors.success,
+                  color: context.successColor,
                 ),
                 _ResultItem(
                   icon: Icons.star,
                   label: l10n.xpEarned,
                   value: '${lesson['xp']}',
-                  color: AppColors.xpColor,
+                  color: context.childTheme.xp,
                 ),
                 _ResultItem(
                   icon: Icons.local_fire_department,
                   label: l10n.streak,
                   value: '5 ${l10n.daysLabel}',
-                  color: AppColors.streakColor,
+                  color: context.childTheme.streak,
                 ),
               ],
             ),
@@ -572,7 +586,7 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
             child: ElevatedButton(
               onPressed: _completeLesson,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.success,
+                backgroundColor: context.successColor,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -626,7 +640,7 @@ class _StatItem extends StatelessWidget {
         Icon(
           icon,
           size: 32,
-          color: AppColors.primary,
+          color: Theme.of(context).colorScheme.primary,
         ),
         const SizedBox(height: 8),
         Text(
@@ -669,12 +683,12 @@ class _AnswerOption extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary.withValues(alpha: 0.1)
+              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
               : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
-                ? AppColors.primary
+                ? Theme.of(context).colorScheme.primary
                 : Theme.of(context).colorScheme.surfaceContainerHighest,
             width: isSelected ? 2 : 1,
           ),
@@ -687,7 +701,7 @@ class _AnswerOption extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: isSelected
-                    ? AppColors.primary
+                    ? Theme.of(context).colorScheme.primary
                     : Theme.of(context).colorScheme.surfaceContainerHighest,
               ),
               child: isSelected
@@ -755,3 +769,5 @@ class _ResultItem extends StatelessWidget {
     );
   }
 }
+
+

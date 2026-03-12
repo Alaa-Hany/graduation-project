@@ -5,6 +5,7 @@ import 'package:kinder_world/core/models/admin_child_record.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/management/admin_management_repository.dart';
 import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
+import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
 
 /// IMPORTANT:
 /// All UI text must use AppLocalizations.
@@ -19,10 +20,12 @@ class AdminChildDetailsScreen extends ConsumerStatefulWidget {
   final int childId;
 
   @override
-  ConsumerState<AdminChildDetailsScreen> createState() => _AdminChildDetailsScreenState();
+  ConsumerState<AdminChildDetailsScreen> createState() =>
+      _AdminChildDetailsScreenState();
 }
 
-class _AdminChildDetailsScreenState extends ConsumerState<AdminChildDetailsScreen> {
+class _AdminChildDetailsScreenState
+    extends ConsumerState<AdminChildDetailsScreen> {
   AdminChildRecord? _child;
   Map<String, dynamic>? _progress;
   Map<String, dynamic>? _activityLog;
@@ -35,6 +38,14 @@ class _AdminChildDetailsScreenState extends ConsumerState<AdminChildDetailsScree
     _load();
   }
 
+  @override
+  void didUpdateWidget(covariant AdminChildDetailsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.childId != widget.childId) {
+      _load();
+    }
+  }
+
   Future<void> _load() async {
     setState(() {
       _loading = true;
@@ -42,14 +53,16 @@ class _AdminChildDetailsScreenState extends ConsumerState<AdminChildDetailsScree
     });
     try {
       final repo = ref.read(adminManagementRepositoryProvider);
-      final child = await repo.fetchChildDetail(widget.childId);
-      final progress = await repo.fetchChildProgress(widget.childId);
-      final activityLog = await repo.fetchChildActivityLog(widget.childId);
+      final results = await Future.wait<Object?>([
+        repo.fetchChildDetail(widget.childId),
+        repo.fetchChildProgress(widget.childId),
+        repo.fetchChildActivityLog(widget.childId),
+      ]);
       if (!mounted) return;
       setState(() {
-        _child = child;
-        _progress = progress;
-        _activityLog = activityLog;
+        _child = results[0] as AdminChildRecord;
+        _progress = results[1] as Map<String, dynamic>;
+        _activityLog = results[2] as Map<String, dynamic>;
         _loading = false;
       });
     } catch (e) {
@@ -69,13 +82,17 @@ class _AdminChildDetailsScreenState extends ConsumerState<AdminChildDetailsScree
       return const AdminPermissionPlaceholder();
     }
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const AdminLoadingState(padding: EdgeInsets.all(24));
     }
     if (_error != null || _child == null) {
-      return Center(child: Text(_error ?? l10n.error));
+      return AdminErrorState(
+        message: _error ?? l10n.unexpectedError,
+        onRetry: _load,
+      );
     }
 
-    final summary = Map<String, dynamic>.from(_progress?['summary'] as Map? ?? const {});
+    final summary =
+        Map<String, dynamic>.from(_progress?['summary'] as Map? ?? const {});
     final milestones = List<Map<String, dynamic>>.from(
       (_progress?['milestones'] as List<dynamic>? ?? const []).map(
         (item) => Map<String, dynamic>.from(item as Map),
@@ -107,9 +124,15 @@ class _AdminChildDetailsScreenState extends ConsumerState<AdminChildDetailsScree
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('${l10n.adminChildrenNameField}: ${_child!.name}'),
-                    Text('${l10n.adminChildrenAgeColumn}: ${_child!.age ?? '—'}'),
-                    Text('${l10n.adminChildrenParentColumn}: ${_child!.parent?['email'] ?? _child!.parentId}'),
-                    Text('${l10n.adminChildrenStatusColumn}: ${_child!.isActive ? l10n.adminUsersStatusActive : l10n.adminUsersStatusDisabled}'),
+                    Text(
+                      '${l10n.adminChildrenAgeColumn}: ${_child!.age ?? l10n.notAvailable}',
+                    ),
+                    Text(
+                      '${l10n.adminChildrenParentColumn}: ${_child!.parent?['email'] ?? _child!.parentId}',
+                    ),
+                    Text(
+                      '${l10n.adminChildrenStatusColumn}: ${_child!.isActive ? l10n.adminUsersStatusActive : l10n.adminUsersStatusDisabled}',
+                    ),
                   ],
                 ),
               ),
@@ -118,9 +141,15 @@ class _AdminChildDetailsScreenState extends ConsumerState<AdminChildDetailsScree
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('${l10n.adminChildrenProgressDaysMetric}: ${summary['days_since_profile_created'] ?? 0}'),
-                    Text('${l10n.adminChildrenProgressEventsMetric}: ${summary['audit_events'] ?? 0}'),
-                    Text('${l10n.adminUsersLastUpdatedMetric}: ${summary['last_updated_at'] ?? _child!.updatedAt ?? '—'}'),
+                    Text(
+                      '${l10n.adminChildrenProgressDaysMetric}: ${summary['days_since_profile_created'] ?? 0}',
+                    ),
+                    Text(
+                      '${l10n.adminChildrenProgressEventsMetric}: ${summary['audit_events'] ?? 0}',
+                    ),
+                    Text(
+                      '${l10n.adminUsersLastUpdatedMetric}: ${summary['last_updated_at'] ?? _child!.updatedAt ?? l10n.notAvailable}',
+                    ),
                   ],
                 ),
               ),
@@ -129,45 +158,59 @@ class _AdminChildDetailsScreenState extends ConsumerState<AdminChildDetailsScree
           const SizedBox(height: 24),
           _CardBlock(
             title: l10n.adminChildrenMilestonesSection,
-            child: Column(
-              children: milestones
-                  .map(
-                    (entry) => ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.flag_outlined),
-                      title: Text(entry['title'] as String? ?? '—'),
-                      subtitle: Text(entry['timestamp'] as String? ?? ''),
-                    ),
+            child: milestones.isEmpty
+                ? AdminEmptyState(
+                    message: l10n.adminChildrenMilestonesSection,
+                    icon: Icons.flag_outlined,
                   )
-                  .toList(),
-            ),
+                : Column(
+                    children: milestones
+                        .map(
+                          (entry) => ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.flag_outlined),
+                            title: Text(
+                              entry['title'] as String? ?? l10n.notAvailable,
+                            ),
+                            subtitle: Text(entry['timestamp'] as String? ?? ''),
+                          ),
+                        )
+                        .toList(),
+                  ),
           ),
           const SizedBox(height: 24),
           _CardBlock(
             title: l10n.adminChildrenActivitySection,
-            child: Column(
-              children: entries
-                  .map(
-                    (entry) => ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Icon(
-                        entry['type'] == 'audit' ? Icons.history : Icons.notifications_outlined,
-                      ),
-                      title: Text(
-                        entry['title'] as String? ??
-                            entry['action'] as String? ??
-                            entry['type'] as String? ??
-                            '—',
-                      ),
-                      subtitle: Text(
-                        entry['created_at'] as String? ??
-                            entry['timestamp'] as String? ??
-                            '',
-                      ),
-                    ),
+            child: entries.isEmpty
+                ? AdminEmptyState(
+                    message: l10n.adminChildrenActivitySection,
+                    icon: Icons.history_rounded,
                   )
-                  .toList(),
-            ),
+                : Column(
+                    children: entries
+                        .map(
+                          (entry) => ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: Icon(
+                              entry['type'] == 'audit'
+                                  ? Icons.history
+                                  : Icons.notifications_outlined,
+                            ),
+                            title: Text(
+                              entry['title'] as String? ??
+                                  entry['action'] as String? ??
+                                  entry['type'] as String? ??
+                                  l10n.notAvailable,
+                            ),
+                            subtitle: Text(
+                              entry['created_at'] as String? ??
+                                  entry['timestamp'] as String? ??
+                                  '',
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
           ),
         ],
       ),

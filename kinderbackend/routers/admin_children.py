@@ -17,7 +17,7 @@ from admin_utils import (
     write_audit_log,
 )
 from deps import get_db
-from models import ChildProfile
+from models import ChildProfile, User
 
 router = APIRouter(prefix="/admin/children", tags=["Admin Children"])
 
@@ -32,7 +32,9 @@ class ChildUpdateRequest(BaseModel):
 def _get_child_or_404(child_id: int, db: Session) -> ChildProfile:
     child = (
         db.query(ChildProfile)
-        .options(joinedload(ChildProfile.parent))
+        .options(
+            joinedload(ChildProfile.parent).selectinload(User.notifications),
+        )
         .filter(ChildProfile.id == child_id)
         .first()
     )

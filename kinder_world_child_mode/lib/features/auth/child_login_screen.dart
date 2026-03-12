@@ -1,4 +1,6 @@
 // ignore_for_file: prefer_const_constructors
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,13 +9,15 @@ import 'package:go_router/go_router.dart';
 import 'package:kinder_world/app.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
-import 'package:kinder_world/core/theme/app_colors.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/avatar_view.dart';
 import 'package:kinder_world/core/widgets/picture_password_row.dart';
 import 'package:kinder_world/features/child_mode/paywall/child_paywall_screen.dart';
+import 'package:kinder_world/router.dart';
 
 class _AvatarOption {
   final String id;
@@ -42,6 +46,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
   final TextEditingController _childNameController = TextEditingController();
   final TextEditingController _childIdController = TextEditingController();
   late Future<List<ChildProfile>> _childrenFuture;
+  int _childrenRequestId = 0;
 
   final List<String> _selectedPictures = [];
   String? _selectedChildId;
@@ -206,24 +211,53 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
 
   Future<List<ChildProfile>> _loadChildren() async {
     final repo = ref.read(childRepositoryProvider);
+    final secureStorage = ref.read(secureStorageProvider);
+    final requestId = ++_childrenRequestId;
     final localChildren = await repo.getAllChildProfiles();
     final childrenById = {
       for (final child in localChildren) child.id: child,
     };
 
-    final token = await ref.read(secureStorageProvider).getAuthToken();
+    final token = secureStorage.hasCachedAuthToken
+        ? secureStorage.cachedAuthToken
+        : await secureStorage.getAuthToken();
     if (token == null || token.startsWith('child_session_')) {
       return childrenById.values.toList();
     }
 
-    final parentId = await ref.read(secureStorageProvider).getParentId();
-    final parentEmail = await ref.read(secureStorageProvider).getParentEmail();
+    final parentId = secureStorage.hasCachedUserId
+        ? secureStorage.cachedUserId
+        : await secureStorage.getParentId();
+    final parentEmail = secureStorage.hasCachedUserEmail
+        ? secureStorage.cachedUserEmail
+        : await secureStorage.getParentEmail();
+    unawaited(
+      _syncChildrenFromParentSession(
+        requestId: requestId,
+        initialChildren: childrenById,
+        parentId: parentId ?? 'local',
+        parentEmail: parentEmail,
+      ),
+    );
+
+    return childrenById.values.toList();
+  }
+
+  Future<void> _syncChildrenFromParentSession({
+    required int requestId,
+    required Map<String, ChildProfile> initialChildren,
+    required String parentId,
+    required String? parentEmail,
+  }) async {
+    final repo = ref.read(childRepositoryProvider);
+    final childrenById = Map<String, ChildProfile>.from(initialChildren);
 
     try {
       final response = await ref.read(networkServiceProvider).get<dynamic>(
             '/children',
           );
       final apiChildren = _extractChildrenList(response.data);
+      final writeOperations = <Future<Object?>>[];
       for (final childData in apiChildren) {
         final childId = _parseChildId(childData);
         if (childId == null || childId.isEmpty) continue;
@@ -231,22 +265,29 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
         final merged = _mergeChildProfileFromApi(
           childData,
           existing: existing,
-          parentId: parentId ?? 'local',
+          parentId: parentId,
           parentEmail: parentEmail,
         );
         if (merged == null) continue;
         childrenById[childId] = merged;
-        if (existing == null) {
-          await repo.createChildProfile(merged);
-        } else {
-          await repo.updateChildProfile(merged);
-        }
+        writeOperations.add(
+          existing == null
+              ? repo.createChildProfile(merged)
+              : repo.updateChildProfile(merged),
+        );
       }
+      if (writeOperations.isNotEmpty) {
+        await Future.wait(writeOperations);
+      }
+      if (!mounted || requestId != _childrenRequestId) return;
+      setState(() {
+        _childrenFuture = Future<List<ChildProfile>>.value(
+          childrenById.values.toList(growable: false),
+        );
+      });
     } catch (_) {
-      return childrenById.values.toList();
+      // Keep the locally cached list when background sync fails.
     }
-
-    return childrenById.values.toList();
   }
 
   void _refreshChildren() {
@@ -273,7 +314,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: isError ? AppColors.error : AppColors.success,
+                  color: isError ? Theme.of(context).colorScheme.error : context.successColor,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
@@ -969,13 +1010,13 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                                   height: 64,
                                   decoration: BoxDecoration(
                                     color: isSelected
-                                        ? AppColors.primary
+                                        ? Theme.of(context).colorScheme.primary
                                             .withValues(alpha: 0.2)
                                         : Theme.of(context).colorScheme.surface,
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
                                       color: isSelected
-                                          ? AppColors.primary
+                                          ? Theme.of(context).colorScheme.primary
                                           : Theme.of(context)
                                               .colorScheme
                                               .surfaceContainerHighest,
@@ -1020,7 +1061,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                           Text(
                             l10n.picturePasswordError,
                             style: TextStyle(
-                              color: AppColors.error,
+                              color: Theme.of(context).colorScheme.error,
                               fontSize: 12,
                             ),
                           ),
@@ -1035,6 +1076,8 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                             children: _pictureOptions.map((option) {
                               final isSelected =
                                   selectedPassword.contains(option.id);
+                              final optionColor =
+                                  resolvePicturePasswordColor(context, option);
                               return InkWell(
                                 onTap: () =>
                                     togglePicture(option.id, setDialogState),
@@ -1044,12 +1087,12 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                                   height: 64,
                                   decoration: BoxDecoration(
                                     color: isSelected
-                                        ? option.color.withValues(alpha: 0.2)
+                                        ? optionColor.withValues(alpha: 0.2)
                                         : Theme.of(context).colorScheme.surface,
                                     borderRadius: BorderRadius.circular(14),
                                     border: Border.all(
                                       color: isSelected
-                                          ? option.color
+                                          ? optionColor
                                           : Theme.of(context)
                                               .colorScheme
                                               .surfaceContainerHighest,
@@ -1059,7 +1102,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                                   child: Icon(
                                     option.icon,
                                     size: 26,
-                                    color: option.color,
+                                    color: optionColor,
                                   ),
                                 ),
                               );
@@ -1292,10 +1335,13 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-        leading: IconButton(
-          icon: const BackButtonIcon(),
-          onPressed: _isLoading ? null : () => context.go('/select-user-type'),
-        ),
+        leading: _isLoading
+            ? const SizedBox.shrink()
+            : const AppBackButton(
+                fallback: Routes.selectUserType,
+                icon: Icons.arrow_back,
+                iconSize: 24,
+              ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -1325,11 +1371,12 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                 future: _childrenFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
+                    return Center(
                       child: Padding(
-                        padding: EdgeInsets.all(40.0),
-                        child:
-                            CircularProgressIndicator(color: AppColors.primary),
+                        padding: const EdgeInsets.all(40.0),
+                        child: CircularProgressIndicator(
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                       ),
                     );
                   }
@@ -1365,10 +1412,12 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
       }
       if (children.length == 1) {
         _queueSelectChild(children.first);
-        return const Center(
+        return Center(
           child: Padding(
-            padding: EdgeInsets.all(16.0),
-            child: CircularProgressIndicator(color: AppColors.primary),
+            padding: const EdgeInsets.all(16.0),
+            child: CircularProgressIndicator(
+              color: Theme.of(context).colorScheme.primary,
+            ),
           ),
         );
       }
@@ -1410,7 +1459,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
               onPressed:
                   _isLoading ? null : () => context.go('/select-user-type'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Theme.of(context).colorScheme.onPrimary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
@@ -1529,8 +1578,8 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
             icon: const Icon(Icons.add),
             label: Text(l10n.createChildProfile),
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.primary,
-              side: const BorderSide(color: AppColors.primary),
+              foregroundColor: Theme.of(context).colorScheme.primary,
+              side: BorderSide(color: Theme.of(context).colorScheme.primary),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
               ),
@@ -1581,9 +1630,11 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.1),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+            ),
           ),
           child: Row(
             children: [
@@ -1591,7 +1642,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                 avatarId: child.avatar,
                 avatarPath: child.avatarPath,
                 size: 50,
-                backgroundColor: AppColors.primary,
+                backgroundColor: Theme.of(context).colorScheme.primary,
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -1641,7 +1692,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                     )
                 : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.behavioral,
+              backgroundColor: context.childTheme.kindness,
               foregroundColor: Theme.of(context).colorScheme.onPrimary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -1702,18 +1753,19 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
           itemBuilder: (context, index) {
             final option = _pictureOptions[index];
             final isSelected = _selectedPictures.contains(option.id);
+            final optionColor = resolvePicturePasswordColor(context, option);
             return InkWell(
               onTap: () => _togglePicture(option.id),
               borderRadius: BorderRadius.circular(16),
               child: Container(
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? option.color.withValues(alpha: 0.2)
+                      ? optionColor.withValues(alpha: 0.2)
                       : Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isSelected
-                        ? option.color
+                        ? optionColor
                         : Theme.of(context).colorScheme.surfaceContainerHighest,
                     width: 2,
                   ),
@@ -1721,7 +1773,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                 child: Icon(
                   option.icon,
                   size: 28,
-                  color: option.color,
+                  color: optionColor,
                 ),
               ),
             );
@@ -1771,12 +1823,12 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary.withValues(alpha: 0.1)
+              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
               : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
-                ? AppColors.primary
+                ? Theme.of(context).colorScheme.primary
                 : Theme.of(context).colorScheme.surfaceContainerHighest,
             width: isSelected ? 2 : 1,
           ),
@@ -1787,7 +1839,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
               avatarId: child.avatar,
               avatarPath: child.avatarPath,
               size: 64,
-              backgroundColor: AppColors.behavioral.withValues(alpha: 0.2),
+              backgroundColor: context.childTheme.kindness.withValues(alpha: 0.2),
             ),
             const SizedBox(height: 12),
             Text(
@@ -1822,7 +1874,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.xpColor.withValues(alpha: 0.2),
+                color: context.childTheme.xp.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -1830,7 +1882,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.xpColor,
+                  color: context.childTheme.xp,
                 ),
               ),
             ),
@@ -1859,13 +1911,13 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.12),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(32),
-                border: Border.all(color: AppColors.primary),
+                border: Border.all(color: Theme.of(context).colorScheme.primary),
               ),
               child: Icon(
                 Icons.add,
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
                 size: 30,
               ),
             ),

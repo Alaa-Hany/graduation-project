@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/app.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 
 class ParentTermsScreen extends StatelessWidget {
   const ParentTermsScreen({super.key});
@@ -66,7 +67,7 @@ class _ParentLegalPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final config = style.config(AppLocalizations.of(context)!);
+    final config = style.config(context, AppLocalizations.of(context)!);
 
     return Scaffold(
       backgroundColor: config.baseBackground,
@@ -175,16 +176,18 @@ class _LegalStyleConfig {
 }
 
 extension _LegalStyleConfigExt on _LegalPageStyle {
-  _LegalStyleConfig config(AppLocalizations l10n) {
+  _LegalStyleConfig config(BuildContext context, AppLocalizations l10n) {
+    final colors = Theme.of(context).colorScheme;
+    final parent = context.parentTheme;
     switch (this) {
       case _LegalPageStyle.terms:
         return _LegalStyleConfig(
-          baseBackground: const Color(0xFFF8F4EF),
-          accent: const Color(0xFF9A3F1C),
-          heroGradient: const LinearGradient(
+          baseBackground: colors.surfaceContainerLowest,
+          accent: parent.reward,
+          heroGradient: LinearGradient(
             colors: [
-             Color(0xFFFFE2CF),
-             Color(0xFFF6D1C1)
+             parent.rewardLight,
+             colors.surfaceContainerLow,
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -199,12 +202,12 @@ extension _LegalStyleConfigExt on _LegalPageStyle {
         );
       case _LegalPageStyle.privacy:
         return _LegalStyleConfig(
-          baseBackground: const Color(0xFFF3F8FF),
-          accent: const Color(0xFF1F6FEB),
-          heroGradient: const LinearGradient(
+          baseBackground: colors.surfaceContainerLowest,
+          accent: parent.info,
+          heroGradient: LinearGradient(
             colors: [
-               Color(0xFFDDEBFF),
-               Color(0xFFCDE0FF)
+               parent.infoLight,
+               colors.surfaceContainerLow,
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -219,12 +222,12 @@ extension _LegalStyleConfigExt on _LegalPageStyle {
         );
       case _LegalPageStyle.coppa:
         return _LegalStyleConfig(
-          baseBackground: const Color(0xFFF4FFF6),
-          accent: const Color(0xFF2E7D32),
-          heroGradient: const LinearGradient(
+          baseBackground: colors.surfaceContainerLowest,
+          accent: parent.primary,
+          heroGradient: LinearGradient(
             colors: [
-               Color(0xFFD7F5DD),
-               Color(0xFFC5EED0)
+               parent.primaryLight,
+               colors.surfaceContainerLow,
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -259,6 +262,7 @@ class _HeroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final colors = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -278,7 +282,7 @@ class _HeroCard extends StatelessWidget {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.8),
+              color: colors.surface.withValues(alpha: 0.82),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: accent, size: 28),
@@ -299,7 +303,7 @@ class _HeroCard extends StatelessWidget {
                   subtitle,
                   style: textTheme.bodySmall?.copyWith(
                     height: 1.4,
-                    color: Colors.black54,
+                    color: colors.onSurfaceVariant,
                   ),
                 ),
               ],

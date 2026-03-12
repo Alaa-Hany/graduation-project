@@ -1,5 +1,21 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+class SecureSessionSnapshot {
+  const SecureSessionSnapshot({
+    required this.authToken,
+    required this.userRole,
+    required this.childSession,
+    required this.parentPinVerified,
+  });
+
+  final String? authToken;
+  final String? userRole;
+  final String? childSession;
+  final bool parentPinVerified;
+
+  bool get isAuthenticated => authToken != null && authToken!.isNotEmpty;
+}
+
 /// Secure storage service for sensitive data
 class SecureStorage {
   static const _storage = FlutterSecureStorage(
@@ -18,6 +34,7 @@ class SecureStorage {
   static const String _keyUserEmail = 'user_email';
   static const String _keyUserRole = 'user_role';
   static const String _keyParentPin = 'parent_pin';
+  static const String _keyParentPinVerified = 'parent_pin_verified';
   static const String _keyChildSession = 'child_session';
   static const String _keyIsPremium = 'is_premium';
   static const String _keyPlanType = 'plan_type';
@@ -31,12 +48,88 @@ class SecureStorage {
   static const String _keyAdminRoles = 'admin_roles';
   static const String _keyAdminPermissions = 'admin_permissions';
 
+  String? _authTokenCache;
+  bool _hasAuthTokenCache = false;
+  String? _userIdCache;
+  bool _hasUserIdCache = false;
+  String? _userEmailCache;
+  bool _hasUserEmailCache = false;
+  String? _userRoleCache;
+  bool _hasUserRoleCache = false;
+  String? _childSessionCache;
+  bool _hasChildSessionCache = false;
+  bool _parentPinVerifiedCache = false;
+  bool _hasParentPinVerifiedCache = false;
+
+  bool get hasCachedSessionSnapshot =>
+      _hasAuthTokenCache &&
+      _hasUserIdCache &&
+      _hasUserEmailCache &&
+      _hasUserRoleCache &&
+      _hasChildSessionCache &&
+      _hasParentPinVerifiedCache;
+
+  bool get hasCachedAuthToken => _hasAuthTokenCache;
+  bool get hasCachedParentPinVerification => _hasParentPinVerifiedCache;
+  bool get hasCachedUserId => _hasUserIdCache;
+  bool get hasCachedUserEmail => _hasUserEmailCache;
+
+  String? get cachedAuthToken => _authTokenCache;
+  String? get cachedUserId => _userIdCache;
+  String? get cachedUserEmail => _userEmailCache;
+
+  SecureSessionSnapshot get cachedSessionSnapshot => SecureSessionSnapshot(
+        authToken: _authTokenCache,
+        userRole: _userRoleCache,
+        childSession: _childSessionCache,
+        parentPinVerified: _parentPinVerifiedCache,
+      );
+
+  Future<void> preloadSessionState() async {
+    try {
+      final values = await _storage.readAll();
+      _authTokenCache = values[_keyAuthToken];
+      _hasAuthTokenCache = true;
+      _userIdCache = values[_keyUserId];
+      _hasUserIdCache = true;
+      _userEmailCache = values[_keyUserEmail];
+      _hasUserEmailCache = true;
+      _userRoleCache = values[_keyUserRole];
+      _hasUserRoleCache = true;
+      _childSessionCache = values[_keyChildSession];
+      _hasChildSessionCache = true;
+      _parentPinVerifiedCache = values[_keyParentPinVerified] == 'true';
+      _hasParentPinVerifiedCache = true;
+    } catch (e) {
+      _authTokenCache = null;
+      _hasAuthTokenCache = true;
+      _userIdCache = null;
+      _hasUserIdCache = true;
+      _userEmailCache = null;
+      _hasUserEmailCache = true;
+      _userRoleCache = null;
+      _hasUserRoleCache = true;
+      _childSessionCache = null;
+      _hasChildSessionCache = true;
+      _parentPinVerifiedCache = false;
+      _hasParentPinVerifiedCache = true;
+    }
+  }
+
   // ==================== AUTH TOKEN ====================
 
   Future<String?> getAuthToken() async {
+    if (_hasAuthTokenCache) {
+      return _authTokenCache;
+    }
     try {
-      return await _storage.read(key: _keyAuthToken);
+      final value = await _storage.read(key: _keyAuthToken);
+      _authTokenCache = value;
+      _hasAuthTokenCache = true;
+      return value;
     } catch (e) {
+      _authTokenCache = null;
+      _hasAuthTokenCache = true;
       return null;
     }
   }
@@ -44,6 +137,8 @@ class SecureStorage {
   Future<bool> saveAuthToken(String token) async {
     try {
       await _storage.write(key: _keyAuthToken, value: token);
+      _authTokenCache = token;
+      _hasAuthTokenCache = true;
       return true;
     } catch (e) {
       return false;
@@ -53,6 +148,8 @@ class SecureStorage {
   Future<bool> deleteAuthToken() async {
     try {
       await _storage.delete(key: _keyAuthToken);
+      _authTokenCache = null;
+      _hasAuthTokenCache = true;
       return true;
     } catch (e) {
       return false;
@@ -90,9 +187,17 @@ class SecureStorage {
   // ==================== USER ID ====================
 
   Future<String?> getUserId() async {
+    if (_hasUserIdCache) {
+      return _userIdCache;
+    }
     try {
-      return await _storage.read(key: _keyUserId);
+      final value = await _storage.read(key: _keyUserId);
+      _userIdCache = value;
+      _hasUserIdCache = true;
+      return value;
     } catch (e) {
+      _userIdCache = null;
+      _hasUserIdCache = true;
       return null;
     }
   }
@@ -100,6 +205,8 @@ class SecureStorage {
   Future<bool> saveUserId(String userId) async {
     try {
       await _storage.write(key: _keyUserId, value: userId);
+      _userIdCache = userId;
+      _hasUserIdCache = true;
       return true;
     } catch (e) {
       return false;
@@ -109,6 +216,8 @@ class SecureStorage {
   Future<bool> deleteUserId() async {
     try {
       await _storage.delete(key: _keyUserId);
+      _userIdCache = null;
+      _hasUserIdCache = true;
       return true;
     } catch (e) {
       return false;
@@ -118,9 +227,17 @@ class SecureStorage {
   // ==================== USER EMAIL ====================
 
   Future<String?> getUserEmail() async {
+    if (_hasUserEmailCache) {
+      return _userEmailCache;
+    }
     try {
-      return await _storage.read(key: _keyUserEmail);
+      final value = await _storage.read(key: _keyUserEmail);
+      _userEmailCache = value;
+      _hasUserEmailCache = true;
+      return value;
     } catch (e) {
+      _userEmailCache = null;
+      _hasUserEmailCache = true;
       return null;
     }
   }
@@ -128,6 +245,8 @@ class SecureStorage {
   Future<bool> saveUserEmail(String email) async {
     try {
       await _storage.write(key: _keyUserEmail, value: email);
+      _userEmailCache = email;
+      _hasUserEmailCache = true;
       return true;
     } catch (e) {
       return false;
@@ -137,6 +256,8 @@ class SecureStorage {
   Future<bool> deleteUserEmail() async {
     try {
       await _storage.delete(key: _keyUserEmail);
+      _userEmailCache = null;
+      _hasUserEmailCache = true;
       return true;
     } catch (e) {
       return false;
@@ -146,9 +267,17 @@ class SecureStorage {
   // ==================== USER ROLE ====================
 
   Future<String?> getUserRole() async {
+    if (_hasUserRoleCache) {
+      return _userRoleCache;
+    }
     try {
-      return await _storage.read(key: _keyUserRole);
+      final value = await _storage.read(key: _keyUserRole);
+      _userRoleCache = value;
+      _hasUserRoleCache = true;
+      return value;
     } catch (e) {
+      _userRoleCache = null;
+      _hasUserRoleCache = true;
       return null;
     }
   }
@@ -156,6 +285,8 @@ class SecureStorage {
   Future<bool> saveUserRole(String role) async {
     try {
       await _storage.write(key: _keyUserRole, value: role);
+      _userRoleCache = role;
+      _hasUserRoleCache = true;
       return true;
     } catch (e) {
       return false;
@@ -165,6 +296,8 @@ class SecureStorage {
   Future<bool> deleteUserRole() async {
     try {
       await _storage.delete(key: _keyUserRole);
+      _userRoleCache = null;
+      _hasUserRoleCache = true;
       return true;
     } catch (e) {
       return false;
@@ -208,12 +341,61 @@ class SecureStorage {
     }
   }
 
+  Future<bool> isParentPinVerified() async {
+    if (_hasParentPinVerifiedCache) {
+      return _parentPinVerifiedCache;
+    }
+    try {
+      final value = await _storage.read(key: _keyParentPinVerified);
+      _parentPinVerifiedCache = value == 'true';
+      _hasParentPinVerifiedCache = true;
+      return _parentPinVerifiedCache;
+    } catch (e) {
+      _parentPinVerifiedCache = false;
+      _hasParentPinVerifiedCache = true;
+      return false;
+    }
+  }
+
+  Future<bool> saveParentPinVerified(bool isVerified) async {
+    try {
+      await _storage.write(
+        key: _keyParentPinVerified,
+        value: isVerified ? 'true' : 'false',
+      );
+      _parentPinVerifiedCache = isVerified;
+      _hasParentPinVerifiedCache = true;
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> clearParentPinVerification() async {
+    try {
+      await _storage.delete(key: _keyParentPinVerified);
+      _parentPinVerifiedCache = false;
+      _hasParentPinVerifiedCache = true;
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   // ==================== CHILD SESSION ====================
 
   Future<String?> getChildSession() async {
+    if (_hasChildSessionCache) {
+      return _childSessionCache;
+    }
     try {
-      return await _storage.read(key: _keyChildSession);
+      final value = await _storage.read(key: _keyChildSession);
+      _childSessionCache = value;
+      _hasChildSessionCache = true;
+      return value;
     } catch (e) {
+      _childSessionCache = null;
+      _hasChildSessionCache = true;
       return null;
     }
   }
@@ -221,6 +403,8 @@ class SecureStorage {
   Future<bool> saveChildSession(String childId) async {
     try {
       await _storage.write(key: _keyChildSession, value: childId);
+      _childSessionCache = childId;
+      _hasChildSessionCache = true;
       return true;
     } catch (e) {
       return false;
@@ -230,6 +414,8 @@ class SecureStorage {
   Future<bool> clearChildSession() async {
     try {
       await _storage.delete(key: _keyChildSession);
+      _childSessionCache = null;
+      _hasChildSessionCache = true;
       return true;
     } catch (e) {
       return false;
@@ -454,6 +640,14 @@ class SecureStorage {
   Future<bool> clearAll() async {
     try {
       await _storage.deleteAll();
+      _authTokenCache = null;
+      _hasAuthTokenCache = true;
+      _userRoleCache = null;
+      _hasUserRoleCache = true;
+      _childSessionCache = null;
+      _hasChildSessionCache = true;
+      _parentPinVerifiedCache = false;
+      _hasParentPinVerifiedCache = true;
       return true;
     } catch (e) {
       return false;
@@ -471,7 +665,15 @@ class SecureStorage {
       await _storage.delete(key: _keyUserId);
       await _storage.delete(key: _keyUserEmail);
       await _storage.delete(key: _keyChildSession);
-      await _storage.delete(key: _keyParentPin);
+      await _storage.delete(key: _keyParentPinVerified);
+      _authTokenCache = null;
+      _hasAuthTokenCache = true;
+      _userRoleCache = null;
+      _hasUserRoleCache = true;
+      _childSessionCache = null;
+      _hasChildSessionCache = true;
+      _parentPinVerifiedCache = false;
+      _hasParentPinVerifiedCache = true;
       
       // Preserve: child profiles, plan type, theme settings, privacy settings
       // These are accessible without authentication

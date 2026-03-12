@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 import 'package:kinder_world/app.dart';
+import 'package:kinder_world/core/storage/secure_storage.dart';
 
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/auth/admin_login_screen.dart';
@@ -30,7 +32,7 @@ import 'package:kinder_world/features/child_mode/learn/lesson_flow_screen.dart';
 import 'package:kinder_world/features/child_mode/play/play_screen.dart';
 import 'package:kinder_world/features/child_mode/play/category_screen.dart';
 import 'package:kinder_world/features/child_mode/ai_buddy/ai_buddy_screen.dart';
-import 'package:kinder_world/features/child_mode/profile/child_profile_screen.dart';
+import 'package:kinder_world/features/child_mode/profile/child_profile_overview_screen.dart';
 import 'package:kinder_world/features/child_mode/profile/achievements_screen.dart';
 import 'package:kinder_world/features/child_mode/store/reward_store_screen.dart';
 
@@ -96,6 +98,8 @@ class Routes {
   static const parentPin = '/parent/pin';
   static const parentChildManagement = '/parent/child-management';
   static const parentChildProfile = '/parent/child-profile';
+  static String parentChildProfileById(String childId) =>
+      '$parentChildProfile/${Uri.encodeComponent(childId)}';
   static const parentReports = '/parent/reports';
   static const parentControls = '/parent/controls';
   static const parentSettings = '/parent/settings';
@@ -181,16 +185,40 @@ bool _isParentAuthRoute(String path) {
 bool _isAnyChildRoute(String path) => path.startsWith('/child/');
 bool _isAnyParentRoute(String path) => path.startsWith('/parent/');
 bool _isParentPinProtectedRoute(String path) {
-  return path == Routes.parentSettings ||
-      path == Routes.parentChildManagement ||
-      path == Routes.parentControls ||
-      path == Routes.parentSubscription ||
-      path == Routes.parentBilling ||
-      path == Routes.parentSafetyDashboard ||
-      path == Routes.parentPrivacySettings ||
-      path == Routes.parentProfile ||
-      path == Routes.parentChangePassword ||
-      path == Routes.parentAccessibility;
+  return _isAnyParentRoute(path) &&
+      path != Routes.parentPin &&
+      !_isParentAuthRoute(path) &&
+      path != Routes.parentForgotPassword;
+}
+
+Widget _buildParentChildProfileRoute(
+    BuildContext context, GoRouterState state) {
+  final extra = state.extra;
+  ChildProfile? child;
+  if (extra is ChildProfile) {
+    child = extra;
+  } else if (extra is Map) {
+    try {
+      child = ChildProfile.fromJson(
+        Map<String, dynamic>.from(extra),
+      );
+    } catch (_) {
+      child = null;
+    }
+  }
+
+  final childId = state.pathParameters['childId'] ?? child?.id;
+  if (childId == null || childId.isEmpty) {
+    return ErrorScreen(
+      error: AppLocalizations.of(context)!.childProfileNotFound,
+    );
+  }
+
+  return ParentChildProfileScreen(
+    key: ValueKey('parent-child-profile-$childId'),
+    childId: childId,
+    initialChild: child,
+  );
 }
 
 class _RouterRefreshListenable extends ChangeNotifier {
@@ -254,18 +282,35 @@ final routerProvider = Provider<GoRouter>((ref) {
         return null;
       }
 
-      // Read session
-      final authToken = await secureStorage.getAuthToken();
-      final userRole = await secureStorage
-          .getUserRole(); // expected: 'parent' | 'child' | null
-      final childSession = await secureStorage
-          .getChildSession(); // null if no selected child / guest not set
+      late final SecureSessionSnapshot resolvedSession;
+      if (secureStorage.hasCachedSessionSnapshot) {
+        resolvedSession = secureStorage.cachedSessionSnapshot;
+      } else {
+        final results = await Future.wait<String?>([
+          secureStorage.getAuthToken(),
+          secureStorage.getUserRole(),
+          secureStorage.getChildSession(),
+        ]);
+        final parentPinVerified = await secureStorage.isParentPinVerified();
+        resolvedSession = SecureSessionSnapshot(
+          authToken: results[0],
+          userRole: results[1],
+          childSession: results[2],
+          parentPinVerified: parentPinVerified,
+        );
+      }
+      final authToken = resolvedSession.authToken;
+      final userRole = resolvedSession.userRole;
+      final childSession = resolvedSession.childSession;
 
       // Debugging logs to diagnose navigation issues
-      logger.d(
-          'Router redirect check -> path: $path | auth: ${authToken != null} | role: $userRole | childSession: $childSession');
+      if (kDebugMode) {
+        logger.d(
+          'Router redirect check -> path: $path | auth: ${authToken != null} | role: $userRole | childSession: $childSession',
+        );
+      }
 
-      final isAuthenticated = authToken != null;
+      final isAuthenticated = resolvedSession.isAuthenticated;
 
       // If not authenticated -> go to welcome (unless already on auth pages)
       if (!isAuthenticated) {
@@ -302,8 +347,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         if (_isAnyChildRoute(path)) return Routes.parentDashboard;
         if (path == Routes.parentPin) return null;
         if (_isParentPinProtectedRoute(path)) {
-          final isParentPinVerified = await secureStorage.isParentPinVerified();
-          if (!isParentPinVerified) {
+          if (!resolvedSession.parentPinVerified) {
             final redirectTarget = Uri.encodeComponent(path);
             return '${Routes.parentPin}?redirect=$redirectTarget';
           }
@@ -463,7 +507,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: Routes.childProfile,
-                builder: (context, state) => const ChildProfileScreen(),
+                builder: (context, state) =>
+                    const ChildProfileOverviewScreen(),
               ),
             ],
           ),
@@ -491,27 +536,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: Routes.parentChildProfile,
-        builder: (context, state) {
-          final extra = state.extra;
-          ChildProfile? child;
-          if (extra is ChildProfile) {
-            child = extra;
-          } else if (extra is Map) {
-            try {
-              child = ChildProfile.fromJson(
-                Map<String, dynamic>.from(extra),
-              );
-            } catch (_) {
-              child = null;
-            }
-          }
-          if (child == null) {
-            return ErrorScreen(
-              error: AppLocalizations.of(context)!.childProfileNotFound,
-            );
-          }
-          return ParentChildProfileScreen(child: child);
-        },
+        builder: _buildParentChildProfileRoute,
+      ),
+      GoRoute(
+        path: '${Routes.parentChildProfile}/:childId',
+        builder: _buildParentChildProfileRoute,
       ),
       GoRoute(
         path: Routes.parentReports,

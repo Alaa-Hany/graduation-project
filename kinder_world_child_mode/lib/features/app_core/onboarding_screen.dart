@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/providers/app_launch_provider.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/router.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
@@ -13,8 +15,7 @@ class _OnboardingData {
   final String subtitle;
   final String description;
   final IconData icon;
-  final List<Color> gradientColors;
-  final List<Color> decorColors;
+  final List<Color> Function(BuildContext context) gradientBuilder;
   final IconData decorIcon1;
   final IconData decorIcon2;
 
@@ -23,8 +24,7 @@ class _OnboardingData {
     required this.subtitle,
     required this.description,
     required this.icon,
-    required this.gradientColors,
-    required this.decorColors,
+    required this.gradientBuilder,
     required this.decorIcon1,
     required this.decorIcon2,
   });
@@ -83,8 +83,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           subtitle: l10n.onboardingLearnSubtitle,
           description: l10n.onboardingLearnDescription,
           icon: Icons.auto_stories_rounded,
-          gradientColors: const [Color(0xFF1565C0), Color(0xFF1E88E5), Color(0xFF42A5F5)],
-          decorColors: const [Color(0xFF90CAF9), Color(0xFFBBDEFB)],
+          gradientBuilder: (context) {
+            final colors = Theme.of(context).colorScheme;
+            return [
+              colors.primary,
+              Color.lerp(colors.primary, colors.secondary, 0.28)!,
+              Color.lerp(colors.primary, colors.tertiary, 0.45)!,
+            ];
+          },
           decorIcon1: Icons.star_rounded,
           decorIcon2: Icons.lightbulb_rounded,
         ),
@@ -93,8 +99,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           subtitle: l10n.onboardingPlaySubtitle,
           description: l10n.onboardingPlayDescription,
           icon: Icons.sports_esports_rounded,
-          gradientColors: const [Color(0xFF6A1B9A), Color(0xFF8E24AA), Color(0xFFAB47BC)],
-          decorColors: const [Color(0xFFCE93D8), Color(0xFFE1BEE7)],
+          gradientBuilder: (context) {
+            final colors = Theme.of(context).colorScheme;
+            final childTheme = context.childTheme;
+            return [
+              childTheme.skill,
+              Color.lerp(childTheme.skill, colors.secondary, 0.25)!,
+              Color.lerp(childTheme.skill, childTheme.fun, 0.4)!,
+            ];
+          },
           decorIcon1: Icons.emoji_events_rounded,
           decorIcon2: Icons.celebration_rounded,
         ),
@@ -103,12 +116,25 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           subtitle: l10n.onboardingGrowSubtitle,
           description: l10n.onboardingGrowDescription,
           icon: Icons.psychology_rounded,
-          gradientColors: const [Color(0xFF1B5E20), Color(0xFF2E7D32), Color(0xFF43A047)],
-          decorColors: const [Color(0xFFA5D6A7), Color(0xFFC8E6C9)],
+          gradientBuilder: (context) {
+            final colors = Theme.of(context).colorScheme;
+            final childTheme = context.childTheme;
+            return [
+              childTheme.success,
+              Color.lerp(childTheme.success, colors.primary, 0.25)!,
+              Color.lerp(childTheme.success, colors.secondary, 0.2)!,
+            ];
+          },
           decorIcon1: Icons.trending_up_rounded,
           decorIcon2: Icons.workspace_premium_rounded,
         ),
       ];
+
+  Future<void> _completeOnboarding() async {
+    await ref.read(appLaunchProvider).completeOnboarding();
+    if (!mounted) return;
+    context.go(Routes.selectUserType);
+  }
 
   void _nextPage() {
     final pages = _pages(AppLocalizations.of(context)!);
@@ -118,7 +144,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
         curve: Curves.easeInOutCubic,
       );
     } else {
-      context.push(Routes.welcome);
+      _completeOnboarding();
     }
   }
 
@@ -133,7 +159,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     final l10n = AppLocalizations.of(context)!;
     final pages = _pages(l10n);
     final page = pages[_currentPage];
+    final gradientColors = page.gradientBuilder(context);
     final isLast = _currentPage == pages.length - 1;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Scaffold(
       body: Stack(
@@ -146,7 +176,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: page.gradientColors,
+                colors: gradientColors,
                 stops: const [0.0, 0.5, 1.0],
               ),
             ),
@@ -162,7 +192,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               height: 220,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.07),
+                color: colors.onPrimary.withValues(alpha: 0.07),
               ),
             ),
           ),
@@ -177,7 +207,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               height: 180,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.06),
+                color: colors.onPrimary.withValues(alpha: 0.06),
               ),
             ),
           ),
@@ -192,7 +222,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               height: 60,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.10),
+                color: colors.onPrimary.withValues(alpha: 0.10),
               ),
             ),
           ),
@@ -207,7 +237,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                 page.decorIcon1,
                 key: ValueKey('d1_$_currentPage'),
                 size: 28,
-                color: Colors.white.withValues(alpha: 0.25),
+                color: colors.onPrimary.withValues(alpha: 0.25),
               ),
             ),
           ),
@@ -220,7 +250,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                 page.decorIcon2,
                 key: ValueKey('d2_$_currentPage'),
                 size: 22,
-                color: Colors.white.withValues(alpha: 0.20),
+                color: colors.onPrimary.withValues(alpha: 0.20),
               ),
             ),
           ),
@@ -250,8 +280,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                       controller: _pageController,
                       count: pages.length,
                       effect: ExpandingDotsEffect(
-                        activeDotColor: Colors.white,
-                        dotColor: Colors.white.withValues(alpha: 0.35),
+                        activeDotColor: colors.onPrimary,
+                        dotColor: colors.onPrimary.withValues(alpha: 0.35),
                         dotHeight: 8,
                         dotWidth: 8,
                         expansionFactor: 3,
@@ -260,24 +290,24 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                     ),
                     // Skip button
                     TextButton(
-                      onPressed: () => context.push(Routes.welcome),
+                      onPressed: _completeOnboarding,
                       style: TextButton.styleFrom(
-                        foregroundColor: Colors.white,
+                        foregroundColor: colors.onPrimary,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 8),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                           side: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.4),
+                            color: colors.onPrimary.withValues(alpha: 0.4),
                           ),
                         ),
                       ),
                       child: Text(
                         l10n.skip,
-                        style: const TextStyle(
+                        style: textTheme.labelLarge?.copyWith(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                          color: colors.onPrimary,
                         ),
                       ),
                     ),
@@ -294,12 +324,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             right: 0,
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: colors.surface,
                 borderRadius:
                     const BorderRadius.vertical(top: Radius.circular(36)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.12),
+                    color: colors.shadow.withValues(alpha: 0.12),
                     blurRadius: 30,
                     offset: const Offset(0, -6),
                   ),
@@ -319,25 +349,26 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                         // Subtitle
                         Text(
                           pages[_currentPage].subtitle,
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF111827),
+                          style: textTheme.headlineSmall?.copyWith(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            color: colors.onSurface,
                             letterSpacing: -0.5,
-                            height: 1.2,
+                            height: 1.1,
                           ),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 12),
                         // Description
                         Text(
                           pages[_currentPage].description,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF6B7280),
-                            height: 1.65,
+                          style: textTheme.bodyLarge?.copyWith(
+                            fontSize: 16,
+                            color: colors.onSurfaceVariant,
+                            fontWeight: FontWeight.w500,
+                            height: 1.6,
                           ),
                         ),
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 32),
                         // CTA button
                         SizedBox(
                           width: double.infinity,
@@ -347,8 +378,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
-                                  page.gradientColors.first,
-                                  page.gradientColors.last,
+                                  gradientColors.first,
+                                  gradientColors.last,
                                 ],
                                 begin: Alignment.centerLeft,
                                 end: Alignment.centerRight,
@@ -356,7 +387,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: page.gradientColors.first
+                                  color: gradientColors.first
                                       .withValues(alpha: 0.35),
                                   blurRadius: 16,
                                   offset: const Offset(0, 6),
@@ -374,10 +405,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                                     children: [
                                       Text(
                                         isLast ? l10n.getStarted : l10n.next,
-                                        style: const TextStyle(
+                                        style: textTheme.labelLarge?.copyWith(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w700,
-                                          color: Colors.white,
+                                          color: colors.onPrimary,
                                           letterSpacing: 0.3,
                                         ),
                                       ),
@@ -386,7 +417,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                                         isLast
                                             ? Icons.rocket_launch_rounded
                                             : Icons.arrow_forward_rounded,
-                                        color: Colors.white,
+                                        color: colors.onPrimary,
                                         size: 18,
                                       ),
                                     ],
@@ -449,6 +480,8 @@ class _OnboardingPageViewState extends State<_OnboardingPageView>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     return SafeArea(
       bottom: false,
       child: Padding(
@@ -470,7 +503,7 @@ class _OnboardingPageViewState extends State<_OnboardingPageView>
                       height: 200,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.08),
+                        color: colors.onPrimary.withValues(alpha: 0.08),
                       ),
                     ),
                     // Middle ring
@@ -479,9 +512,9 @@ class _OnboardingPageViewState extends State<_OnboardingPageView>
                       height: 160,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.12),
+                        color: colors.onPrimary.withValues(alpha: 0.12),
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.2),
+                          color: colors.onPrimary.withValues(alpha: 0.2),
                           width: 1.5,
                         ),
                       ),
@@ -492,14 +525,14 @@ class _OnboardingPageViewState extends State<_OnboardingPageView>
                       height: 120,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.22),
+                        color: colors.onPrimary.withValues(alpha: 0.22),
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.35),
+                          color: colors.onPrimary.withValues(alpha: 0.35),
                           width: 2,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.10),
+                            color: colors.shadow.withValues(alpha: 0.10),
                             blurRadius: 20,
                             offset: const Offset(0, 8),
                           ),
@@ -508,7 +541,7 @@ class _OnboardingPageViewState extends State<_OnboardingPageView>
                       child: Icon(
                         widget.data.icon,
                         size: 60,
-                        color: Colors.white,
+                        color: colors.onPrimary,
                       ),
                     ),
                   ],
@@ -521,17 +554,17 @@ class _OnboardingPageViewState extends State<_OnboardingPageView>
               opacity: _fade,
               child: Text(
                 widget.data.title,
-                style: const TextStyle(
+                style: theme.textTheme.displayMedium?.copyWith(
                   fontSize: 48,
                   fontWeight: FontWeight.w900,
-                  color: Colors.white,
+                  color: colors.onPrimary,
                   letterSpacing: -2.0,
                   height: 1.0,
                   shadows: [
                     Shadow(
-                      color: Colors.black26,
+                      color: colors.shadow.withValues(alpha: 0.3),
                       blurRadius: 12,
-                      offset: Offset(0, 4),
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),

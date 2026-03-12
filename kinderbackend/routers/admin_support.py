@@ -15,8 +15,17 @@ from admin_utils import (
 )
 from deps import get_db
 from models import SupportTicket, SupportTicketMessage
+from notification_service import notify_support_ticket_updated
 
 router = APIRouter(prefix="/admin/support/tickets", tags=["Admin Support"])
+VALID_SUPPORT_STATUSES = {"open", "in_progress", "resolved", "closed"}
+VALID_SUPPORT_CATEGORIES = {
+    "login_issue",
+    "billing_issue",
+    "child_content_issue",
+    "technical_issue",
+    "general_inquiry",
+}
 
 
 class SupportReplyRequest(BaseModel):
@@ -45,7 +54,8 @@ def _get_ticket_or_404(ticket_id: int, db: Session) -> SupportTicket:
 
 @router.get("")
 def list_support_tickets(
-    status: str = Query("", description="Filter by open, in_progress, closed"),
+    status: str = Query("", description="Filter by open, in_progress, resolved, closed"),
+    category: str = Query("", description="Filter by ticket category"),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
@@ -54,7 +64,14 @@ def list_support_tickets(
     query = _ticket_query(db)
     normalized_status = status.strip().lower()
     if normalized_status:
+        if normalized_status not in VALID_SUPPORT_STATUSES:
+            raise HTTPException(status_code=422, detail="Invalid support status filter")
         query = query.filter(SupportTicket.status == normalized_status)
+    normalized_category = category.strip().lower()
+    if normalized_category:
+        if normalized_category not in VALID_SUPPORT_CATEGORIES:
+            raise HTTPException(status_code=422, detail="Invalid support category filter")
+        query = query.filter(SupportTicket.category == normalized_category)
 
     total = query.count()
     items = (
@@ -66,7 +83,7 @@ def list_support_tickets(
     return {
         "items": [serialize_support_ticket(ticket) for ticket in items],
         "pagination": build_pagination_payload(page=page, page_size=page_size, total=total),
-        "filters": {"status": normalized_status},
+        "filters": {"status": normalized_status, "category": normalized_category},
     }
 
 
@@ -93,6 +110,8 @@ def reply_to_support_ticket(
         raise HTTPException(status_code=400, detail="Reply message is required")
 
     ticket = _get_ticket_or_404(ticket_id, db)
+    if ticket.status == "closed":
+        raise HTTPException(status_code=400, detail="Closed tickets cannot receive replies")
     before = serialize_support_ticket(ticket, include_thread=True)
 
     reply = SupportTicketMessage(
@@ -105,6 +124,12 @@ def reply_to_support_ticket(
     ticket.updated_at = datetime.utcnow()
     db.add(ticket)
     db.flush()
+    notify_support_ticket_updated(
+        db,
+        ticket=ticket,
+        title="Support ticket updated",
+        body=f"New reply on ticket '{ticket.subject}'.",
+    )
 
     refreshed_ticket = _get_ticket_or_404(ticket_id, db)
     write_audit_log(
@@ -112,6 +137,45 @@ def reply_to_support_ticket(
         request=request,
         admin=admin,
         action="support.reply",
+        entity_type="support_ticket",
+        entity_id=ticket.id,
+        before_json=before,
+        after_json=serialize_support_ticket(refreshed_ticket, include_thread=True),
+    )
+    db.commit()
+    return {"success": True, "item": serialize_support_ticket(refreshed_ticket, include_thread=True)}
+
+
+@router.post("/{ticket_id}/resolve")
+def resolve_support_ticket(
+    ticket_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    admin=Depends(require_permission("admin.support.close")),
+):
+    ticket = _get_ticket_or_404(ticket_id, db)
+    if ticket.status == "closed":
+        raise HTTPException(status_code=400, detail="Closed tickets cannot be resolved")
+    before = serialize_support_ticket(ticket, include_thread=True)
+
+    ticket.status = "resolved"
+    ticket.closed_at = None
+    ticket.updated_at = datetime.utcnow()
+    db.add(ticket)
+    db.flush()
+    notify_support_ticket_updated(
+        db,
+        ticket=ticket,
+        title="Support ticket resolved",
+        body=f"Ticket '{ticket.subject}' was marked as resolved.",
+    )
+
+    refreshed_ticket = _get_ticket_or_404(ticket_id, db)
+    write_audit_log(
+        db=db,
+        request=request,
+        admin=admin,
+        action="support.resolve",
         entity_type="support_ticket",
         entity_id=ticket.id,
         before_json=before,
@@ -129,6 +193,8 @@ def close_support_ticket(
     admin=Depends(require_permission("admin.support.close")),
 ):
     ticket = _get_ticket_or_404(ticket_id, db)
+    if ticket.status == "closed":
+        raise HTTPException(status_code=400, detail="Ticket is already closed")
     before = serialize_support_ticket(ticket, include_thread=True)
 
     ticket.status = "closed"
@@ -136,6 +202,12 @@ def close_support_ticket(
     ticket.updated_at = ticket.closed_at
     db.add(ticket)
     db.flush()
+    notify_support_ticket_updated(
+        db,
+        ticket=ticket,
+        title="Support ticket closed",
+        body=f"Ticket '{ticket.subject}' was closed.",
+    )
 
     refreshed_ticket = _get_ticket_or_404(ticket_id, db)
     write_audit_log(
@@ -178,6 +250,12 @@ def assign_support_ticket(
     ticket.updated_at = datetime.utcnow()
     db.add(ticket)
     db.flush()
+    notify_support_ticket_updated(
+        db,
+        ticket=ticket,
+        title="Support ticket in progress",
+        body=f"Ticket '{ticket.subject}' is now being handled by the support team.",
+    )
 
     refreshed_ticket = _get_ticket_or_404(ticket_id, db)
     write_audit_log(

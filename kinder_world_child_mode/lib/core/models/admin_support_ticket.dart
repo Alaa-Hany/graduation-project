@@ -31,6 +31,7 @@ class AdminSupportTicket {
     required this.id,
     required this.subject,
     required this.message,
+    required this.category,
     required this.status,
     required this.replyCount,
     this.userId,
@@ -50,6 +51,7 @@ class AdminSupportTicket {
   final int? userId;
   final String subject;
   final String message;
+  final String category;
   final String? email;
   final String status;
   final int? assignedAdminId;
@@ -69,6 +71,7 @@ class AdminSupportTicket {
       userId: json['user_id'] as int?,
       subject: json['subject'] as String? ?? '',
       message: json['message'] as String? ?? '',
+      category: json['category'] as String? ?? 'general_inquiry',
       email: json['email'] as String?,
       status: json['status'] as String? ?? 'open',
       assignedAdminId: json['assigned_admin_id'] as int?,

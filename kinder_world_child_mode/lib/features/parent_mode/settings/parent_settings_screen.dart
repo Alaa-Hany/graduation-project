@@ -2,9 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/router.dart';
 
@@ -18,7 +20,10 @@ class ParentSettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final colors = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final parent = context.parentTheme;
     final authState = ref.watch(authControllerProvider);
     final user = authState.user;
 
@@ -33,11 +38,11 @@ class ParentSettingsScreen extends ConsumerWidget {
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded,
               size: 20, color: colors.onSurface),
-          onPressed: () => context.go(Routes.parentDashboard),
+          onPressed: () => context.appBack(fallback: Routes.parentDashboard),
         ),
         title: Text(
           l10n.settings,
-          style: TextStyle(
+          style: textTheme.titleMedium?.copyWith(
             fontSize: 18,
             fontWeight: FontWeight.w800,
             color: colors.onSurface,
@@ -70,15 +75,26 @@ class ParentSettingsScreen extends ConsumerWidget {
               tiles: [
                 ParentSettingsTile(
                   icon: Icons.lock_rounded,
-                  iconColor: ParentColors.activityPurple,
+                  iconColor: colors.tertiary,
                   title: l10n.changePassword,
                   subtitle: l10n.changePasswordSubtitle,
                   onTap: () => _safeNavigate(
                       () => context.push(Routes.parentChangePassword)),
                 ),
                 ParentSettingsTile(
+                  icon: Icons.pin_rounded,
+                  iconColor: parent.info,
+                  title: l10n.manageParentPin,
+                  subtitle: l10n.manageParentPinSubtitle,
+                  onTap: () => _safeNavigate(
+                    () => context.push(
+                      '${Routes.parentPin}?mode=change&redirect=${Uri.encodeComponent(Routes.parentSettings)}',
+                    ),
+                  ),
+                ),
+                ParentSettingsTile(
                   icon: Icons.notifications_rounded,
-                  iconColor: ParentColors.alertAmber,
+                  iconColor: parent.warning,
                   title: l10n.notifications,
                   subtitle: l10n.notificationsSubtitle,
                   showDivider: false,
@@ -94,8 +110,16 @@ class ParentSettingsScreen extends ConsumerWidget {
               label: l10n.familySection,
               tiles: [
                 ParentSettingsTile(
+                  icon: Icons.shield_outlined,
+                  iconColor: parent.info,
+                  title: l10n.safetyDashboard,
+                  subtitle: l10n.safetyDashboardSubtitle,
+                  onTap: () => _safeNavigate(
+                      () => context.push(Routes.parentSafetyDashboard)),
+                ),
+                ParentSettingsTile(
                   icon: Icons.child_care_rounded,
-                  iconColor: ParentColors.parentGreenLight,
+                  iconColor: parent.success,
                   title: l10n.childProfiles,
                   subtitle: l10n.childProfilesSubtitle,
                   onTap: () => _safeNavigate(
@@ -103,19 +127,20 @@ class ParentSettingsScreen extends ConsumerWidget {
                 ),
                 ParentSettingsTile(
                   icon: Icons.security_rounded,
-                  iconColor: ParentColors.alertRed,
+                  iconColor: parent.danger,
                   title: l10n.parentalControls,
                   subtitle: l10n.parentalControlsSubtitle,
-                  onTap: () => _safeNavigate(
-                      () => context.push(Routes.parentControls)),
+                  onTap: () =>
+                      _safeNavigate(() => context.push(Routes.parentControls)),
                 ),
                 ParentSettingsTile(
                   icon: Icons.workspace_premium_rounded,
-                  iconColor: ParentColors.xpGold,
+                  iconColor: parent.reward,
                   title: l10n.subscription,
                   subtitle: isPremium ? l10n.premiumActive : l10n.upgradePlan,
                   trailing: isPremium
-                      ? const ParentStatusBadge(status: ParentBadgeStatus.premium)
+                      ? const ParentStatusBadge(
+                          status: ParentBadgeStatus.premium)
                       : null,
                   showDivider: false,
                   onTap: () => _safeNavigate(
@@ -131,23 +156,31 @@ class ParentSettingsScreen extends ConsumerWidget {
               tiles: [
                 ParentSettingsTile(
                   icon: Icons.language_rounded,
-                  iconColor: ParentColors.infoBlue,
+                  iconColor: parent.info,
                   title: l10n.language,
                   subtitle: l10n.languageSubtitle,
-                  onTap: () => _safeNavigate(
-                      () => context.push(Routes.parentLanguage)),
+                  onTap: () =>
+                      _safeNavigate(() => context.push(Routes.parentLanguage)),
                 ),
                 ParentSettingsTile(
                   icon: Icons.palette_rounded,
-                  iconColor: ParentColors.activityPurple,
+                  iconColor: colors.tertiary,
                   title: l10n.theme,
                   subtitle: l10n.themeSubtitle,
                   onTap: () =>
                       _safeNavigate(() => context.push(Routes.parentTheme)),
                 ),
                 ParentSettingsTile(
+                  icon: Icons.accessibility_new_rounded,
+                  iconColor: parent.info,
+                  title: l10n.accessibilitySettings,
+                  subtitle: l10n.accessibilitySettingsSubtitle,
+                  onTap: () => _safeNavigate(
+                      () => context.push(Routes.parentAccessibility)),
+                ),
+                ParentSettingsTile(
                   icon: Icons.privacy_tip_rounded,
-                  iconColor: ParentColors.parentGreen,
+                  iconColor: parent.primary,
                   title: l10n.privacySettings,
                   subtitle: l10n.privacySettingsSubtitle,
                   showDivider: false,
@@ -164,7 +197,7 @@ class ParentSettingsScreen extends ConsumerWidget {
               tiles: [
                 ParentSettingsTile(
                   icon: Icons.help_rounded,
-                  iconColor: ParentColors.infoBlue,
+                  iconColor: parent.info,
                   title: l10n.helpFaq,
                   subtitle: l10n.helpFaqSubtitle,
                   onTap: () =>
@@ -172,7 +205,7 @@ class ParentSettingsScreen extends ConsumerWidget {
                 ),
                 ParentSettingsTile(
                   icon: Icons.mail_rounded,
-                  iconColor: ParentColors.parentGreenLight,
+                  iconColor: parent.success,
                   title: l10n.contactUs,
                   subtitle: l10n.contactUsSubtitle,
                   onTap: () =>
@@ -180,7 +213,7 @@ class ParentSettingsScreen extends ConsumerWidget {
                 ),
                 ParentSettingsTile(
                   icon: Icons.info_rounded,
-                  iconColor: Colors.blueGrey,
+                  iconColor: colors.secondary,
                   title: l10n.about,
                   subtitle: l10n.aboutSubtitle,
                   showDivider: false,
@@ -206,9 +239,7 @@ class ParentSettingsScreen extends ConsumerWidget {
                       await ref
                           .read(childSessionControllerProvider.notifier)
                           .endChildSession();
-                      await ref
-                          .read(authControllerProvider.notifier)
-                          .logout();
+                      await ref.read(authControllerProvider.notifier).logout();
                       if (context.mounted) {
                         context.go(Routes.selectUserType);
                       }
@@ -223,7 +254,7 @@ class ParentSettingsScreen extends ConsumerWidget {
             Center(
               child: Text(
                 l10n.appVersionLabel('1.0.0'),
-                style: TextStyle(
+                style: textTheme.bodySmall?.copyWith(
                   fontSize: 12,
                   color: colors.onSurfaceVariant.withValues(alpha: 0.5),
                 ),
@@ -238,13 +269,15 @@ class ParentSettingsScreen extends ConsumerWidget {
 
   Future<bool> _confirmLogout(
       BuildContext context, AppLocalizations l10n) async {
+    final parent = context.parentTheme;
+    final textTheme = Theme.of(context).textTheme;
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           l10n.logoutTitle,
-          style: const TextStyle(fontWeight: FontWeight.w800),
+          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
         ),
         content: Text(l10n.logoutMessage),
         actions: [
@@ -254,7 +287,8 @@ class ParentSettingsScreen extends ConsumerWidget {
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: ParentColors.alertRed,
+              backgroundColor: parent.danger,
+              foregroundColor: parent.danger.onColor,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
             child: Text(l10n.logout),
@@ -286,6 +320,8 @@ class _ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final parent = context.parentTheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -306,11 +342,11 @@ class _ProfileHeader extends StatelessWidget {
           Container(
             width: 60,
             height: 60,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  ParentColors.parentGreen,
-                  ParentColors.parentGreenLight,
+                  parent.primary,
+                  parent.success,
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -320,10 +356,10 @@ class _ProfileHeader extends StatelessWidget {
             child: Center(
               child: Text(
                 name.isNotEmpty ? name[0].toUpperCase() : 'P',
-                style: const TextStyle(
+                style: textTheme.titleLarge?.copyWith(
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
-                  color: Colors.white,
+                  color: parent.primary.onColor,
                 ),
               ),
             ),
@@ -336,7 +372,7 @@ class _ProfileHeader extends StatelessWidget {
               children: [
                 Text(
                   name,
-                  style: TextStyle(
+                  style: textTheme.titleMedium?.copyWith(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
                     color: colors.onSurface,
@@ -347,7 +383,7 @@ class _ProfileHeader extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     email,
-                    style: TextStyle(
+                    style: textTheme.bodySmall?.copyWith(
                       fontSize: 13,
                       color: colors.onSurfaceVariant,
                     ),

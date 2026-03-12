@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
-import 'package:kinder_world/core/theme/app_colors.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/auth_widgets.dart';
 
 class ChildForgotPasswordScreen extends StatefulWidget {
@@ -69,7 +69,7 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
     }
 
     setState(() => _sending = true);
-    await Future.delayed(const Duration(milliseconds: 1200));
+    await Future.delayed(const Duration(milliseconds: 250));
 
     if (!mounted) return;
     setState(() {
@@ -92,7 +92,7 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
             Expanded(child: Text(message)),
           ],
         ),
-        backgroundColor: AppColors.error,
+        backgroundColor: Theme.of(context).colorScheme.error,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -104,9 +104,10 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final size = MediaQuery.of(context).size;
+    final auth = context.authTheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF5F9),
+      backgroundColor: auth.pageBackground,
       body: Stack(
         children: [
           // ── Playful gradient header ──
@@ -116,18 +117,18 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
             right: 0,
             child: Container(
               height: size.height * 0.30,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Color(0xFFE91E63),
-                    Color(0xFFFF5722),
-                    Color(0xFFFF9800),
+                    auth.child,
+                    auth.childLight,
+                    context.colors.tertiary,
                   ],
                 ),
                 borderRadius:
-                    BorderRadius.vertical(bottom: Radius.circular(40)),
+                    const BorderRadius.vertical(bottom: Radius.circular(40)),
               ),
               child: Stack(
                 children: [
@@ -271,6 +272,9 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
 
   // ── Form state ──
   Widget _buildFormState(AppLocalizations l10n) {
+    final auth = context.authTheme;
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
       child: Column(
@@ -278,19 +282,19 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
         children: [
           Text(
             l10n.forgotYourPictures,
-            style: const TextStyle(
+            style: textTheme.headlineSmall?.copyWith(
               fontSize: 22,
               fontWeight: FontWeight.w900,
-              color: Color(0xFF111827),
+              color: auth.textPrimary,
               letterSpacing: -0.4,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             l10n.forgotPicturesDescription,
-            style: const TextStyle(
+            style: textTheme.bodyMedium?.copyWith(
               fontSize: 14,
-              color: Color(0xFF6B7280),
+              color: auth.textMuted,
               height: 1.6,
             ),
           ),
@@ -338,10 +342,10 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFF0F5),
+              color: auth.childBackground,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: const Color(0xFFFFB3D1),
+                color: auth.childLight.withValues(alpha: 0.45),
               ),
             ),
             child: Row(
@@ -351,9 +355,9 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
                 Expanded(
                   child: Text(
                     l10n.parentWillGetEmail,
-                    style: const TextStyle(
+                    style: textTheme.bodySmall?.copyWith(
                       fontSize: 12,
-                      color: Color(0xFF6B7280),
+                      color: auth.textMuted,
                       height: 1.5,
                     ),
                   ),
@@ -368,9 +372,9 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
             label: l10n.askParentForHelp,
             isLoading: _sending,
             onPressed: _sending ? null : () => _sendHelp(l10n),
-            gradientColors: const [
-              Color(0xFFE91E63),
-              Color(0xFFFF9800),
+            gradientColors: [
+              auth.child,
+              auth.childLight,
             ],
             icon: _sending
                 ? null
@@ -389,15 +393,14 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.arrow_back_rounded,
-                      size: 14, color: Color(0xFFE91E63)),
+                  Icon(Icons.arrow_back_rounded, size: 14, color: colors.primary),
                   const SizedBox(width: 4),
                   Text(
                     l10n.backToChildLogin,
-                    style: const TextStyle(
+                    style: textTheme.bodyMedium?.copyWith(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFFE91E63),
+                      color: colors.primary,
                     ),
                   ),
                 ],
@@ -411,6 +414,9 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
 
   // ── Success state ──
   Widget _buildSuccessState(AppLocalizations l10n) {
+    final auth = context.authTheme;
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
       child: Column(
@@ -423,12 +429,12 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
             height: 120,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                colors: [Color(0xFFFFE0EE), Color(0xFFFFEDD5)],
+              gradient: LinearGradient(
+                colors: [auth.childBackground, auth.childLight.subtle(0.18)],
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFE91E63).withValues(alpha: 0.15),
+                  color: auth.child.withValues(alpha: 0.15),
                   blurRadius: 24,
                   offset: const Offset(0, 8),
                 ),
@@ -442,10 +448,10 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
 
           Text(
             l10n.messageSentTitle,
-            style: const TextStyle(
+            style: textTheme.headlineSmall?.copyWith(
               fontSize: 26,
               fontWeight: FontWeight.w900,
-              color: Color(0xFF111827),
+              color: auth.textPrimary,
               letterSpacing: -0.5,
             ),
             textAlign: TextAlign.center,
@@ -453,9 +459,9 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
           const SizedBox(height: 10),
           Text(
             l10n.messageSentToParent(_parentEmailController.text.trim()),
-            style: const TextStyle(
+            style: textTheme.bodyMedium?.copyWith(
               fontSize: 14,
-              color: Color(0xFF6B7280),
+              color: auth.textMuted,
               height: 1.6,
             ),
             textAlign: TextAlign.center,
@@ -467,12 +473,12 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: colors.surface,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFFFB3D1)),
+              border: Border.all(color: auth.childLight.withValues(alpha: 0.45)),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFE91E63).withValues(alpha: 0.06),
+                  color: auth.child.withValues(alpha: 0.06),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
@@ -483,10 +489,10 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
               children: [
                 Text(
                   l10n.whatHappensNext,
-                  style: const TextStyle(
+                  style: textTheme.titleMedium?.copyWith(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF111827),
+                    color: auth.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -513,9 +519,9 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
           GradientButton(
             label: l10n.backToChildLogin,
             onPressed: () => context.go('/child/login'),
-            gradientColors: const [
-              Color(0xFFE91E63),
-              Color(0xFFFF9800),
+            gradientColors: [
+              auth.child,
+              auth.childLight,
             ],
           ),
           const SizedBox(height: 14),
@@ -533,9 +539,9 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
             },
             child: Text(
               l10n.tryAgainDifferentInfo,
-              style: const TextStyle(
+              style: textTheme.bodySmall?.copyWith(
                 fontSize: 13,
-                color: Color(0xFF9CA3AF),
+                color: auth.textHint,
               ),
             ),
           ),

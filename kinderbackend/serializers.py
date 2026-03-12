@@ -67,6 +67,7 @@ def notification_to_json(notification: Notification) -> Dict:
         "type": notification.type,
         "title": notification.title,
         "body": notification.body,
+        "child_id": notification.child_id,
         "is_read": bool(notification.is_read),
         "created_at": _iso_z(notification.created_at),
     }

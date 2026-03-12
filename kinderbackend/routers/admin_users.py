@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from typing import Optional
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import func
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from admin_deps import require_permission
 from admin_utils import (
@@ -34,7 +35,11 @@ class UserResetPasswordRequest(BaseModel):
 def _get_user_or_404(user_id: int, db: Session) -> User:
     user = (
         db.query(User)
-        .options(joinedload(User.children))
+        .options(
+            joinedload(User.children),
+            selectinload(User.notifications),
+            selectinload(User.support_tickets),
+        )
         .filter(User.id == user_id)
         .first()
     )

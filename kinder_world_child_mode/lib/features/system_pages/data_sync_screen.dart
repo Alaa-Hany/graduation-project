@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
+import 'package:kinder_world/router.dart';
 
 class DataSyncScreen extends StatefulWidget {
   const DataSyncScreen({super.key});
@@ -16,19 +17,19 @@ class _DataSyncScreenState extends State<DataSyncScreen>
   bool _isSyncing = false;
   double _syncProgress = 0.0;
   String? _syncStatusKey = 'syncReady';
-  
+
   late AnimationController _controller;
   late Animation<double> _rotationAnimation;
 
   @override
   void initState() {
     super.initState();
-    
+
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
     );
-    
+
     _rotationAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -71,17 +72,17 @@ class _DataSyncScreenState extends State<DataSyncScreen>
       _syncProgress = 0.0;
       _syncStatusKey = 'syncStarting';
     });
-    
+
     _controller.repeat();
-    
-    // Simulate sync process
+
+    // Simulate sync process without making the UI feel blocked.
     for (int i = 0; i <= 100; i += 10) {
-      await Future.delayed(const Duration(milliseconds: 300));
-      
+      await Future.delayed(const Duration(milliseconds: 90));
+
       if (mounted) {
         setState(() {
           _syncProgress = i / 100;
-          
+
           if (i < 30) {
             _syncStatusKey = 'syncingChildProfiles';
           } else if (i < 60) {
@@ -94,15 +95,15 @@ class _DataSyncScreenState extends State<DataSyncScreen>
         });
       }
     }
-    
-    await Future.delayed(const Duration(seconds: 1));
-    
+
+    await Future.delayed(const Duration(milliseconds: 180));
+
     if (mounted) {
       setState(() {
         _isSyncing = false;
         _syncStatusKey = 'syncCompleted';
       });
-      
+
       _controller.stop();
     }
   }
@@ -117,9 +118,11 @@ class _DataSyncScreenState extends State<DataSyncScreen>
       appBar: AppBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: colors.onSurface),
-          onPressed: () => context.go('/parent/settings'),
+        leading: AppBackButton(
+          fallback: Routes.parentDashboard,
+          color: colors.onSurface,
+          icon: Icons.arrow_back,
+          iconSize: 24,
         ),
         title: Text(
           AppLocalizations.of(context)!.dataSyncTitle,
@@ -136,7 +139,7 @@ class _DataSyncScreenState extends State<DataSyncScreen>
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 40),
-              
+
               // Sync icon
               AnimatedBuilder(
                 animation: _rotationAnimation,
@@ -150,7 +153,7 @@ class _DataSyncScreenState extends State<DataSyncScreen>
                   width: 120,
                   height: 120,
                   decoration: BoxDecoration(
-                    color: _isSyncing 
+                    color: _isSyncing
                         ? colors.primary.withValues(alpha: 0.12)
                         : successColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(60),
@@ -163,7 +166,7 @@ class _DataSyncScreenState extends State<DataSyncScreen>
                 ),
               ),
               const SizedBox(height: 32),
-              
+
               // Sync status
               Text(
                 _getSyncStatus(AppLocalizations.of(context)!),
@@ -174,7 +177,7 @@ class _DataSyncScreenState extends State<DataSyncScreen>
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
-              
+
               // Progress bar
               if (_isSyncing) ...[
                 ClipRRect(
@@ -194,9 +197,9 @@ class _DataSyncScreenState extends State<DataSyncScreen>
                   ),
                 ),
               ],
-              
+
               const SizedBox(height: 48),
-              
+
               // Sync details
               Container(
                 padding: const EdgeInsets.all(24),
@@ -215,14 +218,16 @@ class _DataSyncScreenState extends State<DataSyncScreen>
                   children: [
                     _SyncDetailItem(
                       icon: Icons.person,
-                      label: AppLocalizations.of(context)!.syncChildProfilesLabel,
+                      label:
+                          AppLocalizations.of(context)!.syncChildProfilesLabel,
                       value: AppLocalizations.of(context)!.syncedCount(2),
                       isSynced: true,
                     ),
                     const SizedBox(height: 16),
                     _SyncDetailItem(
                       icon: Icons.analytics,
-                      label: AppLocalizations.of(context)!.syncProgressDataLabel,
+                      label:
+                          AppLocalizations.of(context)!.syncProgressDataLabel,
                       value: AppLocalizations.of(context)!.activitiesCount(15),
                       isSynced: true,
                     ),
@@ -243,9 +248,9 @@ class _DataSyncScreenState extends State<DataSyncScreen>
                   ],
                 ),
               ),
-              
+
               const Spacer(),
-              
+
               // Sync button
               SizedBox(
                 width: double.infinity,
@@ -253,15 +258,15 @@ class _DataSyncScreenState extends State<DataSyncScreen>
                 child: ElevatedButton(
                   onPressed: _isSyncing ? null : _startSync,
                   child: _isSyncing
-                    ? CircularProgressIndicator(color: colors.onPrimary)
-                    : Text(
-                        AppLocalizations.of(context)!.syncNow,
-                        style: textTheme.titleSmall?.copyWith(
-                          fontSize: AppConstants.fontSize,
-                          fontWeight: FontWeight.bold,
-                          color: colors.onPrimary,
+                      ? CircularProgressIndicator(color: colors.onPrimary)
+                      : Text(
+                          AppLocalizations.of(context)!.syncNow,
+                          style: textTheme.titleSmall?.copyWith(
+                            fontSize: AppConstants.fontSize,
+                            fontWeight: FontWeight.bold,
+                            color: colors.onPrimary,
+                          ),
                         ),
-                      ),
                 ),
               ),
             ],
@@ -277,7 +282,7 @@ class _SyncDetailItem extends StatelessWidget {
   final String label;
   final String value;
   final bool? isSynced;
-  
+
   const _SyncDetailItem({
     required this.icon,
     required this.label,
@@ -305,7 +310,6 @@ class _SyncDetailItem extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 16),
-        
         Expanded(
           child: Text(
             label,
@@ -314,7 +318,6 @@ class _SyncDetailItem extends StatelessWidget {
             ),
           ),
         ),
-        
         if (isSynced == true)
           Icon(
             Icons.check_circle,
@@ -329,9 +332,7 @@ class _SyncDetailItem extends StatelessWidget {
           )
         else
           const SizedBox(width: 20),
-        
         const SizedBox(width: 8),
-        
         Text(
           value,
           style: textTheme.bodySmall?.copyWith(

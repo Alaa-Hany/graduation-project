@@ -163,18 +163,19 @@ class _ColoringPageScreenState extends State<ColoringPageScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final template = _template;
+    final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFEAF8FF),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
         title: Text(
           widget.title.isEmpty ? l10n.coloringTitle : widget.title,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Comic Sans MS',
             fontWeight: FontWeight.w900,
-            color: Color(0xFF18578C),
+            color: colors.onSurface,
           ),
         ),
       ),
@@ -191,11 +192,11 @@ class _ColoringPageScreenState extends State<ColoringPageScreen> {
                     vertical: 10,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.9),
+                    color: colors.surface.withValues(alpha: 0.92),
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF6CC6FF).withValues(alpha: 0.25),
+                        color: colors.shadow.withValues(alpha: 0.18),
                         blurRadius: 14,
                         offset: const Offset(0, 5),
                       ),
@@ -204,16 +205,19 @@ class _ColoringPageScreenState extends State<ColoringPageScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.auto_awesome_rounded,
-                          color: Color(0xFFFFB300), size: 20),
+                      Icon(
+                        Icons.auto_awesome_rounded,
+                        color: colors.secondary,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
                           l10n.tapShapeToFill,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Comic Sans MS',
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF18578C),
+                            color: colors.onSurface,
                           ),
                         ),
                       ),
@@ -228,7 +232,7 @@ class _ColoringPageScreenState extends State<ColoringPageScreen> {
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: colors.surface,
                       borderRadius: BorderRadius.circular(32),
                     ),
                     child: ClipRRect(
@@ -425,7 +429,7 @@ class _ColoringPageScreenState extends State<ColoringPageScreen> {
 
   Widget _buildPalette() {
     return Container(
-      height: 152,
+      height: 144,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.95),
@@ -513,12 +517,18 @@ class _ColoringPageScreenState extends State<ColoringPageScreen> {
 
   Widget _buildControls() {
     final l10n = AppLocalizations.of(context)!;
+    final compact = MediaQuery.sizeOf(context).width < 390;
+    final width = MediaQuery.sizeOf(context).width;
+    final buttonWidth = compact ? (width - 48) / 2 : (width - 56) / 4;
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, _) {
-        return Row(
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
           children: [
-            Expanded(
+            SizedBox(
+              width: buttonWidth,
               child: _ControlButton(
                 icon: Icons.undo_rounded,
                 label: l10n.undo,
@@ -526,8 +536,8 @@ class _ColoringPageScreenState extends State<ColoringPageScreen> {
                 onTap: _controller.undo,
               ),
             ),
-            const SizedBox(width: 8),
-            Expanded(
+            SizedBox(
+              width: buttonWidth,
               child: _ControlButton(
                 icon: Icons.redo_rounded,
                 label: l10n.redo,
@@ -535,8 +545,8 @@ class _ColoringPageScreenState extends State<ColoringPageScreen> {
                 onTap: _controller.redo,
               ),
             ),
-            const SizedBox(width: 8),
-            Expanded(
+            SizedBox(
+              width: buttonWidth,
               child: _ControlButton(
                 icon: Icons.refresh_rounded,
                 label: l10n.reset,
@@ -544,8 +554,8 @@ class _ColoringPageScreenState extends State<ColoringPageScreen> {
                 onTap: _controller.reset,
               ),
             ),
-            const SizedBox(width: 8),
-            Expanded(
+            SizedBox(
+              width: buttonWidth,
               child: _ControlButton(
                 icon: Icons.cleaning_services_rounded,
                 label: l10n.eraser,
@@ -951,6 +961,7 @@ class _ControlButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final bg = selected ? const Color(0xFFFFD66B) : Colors.white;
     final fg = enabled ? const Color(0xFF15507F) : Colors.black26;
+    final compact = MediaQuery.sizeOf(context).width < 390;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
@@ -962,18 +973,27 @@ class _ControlButton extends StatelessWidget {
           onTap: enabled ? onTap : null,
           borderRadius: BorderRadius.circular(24),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 11),
+            padding: EdgeInsets.symmetric(
+              vertical: compact ? 9 : 11,
+              horizontal: 8,
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 20, color: fg),
-                const SizedBox(width: 6),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: fg,
-                    fontWeight: FontWeight.w800,
-                    fontFamily: 'Comic Sans MS',
+                Icon(icon, size: compact ? 18 : 20, color: fg),
+                SizedBox(width: compact ? 4 : 6),
+                Flexible(
+                  child: Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: fg,
+                      fontWeight: FontWeight.w800,
+                      fontFamily: 'Comic Sans MS',
+                      fontSize: compact ? 12 : 13,
+                    ),
                   ),
                 ),
               ],

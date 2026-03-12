@@ -15,14 +15,20 @@ def list_notifications(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    base_query = db.query(Notification).filter(Notification.user_id == user.id)
     query = (
-        db.query(Notification)
-        .filter(Notification.user_id == user.id)
+        base_query
         .order_by(Notification.created_at.desc())
         .offset(offset)
         .limit(limit)
     )
-    return {"notifications": [notification_to_json(n) for n in query.all()]}
+    unread_count = base_query.filter(Notification.is_read.is_(False)).count()
+    return {
+        "notifications": [notification_to_json(n) for n in query.all()],
+        "summary": {
+            "unread_count": unread_count,
+        },
+    }
 
 
 @router.post("/mark-all-read")

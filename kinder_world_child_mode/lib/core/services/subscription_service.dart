@@ -13,6 +13,12 @@ class SubscriptionService {
         _logger = logger;
 
   Future<bool> activateSubscription(PlanTier tier) async {
+    if (tier != PlanTier.free) {
+      _logger.w(
+        'Blocked activation for paid tier $tier because payment is not configured.',
+      );
+      return false;
+    }
     try {
       final response = await _networkService.post<Map<String, dynamic>>(
         '/subscription/select',

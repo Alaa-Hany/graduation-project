@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kinder_world/core/constants/app_constants.dart';
+import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
+import 'package:kinder_world/router.dart';
 
 class ErrorScreen extends ConsumerStatefulWidget {
   final String error;
-  
+
   const ErrorScreen({
     super.key,
     required this.error,
@@ -17,7 +18,7 @@ class ErrorScreen extends ConsumerStatefulWidget {
   ConsumerState<ErrorScreen> createState() => _ErrorScreenState();
 }
 
-class _ErrorScreenState extends ConsumerState<ErrorScreen> 
+class _ErrorScreenState extends ConsumerState<ErrorScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _shakeAnimation;
@@ -29,7 +30,7 @@ class _ErrorScreenState extends ConsumerState<ErrorScreen>
       vsync: this,
       duration: const Duration(milliseconds: 500),
     );
-    
+
     _shakeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -37,7 +38,7 @@ class _ErrorScreenState extends ConsumerState<ErrorScreen>
       parent: _controller,
       curve: Curves.easeInOut,
     ));
-    
+
     _controller.forward();
   }
 
@@ -57,15 +58,10 @@ class _ErrorScreenState extends ConsumerState<ErrorScreen>
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         automaticallyImplyLeading: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
-            } else {
-              context.go('/welcome');
-            }
-          },
+        leading: const AppBackButton(
+          fallback: Routes.welcome,
+          icon: Icons.arrow_back,
+          iconSize: 24,
         ),
       ),
       body: SafeArea(
@@ -87,107 +83,186 @@ class _ErrorScreenState extends ConsumerState<ErrorScreen>
               children: [
                 // Error Icon
                 Container(
-                  width: 120,
-                  height: 120,
+                  width: 140,
+                  height: 140,
                   decoration: BoxDecoration(
-                    color: errorColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(30),
+                    color: errorColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(40),
+                    border: Border.all(
+                      color: errorColor.withValues(alpha: 0.3),
+                      width: 2,
+                    ),
                   ),
                   child: Icon(
-                    Icons.error_outline,
-                    size: 60,
+                    Icons.error_outline_rounded,
+                    size: 70,
                     color: errorColor,
                   ),
                 ),
                 const SizedBox(height: 40),
-                
+
                 // Title
                 Text(
                   AppLocalizations.of(context)!.oopsSomethingWentWrong,
-                  style: textTheme.titleLarge?.copyWith(
-                    fontSize: AppConstants.largeFontSize * 1.2,
-                    fontWeight: FontWeight.bold,
+                  style: textTheme.headlineMedium?.copyWith(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    color: colors.onSurface,
+                    letterSpacing: -0.5,
+                    height: 1.2,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 16),
-                
-                // Error Message
+                const SizedBox(height: 12),
+
+                // Subtitle
+                Text(
+                  'We encountered an unexpected issue.',
+                  style: textTheme.bodyLarge?.copyWith(
+                    fontSize: 16,
+                    color: colors.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 32),
+
+                // Error Message Card
                 Container(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: colors.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: colors.outlineVariant),
+                    color: colors.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                        color: colors.outlineVariant.withValues(alpha: 0.5)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colors.shadow.withValues(alpha: 0.05),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: Column(
                     children: [
-                      Text(
-                        AppLocalizations.of(context)!.errorDetailsLabel,
-                        style: textTheme.titleSmall?.copyWith(
-                          fontSize: AppConstants.fontSize,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline_rounded,
+                            size: 18,
+                            color: colors.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            AppLocalizations.of(context)!.errorDetailsLabel,
+                            style: textTheme.titleMedium?.copyWith(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: colors.onSurface,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
                       Text(
                         widget.error,
-                        style: textTheme.bodySmall?.copyWith(
-                          fontSize: 14,
+                        style: textTheme.bodyMedium?.copyWith(
+                          fontSize: 15,
                           color: colors.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
                         ),
                         textAlign: TextAlign.center,
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 32),
-                
+                const SizedBox(height: 40),
+
                 // Action Buttons
-                ElevatedButton.icon(
-                  onPressed: () {
-                    // Try to navigate back
-                    if (context.canPop()) {
-                      context.pop();
-                    } else {
-                      context.go('/child/home');
-                    }
-                  },
-                  icon: const Icon(Icons.arrow_back),
-                  label: Text(AppLocalizations.of(context)!.goBack),
-                ),
-                const SizedBox(height: 16),
-                
-                OutlinedButton.icon(
-                  onPressed: () {
-                    // Refresh current route
-                    context.go(context.namedLocation(
-                      (GoRouter.of(context).routerDelegate.currentConfiguration.routes.first as GoRoute).path,
-                    ));
-                  },
-                  icon: const Icon(Icons.refresh),
-                  label: Text(AppLocalizations.of(context)!.tryAgain),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 56),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                
-                TextButton.icon(
-                  onPressed: () {
-                    // Report error (placeholder)
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(AppLocalizations.of(context)!.errorReported),
-                        backgroundColor: successColor,
+                Column(
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        if (context.canPop()) {
+                          context.pop();
+                        } else {
+                          context.go('/child/home');
+                        }
+                      },
+                      icon: const Icon(Icons.arrow_back_rounded),
+                      label: Text(
+                        AppLocalizations.of(context)!.goBack,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
-                    );
-                  },
-                  icon: const Icon(Icons.bug_report),
-                  label: Text(AppLocalizations.of(context)!.reportIssue),
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 58),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        backgroundColor: colors.primary,
+                        foregroundColor: colors.onPrimary,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        // Refresh current route
+                        context.go(context.namedLocation(
+                          (GoRouter.of(context)
+                                  .routerDelegate
+                                  .currentConfiguration
+                                  .routes
+                                  .first as GoRoute)
+                              .path,
+                        ));
+                      },
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: Text(
+                        AppLocalizations.of(context)!.tryAgain,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: colors.primary,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 58),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        side: BorderSide(color: colors.primary),
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextButton.icon(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                                AppLocalizations.of(context)!.errorReported),
+                            backgroundColor: successColor,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        );
+                      },
+                      icon: Icon(
+                        Icons.bug_report_outlined,
+                        color: colors.onSurfaceVariant,
+                      ),
+                      label: Text(
+                        AppLocalizations.of(context)!.reportIssue,
+                        style: TextStyle(
+                          color: colors.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 40),
               ],
