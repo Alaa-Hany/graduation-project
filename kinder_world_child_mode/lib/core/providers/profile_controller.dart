@@ -52,6 +52,7 @@ class ProfileController extends StateNotifier<AsyncValue<void>> {
       if (success) {
         // Invalidate the me provider to refresh user data
         _ref.invalidate(meProvider);
+        await _ref.read(authControllerProvider.notifier).refreshUser();
         state = const AsyncValue.data(null);
         return true;
       } else {

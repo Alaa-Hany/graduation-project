@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/admin_audit_log.dart';
@@ -77,6 +78,42 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
     _loadLogs();
   }
 
+  String _formatDate(DateTime date) {
+    final y = date.year.toString().padLeft(4, '0');
+    final m = date.month.toString().padLeft(2, '0');
+    final d = date.day.toString().padLeft(2, '0');
+    return '$y-$m-$d';
+  }
+
+  Future<void> _pickDate({
+    required TextEditingController controller,
+    required DateTime firstDate,
+    required DateTime lastDate,
+  }) async {
+    final now = DateTime.now();
+    DateTime initialDate = now;
+    final existing = controller.text.trim();
+    if (existing.isNotEmpty) {
+      final parsed = DateTime.tryParse(existing);
+      if (parsed != null) {
+        initialDate = parsed;
+      }
+    }
+    if (initialDate.isBefore(firstDate)) initialDate = firstDate;
+    if (initialDate.isAfter(lastDate)) initialDate = lastDate;
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      controller.text = _formatDate(picked);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -118,6 +155,8 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
                 width: 180,
                 child: TextField(
                   controller: _adminIdController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   decoration: InputDecoration(
                     labelText: l10n.adminAuditAdminFilter,
                     isDense: true,
@@ -144,12 +183,18 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
                 width: 160,
                 child: TextField(
                   controller: _dateFromController,
+                  readOnly: true,
                   decoration: InputDecoration(
                     labelText: l10n.adminAuditDateFromFilter,
                     isDense: true,
                     border: const OutlineInputBorder(),
                     prefixIcon:
                         const Icon(Icons.calendar_today_outlined, size: 18),
+                  ),
+                  onTap: () => _pickDate(
+                    controller: _dateFromController,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
                   ),
                   onSubmitted: (_) => _applyFilters(),
                 ),
@@ -158,11 +203,17 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
                 width: 160,
                 child: TextField(
                   controller: _dateToController,
+                  readOnly: true,
                   decoration: InputDecoration(
                     labelText: l10n.adminAuditDateToFilter,
                     isDense: true,
                     border: const OutlineInputBorder(),
                     prefixIcon: const Icon(Icons.event_outlined, size: 18),
+                  ),
+                  onTap: () => _pickDate(
+                    controller: _dateToController,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
                   ),
                   onSubmitted: (_) => _applyFilters(),
                 ),
@@ -190,8 +241,7 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                           side: BorderSide(
-                            color:
-                                cs.outlineVariant.withValues(alpha: 0.5),
+                            color: cs.outlineVariant.withValues(alpha: 0.5),
                           ),
                         ),
                         child: Padding(
@@ -202,13 +252,15 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Expanded(child: _ActionChip(action: log.action)),
+                                  Expanded(
+                                      child: _ActionChip(action: log.action)),
                                   const SizedBox(width: 12),
                                   Flexible(
                                     child: Text(
                                       log.timestamp ?? '—',
                                       textAlign: TextAlign.end,
-                                      style: theme.textTheme.bodySmall?.copyWith(
+                                      style:
+                                          theme.textTheme.bodySmall?.copyWith(
                                         color: cs.onSurfaceVariant,
                                       ),
                                     ),

@@ -1,13 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/models/privacy_settings.dart';
 import 'package:kinder_world/core/providers/privacy_provider.dart';
 
-class ParentPrivacySettingsScreen extends ConsumerWidget {
+class ParentPrivacySettingsScreen extends ConsumerStatefulWidget {
   const ParentPrivacySettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ParentPrivacySettingsScreen> createState() =>
+      _ParentPrivacySettingsScreenState();
+}
+
+class _ParentPrivacySettingsScreenState
+    extends ConsumerState<ParentPrivacySettingsScreen> {
+  PrivacySettings? _localSettings;
+  bool _saving = false;
+
+  Future<void> _updateSettings(PrivacySettings next) async {
+    if (_saving) return;
+    final previous = _localSettings;
+    setState(() {
+      _saving = true;
+      _localSettings = next;
+    });
+
+    final success =
+        await ref.read(privacyControllerProvider.notifier).updateSettings(next);
+    if (!mounted) return;
+    if (!success) {
+      setState(() {
+        _localSettings = previous;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.error)),
+      );
+    } else {
+      ref.invalidate(privacyProvider);
+    }
+    setState(() => _saving = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final privacyState = ref.watch(privacyProvider);
     final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
@@ -34,57 +69,51 @@ class ParentPrivacySettingsScreen extends ConsumerWidget {
           ),
         ),
         data: (privacySettings) {
+          final current = _localSettings ?? privacySettings;
+          _localSettings ??= privacySettings;
           return Padding(
             padding: const EdgeInsets.all(16.0),
             child: ListView(
               children: [
-                // Analytics toggle
                 SwitchListTile(
                   title: Text(l10n.analyticsTitle),
                   subtitle: Text(l10n.analyticsSubtitle),
-                  value: privacySettings.analyticsEnabled,
-                  onChanged: (value) {
-                    ref.read(privacyControllerProvider.notifier).updateSettings(
-                          privacySettings.copyWith(
-                            analyticsEnabled: value,
+                  value: current.analyticsEnabled,
+                  onChanged: _saving
+                      ? null
+                      : (value) => _updateSettings(
+                            current.copyWith(analyticsEnabled: value),
                           ),
-                        );
-                  },
                 ),
                 const Divider(),
-
-                // Personalized recommendations toggle
                 SwitchListTile(
                   title: Text(l10n.personalizedRecommendationsTitle),
                   subtitle: Text(l10n.personalizedRecommendationsSubtitle),
-                  value: privacySettings.personalizedRecommendations,
-                  onChanged: (value) {
-                    ref.read(privacyControllerProvider.notifier).updateSettings(
-                          privacySettings.copyWith(
-                            personalizedRecommendations: value,
+                  value: current.personalizedRecommendations,
+                  onChanged: _saving
+                      ? null
+                      : (value) => _updateSettings(
+                            current.copyWith(
+                              personalizedRecommendations: value,
+                            ),
                           ),
-                        );
-                  },
                 ),
                 const Divider(),
-
-                // Data collection opt-out toggle
                 SwitchListTile(
                   title: Text(l10n.dataCollectionOptOutTitle),
                   subtitle: Text(l10n.dataCollectionOptOutSubtitle),
-                  value: privacySettings.dataCollectionOptOut,
-                  onChanged: (value) {
-                    ref.read(privacyControllerProvider.notifier).updateSettings(
-                          privacySettings.copyWith(
-                            dataCollectionOptOut: value,
+                  value: current.dataCollectionOptOut,
+                  onChanged: _saving
+                      ? null
+                      : (value) => _updateSettings(
+                            current.copyWith(dataCollectionOptOut: value),
                           ),
-                        );
-                  },
                 ),
-
+                if (_saving) ...[
+                  const SizedBox(height: 8),
+                  const LinearProgressIndicator(minHeight: 2),
+                ],
                 const SizedBox(height: 32),
-
-                // Info section
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(

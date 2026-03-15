@@ -36,8 +36,6 @@ class _AdminSubscriptionsScreenState
   List<DropdownMenuItem<String>> _planItems(AppLocalizations l10n) => [
         DropdownMenuItem(value: 'FREE', child: Text(l10n.adminPlanFree)),
         DropdownMenuItem(value: 'PREMIUM', child: Text(l10n.adminPlanPremium)),
-        DropdownMenuItem(
-            value: 'FAMILY_PLUS', child: Text(l10n.adminPlanFamilyPlus)),
       ];
 
   @override
@@ -668,23 +666,19 @@ class _PlanChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final normalized = plan.trim().toUpperCase();
+    final isFree = normalized == 'FREE';
+    final display = isFree ? 'FREE' : 'PREMIUM';
     final scheme = Theme.of(context).colorScheme;
-    final background = plan == 'FREE'
-        ? scheme.secondaryContainer
-        : plan == 'PREMIUM'
-            ? scheme.tertiaryContainer
-            : scheme.primaryContainer;
-    final foreground = plan == 'FREE'
-        ? scheme.secondary
-        : plan == 'PREMIUM'
-            ? scheme.tertiary
-            : scheme.primary;
+    final background =
+        isFree ? scheme.secondaryContainer : scheme.tertiaryContainer;
+    final foreground = isFree ? scheme.secondary : scheme.tertiary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
           color: background, borderRadius: BorderRadius.circular(999)),
       child: Text(
-        plan,
+        display,
         style: TextStyle(
             color: foreground, fontWeight: FontWeight.w700, fontSize: 12),
       ),

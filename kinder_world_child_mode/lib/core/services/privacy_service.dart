@@ -38,11 +38,17 @@ class PrivacyService {
         data: settings.toJson(),
       );
 
-      if (response.data == null) {
-        return null;
+      final body = response.data;
+      if (body == null) {
+        return settings;
       }
-
-      return PrivacySettings.fromJson(response.data!);
+      if (body.containsKey('analytics_enabled') ||
+          body.containsKey('personalized_recommendations') ||
+          body.containsKey('data_collection_opt_out')) {
+        return PrivacySettings.fromJson(body);
+      }
+      final success = body['success'] == true;
+      return success ? settings : null;
     } catch (e) {
       _logger.e('Error updating privacy settings: $e');
       return null;

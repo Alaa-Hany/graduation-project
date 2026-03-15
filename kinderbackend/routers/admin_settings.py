@@ -9,25 +9,12 @@ from sqlalchemy.orm import Session
 
 from admin_deps import require_permission
 from admin_utils import serialize_system_setting, write_audit_log
+from core.admin_security import require_sensitive_action_confirmation
+from core.system_settings import DEFAULT_SYSTEM_SETTINGS, ensure_default_settings
 from deps import get_db
 from models import SystemSetting
 
 router = APIRouter(prefix="/admin/settings", tags=["Admin Settings"])
-
-DEFAULT_SETTINGS: dict[str, Any] = {
-    "maintenance_mode": False,
-    "registration_enabled": True,
-    "ai_buddy_enabled": True,
-    "feature_flags": {
-        "support_center": True,
-        "analytics_dashboard": True,
-        "cms": True,
-    },
-    "defaults": {
-        "default_plan": "FREE",
-        "default_child_limit": 1,
-    },
-}
 
 
 class SystemSettingsUpdateRequest(BaseModel):
@@ -43,31 +30,15 @@ def _setting_by_key(db: Session) -> dict[str, SystemSetting]:
     return {item.key: item for item in items}
 
 
-def _ensure_default_settings(db: Session) -> dict[str, SystemSetting]:
-    existing = _setting_by_key(db)
-    changed = False
-    for key, value in DEFAULT_SETTINGS.items():
-        if key not in existing:
-            item = SystemSetting(key=key, value_json=value)
-            db.add(item)
-            db.flush()
-            existing[key] = item
-            changed = True
-    if changed:
-        db.commit()
-        existing = _setting_by_key(db)
-    return existing
-
-
 def _settings_payload(existing: dict[str, SystemSetting]) -> dict[str, Any]:
     return {
         "settings": {
             key: serialize_system_setting(existing[key]) if key in existing else None
-            for key in DEFAULT_SETTINGS.keys()
+            for key in DEFAULT_SYSTEM_SETTINGS.keys()
         },
         "effective": {
             key: (existing[key].value_json if key in existing else value)
-            for key, value in DEFAULT_SETTINGS.items()
+            for key, value in DEFAULT_SYSTEM_SETTINGS.items()
         },
     }
 
@@ -77,7 +48,7 @@ def get_admin_settings(
     db: Session = Depends(get_db),
     admin=Depends(require_permission("admin.settings.edit")),
 ):
-    existing = _ensure_default_settings(db)
+    existing = ensure_default_settings(db)
     return _settings_payload(existing)
 
 
@@ -88,7 +59,8 @@ def update_admin_settings(
     db: Session = Depends(get_db),
     admin=Depends(require_permission("admin.settings.edit")),
 ):
-    existing = _ensure_default_settings(db)
+    require_sensitive_action_confirmation(request, action="settings.update")
+    existing = ensure_default_settings(db)
     before = _settings_payload(existing)
 
     updates = {
