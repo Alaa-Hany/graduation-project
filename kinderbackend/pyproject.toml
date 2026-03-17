@@ -1,0 +1,83 @@
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.pytest_cache
+  | \.venv
+  | __pycache__
+  | alembic/versions
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+skip = [".venv", ".pytest_cache", "__pycache__", "alembic/versions"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = [".venv", ".pytest_cache", "__pycache__", "alembic/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"test_*.py" = ["S101"]
+"conftest.py" = ["S101"]
+"run_live_tests.py" = ["E402"]
+
+[tool.mypy]
+python_version = "3.11"
+files = [
+  # Stage 1: low-risk entrypoints, config, helpers, and lightweight services.
+  "main.py",
+  "auth.py",
+  "admin_auth.py",
+  "deps.py",
+  "db_migrations.py",
+  "core/settings.py",
+  "core/time_utils.py",
+  "core/sqlalchemy_types.py",
+  "core/errors.py",
+  "core/validators.py",
+  "core/logging_utils.py",
+  "core/request_context.py",
+  "core/request_id_middleware.py",
+  "core/exception_handlers.py",
+  "core/admin_security.py",
+  "core/admin_rbac.py",
+  "core/system_settings.py",
+  "services/subscription_service.py",
+  "services/notification_service.py",
+  "services/support_ticket_service.py",
+]
+ignore_missing_imports = true
+warn_unused_configs = true
+check_untyped_defs = true
+disallow_any_generics = false
+no_implicit_optional = true
+follow_imports = "skip"
+pretty = true
+show_error_codes = true
+
+[tool.coverage.run]
+branch = true
+source = ["."]
+omit = [
+  "alembic/*",
+  ".venv/*",
+  "debug_create_user.py",
+  "run_live_tests.py",
+  "test_*.py",
+  "conftest.py",
+]
+
+[tool.coverage.report]
+fail_under = 70
+skip_covered = false
+show_missing = true

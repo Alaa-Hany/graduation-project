@@ -501,7 +501,7 @@ class ChildProfileScreen extends ConsumerWidget {
               // ── View Achievements Button ──────────────────────────────────
               ElevatedButton.icon(
                 onPressed: () => context.push(Routes.childAchievements),
-                icon: const Text('🏆', style: TextStyle(fontSize: 18)),
+                icon: const Icon(Icons.emoji_events_rounded, size: 20),
                 label: Text(l10n.gamificationSeeAllAchievements),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: childTheme.skill,
@@ -516,8 +516,8 @@ class ChildProfileScreen extends ConsumerWidget {
               // ── Reward Store Button ───────────────────────────────────────
               ElevatedButton.icon(
                 onPressed: () => context.push(Routes.childStore),
-                icon: const Text('🛍️', style: TextStyle(fontSize: 18)),
-                label: const Text('Reward Store'),
+                icon: const Icon(Icons.storefront_rounded, size: 20),
+                label: Text(l10n.rewardStoreTitle),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: childTheme.fun,
                   foregroundColor: childTheme.fun.onColor,

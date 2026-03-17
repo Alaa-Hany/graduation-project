@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-from datetime import datetime
 from typing import Any, Optional
 from urllib.parse import urlparse
 
@@ -19,13 +18,15 @@ from admin_utils import (
     write_audit_log,
 )
 from core.admin_security import require_sensitive_action_confirmation
+from core.observability import emit_event
+from core.time_utils import db_utc_now
 from deps import get_db
 from models import ContentCategory, ContentItem, Quiz
 
 router = APIRouter(tags=["Admin CMS"])
 
 CONTENT_STATUSES = {"draft", "review", "published"}
-CONTENT_TYPES = {"lesson", "story", "video", "activity"}
+CONTENT_TYPES = {"lesson", "story", "video", "activity", "page"}
 AGE_GROUP_PATTERN = re.compile(r"^\s*(\d{1,2}\s*-\s*\d{1,2}|\d{1,2}\+)\s*$")
 
 
@@ -47,6 +48,7 @@ class CategoryUpdateRequest(BaseModel):
 
 class ContentCreateRequest(BaseModel):
     category_id: Optional[int] = None
+    slug: Optional[str] = None
     content_type: str = "lesson"
     status: str = "draft"
     title_en: str
@@ -62,6 +64,7 @@ class ContentCreateRequest(BaseModel):
 
 class ContentUpdateRequest(BaseModel):
     category_id: Optional[int] = None
+    slug: Optional[str] = None
     content_type: Optional[str] = None
     status: Optional[str] = None
     title_en: Optional[str] = None
@@ -132,7 +135,7 @@ def _normalize_content_type(value: Optional[str]) -> Optional[str]:
         return None
     normalized = value.strip().lower()
     if normalized not in CONTENT_TYPES:
-        raise _error("Content type must be lesson, story, video, or activity")
+        raise _error("Content type must be lesson, story, video, activity, or page")
     return normalized
 
 
@@ -304,11 +307,7 @@ def _get_content_or_404(content_id: int, db: Session) -> ContentItem:
 
 
 def _get_quiz_or_404(quiz_id: int, db: Session) -> Quiz:
-    quiz = (
-        _quizzes_query(db)
-        .filter(Quiz.id == quiz_id, Quiz.deleted_at.is_(None))
-        .first()
-    )
+    quiz = _quizzes_query(db).filter(Quiz.id == quiz_id, Quiz.deleted_at.is_(None)).first()
     if quiz is None:
         raise HTTPException(status_code=404, detail="Quiz not found")
     return quiz
@@ -324,6 +323,20 @@ def _ensure_content_exists(content_id: Optional[int], db: Session) -> None:
     if content_id is None:
         return
     _get_content_or_404(content_id, db)
+
+
+def _ensure_content_slug_available(
+    *,
+    slug: str,
+    db: Session,
+    exclude_content_id: Optional[int] = None,
+) -> None:
+    query = db.query(ContentItem).filter(func.lower(ContentItem.slug) == slug.lower())
+    if exclude_content_id is not None:
+        query = query.filter(ContentItem.id != exclude_content_id)
+    duplicate = query.first()
+    if duplicate is not None:
+        raise _error("Content slug already exists")
 
 
 @router.get("/admin/categories")
@@ -365,8 +378,8 @@ def create_category(
         description_ar=_trim_or_none(payload.description_ar),
         created_by=admin.id,
         updated_by=admin.id,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=db_utc_now(),
+        updated_at=db_utc_now(),
     )
     db.add(category)
     db.flush()
@@ -418,7 +431,7 @@ def update_category(
         category.description_ar = _trim_or_none(payload.description_ar)
 
     category.updated_by = admin.id
-    category.updated_at = datetime.utcnow()
+    category.updated_at = db_utc_now()
     db.add(category)
     db.flush()
     write_audit_log(
@@ -451,9 +464,9 @@ def delete_category(
         raise _error("Cannot delete a category that still has content or quizzes")
 
     before = serialize_content_category(category)
-    category.deleted_at = datetime.utcnow()
+    category.deleted_at = db_utc_now()
     category.updated_by = admin.id
-    category.updated_at = datetime.utcnow()
+    category.updated_at = db_utc_now()
     db.add(category)
     db.flush()
     write_audit_log(
@@ -467,6 +480,13 @@ def delete_category(
         after_json={"id": category.id, "deleted_at": category.deleted_at.isoformat()},
     )
     db.commit()
+    emit_event(
+        "cms.category.deleted",
+        category="cms",
+        admin_id=admin.id,
+        category_id=category.id,
+        slug=category.slug,
+    )
     return {"success": True}
 
 
@@ -474,6 +494,7 @@ def delete_category(
 def list_contents(
     search: str = Query("", description="Search titles"),
     status_filter: str = Query("", alias="status"),
+    slug: str = Query(""),
     category_id: Optional[int] = Query(None),
     content_type: str = Query(""),
     page: int = Query(1, ge=1),
@@ -486,11 +507,14 @@ def list_contents(
     if search.strip():
         term = f"%{search.strip().lower()}%"
         query = query.filter(
-            func.lower(ContentItem.title_en).like(term)
-            | func.lower(ContentItem.title_ar).like(term)
+            func.lower(ContentItem.slug).like(term)
+            | func.lower(func.coalesce(ContentItem.title_en, "")).like(term)
+            | func.lower(func.coalesce(ContentItem.title_ar, "")).like(term)
             | func.lower(func.coalesce(ContentItem.description_en, "")).like(term)
             | func.lower(func.coalesce(ContentItem.description_ar, "")).like(term)
         )
+    if slug.strip():
+        query = query.filter(func.lower(ContentItem.slug) == slug.strip().lower())
     if status_filter.strip():
         query = query.filter(ContentItem.status == _normalize_status(status_filter))
     if category_id is not None:
@@ -510,6 +534,7 @@ def list_contents(
         "pagination": build_pagination_payload(page=page, page_size=page_size, total=total),
         "filters": {
             "search": search,
+            "slug": slug.strip().lower(),
             "status": status_filter.strip().lower(),
             "category_id": category_id,
             "content_type": content_type.strip().lower(),
@@ -540,6 +565,10 @@ def create_content(
     status_value = _normalize_status(payload.status)
     title_en = _require_text(payload.title_en, "English title")
     title_ar = _require_text(payload.title_ar, "Arabic title")
+    slug = _slugify(payload.slug or title_en)
+    if not slug:
+        raise _error("Content slug is required")
+    _ensure_content_slug_available(slug=slug, db=db)
     description_en = _trim_or_none(payload.description_en)
     description_ar = _trim_or_none(payload.description_ar)
     body_en = _trim_or_none(payload.body_en)
@@ -558,6 +587,7 @@ def create_content(
 
     content = ContentItem(
         category_id=payload.category_id,
+        slug=slug,
         content_type=content_type or "lesson",
         status=status_value,
         title_en=title_en,
@@ -571,9 +601,9 @@ def create_content(
         metadata_json=metadata_json,
         created_by=admin.id,
         updated_by=admin.id,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
-        published_at=datetime.utcnow() if status_value == "published" else None,
+        created_at=db_utc_now(),
+        updated_at=db_utc_now(),
+        published_at=db_utc_now() if status_value == "published" else None,
     )
     db.add(content)
     db.flush()
@@ -606,6 +636,12 @@ def update_content(
     if payload.category_id is not None:
         _ensure_category_exists(payload.category_id, db)
         content.category_id = payload.category_id
+    if payload.slug is not None:
+        slug = _slugify(payload.slug)
+        if not slug:
+            raise _error("Content slug is required")
+        _ensure_content_slug_available(slug=slug, db=db, exclude_content_id=content.id)
+        content.slug = slug
     if payload.content_type is not None:
         content.content_type = _normalize_content_type(payload.content_type) or content.content_type
     if payload.status is not None:
@@ -636,12 +672,12 @@ def update_content(
             body_en=content.body_en,
             body_ar=content.body_ar,
         )
-        content.published_at = content.published_at or datetime.utcnow()
+        content.published_at = content.published_at or db_utc_now()
     else:
         content.published_at = None
 
     content.updated_by = admin.id
-    content.updated_at = datetime.utcnow()
+    content.updated_at = db_utc_now()
     db.add(content)
     db.flush()
     content = _get_content_or_404(content_id, db)
@@ -678,9 +714,9 @@ def publish_content(
 
     before = serialize_content_item(content, include_quizzes=True)
     content.status = "published"
-    content.published_at = datetime.utcnow()
+    content.published_at = db_utc_now()
     content.updated_by = admin.id
-    content.updated_at = datetime.utcnow()
+    content.updated_at = db_utc_now()
     db.add(content)
     db.flush()
     content = _get_content_or_404(content_id, db)
@@ -695,6 +731,14 @@ def publish_content(
         after_json=serialize_content_item(content, include_quizzes=True),
     )
     db.commit()
+    emit_event(
+        "cms.content.published",
+        category="cms",
+        admin_id=admin.id,
+        content_id=content.id,
+        slug=content.slug,
+        content_type=content.content_type,
+    )
     return {"success": True, "item": serialize_content_item(content, include_quizzes=True)}
 
 
@@ -711,7 +755,7 @@ def unpublish_content(
     content.status = "draft"
     content.published_at = None
     content.updated_by = admin.id
-    content.updated_at = datetime.utcnow()
+    content.updated_at = db_utc_now()
     db.add(content)
     db.flush()
     content = _get_content_or_404(content_id, db)
@@ -726,6 +770,14 @@ def unpublish_content(
         after_json=serialize_content_item(content, include_quizzes=True),
     )
     db.commit()
+    emit_event(
+        "cms.content.unpublished",
+        category="cms",
+        admin_id=admin.id,
+        content_id=content.id,
+        slug=content.slug,
+        content_type=content.content_type,
+    )
     return {"success": True, "item": serialize_content_item(content, include_quizzes=True)}
 
 
@@ -739,9 +791,9 @@ def delete_content(
     require_sensitive_action_confirmation(request, action="content.delete")
     content = _get_content_or_404(content_id, db)
     before = serialize_content_item(content, include_quizzes=True)
-    content.deleted_at = datetime.utcnow()
+    content.deleted_at = db_utc_now()
     content.updated_by = admin.id
-    content.updated_at = datetime.utcnow()
+    content.updated_at = db_utc_now()
     db.add(content)
     db.flush()
     write_audit_log(
@@ -755,6 +807,14 @@ def delete_content(
         after_json={"id": content.id, "deleted_at": content.deleted_at.isoformat()},
     )
     db.commit()
+    emit_event(
+        "cms.content.deleted",
+        category="cms",
+        admin_id=admin.id,
+        content_id=content.id,
+        slug=content.slug,
+        content_type=content.content_type,
+    )
     return {"success": True}
 
 
@@ -818,9 +878,9 @@ def create_quiz(
         questions_json=questions_json,
         created_by=admin.id,
         updated_by=admin.id,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
-        published_at=datetime.utcnow() if status_value == "published" else None,
+        created_at=db_utc_now(),
+        updated_at=db_utc_now(),
+        published_at=db_utc_now() if status_value == "published" else None,
     )
     db.add(quiz)
     db.flush()
@@ -874,12 +934,12 @@ def update_quiz(
 
     if quiz.status == "published":
         _validate_questions_json(quiz.questions_json, require_non_empty=True)
-        quiz.published_at = quiz.published_at or datetime.utcnow()
+        quiz.published_at = quiz.published_at or db_utc_now()
     else:
         quiz.published_at = None
 
     quiz.updated_by = admin.id
-    quiz.updated_at = datetime.utcnow()
+    quiz.updated_at = db_utc_now()
     db.add(quiz)
     db.flush()
     quiz = _get_quiz_or_404(quiz_id, db)
@@ -908,9 +968,9 @@ def delete_quiz(
     require_sensitive_action_confirmation(request, action="quiz.delete")
     quiz = _get_quiz_or_404(quiz_id, db)
     before = serialize_quiz(quiz)
-    quiz.deleted_at = datetime.utcnow()
+    quiz.deleted_at = db_utc_now()
     quiz.updated_by = admin.id
-    quiz.updated_at = datetime.utcnow()
+    quiz.updated_at = db_utc_now()
     db.add(quiz)
     db.flush()
     write_audit_log(
@@ -924,4 +984,11 @@ def delete_quiz(
         after_json={"id": quiz.id, "deleted_at": quiz.deleted_at.isoformat()},
     )
     db.commit()
+    emit_event(
+        "cms.quiz.deleted",
+        category="cms",
+        admin_id=admin.id,
+        quiz_id=quiz.id,
+        title=quiz.title_en,
+    )
     return {"success": True}

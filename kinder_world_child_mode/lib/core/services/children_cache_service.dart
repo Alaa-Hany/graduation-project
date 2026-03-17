@@ -83,7 +83,16 @@ class ChildrenCacheService {
 
     final shouldFetchRemote =
         forceRefresh || snapshot.isStale || localById.isEmpty;
-    if (token == null || token.isEmpty || token.startsWith('child_session_')) {
+    final isAuthMissing =
+        token == null || token.isEmpty || token.startsWith('child_session_');
+    if (isAuthMissing) {
+      final isServerBacked = snapshot.syncState != CacheSyncState.neverSynced;
+      if (!isServerBacked) {
+        return ChildrenCacheResult(
+          children: const [],
+          snapshot: snapshot,
+        );
+      }
       return ChildrenCacheResult(
         children: localById.values.toList(growable: false),
         snapshot: snapshot,
@@ -154,8 +163,11 @@ class ChildrenCacheService {
         key: parentId,
         staleAfter: _childrenStaleAfter,
       );
+      final isServerBacked = staleSnapshot.syncState != CacheSyncState.neverSynced;
       return ChildrenCacheResult(
-        children: localById.values.toList(growable: false),
+        children: isServerBacked
+            ? localById.values.toList(growable: false)
+            : const [],
         snapshot: staleSnapshot,
       );
     }
@@ -294,6 +306,11 @@ class ChildrenCacheService {
     final lastSession =
         existing?.lastSession ?? _parseNullableDate(data['last_session']);
 
+    final resolvedParentId = parentId ?? existing?.parentId;
+    if (resolvedParentId == null || resolvedParentId.isEmpty) {
+      return null;
+    }
+
     return ChildProfile(
       id: childId,
       name: resolvedName,
@@ -305,7 +322,7 @@ class ChildrenCacheService {
       xp: existing?.xp ?? _parseInt(data['xp'], 0),
       streak: existing?.streak ?? _parseInt(data['streak'], 0),
       favorites: existing?.favorites ?? _parseStringList(data['favorites']),
-      parentId: parentId ?? existing?.parentId ?? 'local',
+      parentId: resolvedParentId,
       parentEmail: existing?.parentEmail ??
           parentEmail ??
           data['parent_email']?.toString(),

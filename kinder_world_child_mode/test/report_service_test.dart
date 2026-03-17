@@ -121,4 +121,85 @@ void main() {
     expect(report.currentMood, 'calm');
     expect(report.recentSessions, isEmpty);
   });
+
+  test('buildReportFromBackend maps backend analytics payloads without local fallback', () {
+    final report = ParentReportService.buildReportFromBackend(
+      child: _child(currentMood: null),
+      period: ReportPeriod.week,
+      basicPayload: {
+        'summary': {
+          'activities_completed_7d': 3,
+          'lessons_completed_7d': 2,
+          'screen_time_minutes_7d': 35,
+          'average_score': 91.5,
+          'completion_rate': 0.75,
+        },
+        'data_availability': {
+          'screen_time': true,
+          'activities': true,
+        },
+        'recent_sessions': [
+          {
+            'title': 'Numbers',
+            'content_type': 'lessons',
+            'score': 92,
+            'duration_minutes': 15,
+            'completed_at': DateTime(2026, 3, 17).toIso8601String(),
+            'completion_status': CompletionStatus.completed,
+          },
+        ],
+      },
+      advancedPayload: {
+        'reports': {
+          'daily_overview': [
+            {
+              'date': DateTime(2026, 3, 16).toIso8601String(),
+              'activities_completed': 2,
+              'lessons_completed': 1,
+              'screen_time_minutes': 20,
+            },
+          ],
+          'account_summary': {
+            'average_score': 91.5,
+            'completion_rate': 0.75,
+          },
+          'mood_counts': {
+            'happy': 2,
+            'excited': 1,
+          },
+          'top_content_type': 'lessons',
+          'achievements': {
+            'recent_unlocks': [
+              {
+                'achievement_key': 'first_lesson',
+                'activity_name': 'Numbers',
+                'occurred_at': DateTime(2026, 3, 17).toIso8601String(),
+              },
+            ],
+          },
+          'recent_sessions': [
+            {
+              'title': 'Numbers',
+              'content_type': 'lessons',
+              'score': 92,
+              'duration_minutes': 15,
+              'completed_at': DateTime(2026, 3, 17).toIso8601String(),
+              'completion_status': CompletionStatus.completed,
+            },
+          ],
+        },
+      },
+    );
+
+    expect(report.totalActivitiesCompleted, 3);
+    expect(report.totalLessonsCompleted, 2);
+    expect(report.totalScreenTimeMinutes, 35);
+    expect(report.averageScore, 91.5);
+    expect(report.completionRate, 0.75);
+    expect(report.topContentType, 'lessons');
+    expect(report.currentMood, 'happy');
+    expect(report.usesRecordedSessions, isTrue);
+    expect(report.achievements, hasLength(1));
+    expect(report.recentSessions.first.title, 'Numbers');
+  });
 }

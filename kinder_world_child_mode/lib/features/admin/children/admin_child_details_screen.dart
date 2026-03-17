@@ -29,6 +29,7 @@ class _AdminChildDetailsScreenState
   AdminChildRecord? _child;
   Map<String, dynamic>? _progress;
   Map<String, dynamic>? _activityLog;
+  Map<String, dynamic>? _aiBuddySummary;
   bool _loading = true;
   String? _error;
 
@@ -57,12 +58,14 @@ class _AdminChildDetailsScreenState
         repo.fetchChildDetail(widget.childId),
         repo.fetchChildProgress(widget.childId),
         repo.fetchChildActivityLog(widget.childId),
+        repo.fetchChildAiBuddySummary(widget.childId),
       ]);
       if (!mounted) return;
       setState(() {
         _child = results[0] as AdminChildRecord;
         _progress = results[1] as Map<String, dynamic>;
         _activityLog = results[2] as Map<String, dynamic>;
+        _aiBuddySummary = results[3] as Map<String, dynamic>;
         _loading = false;
       });
     } catch (e) {
@@ -100,6 +103,16 @@ class _AdminChildDetailsScreenState
     );
     final entries = List<Map<String, dynamic>>.from(
       (_activityLog?['entries'] as List<dynamic>? ?? const []).map(
+        (item) => Map<String, dynamic>.from(item as Map),
+      ),
+    );
+    final aiSummary =
+        Map<String, dynamic>.from(_aiBuddySummary ?? const <String, dynamic>{});
+    final usageMetrics = Map<String, dynamic>.from(
+      aiSummary['usage_metrics'] as Map? ?? const {},
+    );
+    final recentFlags = List<Map<String, dynamic>>.from(
+      (aiSummary['recent_flags'] as List<dynamic>? ?? const []).map(
         (item) => Map<String, dynamic>.from(item as Map),
       ),
     );
@@ -177,6 +190,42 @@ class _AdminChildDetailsScreenState
                         )
                         .toList(),
                   ),
+          ),
+          const SizedBox(height: 24),
+          _CardBlock(
+            title: l10n.aiBuddy,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(aiSummary['parent_summary'] as String? ?? l10n.notAvailable),
+                const SizedBox(height: 12),
+                Text(
+                  '${l10n.analyticsTitle}: ${usageMetrics['sessions_count'] ?? 0} / ${usageMetrics['messages_count'] ?? 0}',
+                ),
+                Text(
+                  '${l10n.safety}: ${usageMetrics['refusal_count'] ?? 0} / ${usageMetrics['safe_redirect_count'] ?? 0}',
+                ),
+                Text(
+                  '${l10n.activityReports}: ${aiSummary['visibility_mode'] ?? l10n.notAvailable}',
+                ),
+                if (recentFlags.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  ...recentFlags.map(
+                    (flag) => ListTile(
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.shield_outlined),
+                      title: Text(
+                        flag['topic'] as String? ?? l10n.notAvailable,
+                      ),
+                      subtitle: Text(
+                        flag['reason'] as String? ?? l10n.notAvailable,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
           const SizedBox(height: 24),
           _CardBlock(

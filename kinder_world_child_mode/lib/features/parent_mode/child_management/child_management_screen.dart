@@ -507,7 +507,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                                     .read(childrenCacheServiceProvider)
                                     .markChildrenMutated(_cachedParentId ?? '');
                                 _showTopMessage(
-                                  'Deleted offline. Will sync when online.',
+                                  l10n.deletedOfflineWillSync,
                                   isError: false,
                                 );
                               } else {
@@ -747,6 +747,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
         floatingActionButton: FloatingActionButton(
           onPressed: () async {
             final l10n = AppLocalizations.of(context)!;
+            final messenger = ScaffoldMessenger.of(context);
             try {
               final plan = await ref.read(planInfoProvider.future);
               final parentId =
@@ -760,13 +761,16 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                 return;
               }
             } catch (_) {
-              // If plan lookup fails, continue without blocking.
+              if (!mounted) return;
+              messenger.showSnackBar(
+                SnackBar(content: Text(l10n.tryAgain)),
+              );
+              return;
             }
 
             if (!mounted) return;
-            final parentContext = context;
             // ignore: use_build_context_synchronously
-            final messenger = ScaffoldMessenger.of(parentContext);
+            final parentContext = context;
             String name = '';
             int? age;
             String selectedAvatar = _avatarOptions.first.id;
@@ -834,7 +838,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                                 const SizedBox(width: 12),
                                 DropdownButton<int>(
                                   value: age,
-                                  hint: Text('-'),
+                                  hint: Text(l10n.placeholderDash),
                                   items: List.generate(8, (i) => i + 5)
                                       .map((v) => DropdownMenuItem(
                                             value: v,
@@ -1036,6 +1040,18 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                                       ref.read(childRepositoryProvider);
                                   final existing =
                                       await repo.getChildProfile(childId);
+                                  final resolvedParentId =
+                                      parentId ?? existing?.parentId;
+                                  if (resolvedParentId == null ||
+                                      resolvedParentId.isEmpty) {
+                                    setDialogState(() {
+                                      isSaving = false;
+                                    });
+                                    _showTopMessage(
+                                      l10n.parentSessionMissing,
+                                    );
+                                    return;
+                                  }
                                   final newProfile = ChildProfile(
                                     id: childId,
                                     name: trimmedName,
@@ -1047,7 +1063,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                                     xp: existing?.xp ?? 0,
                                     streak: existing?.streak ?? 0,
                                     favorites: existing?.favorites ?? const [],
-                                    parentId: parentId ?? 'local',
+                                    parentId: resolvedParentId,
                                     parentEmail:
                                         existing?.parentEmail ?? parentEmail,
                                     picturePassword:
@@ -1077,7 +1093,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                                     await ref
                                         .read(childrenCacheServiceProvider)
                                         .markChildrenMutated(
-                                            parentId ?? 'local');
+                                            resolvedParentId);
                                     messenger.showSnackBar(
                                       SnackBar(
                                         content: Text(l10n.childProfileAdded),

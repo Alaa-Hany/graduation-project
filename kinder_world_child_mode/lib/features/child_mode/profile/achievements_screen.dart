@@ -58,20 +58,20 @@ class AchievementsScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
                 _SectionTitle(
                   title: l10n.badges,
-                  subtitle: 'Collect badges and shine!',
+                  subtitle: l10n.achievementsCollectBadgesSubtitle,
                 ),
                 const SizedBox(height: 10),
                 const BadgesRow(),
                 const SizedBox(height: 20),
-                const _SectionTitle(
-                  title: 'Unlocked Achievements',
-                  subtitle: 'Keep going for more achievements',
+                _SectionTitle(
+                  title: l10n.achievementsUnlockedTitle,
+                  subtitle: l10n.achievementsUnlockedSubtitle,
                 ),
                 const SizedBox(height: 10),
                 if (unlocked.isEmpty)
-                  const _EmptyCard(
+                  _EmptyCard(
                     icon: Icons.emoji_events_outlined,
-                    text: 'No achievements yet',
+                    text: l10n.achievementsEmpty,
                   )
                 else
                   ...unlocked.map(
@@ -81,15 +81,15 @@ class AchievementsScreen extends ConsumerWidget {
                     ),
                   ),
                 const SizedBox(height: 20),
-                const _SectionTitle(
-                  title: 'Upcoming Achievements',
-                  subtitle: 'Complete more activities to unlock',
+                _SectionTitle(
+                  title: l10n.achievementsUpcomingTitle,
+                  subtitle: l10n.achievementsUpcomingSubtitle,
                 ),
                 const SizedBox(height: 10),
                 if (locked.isEmpty)
-                  const _EmptyCard(
+                  _EmptyCard(
                     icon: Icons.check_circle_outline_rounded,
-                    text: 'All achievements unlocked!',
+                    text: l10n.achievementsAllUnlocked,
                   )
                 else
                   ...locked.take(10).map(
@@ -187,6 +187,7 @@ class _LockedAchievementCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     final childTheme = context.childTheme;
     return Opacity(
       opacity: 0.72,
@@ -215,7 +216,7 @@ class _LockedAchievementCard extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                _titleFor(achievement.titleKey),
+                l10n.achievementTitle(achievement.titleKey),
                 style: const TextStyle(fontWeight: FontWeight.w800),
               ),
             ),
@@ -226,7 +227,7 @@ class _LockedAchievementCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
-                '+${achievement.xpReward} XP',
+                l10n.gamificationXpReward(achievement.xpReward),
                 style: TextStyle(
                   color: childTheme.xp,
                   fontWeight: FontWeight.w900,
@@ -239,23 +240,6 @@ class _LockedAchievementCard extends StatelessWidget {
     );
   }
 
-  String _titleFor(String key) {
-    const titles = {
-      'achievementFirstLessonTitle': 'First Lesson Complete!',
-      'achievementFirstActivityTitle': 'First Activity Done!',
-      'achievementStreak3Title': '3-Day Streak!',
-      'achievementStreak7Title': 'Week Warrior!',
-      'achievementStreak30Title': 'Monthly Master!',
-      'achievementActivities10Title': 'Activity Pro!',
-      'achievementActivities50Title': 'Activity Legend!',
-      'achievementLevel5Title': 'Level 5 Hero!',
-      'achievementXP1000Title': '1,000 XP Earned!',
-      'achievementPerfectScoreTitle': 'Perfect Score!',
-      'achievementExplorerTitle': 'Explorer!',
-      'achievementFirstBadgeTitle': 'First Badge Earned!',
-    };
-    return titles[key] ?? key;
-  }
 }
 
 class _StreakMilestoneCard extends StatelessWidget {

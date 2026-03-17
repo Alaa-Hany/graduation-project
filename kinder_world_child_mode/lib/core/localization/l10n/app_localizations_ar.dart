@@ -1256,6 +1256,13 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   String get offlineStories => 'القصص';
   @override
   String get offlineProgressTracking => 'تتبع التقدم';
+
+  @override
+  String get localContentLabel => 'محتوى محلي';
+
+  @override
+  String get localContentSubtitle =>
+      'هذا القسم يستخدم محتوى محلي حتى يتم نشر المحتوى عبر الإنترنت.';
   @override
   String get checkingConnection => 'جاري التحقق من الاتصال...';
   @override
@@ -1323,13 +1330,17 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get legalNoContent => 'لا يوجد محتوى';
   @override
-  String get legalTermsPlaceholder => 'محتوى شروط الخدمة سيظهر هنا.';
+  String get legalTermsPlaceholder =>
+      'لم يتم نشر هذا المحتوى بعد. يرجى المحاولة لاحقًا.';
   @override
-  String get legalPrivacyPlaceholder => 'محتوى سياسة الخصوصية سيظهر هنا.';
+  String get legalPrivacyPlaceholder =>
+      'لم يتم نشر هذا المحتوى بعد. يرجى المحاولة لاحقًا.';
   @override
-  String get legalCoppaPlaceholder => 'محتوى امتثال COPPA سيظهر هنا.';
+  String get legalCoppaPlaceholder =>
+      'لم يتم نشر هذا المحتوى بعد. يرجى المحاولة لاحقًا.';
   @override
-  String get legalPlaceholder => 'المحتوى القانوني سيظهر هنا.';
+  String get legalPlaceholder =>
+      'لم يتم نشر هذا المحتوى بعد. يرجى المحاولة لاحقًا.';
 
   // ── Maintenance ──
   @override
@@ -2974,4 +2985,417 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   String unlockWithStreak(int streak) => 'يفتح عند سلسلة $streak أيام';
   @override
   String unlockWithActivities(int count) => 'يفتح بعد إكمال $count أنشطة';
+
+  @override
+  String get placeholderDash => '-';
+
+  @override
+  String get setAsDefault => 'تعيين كافتراضي';
+
+  @override
+  String get paymentProviderMethodIdOptional => 'معرّف وسيلة الدفع لدى المزود (اختياري)';
+
+  @override
+  String get paymentMethodDefaultLabel => 'افتراضي';
+
+  @override
+  String aiCompanionSubtitleWithName(String name) => '$name، رفيقك التعليمي الذكي';
+
+  @override
+  String get aiBuddyStatusUnavailable => 'غير متاح';
+
+  @override
+  String get aiBuddyStatusFallbackOnly => 'وضع بديل فقط';
+
+  @override
+  String get aiBuddyFallbackSubtitle =>
+      'وضع الأمان مفعّل حتى يتم ربط مزود ذكاء اصطناعي فعلي.';
+
+  @override
+  String aiBuddyFallbackSubtitleFor(String name) =>
+      '$name، وضع الأمان مفعّل حتى يتم ربط مزود ذكاء اصطناعي فعلي.';
+
+  @override
+  String get aiBuddyBannerUnavailableTitle => 'AI Buddy غير متاح';
+
+  @override
+  String get aiBuddyBannerFallbackTitle => 'AI Buddy يعمل في وضع الأمان';
+
+  @override
+  String get aiBuddyBannerOnlineTitle => 'AI Buddy متصل';
+
+  @override
+  String get aiBuddyBannerFallbackDescription =>
+      'الردود تأتي من مسار بديل داخل الخادم وليست من مزود نموذج فعلي.';
+
+  @override
+  String get aiBuddyBannerOnlineDescription =>
+      'الردود تأتي من مزود الذكاء الاصطناعي المهيأ في الخلفية.';
+
+  @override
+  String get aiBuddyUnavailableTitle => 'AI Buddy غير متاح الآن';
+
+  @override
+  String get aiBuddyNoConversationTitle => 'لا توجد محادثة بعد';
+
+  @override
+  String get aiBuddyNoConversationSubtitle =>
+      'ابدأ جلسة جديدة للتحدث مع AI Buddy.';
+
+  @override
+  String get aiBuddyStartSessionAction => 'ابدأ الجلسة';
+
+  @override
+  String get aiBuddyNoMessagesTitle => 'لا توجد رسائل بعد';
+
+  @override
+  String get aiBuddyNoMessagesSubtitle =>
+      'الجلسة جاهزة، لكن لم يتم إرسال أي رسائل بعد.';
+
+  @override
+  String get aiBuddyRefreshAction => 'تحديث';
+
+  @override
+  String get aiBuddyUnavailableHint => 'AI Buddy غير متاح الآن';
+
+  @override
+  String get aiBuddySafeModeHint => 'AI Buddy يعمل في وضع الأمان';
+
+  @override
+  String get aiBuddyNoActiveChildSession => 'لا توجد جلسة طفل نشطة.';
+
+  @override
+  String get gamificationMyBadges => 'شاراتي';
+
+  @override
+  String get gamificationDayStreak => 'سلسلة أيام';
+
+  @override
+  String get gamificationNoStreak => 'لا توجد سلسلة';
+
+  @override
+  String gamificationUnlockedOn(String date) => 'فُتحت في $date';
+
+  @override
+  String gamificationXpReward(int xp) => '+$xp نقطة خبرة';
+
+  @override
+  String gamificationCompactLevel(int level) => 'م $level';
+
+  @override
+  String gamificationCompactStreak(int days) => '$daysي';
+
+  @override
+  String gamificationLevelWithEmoji(String emoji, int level) =>
+      '$emoji المستوى $level';
+
+  @override
+  String get gamificationMaxLevel => 'أقصى مستوى!';
+
+  @override
+  String gamificationXpToLevel(int xp, int level) =>
+      '$xp نقطة خبرة للوصول إلى المستوى $level';
+
+  @override
+  String get gamificationAwesome => 'رائع!';
+
+  @override
+  String get achievementsCollectBadgesSubtitle => 'اجمع الشارات وتألق!';
+
+  @override
+  String get achievementsUnlockedTitle => 'الإنجازات المفتوحة';
+
+  @override
+  String get achievementsUnlockedSubtitle => 'استمر لفتح مزيد من الإنجازات';
+
+  @override
+  String get achievementsEmpty => 'لا توجد إنجازات بعد';
+
+  @override
+  String get achievementsUpcomingTitle => 'الإنجازات القادمة';
+
+  @override
+  String get achievementsUpcomingSubtitle => 'أكمل مزيدًا من الأنشطة لفتحها';
+
+  @override
+  String get achievementsAllUnlocked => 'تم فتح جميع الإنجازات!';
+
+  @override
+  String achievementTitle(String key) {
+    switch (key) {
+      case 'achievementFirstLessonTitle':
+        return 'أول درس';
+      case 'achievementFirstActivityTitle':
+        return 'أول نشاط';
+      case 'achievementStreak3Title':
+        return 'سلسلة 3 أيام';
+      case 'achievementStreak7Title':
+        return 'بطل الأسبوع';
+      case 'achievementStreak30Title':
+        return 'بطل الشهر';
+      case 'achievementActivities10Title':
+        return 'محترف الأنشطة';
+      case 'achievementActivities50Title':
+        return 'أسطورة الأنشطة';
+      case 'achievementLevel5Title':
+        return 'بطل المستوى 5';
+      case 'achievementXP1000Title':
+        return 'جامع 1000 خبرة';
+      case 'achievementPerfectScoreTitle':
+        return 'درجة كاملة';
+      case 'achievementExplorerTitle':
+        return 'المستكشف';
+      case 'achievementFirstBadgeTitle':
+        return 'أول شارة';
+      default:
+        return key;
+    }
+  }
+
+  @override
+  String achievementDescription(String key) {
+    switch (key) {
+      case 'achievementFirstLessonDesc':
+        return 'أكمل أول درس لك.';
+      case 'achievementFirstActivityDesc':
+        return 'أكمل أول نشاط لك.';
+      case 'achievementStreak3Desc':
+        return 'استخدم التطبيق 3 أيام متتالية.';
+      case 'achievementStreak7Desc':
+        return 'استخدم التطبيق 7 أيام متتالية.';
+      case 'achievementStreak30Desc':
+        return 'استخدم التطبيق 30 يومًا متتاليًا.';
+      case 'achievementActivities10Desc':
+        return 'أكمل 10 أنشطة.';
+      case 'achievementActivities50Desc':
+        return 'أكمل 50 نشاطًا.';
+      case 'achievementLevel5Desc':
+        return 'صل إلى المستوى 5.';
+      case 'achievementXP1000Desc':
+        return 'اجمع 1000 نقطة خبرة.';
+      case 'achievementPerfectScoreDesc':
+        return 'احصل على 100% في اختبار.';
+      case 'achievementExplorerDesc':
+        return 'جرّب كل فئات المحتوى الأربع.';
+      case 'achievementFirstBadgeDesc':
+        return 'احصل على أول شارة لك.';
+      default:
+        return key;
+    }
+  }
+
+  @override
+  String badgeName(String key) {
+    switch (key) {
+      case 'badgeStarLearnerName':
+        return 'المتعلم اللامع';
+      case 'badgeStreakHeroName':
+        return 'بطل المواظبة';
+      case 'badgeActivityChampionName':
+        return 'بطل الأنشطة';
+      case 'badgeQuizMasterName':
+        return 'خبير الاختبارات';
+      case 'badgeExplorerName':
+        return 'المستكشف';
+      case 'badgeLevelMasterName':
+        return 'خبير المستويات';
+      default:
+        return key;
+    }
+  }
+
+  @override
+  String badgeDescription(String key) {
+    switch (key) {
+      case 'badgeStarLearnerDesc':
+        return 'تُمنح عند إكمال أول درس.';
+      case 'badgeStreakHeroDesc':
+        return 'تُمنح عند الحفاظ على سلسلة 7 أيام.';
+      case 'badgeActivityChampionDesc':
+        return 'تُمنح عند إكمال 10 أنشطة.';
+      case 'badgeQuizMasterDesc':
+        return 'تُمنح عند الحصول على درجة كاملة في اختبار.';
+      case 'badgeExplorerDesc':
+        return 'تُمنح عند استكشاف جميع فئات المحتوى.';
+      case 'badgeLevelMasterDesc':
+        return 'تُمنح عند الوصول إلى المستوى 5.';
+      default:
+        return key;
+    }
+  }
+
+  @override
+  String get rewardStoreTitle => 'متجر المكافآت';
+
+  @override
+  String get rewardStoreCoinsLabel => 'العملات';
+
+  @override
+  String get rewardStoreFilterAll => 'الكل';
+
+  @override
+  String get rewardTypeAvatar => 'شخصية';
+
+  @override
+  String get rewardTypeFrame => 'إطار';
+
+  @override
+  String get rewardTypeBadge => 'شارة';
+
+  @override
+  String get rewardTypeSticker => 'ملصق';
+
+  @override
+  String get rewardTypeTheme => 'ثيم';
+
+  @override
+  String rewardItemName(String itemId) {
+    switch (itemId) {
+      case 'av_robot':
+        return 'روبوت';
+      case 'av_unicorn':
+        return 'يونيكورن';
+      case 'av_astronaut':
+        return 'رائد فضاء';
+      case 'av_dragon':
+        return 'تنين';
+      case 'fr_rainbow':
+        return 'قوس قزح';
+      case 'fr_stars':
+        return 'نجوم';
+      case 'fr_flowers':
+        return 'زهور';
+      case 'bd_champion':
+        return 'البطل';
+      case 'bd_star':
+        return 'نجمة';
+      case 'bd_rocket':
+        return 'صاروخ';
+      case 'st_heart':
+        return 'قلب';
+      case 'st_fire':
+        return 'نار';
+      case 'st_lightning':
+        return 'برق';
+      case 'st_diamond':
+        return 'ألماسة';
+      case 'th_ocean':
+        return 'المحيط';
+      case 'th_forest':
+        return 'الغابة';
+      case 'th_galaxy':
+        return 'المجرة';
+      default:
+        return itemId;
+    }
+  }
+
+  @override
+  String get rewardStoreAlreadyOwned => 'تمتلك هذا العنصر بالفعل';
+
+  @override
+  String get rewardStoreAlreadyPending => 'يوجد طلب موافقة معلّق لهذا العنصر';
+
+  @override
+  String get rewardStoreRequestSent => 'تم إرسال الطلب إلى الوالد';
+
+  @override
+  String rewardStoreNeedMoreCoinsMessage(int price, int currentCoins) =>
+      'تحتاج إلى $price عملة، والمتوفر لديك $currentCoins';
+
+  @override
+  String get rewardStoreRewardRedeemed => 'تم استبدال المكافأة';
+
+  @override
+  String get rewardStoreRequestNotFound => 'لم يتم العثور على الطلب';
+
+  @override
+  String get rewardStoreItemMissing => 'عنصر المكافأة غير موجود';
+
+  @override
+  String get rewardStoreNotEnoughCoinsApproval =>
+      'لا توجد عملات كافية للموافقة على هذا الطلب';
+
+  @override
+  String rewardStoreItemApproved(String name) => 'تمت الموافقة على $name';
+
+  @override
+  String get rewardStoreRequestRejected => 'تم رفض الطلب';
+
+  @override
+  String get rewardStoreParentPinMissing =>
+      'لم يتم إعداد رقم PIN للوالد. يرجى ضبطه من إعدادات الوالد.';
+
+  @override
+  String get rewardStoreParentApprovalTitle => 'موافقة الوالد';
+
+  @override
+  String get rewardStoreParentPinLabel => 'أدخل رقم PIN للوالد';
+
+  @override
+  String get rewardStoreVerifyAction => 'تحقق';
+
+  @override
+  String get rewardStoreParentVerificationSuccess => 'تم التحقق من الوالد بنجاح';
+
+  @override
+  String get rewardStoreInvalidPin => 'رقم PIN غير صحيح';
+
+  @override
+  String get rewardStoreWaitingForParentApproval => 'بانتظار موافقة الوالد';
+
+  @override
+  String rewardStoreItemUnequipped(String name) => 'تمت إزالة $name';
+
+  @override
+  String rewardStoreItemEquipped(String name) => 'تم تجهيز $name';
+
+  @override
+  String rewardStorePendingApprovals(int count) => 'طلبات موافقة الوالد ($count)';
+
+  @override
+  String get rewardStoreParentUnlock => 'فتح الوالد';
+
+  @override
+  String rewardStoreRequestedAt(String dateTime) => 'طُلب في $dateTime';
+
+  @override
+  String get rewardStoreRejectAction => 'رفض';
+
+  @override
+  String get rewardStoreApproveAction => 'موافقة';
+
+  @override
+  String get rewardStoreEquippedLabel => 'المجهز';
+
+  @override
+  String rewardStorePriceCoins(int coins) => '$coins عملة';
+
+  @override
+  String get rewardStorePendingAction => 'قيد الانتظار...';
+
+  @override
+  String get rewardStoreUnequipAction => 'إزالة';
+
+  @override
+  String get rewardStoreEquipAction => 'تجهيز';
+
+  @override
+  String get rewardStoreRequestParentAction => 'اطلب الوالد';
+
+  @override
+  String get rewardStoreNeedMoreCoinsAction => 'تحتاج عملات أكثر';
+
+  @override
+  String get rewardStoreRedeemAction => 'استبدال';
+
+  @override
+  String get parentSessionMissing => 'جلسة الوالد غير موجودة. يرجى تسجيل الدخول مرة أخرى.';
+
+  @override
+  String get deletedOfflineWillSync => 'تم الحذف بدون اتصال. ستتم المزامنة عند عودة الإنترنت.';
+
+  @override
+  String get aiBuddyFallbackSummary =>
+      'AI Buddy يعمل حاليًا في وضع بديل من الخادم وليس عبر مزود نموذج فعلي.';
 }

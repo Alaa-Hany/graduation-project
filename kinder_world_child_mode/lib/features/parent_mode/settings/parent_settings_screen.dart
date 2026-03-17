@@ -6,6 +6,8 @@ import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
+import 'package:kinder_world/core/providers/plan_provider.dart';
+import 'package:kinder_world/core/subscription/plan_info.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/router.dart';
@@ -26,8 +28,9 @@ class ParentSettingsScreen extends ConsumerWidget {
     final parent = context.parentTheme;
     final authState = ref.watch(authControllerProvider);
     final user = authState.user;
-
-    final bool isPremium = user?.hasActiveSubscription ?? false;
+    final currentPlan =
+        ref.watch(planInfoProvider).asData?.value ?? PlanInfo.fromTier(PlanTier.free);
+    final bool isPremium = currentPlan.tier != PlanTier.free;
 
     return Scaffold(
       backgroundColor: colors.surfaceContainerLowest,

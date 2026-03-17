@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import os
 from collections import defaultdict
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import date, datetime, timedelta
 from math import floor
 from typing import Iterable
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from core.time_utils import ensure_utc, to_db_utc, utc_now, utc_start_of_day, utc_today
 from models import (
     ChildActivityEvent,
     ChildDailyActivitySummary,
@@ -26,12 +27,13 @@ TRACKED_EVENT_TYPES = {
     "mood_entry",
     "achievement_unlocked",
 }
+COMPLETION_EVENT_TYPES = {"activity_completed", "lesson_completed"}
 
 
 class AnalyticsService:
     @staticmethod
     def _start_of_day(day: date) -> datetime:
-        return datetime.combine(day, time.min)
+        return utc_start_of_day(day)
 
     def _ensure_parent_child_access(
         self,
@@ -61,12 +63,6 @@ class AnalyticsService:
 
     def _retention_expires_at(self, occurred_at: datetime) -> datetime:
         return occurred_at + timedelta(days=self._retention_days())
-
-    @staticmethod
-    def _as_naive_utc(value: datetime) -> datetime:
-        if value.tzinfo is None:
-            return value
-        return value.astimezone(timezone.utc).replace(tzinfo=None)
 
     def _get_or_create_daily_summary(
         self,
@@ -159,7 +155,7 @@ class AnalyticsService:
             )
 
         self._ensure_parent_child_access(db=db, parent=parent, child_id=payload.child_id)
-        occurred_at = self._as_naive_utc(payload.occurred_at or datetime.utcnow())
+        occurred_at = to_db_utc(payload.occurred_at or utc_now())
 
         event = ChildActivityEvent(
             child_id=payload.child_id,
@@ -180,7 +176,7 @@ class AnalyticsService:
             db=db,
             child_id=payload.child_id,
             occurred_at=occurred_at,
-            activities_completed=1,
+            activities_completed=1 if payload.event_type in COMPLETION_EVENT_TYPES else 0,
             lessons_completed=1 if payload.event_type == "lesson_completed" else 0,
             mood_entries=1 if payload.event_type == "mood_entry" else 0,
             achievements_unlocked=1 if payload.event_type == "achievement_unlocked" else 0,
@@ -199,14 +195,13 @@ class AnalyticsService:
 
     def record_session_log(self, *, db: Session, parent: User, payload) -> dict:
         self._ensure_parent_child_access(db=db, parent=parent, child_id=payload.child_id)
-        if payload.ended_at < payload.started_at:
+        started_at = ensure_utc(payload.started_at)
+        ended_at = ensure_utc(payload.ended_at)
+        if ended_at < started_at:
             raise HTTPException(
                 status_code=422,
                 detail="ended_at must be greater than or equal to started_at",
             )
-
-        started_at = self._as_naive_utc(payload.started_at)
-        ended_at = self._as_naive_utc(payload.ended_at)
         duration = max(int((ended_at - started_at).total_seconds()), 0)
         session_log = ChildSessionLog(
             child_id=payload.child_id,
@@ -233,12 +228,10 @@ class AnalyticsService:
                 "id": session_log.id,
                 "child_id": session_log.child_id,
                 "duration_seconds": session_log.duration_seconds,
-                "started_at": session_log.started_at.isoformat()
-                if session_log.started_at
-                else None,
-                "ended_at": session_log.ended_at.isoformat()
-                if session_log.ended_at
-                else None,
+                "started_at": (
+                    session_log.started_at.isoformat() if session_log.started_at else None
+                ),
+                "ended_at": session_log.ended_at.isoformat() if session_log.ended_at else None,
             }
         }
 
@@ -252,6 +245,21 @@ class AnalyticsService:
             .order_by(ChildProfile.created_at.desc(), ChildProfile.id.desc())
             .all()
         )
+
+    def _children_for_report(
+        self,
+        *,
+        db: Session,
+        user: User,
+        child_id: int | None = None,
+    ) -> list[ChildProfile]:
+        children = self._children_for_parent(db, user.id)
+        if child_id is None:
+            return children
+        for child in children:
+            if child.id == child_id:
+                return [child]
+        raise HTTPException(status_code=404, detail="Child not found")
 
     @staticmethod
     def _serialize_child(child: ChildProfile) -> dict:
@@ -267,7 +275,7 @@ class AnalyticsService:
 
     @staticmethod
     def _daily_points_template(days: int) -> list[dict]:
-        today = date.today()
+        today = utc_today()
         points = []
         for offset in range(days - 1, -1, -1):
             day = today - timedelta(days=offset)
@@ -295,7 +303,7 @@ class AnalyticsService:
             return points, {"has_sessions": False, "has_events": False}
 
         point_by_date = {item["date"]: item for item in points}
-        start_day = date.today() - timedelta(days=days - 1)
+        start_day = utc_today() - timedelta(days=days - 1)
         start_dt = self._start_of_day(start_day)
 
         sessions = (
@@ -328,17 +336,158 @@ class AnalyticsService:
             if day_key not in point_by_date:
                 continue
             item = point_by_date[day_key]
-            item["activities_completed"] += 1
+            if event.event_type in COMPLETION_EVENT_TYPES:
+                item["activities_completed"] += 1
             if event.event_type == "lesson_completed":
                 item["lessons_completed"] += 1
             item["data_available"] = True
 
         return points, {"has_sessions": bool(sessions), "has_events": bool(events)}
 
+    def _score_summary(
+        self,
+        *,
+        db: Session,
+        child_ids: list[int],
+        days: int,
+    ) -> dict[str, float | int]:
+        if not child_ids:
+            return {
+                "average_score": 0.0,
+                "completed_count": 0,
+                "total_count": 0,
+                "completion_rate": 0.0,
+            }
+        start_dt = self._start_of_day(utc_today() - timedelta(days=days - 1))
+        events = (
+            db.query(ChildActivityEvent)
+            .filter(
+                ChildActivityEvent.child_id.in_(child_ids),
+                ChildActivityEvent.occurred_at >= start_dt,
+                ChildActivityEvent.archived_at.is_(None),
+                ChildActivityEvent.event_type.in_(("activity_completed", "lesson_completed")),
+            )
+            .all()
+        )
+        scores: list[int] = []
+        for event in events:
+            metadata = event.metadata_json or {}
+            raw_score = metadata.get("score")
+            try:
+                if raw_score is not None:
+                    scores.append(int(raw_score))
+            except (TypeError, ValueError):
+                continue
+        total_count = len(events)
+        completed_count = sum(
+            1
+            for event in events
+            if (event.metadata_json or {}).get("completion_status", "completed") == "completed"
+        )
+        average_score = round(sum(scores) / len(scores), 2) if scores else 0.0
+        completion_rate = round(completed_count / total_count, 4) if total_count else 0.0
+        return {
+            "average_score": average_score,
+            "completed_count": completed_count,
+            "total_count": total_count,
+            "completion_rate": completion_rate,
+        }
+
+    def _recent_sessions(
+        self,
+        *,
+        db: Session,
+        child_ids: list[int],
+        days: int,
+        limit: int = 5,
+    ) -> list[dict]:
+        if not child_ids:
+            return []
+        start_dt = self._start_of_day(utc_today() - timedelta(days=days - 1))
+        events = (
+            db.query(ChildActivityEvent)
+            .filter(
+                ChildActivityEvent.child_id.in_(child_ids),
+                ChildActivityEvent.occurred_at >= start_dt,
+                ChildActivityEvent.archived_at.is_(None),
+                ChildActivityEvent.event_type.in_(("activity_completed", "lesson_completed")),
+            )
+            .order_by(ChildActivityEvent.occurred_at.desc(), ChildActivityEvent.id.desc())
+            .all()
+        )
+        sessions: list[dict] = []
+        for event in events[:limit]:
+            metadata = event.metadata_json or {}
+            sessions.append(
+                {
+                    "title": event.activity_name or event.lesson_id or event.event_type,
+                    "content_type": (
+                        metadata.get("content_type")
+                        or ("lessons" if event.event_type == "lesson_completed" else "activities")
+                    ),
+                    "score": int(metadata.get("score") or 0),
+                    "duration_minutes": max(int((event.duration_seconds or 0) / 60), 0),
+                    "completed_at": event.occurred_at.isoformat() if event.occurred_at else None,
+                    "completion_status": metadata.get("completion_status", "completed"),
+                }
+            )
+        return sessions
+
+    def _mood_counts(
+        self,
+        *,
+        db: Session,
+        child_ids: list[int],
+        days: int,
+    ) -> dict[str, int]:
+        if not child_ids:
+            return {}
+        start_dt = self._start_of_day(utc_today() - timedelta(days=days - 1))
+        events = (
+            db.query(ChildActivityEvent)
+            .filter(
+                ChildActivityEvent.child_id.in_(child_ids),
+                ChildActivityEvent.event_type == "mood_entry",
+                ChildActivityEvent.occurred_at >= start_dt,
+                ChildActivityEvent.archived_at.is_(None),
+            )
+            .all()
+        )
+        counts: dict[str, int] = defaultdict(int)
+        for event in events:
+            metadata = event.metadata_json or {}
+            mood_label = metadata.get("mood_label")
+            if not mood_label and event.mood_value is not None:
+                mood_label = {
+                    5: "happy",
+                    4: "excited",
+                    3: "calm",
+                    2: "tired",
+                    1: "sad",
+                }.get(int(event.mood_value), "calm")
+            if mood_label:
+                counts[str(mood_label)] += 1
+        return dict(counts)
+
+    def _top_content_type(
+        self,
+        *,
+        db: Session,
+        child_ids: list[int],
+        days: int,
+    ) -> str | None:
+        recent = self._recent_sessions(db=db, child_ids=child_ids, days=days, limit=100)
+        if not recent:
+            return None
+        counts: dict[str, int] = defaultdict(int)
+        for item in recent:
+            counts[str(item["content_type"])] += 1
+        return max(counts.items(), key=lambda item: item[1])[0]
+
     def _mood_trend(self, *, db: Session, child_ids: list[int], days: int = 14) -> list[dict]:
         if not child_ids:
             return []
-        start_dt = self._start_of_day(date.today() - timedelta(days=days - 1))
+        start_dt = self._start_of_day(utc_today() - timedelta(days=days - 1))
         events = (
             db.query(ChildActivityEvent)
             .filter(
@@ -391,9 +540,7 @@ class AnalyticsService:
                     "child_id": event.child_id,
                     "achievement_key": event.achievement_key,
                     "activity_name": event.activity_name,
-                    "occurred_at": event.occurred_at.isoformat()
-                    if event.occurred_at
-                    else None,
+                    "occurred_at": event.occurred_at.isoformat() if event.occurred_at else None,
                 }
             )
         return len(rows), recent
@@ -407,7 +554,7 @@ class AnalyticsService:
     ) -> list[dict]:
         if not children:
             return []
-        start_dt = self._start_of_day(date.today() - timedelta(days=days - 1))
+        start_dt = self._start_of_day(utc_today() - timedelta(days=days - 1))
         child_ids = [child.id for child in children]
 
         sessions = (
@@ -431,16 +578,15 @@ class AnalyticsService:
 
         session_minutes_by_child: dict[int, int] = defaultdict(int)
         for item in sessions:
-            session_minutes_by_child[item.child_id] += floor(
-                (item.duration_seconds or 0) / 60
-            )
+            session_minutes_by_child[item.child_id] += floor((item.duration_seconds or 0) / 60)
 
         activities_by_child: dict[int, int] = defaultdict(int)
         lessons_by_child: dict[int, int] = defaultdict(int)
         mood_entries_by_child: dict[int, int] = defaultdict(int)
         achievements_by_child: dict[int, int] = defaultdict(int)
         for event in events:
-            activities_by_child[event.child_id] += 1
+            if event.event_type in COMPLETION_EVENT_TYPES:
+                activities_by_child[event.child_id] += 1
             if event.event_type == "lesson_completed":
                 lessons_by_child[event.child_id] += 1
             elif event.event_type == "mood_entry":
@@ -463,14 +609,23 @@ class AnalyticsService:
             )
         return summaries
 
-    def build_basic_report(self, *, db: Session, user: User) -> dict:
-        children = self._children_for_parent(db, user.id)
+    def build_basic_report(
+        self,
+        *,
+        db: Session,
+        user: User,
+        child_id: int | None = None,
+        days: int = 7,
+    ) -> dict:
+        children = self._children_for_report(db=db, user=user, child_id=child_id)
         child_ids = [child.id for child in children]
         daily_points, presence = self._aggregate_daily_points(
             db=db,
             child_ids=child_ids,
-            days=7,
+            days=days,
         )
+        score_summary = self._score_summary(db=db, child_ids=child_ids, days=days)
+        recent_sessions = self._recent_sessions(db=db, child_ids=child_ids, days=days, limit=5)
 
         unread_notifications = (
             db.query(Notification)
@@ -485,9 +640,7 @@ class AnalyticsService:
             )
             .count()
         )
-        payment_methods = (
-            db.query(PaymentMethod).filter(PaymentMethod.user_id == user.id).count()
-        )
+        payment_methods = db.query(PaymentMethod).filter(PaymentMethod.user_id == user.id).count()
 
         summary = {
             "child_count": len(children),
@@ -495,9 +648,11 @@ class AnalyticsService:
             "unread_notifications": unread_notifications,
             "open_support_tickets": open_support_tickets,
             "payment_methods_count": payment_methods,
-            "screen_time_minutes_7d": sum(item["screen_time_minutes"] for item in daily_points),
-            "activities_completed_7d": sum(item["activities_completed"] for item in daily_points),
-            "lessons_completed_7d": sum(item["lessons_completed"] for item in daily_points),
+            f"screen_time_minutes_{days}d": sum(item["screen_time_minutes"] for item in daily_points),
+            f"activities_completed_{days}d": sum(item["activities_completed"] for item in daily_points),
+            f"lessons_completed_{days}d": sum(item["lessons_completed"] for item in daily_points),
+            "average_score": score_summary["average_score"],
+            "completion_rate": score_summary["completion_rate"],
         }
 
         data_availability = {
@@ -513,18 +668,27 @@ class AnalyticsService:
             "reports": daily_points,
             "summary": summary,
             "children": [self._serialize_child(child) for child in children],
+            "recent_sessions": recent_sessions,
             "data_availability": data_availability,
             "data_source": "backend_analytics",
             "access_level": "basic",
+            "selected_child_id": child_id,
         }
 
-    def build_advanced_report(self, *, db: Session, user: User) -> dict:
-        children = self._children_for_parent(db, user.id)
+    def build_advanced_report(
+        self,
+        *,
+        db: Session,
+        user: User,
+        child_id: int | None = None,
+        days: int = 30,
+    ) -> dict:
+        children = self._children_for_report(db=db, user=user, child_id=child_id)
         child_ids = [child.id for child in children]
         daily_points, presence = self._aggregate_daily_points(
             db=db,
             child_ids=child_ids,
-            days=30,
+            days=days,
         )
         newest_child = children[0] if children else None
 
@@ -534,13 +698,16 @@ class AnalyticsService:
             "10_12": sum(1 for child in children if 10 <= (child.age or 0) <= 12),
             "unknown": sum(1 for child in children if child.age is None),
         }
-        mood_trends = self._mood_trend(db=db, child_ids=child_ids, days=30)
+        mood_trends = self._mood_trend(db=db, child_ids=child_ids, days=days)
+        mood_counts = self._mood_counts(db=db, child_ids=child_ids, days=days)
         achievement_count, recent_achievements = self._achievements(
             db=db,
             child_ids=child_ids,
             limit=10,
         )
         child_summaries = self._child_summaries(db=db, children=children, days=7)
+        score_summary = self._score_summary(db=db, child_ids=child_ids, days=days)
+        recent_sessions = self._recent_sessions(db=db, child_ids=child_ids, days=days, limit=5)
 
         data_availability = {
             "child_profiles": bool(children),
@@ -557,17 +724,19 @@ class AnalyticsService:
         if not presence["has_events"]:
             insight_notes.append("No activity events recorded yet.")
         if not insight_notes:
-            insight_notes.append(
-                "Insights are generated from recorded child activity events."
-            )
+            insight_notes.append("Insights are generated from recorded child activity events.")
 
         comparison = {
-            "status": "available"
-            if presence["has_events"] or presence["has_sessions"]
-            else "not_available",
-            "reason": "Built from backend-stored analytics events and session logs."
-            if presence["has_events"] or presence["has_sessions"]
-            else "No activity/session data has been recorded yet.",
+            "status": (
+                "available"
+                if presence["has_events"] or presence["has_sessions"]
+                else "not_available"
+            ),
+            "reason": (
+                "Built from backend-stored analytics events and session logs."
+                if presence["has_events"] or presence["has_sessions"]
+                else "No activity/session data has been recorded yet."
+            ),
         }
 
         return {
@@ -577,31 +746,47 @@ class AnalyticsService:
                 "account_summary": {
                     "child_count": len(children),
                     "active_child_count": sum(1 for child in children if child.is_active),
-                    "newest_child_created_at": newest_child.created_at.isoformat()
-                    if newest_child and newest_child.created_at
-                    else None,
-                    "screen_time_minutes_30d": sum(
+                    "newest_child_created_at": (
+                        newest_child.created_at.isoformat()
+                        if newest_child and newest_child.created_at
+                        else None
+                    ),
+                    f"screen_time_minutes_{days}d": sum(
                         item["screen_time_minutes"] for item in daily_points
                     ),
-                    "activities_completed_30d": sum(
+                    f"activities_completed_{days}d": sum(
                         item["activities_completed"] for item in daily_points
                     ),
-                    "lessons_completed_30d": sum(
+                    f"lessons_completed_{days}d": sum(
                         item["lessons_completed"] for item in daily_points
                     ),
+                    "average_score": score_summary["average_score"],
+                    "completion_rate": score_summary["completion_rate"],
                 },
                 "age_distribution": age_distribution,
                 "data_availability": data_availability,
                 "insight_notes": insight_notes,
                 "comparison": comparison,
                 "mood_trends": mood_trends,
+                "mood_counts": mood_counts,
+                "average_score": score_summary["average_score"],
+                "completion_rate": score_summary["completion_rate"],
+                "top_content_type": self._top_content_type(
+                    db=db,
+                    child_ids=child_ids,
+                    days=days,
+                ),
                 "achievements": {
                     "total_unlocked": achievement_count,
                     "recent_unlocks": recent_achievements,
                 },
+                "recent_sessions": recent_sessions,
                 "child_summaries": child_summaries,
+                "data_source": "backend_analytics",
             },
             "access_level": "advanced",
+            "data_source": "backend_analytics",
+            "selected_child_id": child_id,
         }
 
 
@@ -622,4 +807,3 @@ def build_basic_report(*, db: Session, user: User) -> dict:
 
 def build_advanced_report(*, db: Session, user: User) -> dict:
     return analytics_service.build_advanced_report(db=db, user=user)
-

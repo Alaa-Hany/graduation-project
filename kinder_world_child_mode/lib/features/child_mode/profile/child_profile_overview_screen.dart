@@ -406,7 +406,7 @@ class ChildProfileOverviewScreen extends ConsumerWidget {
                     ElevatedButton.icon(
                       onPressed: () => context.push(Routes.childStore),
                       icon: const Icon(Icons.storefront_rounded),
-                      label: const Text('Reward Store'),
+                      label: Text(l10n.rewardStoreTitle),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: childTheme.fun,
                         foregroundColor: childTheme.fun.onColor,

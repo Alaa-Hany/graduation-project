@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from admin_deps import require_permission
+from core.time_utils import utc_start_of_day, utc_today
 from deps import get_db
 from models import ChildProfile, Notification, SupportTicket, User
 
@@ -15,8 +16,7 @@ router = APIRouter(prefix="/admin/analytics", tags=["Admin Analytics"])
 
 
 def _start_of_today() -> datetime:
-    today = date.today()
-    return datetime.combine(today, time.min)
+    return utc_start_of_day(utc_today())
 
 
 def _range_days(range_name: str) -> int:
@@ -37,7 +37,7 @@ def get_analytics_overview(
     admin=Depends(require_permission("admin.analytics.view")),
 ):
     today_start = _start_of_today()
-    last_7_days_start = datetime.combine(date.today() - timedelta(days=6), time.min)
+    last_7_days_start = utc_start_of_day(utc_today() - timedelta(days=6))
 
     total_users = db.query(User).count()
     active_children = (
@@ -48,18 +48,16 @@ def get_analytics_overview(
     activities_today = db.query(Notification).filter(Notification.created_at >= today_start).count()
     open_tickets = db.query(SupportTicket).filter(SupportTicket.status != "closed").count()
 
-    subscription_rows = (
-        db.query(User.plan, func.count(User.id))
-        .group_by(User.plan)
-        .all()
-    )
+    subscription_rows = db.query(User.plan, func.count(User.id)).group_by(User.plan).all()
     subscriptions_by_plan = {plan or "FREE": count for plan, count in subscription_rows}
     paid_subscriptions = sum(
         count for plan, count in subscriptions_by_plan.items() if (plan or "FREE").upper() != "FREE"
     )
 
     usage_summary = {
-        "new_users_last_7_days": db.query(User).filter(User.created_at >= last_7_days_start).count(),
+        "new_users_last_7_days": db.query(User)
+        .filter(User.created_at >= last_7_days_start)
+        .count(),
         "new_children_last_7_days": (
             db.query(ChildProfile)
             .filter(
@@ -68,8 +66,12 @@ def get_analytics_overview(
             )
             .count()
         ),
-        "tickets_last_7_days": db.query(SupportTicket).filter(SupportTicket.created_at >= last_7_days_start).count(),
-        "activities_last_7_days": db.query(Notification).filter(Notification.created_at >= last_7_days_start).count(),
+        "tickets_last_7_days": db.query(SupportTicket)
+        .filter(SupportTicket.created_at >= last_7_days_start)
+        .count(),
+        "activities_last_7_days": db.query(Notification)
+        .filter(Notification.created_at >= last_7_days_start)
+        .count(),
     }
 
     recent_tickets = (
@@ -113,8 +115,8 @@ def get_analytics_usage(
     admin=Depends(require_permission("admin.analytics.view")),
 ):
     total_days = _range_days(range_name)
-    start_day = date.today() - timedelta(days=total_days - 1)
-    start_dt = datetime.combine(start_day, time.min)
+    start_day = utc_today() - timedelta(days=total_days - 1)
+    start_dt = utc_start_of_day(start_day)
 
     buckets: dict[date, dict[str, int]] = defaultdict(
         lambda: {

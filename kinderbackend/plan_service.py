@@ -24,9 +24,8 @@ PLAN_FEATURES: Dict[str, Dict[str, bool]] = {
         "basic_reports": True,
         "basic_notifications": True,
         "basic_parental_controls": True,
-        
         # Premium-only features
-        "advanced_reports": False,        # ✓ FIXED: was True
+        "advanced_reports": False,  # ✓ FIXED: was True
         "ai_insights": False,
         "smart_notifications": False,
         "offline_downloads": False,
@@ -38,13 +37,12 @@ PLAN_FEATURES: Dict[str, Dict[str, bool]] = {
         "basic_reports": True,
         "basic_notifications": True,
         "basic_parental_controls": True,
-        
         # Premium-specific features
         "advanced_reports": True,
         "ai_insights": True,
         "smart_notifications": True,
         "offline_downloads": True,
-        "multiple_children": False,       # Limited to 3 children (enforced via PLAN_LIMITS)
+        "multiple_children": False,  # Limited to 3 children (enforced via PLAN_LIMITS)
         "priority_support": False,
     },
     PLAN_FAMILY_PLUS: {
@@ -56,7 +54,7 @@ PLAN_FEATURES: Dict[str, Dict[str, bool]] = {
         "ai_insights": True,
         "smart_notifications": True,
         "offline_downloads": True,
-        "multiple_children": True,        # Unlimited children (9999)
+        "multiple_children": True,  # Unlimited children (9999)
         "priority_support": True,
     },
 }

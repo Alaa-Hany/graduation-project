@@ -181,7 +181,9 @@ def test_child_register_schema_rejects_blank_picture_password_entries():
     )
 
 
-def test_admin_logout_revokes_existing_access_token(client, seed_builtin_rbac, create_admin, admin_headers):
+def test_admin_logout_revokes_existing_access_token(
+    client, seed_builtin_rbac, create_admin, admin_headers
+):
     seed_builtin_rbac()
     admin = create_admin(email="logout.admin@example.com", role_names=["super_admin"])
     headers = admin_headers(admin)

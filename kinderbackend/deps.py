@@ -1,8 +1,9 @@
-from typing import Optional
 import logging
+from collections.abc import Callable, Generator
+from typing import Optional
 
 from fastapi import Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError
 from sqlalchemy.orm import Session
 
@@ -17,12 +18,19 @@ security = HTTPBearer(auto_error=False, bearerFormat="JWT")
 
 
 def _coerce_token_version(raw_token_version: object) -> int | None:
-    try:
+    if isinstance(raw_token_version, bool):
         return int(raw_token_version)
-    except (TypeError, ValueError):
-        return None
+    if isinstance(raw_token_version, int):
+        return raw_token_version
+    if isinstance(raw_token_version, (str, bytes, bytearray)):
+        try:
+            return int(raw_token_version)
+        except ValueError:
+            return None
+    return None
 
-def get_db():
+
+def get_db() -> Generator[Session, None, None]:
     db = SessionLocal()
     try:
         yield db
@@ -30,7 +38,7 @@ def get_db():
         db.close()
 
 
-def decode_bearer(authorization: Optional[str]) -> Optional[str]:
+def decode_bearer(authorization: Optional[str]) -> str:
     if not authorization or not authorization.startswith("Bearer "):
         raise unauthorized("Authentication required")
     token = authorization.replace("Bearer ", "").strip()
@@ -41,7 +49,10 @@ def decode_bearer(authorization: Optional[str]) -> Optional[str]:
             raise unauthorized("Invalid token type")
         if token_type == "child_session":
             raise unauthorized("Invalid token type")
-        return payload.get("sub")
+        subject = payload.get("sub")
+        if not isinstance(subject, str) or not subject:
+            raise unauthorized("Invalid token payload")
+        return subject
     except JWTError:
         raise unauthorized("Invalid token")
 
@@ -79,26 +90,26 @@ def get_current_user(
     return user
 
 
-def require_feature(feature_name: str):
+def require_feature(feature_name: str) -> Callable[[User], User]:
     """
     Dependency factory for feature-gated endpoints.
-    
+
     Usage:
         @router.get("/reports/basic")
         def get_basic_reports(user: User = Depends(require_feature("basic_reports"))):
             return {"reports": []}
-    
+
     Args:
         feature_name: The feature to require (e.g., "advanced_reports")
-    
+
     Raises:
         HTTPException(403): If feature not available in user's plan
-    
+
     Returns:
         User object if feature is available
     """
     from plan_service import feature_enabled, get_user_plan
-    
+
     def check_feature(user: User = Depends(get_current_user)) -> User:
         plan = get_user_plan(user)
         if not feature_enabled(plan, feature_name):
@@ -116,5 +127,5 @@ def require_feature(feature_name: str):
                 },
             )
         return user
-    
+
     return check_feature

@@ -5,10 +5,11 @@ support, subscription demo mode, and demo/static feature endpoints.
 
 from __future__ import annotations
 
-import admin_models  # noqa: F401
 import pytest
+from fastapi.testclient import TestClient
 
-from auth import create_access_token, create_refresh_token, hash_password
+import admin_models  # noqa: F401
+from auth import create_access_token, hash_password
 from models import Notification, PrivacySetting, SupportTicket, User
 from plan_service import PLAN_FAMILY_PLUS, PLAN_FREE, PLAN_PREMIUM
 
@@ -59,16 +60,41 @@ def _create_notification(db, *, user_id: int, title: str, is_read: bool = False)
     [
         ("get", "/auth/me", None),
         ("get", "/privacy/settings", None),
-        ("put", "/privacy/settings", {"analytics_enabled": True, "personalized_recommendations": True, "data_collection_opt_out": False}),
+        (
+            "put",
+            "/privacy/settings",
+            {
+                "analytics_enabled": True,
+                "personalized_recommendations": True,
+                "data_collection_opt_out": False,
+            },
+        ),
         ("get", "/parental-controls/settings", None),
-        ("put", "/parental-controls/settings", {"daily_limit_enabled": True, "hours_per_day": 2, "break_reminders_enabled": True, "age_appropriate_only": True, "block_educational": False, "require_approval": False, "sleep_mode": True, "bedtime": "8:00 PM", "wake_time": "7:00 AM", "emergency_lock": False}),
+        (
+            "put",
+            "/parental-controls/settings",
+            {
+                "daily_limit_enabled": True,
+                "hours_per_day": 2,
+                "break_reminders_enabled": True,
+                "age_appropriate_only": True,
+                "block_educational": False,
+                "require_approval": False,
+                "sleep_mode": True,
+                "bedtime": "8:00 PM",
+                "wake_time": "7:00 AM",
+                "emergency_lock": False,
+            },
+        ),
         ("get", "/notifications", None),
         ("post", "/support/contact", {"subject": "Need help", "message": "Hello"}),
         ("get", "/billing/methods", None),
         ("get", "/subscription/me", None),
     ],
 )
-def test_parent_protected_endpoints_require_auth(client, method: str, path: str, payload: dict | None):
+def test_parent_protected_endpoints_require_auth(
+    client, method: str, path: str, payload: dict | None
+):
     if payload is None:
         response = getattr(client, method)(path)
     else:
@@ -157,7 +183,9 @@ def test_free_plan_child_limit_is_enforced(client, db):
     assert detail["limit"] == 1
 
 
-def test_child_validation_duplicate_name_update_login_and_picture_password_flow(client: TestClient, db):
+def test_child_validation_duplicate_name_update_login_and_picture_password_flow(
+    client: TestClient, db
+):
     parent = _create_parent(db, email="premium.parent@gmail.com", plan=PLAN_PREMIUM)
     headers = _auth_header(parent)
 
@@ -292,7 +320,9 @@ def test_child_validation_duplicate_name_update_login_and_picture_password_flow(
     assert new_password_login.status_code == 200
 
 
-def test_privacy_parental_controls_notifications_support_and_billing_persist(client: TestClient, db):
+def test_privacy_parental_controls_notifications_support_and_billing_persist(
+    client: TestClient, db
+):
     parent = _create_parent(db, email="settings.parent@gmail.com", plan=PLAN_PREMIUM)
     headers = _auth_header(parent)
 
@@ -487,7 +517,9 @@ def test_child_parental_controls_crud_and_parent_ownership(client: TestClient, d
     assert create_child.status_code == 200
     child_id = create_child.json()["child"]["id"]
 
-    get_default = client.get(f"/parental-controls/children/{child_id}/settings", headers=owner_headers)
+    get_default = client.get(
+        f"/parental-controls/children/{child_id}/settings", headers=owner_headers
+    )
     assert get_default.status_code == 200
     assert get_default.json()["settings"]["daily_limit_minutes"] == 120
 
@@ -511,7 +543,11 @@ def test_child_parental_controls_crud_and_parent_ownership(client: TestClient, d
                 {"day_of_week": 5, "start_time": "10:00", "end_time": "12:00", "is_allowed": True},
             ],
             "blocked_apps": [
-                {"app_identifier": "com.video.app", "app_name": "Video App", "reason": "Too distracting"}
+                {
+                    "app_identifier": "com.video.app",
+                    "app_name": "Video App",
+                    "reason": "Too distracting",
+                }
             ],
             "blocked_sites": [
                 {"domain": "example.com", "label": "Example", "reason": "Blocked by parent"}
@@ -550,7 +586,11 @@ def test_child_parental_controls_crud_and_parent_ownership(client: TestClient, d
 
     replace_schedule = client.put(
         f"/parental-controls/children/{child_id}/schedule-rules",
-        json={"allowed_windows": [{"day_of_week": 2, "start_time": "15:00", "end_time": "17:00", "is_allowed": True}]},
+        json={
+            "allowed_windows": [
+                {"day_of_week": 2, "start_time": "15:00", "end_time": "17:00", "is_allowed": True}
+            ]
+        },
         headers=owner_headers,
     )
     assert replace_schedule.status_code == 200
@@ -562,8 +602,7 @@ def test_child_parental_controls_crud_and_parent_ownership(client: TestClient, d
     assert len(list_controls.json()["items"]) == 1
     assert list_controls.json()["items"][0]["child"]["id"] == child_id
 
-    forbidden = client.get(f"/parental-controls/children/{child_id}/settings", headers=other_headers)
+    forbidden = client.get(
+        f"/parental-controls/children/{child_id}/settings", headers=other_headers
+    )
     assert forbidden.status_code == 403
-
-
-

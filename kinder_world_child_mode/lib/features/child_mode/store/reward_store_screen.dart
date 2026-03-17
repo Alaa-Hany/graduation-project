@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
+import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/providers/gamification_provider.dart';
 import 'package:kinder_world/core/providers/parent_pin_provider.dart';
@@ -12,18 +13,18 @@ import 'package:kinder_world/core/theme/theme_extensions.dart';
 enum RewardType { avatar, frame, badge, sticker, theme }
 
 extension RewardTypeLabel on RewardType {
-  String get label {
+  String label(AppLocalizations l10n) {
     switch (this) {
       case RewardType.avatar:
-        return 'Avatar';
+        return l10n.rewardTypeAvatar;
       case RewardType.frame:
-        return 'Frame';
+        return l10n.rewardTypeFrame;
       case RewardType.badge:
-        return 'Badge';
+        return l10n.rewardTypeBadge;
       case RewardType.sticker:
-        return 'Sticker';
+        return l10n.rewardTypeSticker;
       case RewardType.theme:
-        return 'Theme';
+        return l10n.rewardTypeTheme;
     }
   }
 
@@ -280,11 +281,33 @@ class RewardStoreState {
 
 enum RewardRedeemOutcome { purchased, pendingApproval, failed }
 
+enum RewardRedeemMessage {
+  alreadyOwned,
+  alreadyPending,
+  requestSent,
+  needMoreCoins,
+  rewardRedeemed,
+  requestNotFound,
+  itemMissing,
+  notEnoughCoinsApproval,
+  itemApproved,
+  requestRejected,
+}
+
 class RewardRedeemResult {
-  const RewardRedeemResult({required this.outcome, required this.message});
+  const RewardRedeemResult({
+    required this.outcome,
+    required this.message,
+    this.itemId,
+    this.price,
+    this.currentCoins,
+  });
 
   final RewardRedeemOutcome outcome;
-  final String message;
+  final RewardRedeemMessage message;
+  final String? itemId;
+  final int? price;
+  final int? currentCoins;
 }
 
 class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
@@ -408,13 +431,13 @@ class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
     if (state.ownedIds.contains(item.id)) {
       return const RewardRedeemResult(
         outcome: RewardRedeemOutcome.failed,
-        message: 'Already owned',
+        message: RewardRedeemMessage.alreadyOwned,
       );
     }
     if (hasPendingRequestForItem(item.id)) {
       return const RewardRedeemResult(
         outcome: RewardRedeemOutcome.failed,
-        message: 'Already waiting for parent approval',
+        message: RewardRedeemMessage.alreadyPending,
       );
     }
 
@@ -432,14 +455,16 @@ class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
       _persist();
       return const RewardRedeemResult(
         outcome: RewardRedeemOutcome.pendingApproval,
-        message: 'Request sent to parent',
+        message: RewardRedeemMessage.requestSent,
       );
     }
 
     if (state.coins < item.price) {
       return RewardRedeemResult(
         outcome: RewardRedeemOutcome.failed,
-        message: 'Need ${item.price} coins - you have ${state.coins}',
+        message: RewardRedeemMessage.needMoreCoins,
+        price: item.price,
+        currentCoins: state.coins,
       );
     }
 
@@ -461,7 +486,7 @@ class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
     _persist();
     return const RewardRedeemResult(
       outcome: RewardRedeemOutcome.purchased,
-      message: 'Reward redeemed',
+      message: RewardRedeemMessage.rewardRedeemed,
     );
   }
 
@@ -471,7 +496,7 @@ class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
     if (request == null) {
       return const RewardRedeemResult(
         outcome: RewardRedeemOutcome.failed,
-        message: 'Request not found',
+        message: RewardRedeemMessage.requestNotFound,
       );
     }
 
@@ -480,14 +505,14 @@ class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
     if (item == null) {
       return const RewardRedeemResult(
         outcome: RewardRedeemOutcome.failed,
-        message: 'Reward item missing',
+        message: RewardRedeemMessage.itemMissing,
       );
     }
 
     if (state.coins < item.price) {
       return const RewardRedeemResult(
         outcome: RewardRedeemOutcome.failed,
-        message: 'Not enough coins for approval',
+        message: RewardRedeemMessage.notEnoughCoinsApproval,
       );
     }
 
@@ -507,7 +532,8 @@ class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
     _persist();
     return RewardRedeemResult(
       outcome: RewardRedeemOutcome.purchased,
-      message: '${item.name} approved',
+      message: RewardRedeemMessage.itemApproved,
+      itemId: item.id,
     );
   }
 
@@ -517,7 +543,7 @@ class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
     if (request == null) {
       return const RewardRedeemResult(
         outcome: RewardRedeemOutcome.failed,
-        message: 'Request not found',
+        message: RewardRedeemMessage.requestNotFound,
       );
     }
 
@@ -535,7 +561,7 @@ class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
     _persist();
     return const RewardRedeemResult(
       outcome: RewardRedeemOutcome.purchased,
-      message: 'Request rejected',
+      message: RewardRedeemMessage.requestRejected,
     );
   }
 
@@ -592,6 +618,7 @@ class _RewardStoreScreenState extends ConsumerState<RewardStoreScreen> {
   @override
   Widget build(BuildContext context) {
     final storeState = ref.watch(rewardStoreProvider);
+    final l10n = AppLocalizations.of(context)!;
     final childTheme = context.childTheme;
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
@@ -613,7 +640,7 @@ class _RewardStoreScreenState extends ConsumerState<RewardStoreScreen> {
         foregroundColor: onStoreColor,
         elevation: 0,
         title: Text(
-          'Reward Store',
+          l10n.rewardStoreTitle,
           style: textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w800,
             fontSize: 20,
@@ -632,7 +659,7 @@ class _RewardStoreScreenState extends ConsumerState<RewardStoreScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Coins',
+                Text(l10n.rewardStoreCoinsLabel,
                     style: TextStyle(fontSize: 16, color: childTheme.xp)),
                 const SizedBox(width: 5),
                 AnimatedSwitcher(
@@ -668,14 +695,14 @@ class _RewardStoreScreenState extends ConsumerState<RewardStoreScreen> {
                 final result = ref
                     .read(rewardStoreProvider.notifier)
                     .approveRequest(request.id);
-                _snack(result.message,
+                _snack(_resolveResultMessage(result),
                     success: result.outcome != RewardRedeemOutcome.failed);
               },
               onReject: (request) {
                 final result = ref
                     .read(rewardStoreProvider.notifier)
                     .rejectRequest(request.id);
-                _snack(result.message, success: true);
+                _snack(_resolveResultMessage(result), success: true);
               },
             ),
           SizedBox(
@@ -685,7 +712,7 @@ class _RewardStoreScreenState extends ConsumerState<RewardStoreScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               children: [
                 _FilterChip(
-                  label: 'All',
+                  label: l10n.rewardStoreFilterAll,
                   emoji: '?',
                   selected: _filter == null,
                   selectedColor: storeColor,
@@ -693,7 +720,7 @@ class _RewardStoreScreenState extends ConsumerState<RewardStoreScreen> {
                 ),
                 for (final type in RewardType.values)
                   _FilterChip(
-                    label: type.label,
+                    label: type.label(l10n),
                     emoji: type.typeEmoji,
                     selected: _filter == type,
                     selectedColor: storeColor,
@@ -740,14 +767,14 @@ class _RewardStoreScreenState extends ConsumerState<RewardStoreScreen> {
   }
 
   Future<void> _unlockParentApproval() async {
+    final l10n = AppLocalizations.of(context)!;
     await ref.read(parentPinProvider.notifier).refreshStatus();
     if (!mounted) {
       return;
     }
     final pinState = ref.read(parentPinProvider);
     if (!pinState.hasPin) {
-      _snack('Parent PIN is not set. Please set it in parent settings.',
-          success: false);
+      _snack(l10n.rewardStoreParentPinMissing, success: false);
       return;
     }
 
@@ -756,24 +783,24 @@ class _RewardStoreScreenState extends ConsumerState<RewardStoreScreen> {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: const Text('Parent Approval'),
+          title: Text(l10n.rewardStoreParentApprovalTitle),
           content: TextField(
             controller: controller,
             obscureText: true,
             keyboardType: TextInputType.number,
             maxLength: 6,
-            decoration: const InputDecoration(
-              labelText: 'Enter Parent PIN',
+            decoration: InputDecoration(
+              labelText: l10n.rewardStoreParentPinLabel,
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('Verify'),
+              child: Text(l10n.rewardStoreVerifyAction),
             ),
           ],
         );
@@ -787,39 +814,74 @@ class _RewardStoreScreenState extends ConsumerState<RewardStoreScreen> {
     if (!mounted) return;
     if (verified) {
       setState(() => _approvalUnlocked = true);
-      _snack('Parent verification successful');
+      _snack(l10n.rewardStoreParentVerificationSuccess);
     } else {
-      _snack('Invalid PIN', success: false);
+      _snack(l10n.rewardStoreInvalidPin, success: false);
     }
   }
 
   void _handleAction(RewardItem item, bool owned, bool equipped, bool pending) {
+    final l10n = AppLocalizations.of(context)!;
     if (pending) {
-      _snack('Waiting for parent approval', success: false);
+      _snack(l10n.rewardStoreWaitingForParentApproval, success: false);
       return;
     }
     if (owned && equipped) {
       ref.read(rewardStoreProvider.notifier).unequip(item.type);
-      _snack('${item.name} unequipped', success: false);
+      _snack(
+        l10n.rewardStoreItemUnequipped(l10n.rewardItemName(item.id)),
+        success: false,
+      );
       return;
     }
     if (owned) {
       ref.read(rewardStoreProvider.notifier).equip(item);
-      _snack('${item.name} equipped');
+      _snack(l10n.rewardStoreItemEquipped(l10n.rewardItemName(item.id)));
       return;
     }
 
     final result = ref.read(rewardStoreProvider.notifier).redeem(item);
     switch (result.outcome) {
       case RewardRedeemOutcome.purchased:
-        _snack(result.message);
+        _snack(_resolveResultMessage(result));
         break;
       case RewardRedeemOutcome.pendingApproval:
-        _snack(result.message);
+        _snack(_resolveResultMessage(result));
         break;
       case RewardRedeemOutcome.failed:
-        _snack(result.message, success: false);
+        _snack(_resolveResultMessage(result), success: false);
         break;
+    }
+  }
+
+  String _resolveResultMessage(RewardRedeemResult result) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (result.message) {
+      case RewardRedeemMessage.alreadyOwned:
+        return l10n.rewardStoreAlreadyOwned;
+      case RewardRedeemMessage.alreadyPending:
+        return l10n.rewardStoreAlreadyPending;
+      case RewardRedeemMessage.requestSent:
+        return l10n.rewardStoreRequestSent;
+      case RewardRedeemMessage.needMoreCoins:
+        return l10n.rewardStoreNeedMoreCoinsMessage(
+          result.price ?? 0,
+          result.currentCoins ?? 0,
+        );
+      case RewardRedeemMessage.rewardRedeemed:
+        return l10n.rewardStoreRewardRedeemed;
+      case RewardRedeemMessage.requestNotFound:
+        return l10n.rewardStoreRequestNotFound;
+      case RewardRedeemMessage.itemMissing:
+        return l10n.rewardStoreItemMissing;
+      case RewardRedeemMessage.notEnoughCoinsApproval:
+        return l10n.rewardStoreNotEnoughCoinsApproval;
+      case RewardRedeemMessage.itemApproved:
+        return l10n.rewardStoreItemApproved(
+          l10n.rewardItemName(result.itemId ?? ''),
+        );
+      case RewardRedeemMessage.requestRejected:
+        return l10n.rewardStoreRequestRejected;
     }
   }
 
@@ -861,6 +923,7 @@ class _PendingApprovalsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     return Card(
       margin: const EdgeInsets.fromLTRB(12, 8, 12, 4),
@@ -874,7 +937,7 @@ class _PendingApprovalsCard extends StatelessWidget {
                 Icon(Icons.pending_actions, color: colors.primary),
                 const SizedBox(width: 8),
                 Text(
-                  'Pending Parent Approvals (${requests.length})',
+                  l10n.rewardStorePendingApprovals(requests.length),
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -883,7 +946,7 @@ class _PendingApprovalsCard extends StatelessWidget {
                 if (!unlocked)
                   OutlinedButton(
                     onPressed: onUnlock,
-                    child: const Text('Parent Unlock'),
+                    child: Text(l10n.rewardStoreParentUnlock),
                   ),
               ],
             ),
@@ -909,11 +972,16 @@ class _PendingApprovalsCard extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(item.name,
+                            Text(l10n.rewardItemName(item.id),
                                 style: const TextStyle(
                                     fontWeight: FontWeight.w700)),
                             Text(
-                              'Requested ${DateFormat('MMM d, h:mm a').format(request.requestedAt)}',
+                              l10n.rewardStoreRequestedAt(
+                                DateFormat(
+                                  'MMM d, h:mm a',
+                                  Localizations.localeOf(context).toLanguageTag(),
+                                ).format(request.requestedAt),
+                              ),
                               style: TextStyle(
                                 fontSize: 12,
                                 color: colors.onSurfaceVariant,
@@ -925,11 +993,11 @@ class _PendingApprovalsCard extends StatelessWidget {
                       if (unlocked) ...[
                         TextButton(
                           onPressed: () => onReject(request),
-                          child: const Text('Reject'),
+                          child: Text(l10n.rewardStoreRejectAction),
                         ),
                         FilledButton(
                           onPressed: () => onApprove(request),
-                          child: const Text('Approve'),
+                          child: Text(l10n.rewardStoreApproveAction),
                         ),
                       ],
                     ],
@@ -952,13 +1020,14 @@ class _EquippedStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     return Container(
       color: xpColor.withValues(alpha: 0.1),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          Text('Equipped:',
+          Text('${l10n.rewardStoreEquippedLabel}:',
               style: TextStyle(
                   color: colors.onSurface, fontWeight: FontWeight.w700)),
           const SizedBox(width: 8),
@@ -976,7 +1045,7 @@ class _EquippedStrip extends StatelessWidget {
                         color: item.color.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Text('${item.emoji} ${item.name}',
+                      child: Text('${item.emoji} ${l10n.rewardItemName(item.id)}',
                           style: TextStyle(
                               color: item.color, fontWeight: FontWeight.w700)),
                     ),
@@ -1053,6 +1122,7 @@ class _StoreItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     final canAfford = coins >= item.price;
     return Container(
@@ -1075,8 +1145,11 @@ class _StoreItemCard extends StatelessWidget {
             child: Text(item.type.typeEmoji),
           ),
           Text(item.emoji, style: const TextStyle(fontSize: 46)),
-          Text(item.name, style: const TextStyle(fontWeight: FontWeight.w800)),
-          Text('Coins ${item.price}',
+          Text(
+            l10n.rewardItemName(item.id),
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+          Text(l10n.rewardStorePriceCoins(item.price),
               style: TextStyle(
                   color:
                       canAfford ? context.childTheme.success : colors.error)),
@@ -1088,7 +1161,7 @@ class _StoreItemCard extends StatelessWidget {
                 backgroundColor: item.color,
                 foregroundColor: item.color.onColor,
               ),
-              child: Text(_actionLabel(canAfford)),
+              child: Text(_actionLabel(context, canAfford)),
             ),
           ),
         ],
@@ -1096,12 +1169,13 @@ class _StoreItemCard extends StatelessWidget {
     );
   }
 
-  String _actionLabel(bool canAfford) {
-    if (pendingApproval) return 'Pending...';
-    if (owned && equipped) return 'Unequip';
-    if (owned) return 'Equip';
-    if (needsApproval) return 'Request Parent';
-    if (!canAfford) return 'Need more coins';
-    return 'Redeem';
+  String _actionLabel(BuildContext context, bool canAfford) {
+    final l10n = AppLocalizations.of(context)!;
+    if (pendingApproval) return l10n.rewardStorePendingAction;
+    if (owned && equipped) return l10n.rewardStoreUnequipAction;
+    if (owned) return l10n.rewardStoreEquipAction;
+    if (needsApproval) return l10n.rewardStoreRequestParentAction;
+    if (!canAfford) return l10n.rewardStoreNeedMoreCoinsAction;
+    return l10n.rewardStoreRedeemAction;
   }
 }

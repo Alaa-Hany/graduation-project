@@ -91,8 +91,7 @@ def test_register_validation_returns_422_instead_of_500_for_trimmed_blank_value(
     payload = response.json()
     _assert_validation_payload_is_safe(payload)
     assert any(
-        error["msg"] == "Value error, value must not be blank"
-        for error in payload["detail"]
+        error["msg"] == "Value error, value must not be blank" for error in payload["detail"]
     )
 
 
@@ -111,7 +110,6 @@ def test_child_register_validation_returns_safe_json_errors(client):
     payload = response.json()
     _assert_validation_payload_is_safe(payload)
     assert any(
-        error["msg"]
-        == "Value error, picture_password entries must be non-empty strings"
+        error["msg"] == "Value error, picture_password entries must be non-empty strings"
         for error in payload["detail"]
     )

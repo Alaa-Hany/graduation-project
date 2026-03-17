@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from models import Notification, SupportTicket, User
 from serializers import notification_to_json
+from services.premium_behavior_service import premium_behavior_service
 
 
 class NotificationService:
@@ -76,11 +77,7 @@ class NotificationService:
         offset: int,
     ) -> dict:
         base_query = db.query(Notification).filter(Notification.user_id == user.id)
-        query = (
-            base_query.order_by(Notification.created_at.desc())
-            .offset(offset)
-            .limit(limit)
-        )
+        query = base_query.order_by(Notification.created_at.desc()).offset(offset).limit(limit)
         unread_count = base_query.filter(Notification.is_read.is_(False)).count()
         return {
             "notifications": [notification_to_json(n) for n in query.all()],
@@ -90,9 +87,7 @@ class NotificationService:
         }
 
     def mark_all_read(self, *, db: Session, user: User) -> dict:
-        db.query(Notification).filter(Notification.user_id == user.id).update(
-            {"is_read": True}
-        )
+        db.query(Notification).filter(Notification.user_id == user.id).update({"is_read": True})
         db.commit()
         return {"success": True}
 
@@ -109,45 +104,11 @@ class NotificationService:
         db.commit()
         return {"success": True}
 
-    def get_basic_feature_notifications(self, *, user: User) -> dict:
-        return {
-            "notifications": [
-                {
-                    "id": 1,
-                    "type": "SCREEN_TIME_LIMIT",
-                    "message": "Child reached 1 hour screen time today",
-                    "created_at": "2024-01-18T14:30:00Z",
-                },
-                {
-                    "id": 2,
-                    "type": "WEEKLY_SUMMARY",
-                    "message": "Weekly summary ready for review",
-                    "created_at": "2024-01-17T08:00:00Z",
-                },
-            ],
-            "access_level": "basic",
-        }
+    def get_basic_feature_notifications(self, *, db: Session, user: User) -> dict:
+        return premium_behavior_service.build_basic_notifications(db=db, user=user)
 
-    def get_smart_feature_notifications(self, *, user: User) -> dict:
-        return {
-            "notifications": [
-                {
-                    "id": 1,
-                    "type": "BEHAVIORAL_INSIGHT",
-                    "message": "Child's usage pattern changing: 20% increase in evening usage",
-                    "severity": "warning",
-                    "created_at": "2024-01-18T16:00:00Z",
-                },
-                {
-                    "id": 2,
-                    "type": "ANOMALY_ALERT",
-                    "message": "Unusual activity: New app installed at 2 AM",
-                    "severity": "critical",
-                    "created_at": "2024-01-18T02:15:00Z",
-                },
-            ],
-            "access_level": "smart",
-        }
+    def get_smart_feature_notifications(self, *, db: Session, user: User) -> dict:
+        return premium_behavior_service.build_smart_notifications(db=db, user=user)
 
 
 notification_service = NotificationService()

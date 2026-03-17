@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/admin_subscription_models.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
@@ -36,6 +37,8 @@ class _AdminSubscriptionsScreenState
   List<DropdownMenuItem<String>> _planItems(AppLocalizations l10n) => [
         DropdownMenuItem(value: 'FREE', child: Text(l10n.adminPlanFree)),
         DropdownMenuItem(value: 'PREMIUM', child: Text(l10n.adminPlanPremium)),
+        DropdownMenuItem(
+            value: 'FAMILY_PLUS', child: Text(l10n.familyPlanLabel)),
       ];
 
   @override
@@ -48,6 +51,26 @@ class _AdminSubscriptionsScreenState
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  String _formatDate(String? value) {
+    if (value == null || value.isEmpty) return '—';
+    final parsed = DateTime.tryParse(value)?.toLocal();
+    if (parsed == null) return value;
+    return DateFormat('MMM d, y • h:mm a').format(parsed);
+  }
+
+  String _formatAmount(int amountCents, String currency) {
+    return '${(amountCents / 100).toStringAsFixed(2)} ${currency.toUpperCase()}';
+  }
+
+  String _displayStatus(String raw) {
+    return raw
+        .replaceAll('_', ' ')
+        .split(' ')
+        .where((part) => part.isNotEmpty)
+        .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
+        .join(' ');
   }
 
   Future<void> _load({int? selectId}) async {
@@ -527,6 +550,83 @@ class _AdminSubscriptionsScreenState
               value: '${item.paymentMethodCount}',
             ),
             const SizedBox(height: 16),
+            Row(
+              children: [
+                Icon(Icons.sync_alt_rounded,
+                    size: 18, color: colorScheme.primary),
+                const SizedBox(width: 6),
+                Text(
+                  'Lifecycle',
+                  style: theme.textTheme.titleSmall
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            _InfoRow(
+              icon: Icons.flag_circle_outlined,
+              label: 'Current status',
+              value: _displayStatus(item.lifecycle.status),
+            ),
+            const SizedBox(height: 8),
+            _InfoRow(
+              icon: Icons.play_circle_outline_rounded,
+              label: 'Started at',
+              value: _formatDate(item.lifecycle.startedAt),
+            ),
+            const SizedBox(height: 8),
+            _InfoRow(
+              icon: Icons.event_available_outlined,
+              label: 'Expires at',
+              value: _formatDate(item.lifecycle.expiresAt),
+            ),
+            const SizedBox(height: 8),
+            _InfoRow(
+              icon: Icons.event_busy_outlined,
+              label: 'Cancel at',
+              value: _formatDate(item.lifecycle.cancelAt),
+            ),
+            const SizedBox(height: 8),
+            _InfoRow(
+              icon: Icons.autorenew_rounded,
+              label: 'Will renew',
+              value: item.lifecycle.willRenew ? 'Yes' : 'No',
+            ),
+            const SizedBox(height: 8),
+            _InfoRow(
+              icon: Icons.credit_score_rounded,
+              label: 'Last payment',
+              value: _displayStatus(item.lifecycle.lastPaymentStatus),
+            ),
+            const SizedBox(height: 8),
+            _InfoRow(
+              icon: Icons.cloud_done_outlined,
+              label: 'Provider',
+              value: item.lifecycle.provider,
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _MetricChip(
+                  icon: Icons.timeline_rounded,
+                  label: 'Events',
+                  value: '${item.historySummary.eventCount}',
+                ),
+                _MetricChip(
+                  icon: Icons.receipt_long_rounded,
+                  label: 'Transactions',
+                  value: '${item.historySummary.billingTransactionCount}',
+                ),
+                _MetricChip(
+                  icon: Icons.credit_card_rounded,
+                  label: 'Attempts',
+                  value: '${item.historySummary.paymentAttemptCount}',
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
 
             // ── Features ─────────────────────────────────────────────
             Row(
@@ -583,6 +683,56 @@ class _AdminSubscriptionsScreenState
                   ),
                 );
               }).toList(),
+            ),
+            const SizedBox(height: 16),
+            _TimelineSection(
+              title: 'Recent Events',
+              icon: Icons.event_note_rounded,
+              children: item.recentEvents
+                  .take(8)
+                  .map((event) => _TimelineEntry(
+                        title:
+                            '${_displayStatus(event.eventType)} • ${event.planId}',
+                        subtitle:
+                            '${_displayStatus(event.status)} • ${event.source}',
+                        trailing: _formatDate(event.occurredAt),
+                      ))
+                  .toList(),
+            ),
+            const SizedBox(height: 16),
+            _TimelineSection(
+              title: 'Billing History',
+              icon: Icons.receipt_rounded,
+              children: item.billingHistory
+                  .take(8)
+                  .map((entry) => _TimelineEntry(
+                        title:
+                            '${_displayStatus(entry.transactionType)} • ${entry.planId}',
+                        subtitle:
+                            '${_formatAmount(entry.amountCents, entry.currency)} • ${_displayStatus(entry.status)}',
+                        trailing: _formatDate(entry.effectiveAt),
+                      ))
+                  .toList(),
+            ),
+            const SizedBox(height: 16),
+            _TimelineSection(
+              title: 'Payment Attempts',
+              icon: Icons.payments_outlined,
+              children: item.paymentAttempts
+                  .take(8)
+                  .map((entry) => _TimelineEntry(
+                        title:
+                            '${_displayStatus(entry.attemptType)} • ${entry.planId}',
+                        subtitle: [
+                          _formatAmount(entry.amountCents, entry.currency),
+                          _displayStatus(entry.status),
+                          if ((entry.failureCode ?? '').isNotEmpty)
+                            entry.failureCode!,
+                        ].join(' • '),
+                        trailing:
+                            _formatDate(entry.completedAt ?? entry.requestedAt),
+                      ))
+                  .toList(),
             ),
             const SizedBox(height: 16),
 
@@ -667,20 +817,188 @@ class _PlanChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final normalized = plan.trim().toUpperCase();
-    final isFree = normalized == 'FREE';
-    final display = isFree ? 'FREE' : 'PREMIUM';
+    final l10n = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
-    final background =
-        isFree ? scheme.secondaryContainer : scheme.tertiaryContainer;
-    final foreground = isFree ? scheme.secondary : scheme.tertiary;
+
+    final isFree = normalized == 'FREE';
+    final isFamily = normalized == 'FAMILY_PLUS';
+    final display = isFree
+        ? l10n.adminPlanFree
+        : isFamily
+            ? l10n.familyPlanLabel
+            : l10n.planPremium;
+    final background = isFree
+        ? scheme.secondaryContainer
+        : isFamily
+            ? scheme.primaryContainer
+            : scheme.tertiaryContainer;
+    final foreground = isFree
+        ? scheme.secondary
+        : isFamily
+            ? scheme.primary
+            : scheme.tertiary;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-          color: background, borderRadius: BorderRadius.circular(999)),
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+      ),
       child: Text(
         display,
         style: TextStyle(
-            color: foreground, fontWeight: FontWeight.w700, fontSize: 12),
+          color: foreground,
+          fontWeight: FontWeight.w700,
+          fontSize: 12,
+        ),
+      ),
+    );
+  }
+}
+
+class _MetricChip extends StatelessWidget {
+  const _MetricChip({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: scheme.primary),
+          const SizedBox(width: 6),
+          Text(
+            '$label: ',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+          ),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TimelineSection extends StatelessWidget {
+  const _TimelineSection({
+    required this.title,
+    required this.icon,
+    required this.children,
+  });
+
+  final String title;
+  final IconData icon;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 18, color: scheme.primary),
+            const SizedBox(width: 6),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        if (children.isEmpty)
+          Text(
+            'No records yet.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+          )
+        else
+          Column(children: children),
+      ],
+    );
+  }
+}
+
+class _TimelineEntry extends StatelessWidget {
+  const _TimelineEntry({
+    required this.title,
+    required this.subtitle,
+    required this.trailing,
+  });
+
+  final String title;
+  final String subtitle;
+  final String trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text(
+              trailing,
+              textAlign: TextAlign.end,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+            ),
+          ),
+        ],
       ),
     );
   }

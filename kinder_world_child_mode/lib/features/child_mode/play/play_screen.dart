@@ -1,10 +1,11 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/models/public_content.dart';
+import 'package:kinder_world/core/repositories/public_content_repository.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
+import 'package:kinder_world/features/child_mode/learn/learn_screen.dart';
 import 'package:kinder_world/features/child_mode/profile/child_profile_screen.dart';
 
 class PlayScreen extends ConsumerStatefulWidget {
@@ -15,225 +16,115 @@ class PlayScreen extends ConsumerStatefulWidget {
 }
 
 class _PlayScreenState extends ConsumerState<PlayScreen> {
-  int _selectedTab = 0;
+  String _selectedType = 'all';
   String _searchQuery = '';
+  late Future<List<PublicContentItem>> _itemsFuture;
 
-  // 'key' is stable for filtering; 'label' is kept for legacy but not used for filtering
-  List<Map<String, Object>> _tabs(BuildContext context) {
-    final child = context.childTheme;
-    final colors = Theme.of(context).colorScheme;
-    return [
-      {'key': 'all', 'emoji': '🌟', 'color': colors.primary},
-      {'key': 'kindness', 'emoji': '💖', 'color': child.kindness},
-      {'key': 'learning', 'emoji': '📚', 'color': child.learning},
-      {'key': 'skills', 'emoji': '🧩', 'color': child.skill},
-      {'key': 'music', 'emoji': '🎵', 'color': child.fun},
-    ];
-  }
-
-  static const _cards = <Map<String, String>>[
-    {
-      'title': 'Tom & Jerry | Keep Calm',
-      'duration': '1:27:03',
-      'image': 'assets/images/ent_tomjerry.png',
-      'tag': 'Entertaining',
-      'emoji': '😄',
-    },
-    {
-      'title': 'Momo & Mimi | Arabic',
-      'duration': '3:39',
-      'image': 'assets/images/ent_momo.png',
-      'tag': 'Entertaining',
-      'emoji': '🌙',
-    },
-    {
-      'title': 'Kindness Challenge',
-      'duration': '7:00',
-      'image': 'assets/images/behavior_kindness.png',
-      'tag': 'Behavioral',
-      'emoji': '💖',
-    },
-    {
-      'title': 'Build & Create',
-      'duration': '5:20',
-      'image': 'assets/images/skill_handcrafts.png',
-      'tag': 'Skillful',
-      'emoji': '🏗️',
-    },
-    {
-      'title': 'Math Basics | Fun',
-      'duration': '8:10',
-      'image': 'assets/images/educational_main.png',
-      'tag': 'Educational',
-      'emoji': '🔢',
-    },
-    {
-      'title': 'Science Wonders',
-      'duration': '6:45',
-      'image': 'assets/images/edu_science.png',
-      'tag': 'Educational',
-      'emoji': '🔬',
-    },
-    {
-      'title': 'Story Time',
-      'duration': '4:12',
-      'image': 'assets/images/behavior_love.png',
-      'tag': 'Behavioral',
-      'emoji': '📖',
-    },
-    {
-      'title': 'Coloring Fun',
-      'duration': '5:05',
-      'image': 'assets/images/skill_coloring.png',
-      'tag': 'Skillful',
-      'emoji': '🎨',
-    },
-    {
-      'title': 'Alphabet Song',
-      'duration': '2:30',
-      'image': 'assets/images/edu_english.png',
-      'tag': 'Educational',
-      'emoji': '🔤',
-    },
-    {
-      'title': 'Animal Friends',
-      'duration': '3:55',
-      'image': 'assets/images/edu_animals.png',
-      'tag': 'Educational',
-      'emoji': '🦁',
-    },
-    {
-      'title': 'Dance Party',
-      'duration': '4:20',
-      'image': 'assets/images/ent_clips.png',
-      'tag': 'Entertaining',
-      'emoji': '💃',
-    },
-    {
-      'title': 'Sharing Time',
-      'duration': '6:10',
-      'image': 'assets/images/behavior_giving.png',
-      'tag': 'Behavioral',
-      'emoji': '🤝',
-    },
-    {
-      'title': 'Puzzle Play',
-      'duration': '5:40',
-      'image': 'assets/images/skill_handcrafts.png',
-      'tag': 'Skillful',
-      'emoji': '🧩',
-    },
-  ];
-
-  // ── featured picks (always shown at top) ──────────────────────────────────
-  static const _featured = <Map<String, String>>[
-    {
-      'title': 'Tom & Jerry\nKeep Calm',
-      'duration': '1:27:03',
-      'image': 'assets/images/ent_tomjerry.png',
-      'emoji': '😄',
-      'label': 'Fan Favourite',
-    },
-    {
-      'title': 'Kindness\nChallenge',
-      'duration': '7:00',
-      'image': 'assets/images/behavior_kindness.png',
-      'emoji': '💖',
-      'label': 'Today\'s Pick',
-    },
-    {
-      'title': 'Math Basics\nFun Edition',
-      'duration': '8:10',
-      'image': 'assets/images/educational_main.png',
-      'emoji': '🔢',
-      'label': 'Top Rated',
-    },
-  ];
-
-  List<Map<String, String>> _filteredCards(AppLocalizations l10n) {
-    final query = _searchQuery.trim().toLowerCase();
-    final key = _tabs(context)[_selectedTab]['key'] as String;
-    final tag = switch (key) {
-      'kindness' => 'Behavioral',
-      'learning' => 'Educational',
-      'skills' => 'Skillful',
-      'music' => 'Entertaining',
-      _ => 'All',
-    };
-    final localizedCards = _cards
-        .map(
-          (card) => {
-            ...card,
-            'title': _localizedVideoTitle(card['title'] ?? '', l10n),
-            'tag': _localizedTag(card['tag'] ?? '', l10n),
-          },
-        )
-        .toList();
-    final localizedTag = key == 'all' ? null : _localizedTag(tag, l10n);
-    final base = localizedTag == null
-        ? localizedCards
-        : localizedCards.where((c) => c['tag'] == localizedTag).toList();
-    final filtered = query.isEmpty
-        ? base
-        : base
-            .where((c) => (c['title'] ?? '').toLowerCase().contains(query))
-            .toList();
-    final seed = query.hashCode ^ _selectedTab.hashCode;
-    return (filtered.toList()..shuffle(Random(seed)))
-        .cast<Map<String, String>>();
+  @override
+  void initState() {
+    super.initState();
+    _itemsFuture = ref.read(publicContentRepositoryProvider).fetchItems();
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
-    final filteredCards = _filteredCards(l10n);
+
     return Scaffold(
       backgroundColor: colors.surface,
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(colors, l10n),
-            _buildCategoryTabs(l10n),
-            const SizedBox(height: 14),
-            _buildSearchBar(colors, l10n),
-            const SizedBox(height: 12),
-            Expanded(
-              child: filteredCards.isEmpty
-                  ? ChildEmptyState(
-                      emoji: '🎬',
-                      title: l10n.nothingFound,
-                      subtitle: l10n.tryDifferentSearch,
-                    )
-                  : ListView(
-                      padding: const EdgeInsets.only(
-                        left: 16,
-                        right: 16,
-                        bottom: 16,
-                      ),
+        child: RefreshIndicator(
+          onRefresh: () async {
+            setState(() {
+              _itemsFuture = ref.read(publicContentRepositoryProvider).fetchItems();
+            });
+            await _itemsFuture;
+          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(colors, l10n),
+              _buildTypeTabs(),
+              const SizedBox(height: 14),
+              _buildSearchBar(colors, l10n),
+              const SizedBox(height: 12),
+              Expanded(
+                child: FutureBuilder<List<PublicContentItem>>(
+                  future: _itemsFuture,
+                  builder: (context, snapshot) {
+                    final filtered = _filteredItems(snapshot.data ?? const []);
+                    if (snapshot.connectionState == ConnectionState.waiting &&
+                        filtered.isEmpty) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (filtered.isEmpty) {
+                      return ChildEmptyState(
+                        emoji: '...',
+                        title: l10n.nothingFound,
+                        subtitle: 'Publish child-safe videos, stories, or activities from CMS.',
+                      );
+                    }
+                    return ListView(
+                      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
                       children: [
-                        // Featured row (only in "All" tab, no search active)
-                        if (_selectedTab == 0 && _searchQuery.isEmpty) ...[
-                          _buildFeaturedSection(l10n),
-                          const SizedBox(height: 20),
-                          ChildSectionHeader(title: l10n.allVideos),
+                        if (_selectedType == 'all' && _searchQuery.isEmpty) ...[
+                          ChildSectionHeader(title: l10n.featured),
                           const SizedBox(height: 12),
+                          SizedBox(
+                            height: 180,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: filtered.take(3).length,
+                              separatorBuilder: (_, __) => const SizedBox(width: 12),
+                              itemBuilder: (context, index) =>
+                                  _FeaturedContentCard(item: filtered[index]),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
                         ],
-                        ...filteredCards.map((c) => Padding(
-                              padding: const EdgeInsets.only(bottom: 14),
-                              child: _buildMediaCard(c, colors),
-                            )),
+                        ChildSectionHeader(title: l10n.allVideos),
+                        const SizedBox(height: 12),
+                        ...filtered.map(
+                          (item) => Padding(
+                            padding: const EdgeInsets.only(bottom: 14),
+                            child: _PlayableContentCard(item: item),
+                          ),
+                        ),
                       ],
-                    ),
-            ),
-          ],
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // ── HEADER ─────────────────────────────────────────────────────────────────
+  List<PublicContentItem> _filteredItems(List<PublicContentItem> items) {
+    final allowed = items.where((item) {
+      if (_selectedType == 'all') {
+        return true;
+      }
+      return item.contentType == _selectedType;
+    }).toList();
+    final query = _searchQuery.trim().toLowerCase();
+    if (query.isEmpty) {
+      return allowed;
+    }
+    return allowed.where((item) {
+      final haystack = [
+        item.slug,
+        item.titleEn,
+        item.titleAr,
+        item.descriptionEn ?? '',
+        item.descriptionAr ?? '',
+      ].join(' ').toLowerCase();
+      return haystack.contains(query);
+    }).toList();
+  }
 
   Widget _buildHeader(ColorScheme colors, AppLocalizations l10n) {
     final successColor = context.successColor;
@@ -241,7 +132,6 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
       padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
       child: Row(
         children: [
-          // Screen title
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -264,7 +154,6 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
             ],
           ),
           const Spacer(),
-          // Safe badge
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
@@ -304,38 +193,32 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
     );
   }
 
-  // ── CATEGORY TABS ──────────────────────────────────────────────────────────
-
-  Widget _buildCategoryTabs(AppLocalizations l10n) {
-    final tabLabels = [
-      l10n.all,
-      l10n.kindnessTab,
-      l10n.learningTab,
-      l10n.skillsTab,
-      l10n.music,
+  Widget _buildTypeTabs() {
+    const tabs = [
+      ('all', 'All'),
+      ('video', 'Videos'),
+      ('story', 'Stories'),
+      ('activity', 'Activities'),
+      ('lesson', 'Lessons'),
     ];
     return SizedBox(
       height: 48,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: _tabs(context).length,
+        itemCount: tabs.length,
         separatorBuilder: (_, __) => const SizedBox(width: 10),
-        itemBuilder: (_, i) {
-          final tab = _tabs(context)[i];
-          return ChildCategoryChip(
-            label: tabLabels[i],
-            emoji: tab['emoji'] as String,
-            color: tab['color'] as Color,
-            isSelected: _selectedTab == i,
-            onTap: () => setState(() => _selectedTab = i),
+        itemBuilder: (_, index) {
+          final tab = tabs[index];
+          return ChoiceChip(
+            label: Text(tab.$2),
+            selected: _selectedType == tab.$1,
+            onSelected: (_) => setState(() => _selectedType = tab.$1),
           );
         },
       ),
     );
   }
-
-  // ── SEARCH BAR ─────────────────────────────────────────────────────────────
 
   Widget _buildSearchBar(ColorScheme colors, AppLocalizations l10n) {
     return Padding(
@@ -366,371 +249,6 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
     );
   }
 
-  // ── FEATURED SECTION ───────────────────────────────────────────────────────
-
-  Widget _buildFeaturedSection(AppLocalizations l10n) {
-    final featuredCards = _featured
-        .map(
-          (card) => {
-            ...card,
-            'title': _localizedFeaturedTitle(card['title'] ?? '', l10n),
-          },
-        )
-        .toList();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ChildSectionHeader(title: l10n.featured),
-        const SizedBox(height: 12),
-        SizedBox(
-          height: 180,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: featuredCards.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (_, i) => _buildFeaturedCard(featuredCards[i]),
-          ),
-        ),
-      ],
-    );
-  }
-
-  String _featuredLabel(String raw, AppLocalizations l10n) {
-    return switch (raw) {
-      'Fan Favourite' => l10n.fanFavourite,
-      'Today\'s Pick' => l10n.todaysPick,
-      'Top Rated' => l10n.topRated,
-      _ => raw,
-    };
-  }
-
-  String _localizedFeaturedTitle(String raw, AppLocalizations l10n) {
-    return switch (raw) {
-      'Tom & Jerry\nKeep Calm' =>
-        l10n.videoTomAndJerryKeepCalm.replaceAll(' | ', '\n'),
-      'Kindness\nChallenge' =>
-        l10n.videoKindnessChallenge.replaceAll(' ', '\n'),
-      'Math Basics\nFun Edition' =>
-        l10n.videoMathBasicsFun.replaceAll(' | ', '\n'),
-      _ => raw,
-    };
-  }
-
-  String _localizedVideoTitle(String raw, AppLocalizations l10n) {
-    return switch (raw) {
-      'Tom & Jerry | Keep Calm' => l10n.videoTomAndJerryKeepCalm,
-      'Momo & Mimi | Arabic' => l10n.videoMomoAndMimiArabic,
-      'Kindness Challenge' => l10n.videoKindnessChallenge,
-      'Build & Create' => l10n.videoBuildAndCreate,
-      'Math Basics | Fun' => l10n.videoMathBasicsFun,
-      'Science Wonders' => l10n.videoScienceWonders,
-      'Story Time' => l10n.historyStoryTime,
-      'Coloring Fun' => l10n.videoColoringFun,
-      'Alphabet Song' => l10n.videoAlphabetSong,
-      'Animal Friends' => l10n.videoAnimalFriends,
-      'Dance Party' => l10n.historyDanceParty,
-      'Sharing Time' => l10n.videoSharingTime,
-      'Puzzle Play' => l10n.videoPuzzlePlay,
-      _ => raw,
-    };
-  }
-
-  String _localizedTag(String raw, AppLocalizations l10n) {
-    return switch (raw) {
-      'Behavioral' => l10n.categoryBehavioral,
-      'Educational' => l10n.categoryEducational,
-      'Skillful' => l10n.categorySkillful,
-      'Entertaining' => l10n.categoryEntertaining,
-      _ => raw,
-    };
-  }
-
-  Widget _buildFeaturedCard(Map<String, String> card) {
-    final colors = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
-    return SizedBox(
-      width: 200,
-      child: KinderCard(
-        padding: EdgeInsets.zero,
-        borderRadius: 18,
-        onTap: () {},
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Thumbnail
-            Expanded(
-              child: ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(18)),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Image.asset(
-                      card['image'] ?? '',
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              colors.primary.withValues(alpha: 0.6),
-                              colors.primary.withValues(alpha: 0.3),
-                            ],
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            card['emoji'] ?? '🎬',
-                            style: const TextStyle(fontSize: 40),
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Dark overlay
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            colors.shadow.withValues(alpha: 0.55),
-                          ],
-                        ),
-                      ),
-                    ),
-                    // Label pill
-                    Positioned(
-                      top: 8,
-                      left: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: colors.primary,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          _featuredLabel(card['label'] ?? '', l10n),
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: colors.onPrimary,
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Duration
-                    Positioned(
-                      bottom: 8,
-                      right: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: colors.surface.withValues(alpha: 0.82),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          card['duration'] ?? '',
-                          style: TextStyle(
-                            color: colors.onSurface,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Play button
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: colors.surface.withValues(alpha: 0.92),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.play_arrow_rounded,
-                          color: colors.onSurface,
-                          size: 24,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            // Title
-            Padding(
-              padding: const EdgeInsets.all(10),
-              child: Text(
-                card['title'] ?? '',
-                maxLines: 2,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: colors.onSurface,
-                  height: 1.3,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ── LIST MEDIA CARD ────────────────────────────────────────────────────────
-
-  Widget _buildMediaCard(Map<String, String> card, ColorScheme colors) {
-    final tagColor = _tagColor(card['tag'] ?? '');
-    return KinderCard(
-      padding: EdgeInsets.zero,
-      borderRadius: 18,
-      onTap: () {},
-      child: Row(
-        children: [
-          // Thumbnail
-          ClipRRect(
-            borderRadius: const BorderRadius.horizontal(
-              left: Radius.circular(18),
-            ),
-            child: SizedBox(
-              width: 110,
-              height: 80,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.asset(
-                    card['image'] ?? '',
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: colors.surfaceContainerHighest,
-                      child: Center(
-                        child: Text(
-                          card['emoji'] ?? '🎬',
-                          style: const TextStyle(fontSize: 30),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Center(
-                    child: Container(
-                      width: 30,
-                      height: 30,
-                      decoration: BoxDecoration(
-                        color: colors.shadow.withValues(alpha: 0.5),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.play_arrow_rounded,
-                        color: colors.onSurface,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 5,
-                    right: 5,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 5,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colors.surface.withValues(alpha: 0.82),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        card['duration'] ?? '',
-                        style: TextStyle(
-                          color: colors.onSurface,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Info
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    card['title'] ?? '',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: colors.onSurface,
-                      height: 1.3,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  // Tag badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: tagColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      card['tag'] ?? '',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: tagColor,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Arrow
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: Icon(
-              Icons.chevron_right_rounded,
-              color: colors.onSurfaceVariant,
-              size: 20,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Color _tagColor(String tag) {
-    final l10n = AppLocalizations.of(context)!;
-    final childTheme = context.childTheme;
-    return switch (tag) {
-      var value when value == l10n.categoryBehavioral =>
-        childTheme.kindness,
-      var value when value == l10n.categoryEducational =>
-        childTheme.learning,
-      var value when value == l10n.categorySkillful => childTheme.skill,
-      var value when value == l10n.categoryEntertaining => childTheme.fun,
-      _ => childTheme.learning,
-    };
-  }
-
   Widget _iconBubble(
     IconData icon, {
     required ColorScheme colors,
@@ -749,5 +267,263 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
         child: Icon(icon, size: 18, color: colors.onSurface),
       ),
     );
+  }
+}
+
+class _FeaturedContentCard extends StatelessWidget {
+  const _FeaturedContentCard({required this.item});
+
+  final PublicContentItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final accent = _categoryColor(item.category?.slug ?? item.contentType, context);
+    return SizedBox(
+      width: 220,
+      child: KinderCard(
+        padding: EdgeInsets.zero,
+        borderRadius: 18,
+        onTap: () => _openDetail(context),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  _Thumbnail(
+                    url: item.thumbnailUrl,
+                    icon: _contentIcon(item.contentType),
+                    color: accent,
+                  ),
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: colors.primary,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        _displayType(item.contentType),
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: colors.onPrimary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Text(
+                _localized(item.titleEn, item.titleAr, context),
+                maxLines: 2,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: colors.onSurface,
+                  height: 1.3,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openDetail(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ChildContentDetailScreen(initialItem: item),
+      ),
+    );
+  }
+}
+
+class _PlayableContentCard extends StatelessWidget {
+  const _PlayableContentCard({required this.item});
+
+  final PublicContentItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final tagColor = _categoryColor(item.category?.slug ?? item.contentType, context);
+    return KinderCard(
+      padding: EdgeInsets.zero,
+      borderRadius: 18,
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => ChildContentDetailScreen(initialItem: item),
+          ),
+        );
+      },
+      child: Row(
+        children: [
+          _Thumbnail(
+            url: item.thumbnailUrl,
+            icon: _contentIcon(item.contentType),
+            color: tagColor,
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _localized(item.titleEn, item.titleAr, context),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: colors.onSurface,
+                      height: 1.3,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: tagColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      _displayType(item.contentType),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: tagColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Icon(
+              Icons.chevron_right_rounded,
+              color: colors.onSurfaceVariant,
+              size: 20,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Thumbnail extends StatelessWidget {
+  const _Thumbnail({
+    required this.url,
+    required this.icon,
+    required this.color,
+  });
+
+  final String? url;
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasRemoteImage = url != null &&
+        url!.trim().isNotEmpty &&
+        (url!.startsWith('http://') || url!.startsWith('https://'));
+    return ClipRRect(
+      borderRadius: const BorderRadius.horizontal(left: Radius.circular(18)),
+      child: SizedBox(
+        width: 110,
+        height: 80,
+        child: hasRemoteImage
+            ? Image.network(
+                url!,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _fallback(),
+              )
+            : _fallback(),
+      ),
+    );
+  }
+
+  Widget _fallback() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            color.withValues(alpha: 0.22),
+            color.withValues(alpha: 0.10),
+          ],
+        ),
+      ),
+      child: Icon(icon, size: 30, color: color),
+    );
+  }
+}
+
+String _localized(String en, String ar, BuildContext context) {
+  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+  if (isArabic && ar.trim().isNotEmpty) {
+    return ar;
+  }
+  if (en.trim().isNotEmpty) {
+    return en;
+  }
+  return ar;
+}
+
+String _displayType(String contentType) {
+  switch (contentType) {
+    case 'lesson':
+      return 'Lesson';
+    case 'story':
+      return 'Story';
+    case 'video':
+      return 'Video';
+    case 'activity':
+      return 'Activity';
+    default:
+      return contentType;
+  }
+}
+
+IconData _contentIcon(String contentType) {
+  switch (contentType) {
+    case 'lesson':
+      return Icons.school_rounded;
+    case 'story':
+      return Icons.auto_stories_rounded;
+    case 'video':
+      return Icons.play_circle_fill_rounded;
+    case 'activity':
+      return Icons.extension_rounded;
+    default:
+      return Icons.article_rounded;
+  }
+}
+
+Color _categoryColor(String key, BuildContext context) {
+  final childTheme = context.childTheme;
+  switch (key) {
+    case 'behavioral':
+      return childTheme.kindness;
+    case 'skillful':
+      return childTheme.skill;
+    case 'entertaining':
+      return childTheme.fun;
+    case 'educational':
+      return childTheme.learning;
+    default:
+      return childTheme.learning;
   }
 }

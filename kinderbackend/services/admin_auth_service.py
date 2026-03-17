@@ -1,20 +1,17 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from fastapi import HTTPException, Request, status
 from jose import JWTError
 from sqlalchemy.orm import Session
 
-from admin_auth import (
-    ADMIN_TOKEN_TYPE,
-    create_admin_access_token,
-    create_admin_refresh_token,
-)
+from admin_auth import ADMIN_TOKEN_TYPE, create_admin_access_token, create_admin_refresh_token
 from admin_utils import build_admin_payload, write_audit_log
 from auth import decode_token, verify_password
 from core.settings import settings
+from core.time_utils import db_utc_now, ensure_utc, utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -25,11 +22,11 @@ class AdminAuthService:
 
         email = payload.email.strip().lower()
         admin = db.query(AdminUser).filter(AdminUser.email == email).first()
-        now = datetime.utcnow()
+        now = db_utc_now()
         client_host = request.client.host if request.client else None
         user_agent = request.headers.get("user-agent")
 
-        if admin and admin.locked_until and admin.locked_until > now:
+        if admin and admin.locked_until and ensure_utc(admin.locked_until) > utc_now():
             write_audit_log(
                 db=db,
                 request=request,
@@ -40,7 +37,7 @@ class AdminAuthService:
                 before_json=None,
                 after_json={
                     "email": email,
-                    "locked_until": admin.locked_until.isoformat(),
+                    "locked_until": ensure_utc(admin.locked_until).isoformat(),
                     "failed_login_attempts": int(admin.failed_login_attempts or 0),
                 },
             )
@@ -50,7 +47,7 @@ class AdminAuthService:
                 detail={
                     "code": "ADMIN_TEMP_LOCKED",
                     "message": "Too many failed login attempts. Try again later.",
-                    "locked_until": admin.locked_until.isoformat(),
+                    "locked_until": ensure_utc(admin.locked_until).isoformat(),
                 },
             )
 
@@ -92,11 +89,9 @@ class AdminAuthService:
                     "email": email,
                     "ip_address": client_host,
                     "user_agent": user_agent,
-                    "failed_login_attempts": int(
-                        getattr(admin, "failed_login_attempts", 0) or 0
-                    ),
+                    "failed_login_attempts": int(getattr(admin, "failed_login_attempts", 0) or 0),
                     "locked_until": (
-                        admin.locked_until.isoformat()
+                        ensure_utc(admin.locked_until).isoformat()
                         if admin is not None and admin.locked_until
                         else None
                     ),
@@ -249,7 +244,7 @@ class AdminAuthService:
     def logout(self, *, request: Request, admin, db: Session) -> dict:
         previous_version = int(admin.token_version or 0)
         admin.token_version = previous_version + 1
-        admin.updated_at = datetime.utcnow()
+        admin.updated_at = db_utc_now()
         db.add(admin)
         write_audit_log(
             db=db,
@@ -271,4 +266,3 @@ class AdminAuthService:
 
 
 admin_auth_service = AdminAuthService()
-

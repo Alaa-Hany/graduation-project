@@ -341,7 +341,7 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
             ),
             child: Row(
               children: [
-                const Text('💡', style: TextStyle(fontSize: 18)),
+                Icon(Icons.lightbulb_rounded, color: auth.child, size: 20),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -432,8 +432,12 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
                 ),
               ],
             ),
-            child: const Center(
-              child: Text('🎉', style: TextStyle(fontSize: 52)),
+            child: Center(
+              child: Icon(
+                Icons.celebration_rounded,
+                color: auth.child,
+                size: 52,
+              ),
             ),
           ),
           const SizedBox(height: 24),

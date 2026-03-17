@@ -4,8 +4,6 @@ Tests for email normalization and subscription endpoints.
 Run with: pytest test_email_and_subscription.py -v
 """
 
-import pytest
-
 from auth import create_access_token, hash_password
 from models import User
 from plan_service import PLAN_FREE, PLAN_PREMIUM
@@ -144,6 +142,3 @@ def test_subscription_endpoints(client, db):
     paid_payload = select_paid.json()
     assert paid_payload["current_plan_id"] == PLAN_PREMIUM
     assert paid_payload["session_id"]
-
-
-

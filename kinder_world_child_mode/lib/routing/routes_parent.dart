@@ -27,6 +27,7 @@ import 'package:kinder_world/features/parent_mode/subscription/billing_managemen
 import 'package:kinder_world/features/parent_mode/subscription/subscription_screen.dart';
 import 'package:kinder_world/features/system_pages/data_sync_screen.dart';
 import 'package:kinder_world/features/system_pages/error_screen.dart';
+import 'package:kinder_world/core/subscription/subscription_return.dart';
 
 import 'route_paths.dart';
 
@@ -151,7 +152,11 @@ List<RouteBase> buildParentRoutes() {
     ),
     GoRoute(
       path: Routes.parentSubscription,
-      builder: (context, state) => const SubscriptionScreen(),
+      builder: (context, state) {
+        final payload =
+            SubscriptionReturnPayload.fromQuery(state.uri.queryParameters);
+        return SubscriptionScreen(returnPayload: payload);
+      },
     ),
     GoRoute(
       path: Routes.parentBilling,

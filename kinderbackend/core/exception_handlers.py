@@ -1,6 +1,5 @@
-from __future__ import annotations
-
 import logging
+from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
@@ -11,8 +10,8 @@ from core.errors import AppException
 logger = logging.getLogger(__name__)
 
 
-def _normalize_validation_errors(errors: list[dict]) -> list[dict]:
-    def _normalize(value):
+def _normalize_validation_errors(errors: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _normalize(value: Any) -> Any:
         if isinstance(value, dict):
             return {str(key): _normalize(item) for key, item in value.items()}
         if isinstance(value, (list, tuple)):

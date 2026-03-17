@@ -68,7 +68,7 @@ class RegisterIn(AuthSchemaBase):
                 "password": "secret123",
                 "confirm_password": "secret123",
             }
-        }
+        },
     )
 
 

@@ -77,7 +77,7 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
           )
         : Future<AdminPagedResponse<AdminSupportTicket>?>.value(null);
 
-    final subscriptionsFuture = _canLoad(admin, 'admin.subscriptions.view')
+    final subscriptionsFuture = _canLoad(admin, 'admin.subscription.view')
         ? safe(() => repo.fetchSubscriptions(page: 1), 'subscriptions')
         : Future<AdminPagedResponse<AdminSubscriptionRecord>?>.value(null);
 

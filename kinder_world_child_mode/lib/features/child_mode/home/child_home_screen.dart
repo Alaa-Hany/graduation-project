@@ -1000,8 +1000,12 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                   color: colors.onPrimary.withValues(alpha: 0.22),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Center(
-                  child: Text('💡', style: TextStyle(fontSize: 36)),
+                child: Center(
+                  child: Icon(
+                    Icons.lightbulb_rounded,
+                    size: 36,
+                    color: colors.onPrimary,
+                  ),
                 ),
               ),
               const SizedBox(width: 16),

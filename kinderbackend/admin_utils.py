@@ -6,25 +6,21 @@ from typing import Any, Optional
 from fastapi import Request
 from sqlalchemy.orm import Session
 
-from admin_models import (
-    AuditLog,
-    AdminUser,
-    AdminUserRole,
-    Permission,
-    Role,
-    RolePermission,
-)
+from admin_models import AdminUser, AdminUserRole, AuditLog, Permission, Role, RolePermission
+from core.time_utils import utc_now
 from models import (
     ChildProfile,
     ContentCategory,
     ContentItem,
     Quiz,
-    SystemSetting,
+    SubscriptionProfile,
     SupportTicket,
     SupportTicketMessage,
+    SystemSetting,
     User,
 )
 from plan_service import get_plan_features, get_plan_limits, get_user_plan
+from services.premium_behavior_service import premium_behavior_service
 from serializers import child_to_json, user_to_json
 
 
@@ -54,7 +50,9 @@ def build_admin_payload(admin, db: Session) -> dict[str, Any]:
         "last_login_at": admin.last_login_at.isoformat() if admin.last_login_at else None,
         "last_login_ip": admin.last_login_ip,
         "last_login_user_agent": admin.last_login_user_agent,
-        "last_failed_login_at": admin.last_failed_login_at.isoformat() if admin.last_failed_login_at else None,
+        "last_failed_login_at": (
+            admin.last_failed_login_at.isoformat() if admin.last_failed_login_at else None
+        ),
         "last_failed_login_ip": admin.last_failed_login_ip,
         "last_failed_login_user_agent": admin.last_failed_login_user_agent,
         "failed_login_attempts": int(admin.failed_login_attempts or 0),
@@ -258,7 +256,9 @@ def _ticket_assignee_payload(ticket: SupportTicket) -> dict[str, Any] | None:
     }
 
 
-def serialize_support_ticket(ticket: SupportTicket, *, include_thread: bool = False) -> dict[str, Any]:
+def serialize_support_ticket(
+    ticket: SupportTicket, *, include_thread: bool = False
+) -> dict[str, Any]:
     thread = [
         {
             "id": f"root-{ticket.id}",
@@ -269,12 +269,15 @@ def serialize_support_ticket(ticket: SupportTicket, *, include_thread: bool = Fa
             "created_at": ticket.created_at.isoformat() if ticket.created_at else None,
         }
     ]
-    thread.extend(serialize_support_ticket_message(message) for message in (ticket.thread_messages or []))
+    thread.extend(
+        serialize_support_ticket_message(message) for message in (ticket.thread_messages or [])
+    )
 
     last_message_at = ticket.updated_at or ticket.created_at
     if ticket.thread_messages:
         last_message_at = ticket.thread_messages[-1].created_at or last_message_at
 
+    priority = premium_behavior_service.support_priority_snapshot(ticket)
     payload = {
         "id": ticket.id,
         "user_id": ticket.user_id,
@@ -292,6 +295,9 @@ def serialize_support_ticket(ticket: SupportTicket, *, include_thread: bool = Fa
         "reply_count": len(ticket.thread_messages or []),
         "last_message_at": last_message_at.isoformat() if last_message_at else None,
         "preview": ticket.message,
+        "priority_level": priority["priority_level"],
+        "priority_score": priority["priority_score"],
+        "priority_reason": priority["priority_reason"],
     }
     if include_thread:
         payload["thread"] = thread
@@ -341,7 +347,9 @@ def serialize_quiz(quiz: Quiz) -> dict[str, Any]:
         "question_count": len(quiz.questions_json or []),
         "content_title_en": quiz.content.title_en if quiz.content is not None else None,
         "content_title_ar": quiz.content.title_ar if quiz.content is not None else None,
-        "category": serialize_content_category(quiz.category) if quiz.category is not None else None,
+        "category": (
+            serialize_content_category(quiz.category) if quiz.category is not None else None
+        ),
         "created_by_admin": _content_admin_payload(quiz.creator),
         "updated_by_admin": _content_admin_payload(quiz.updater),
         "published_at": quiz.published_at.isoformat() if quiz.published_at else None,
@@ -350,10 +358,13 @@ def serialize_quiz(quiz: Quiz) -> dict[str, Any]:
     }
 
 
-def serialize_content_item(content: ContentItem, *, include_quizzes: bool = False) -> dict[str, Any]:
+def serialize_content_item(
+    content: ContentItem, *, include_quizzes: bool = False
+) -> dict[str, Any]:
     payload = {
         "id": content.id,
         "category_id": content.category_id,
+        "slug": content.slug,
         "content_type": content.content_type,
         "status": content.status,
         "title_en": content.title_en,
@@ -365,7 +376,9 @@ def serialize_content_item(content: ContentItem, *, include_quizzes: bool = Fals
         "thumbnail_url": content.thumbnail_url,
         "age_group": content.age_group,
         "metadata_json": content.metadata_json or {},
-        "category": serialize_content_category(content.category) if content.category is not None else None,
+        "category": (
+            serialize_content_category(content.category) if content.category is not None else None
+        ),
         "quiz_count": len([quiz for quiz in (content.quizzes or []) if quiz.deleted_at is None]),
         "created_by_admin": _content_admin_payload(content.creator),
         "updated_by_admin": _content_admin_payload(content.updater),
@@ -384,18 +397,63 @@ def serialize_subscription_record(user: User) -> dict[str, Any]:
     plan = get_user_plan(user)
     payment_methods = getattr(user, "payment_methods", []) or []
     children = getattr(user, "children", []) or []
+    profile: SubscriptionProfile | None = getattr(user, "subscription_profile", None)
+    subscription_events = getattr(user, "subscription_events", []) or []
+    billing_transactions = getattr(user, "billing_transactions", []) or []
+    payment_attempts = getattr(user, "payment_attempts", []) or []
+    lifecycle = {
+        "current_plan_id": plan,
+        "selected_plan_id": None,
+        "status": (
+            "active"
+            if user.is_active and plan != "FREE"
+            else ("free" if user.is_active else "disabled")
+        ),
+        "started_at": None,
+        "expires_at": None,
+        "cancel_at": None,
+        "will_renew": False,
+        "last_payment_status": "not_applicable",
+        "provider": "internal",
+        "is_active": bool(user.is_active) and plan != "FREE",
+    }
+    if profile is not None:
+        lifecycle = {
+            "current_plan_id": profile.current_plan_id,
+            "selected_plan_id": profile.selected_plan_id,
+            "status": profile.status,
+            "started_at": profile.started_at.isoformat() if profile.started_at else None,
+            "expires_at": profile.expires_at.isoformat() if profile.expires_at else None,
+            "cancel_at": profile.cancel_at.isoformat() if profile.cancel_at else None,
+            "will_renew": bool(profile.will_renew),
+            "last_payment_status": profile.last_payment_status,
+            "provider": profile.provider,
+            "provider_customer_id": profile.provider_customer_id,
+            "provider_subscription_id": profile.provider_subscription_id,
+            "is_active": bool(user.is_active) and profile.current_plan_id != "FREE",
+        }
     return {
         "id": user.id,
         "user_id": user.id,
         "email": user.email,
         "name": user.name,
         "plan": plan,
-        "status": "active" if user.is_active and plan != "FREE" else ("free" if user.is_active else "disabled"),
+        "status": (
+            "active"
+            if user.is_active and plan != "FREE"
+            else ("free" if user.is_active else "disabled")
+        ),
         "is_active": bool(user.is_active),
         "child_count": len(children),
         "payment_method_count": len(payment_methods),
         "limits": get_plan_limits(plan),
         "features": get_plan_features(plan),
+        "lifecycle": lifecycle,
+        "history_summary": {
+            "event_count": len(subscription_events),
+            "billing_transaction_count": len(billing_transactions),
+            "payment_attempt_count": len(payment_attempts),
+        },
         "created_at": user.created_at.isoformat() if user.created_at else None,
         "updated_at": user.updated_at.isoformat() if user.updated_at else None,
     }
@@ -437,9 +495,9 @@ def build_user_activity(user: User, audit_logs: list[AuditLog]) -> dict[str, Any
                 "title": notification.title,
                 "type": notification.type,
                 "is_read": bool(notification.is_read),
-                "created_at": notification.created_at.isoformat()
-                if notification.created_at
-                else None,
+                "created_at": (
+                    notification.created_at.isoformat() if notification.created_at else None
+                ),
             }
             for notification in notifications[:10]
         ],
@@ -459,7 +517,7 @@ def build_user_activity(user: User, audit_logs: list[AuditLog]) -> dict[str, Any
 def build_child_progress(child: ChildProfile, audit_logs: list[AuditLog]) -> dict[str, Any]:
     days_since_created = 0
     if child.created_at:
-        days_since_created = max((datetime.utcnow().date() - child.created_at.date()).days, 0)
+        days_since_created = max((utc_now().date() - child.created_at.date()).days, 0)
 
     return {
         "child_id": child.id,
@@ -502,9 +560,9 @@ def build_child_activity_log(child: ChildProfile, audit_logs: list[AuditLog]) ->
                 "type": "notification",
                 "title": notification.title,
                 "body": notification.body,
-                "created_at": notification.created_at.isoformat()
-                if notification.created_at
-                else None,
+                "created_at": (
+                    notification.created_at.isoformat() if notification.created_at else None
+                ),
             }
             for notification in parent_notifications[:20]
         ]

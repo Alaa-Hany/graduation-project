@@ -78,6 +78,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get offlineProgressTracking => 'Progress tracking';
 
   @override
+  String get localContentLabel => 'Local content pack';
+
+  @override
+  String get localContentSubtitle =>
+      'This section uses built-in assets until online content is published.';
+
+  @override
   String get checkingConnection => 'Checking connection...';
 
   @override
@@ -169,19 +176,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get legalNoContent => 'No content yet';
 
   @override
-  String get legalTermsPlaceholder => 'Terms will be available soon.';
+  String get legalTermsPlaceholder =>
+      'This content has not been published yet. Please check back later.';
 
   @override
   String get legalPrivacyPlaceholder =>
-      'Privacy policy details are coming soon.';
+      'This content has not been published yet. Please check back later.';
 
   @override
   String get legalCoppaPlaceholder =>
-      'COPPA compliance information will be posted shortly.';
+      'This content has not been published yet. Please check back later.';
 
   @override
   String get legalPlaceholder =>
-      'We will share the requested information soon.';
+      'This content has not been published yet. Please check back later.';
 
   @override
   String get maintenanceTitle => 'Under Maintenance';
@@ -4857,4 +4865,423 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get moodEncouragementAngry =>
       'Let\'s take a deep breath and do something relaxing.';
+
+  @override
+  String get placeholderDash => '-';
+
+  @override
+  String get setAsDefault => 'Set as default';
+
+  @override
+  String get paymentProviderMethodIdOptional => 'Provider method ID (optional)';
+
+  @override
+  String get paymentMethodDefaultLabel => 'Default';
+
+  @override
+  String aiCompanionSubtitleWithName(String name) =>
+      '$name, your AI learning companion';
+
+  @override
+  String get aiBuddyStatusUnavailable => 'Unavailable';
+
+  @override
+  String get aiBuddyStatusFallbackOnly => 'Fallback only';
+
+  @override
+  String get aiBuddyFallbackSubtitle =>
+      'Safe mode is active until a live AI provider is connected.';
+
+  @override
+  String aiBuddyFallbackSubtitleFor(String name) =>
+      '$name, safe mode is active until a live AI provider is connected.';
+
+  @override
+  String get aiBuddyBannerUnavailableTitle => 'AI Buddy is unavailable';
+
+  @override
+  String get aiBuddyBannerFallbackTitle => 'AI Buddy is running in safe mode';
+
+  @override
+  String get aiBuddyBannerOnlineTitle => 'AI Buddy is connected';
+
+  @override
+  String get aiBuddyBannerFallbackDescription =>
+      'Responses come from the backend fallback flow, not a live model provider.';
+
+  @override
+  String get aiBuddyBannerOnlineDescription =>
+      'Responses are coming from the configured AI backend.';
+
+  @override
+  String get aiBuddyUnavailableTitle => 'AI Buddy is unavailable right now';
+
+  @override
+  String get aiBuddyNoConversationTitle => 'No conversation yet';
+
+  @override
+  String get aiBuddyNoConversationSubtitle =>
+      'Start a new session to talk with AI Buddy.';
+
+  @override
+  String get aiBuddyStartSessionAction => 'Start session';
+
+  @override
+  String get aiBuddyNoMessagesTitle => 'No messages yet';
+
+  @override
+  String get aiBuddyNoMessagesSubtitle =>
+      'This session is ready, but no messages have been sent yet.';
+
+  @override
+  String get aiBuddyRefreshAction => 'Refresh';
+
+  @override
+  String get aiBuddyUnavailableHint => 'AI Buddy is unavailable right now';
+
+  @override
+  String get aiBuddySafeModeHint => 'AI Buddy is in safe mode';
+
+  @override
+  String get aiBuddyNoActiveChildSession => 'No active child session.';
+
+  @override
+  String get gamificationMyBadges => 'My Badges';
+
+  @override
+  String get gamificationDayStreak => 'Day Streak';
+
+  @override
+  String get gamificationNoStreak => 'No Streak';
+
+  @override
+  String gamificationUnlockedOn(String date) => 'Unlocked $date';
+
+  @override
+  String gamificationXpReward(int xp) => '+$xp XP';
+
+  @override
+  String gamificationCompactLevel(int level) => 'Lv $level';
+
+  @override
+  String gamificationCompactStreak(int days) => '${days}d';
+
+  @override
+  String gamificationLevelWithEmoji(String emoji, int level) =>
+      '$emoji Level $level';
+
+  @override
+  String get gamificationMaxLevel => 'Max Level!';
+
+  @override
+  String gamificationXpToLevel(int xp, int level) => '$xp XP to Level $level';
+
+  @override
+  String get gamificationAwesome => 'Awesome!';
+
+  @override
+  String get achievementsCollectBadgesSubtitle => 'Collect badges and shine!';
+
+  @override
+  String get achievementsUnlockedTitle => 'Unlocked Achievements';
+
+  @override
+  String get achievementsUnlockedSubtitle =>
+      'Keep going for more achievements';
+
+  @override
+  String get achievementsEmpty => 'No achievements yet';
+
+  @override
+  String get achievementsUpcomingTitle => 'Upcoming Achievements';
+
+  @override
+  String get achievementsUpcomingSubtitle =>
+      'Complete more activities to unlock';
+
+  @override
+  String get achievementsAllUnlocked => 'All achievements unlocked!';
+
+  @override
+  String achievementTitle(String key) {
+    switch (key) {
+      case 'achievementFirstLessonTitle':
+        return 'First Lesson';
+      case 'achievementFirstActivityTitle':
+        return 'First Activity';
+      case 'achievementStreak3Title':
+        return '3-Day Streak';
+      case 'achievementStreak7Title':
+        return 'Week Warrior';
+      case 'achievementStreak30Title':
+        return 'Monthly Master';
+      case 'achievementActivities10Title':
+        return 'Activity Pro';
+      case 'achievementActivities50Title':
+        return 'Activity Legend';
+      case 'achievementLevel5Title':
+        return 'Level 5 Hero';
+      case 'achievementXP1000Title':
+        return 'XP Millionaire';
+      case 'achievementPerfectScoreTitle':
+        return 'Perfect Score';
+      case 'achievementExplorerTitle':
+        return 'Explorer';
+      case 'achievementFirstBadgeTitle':
+        return 'First Badge';
+      default:
+        return key;
+    }
+  }
+
+  @override
+  String achievementDescription(String key) {
+    switch (key) {
+      case 'achievementFirstLessonDesc':
+        return 'Complete your very first lesson.';
+      case 'achievementFirstActivityDesc':
+        return 'Complete your first activity.';
+      case 'achievementStreak3Desc':
+        return 'Use the app 3 days in a row.';
+      case 'achievementStreak7Desc':
+        return 'Use the app 7 days in a row.';
+      case 'achievementStreak30Desc':
+        return 'Use the app 30 days in a row.';
+      case 'achievementActivities10Desc':
+        return 'Complete 10 activities.';
+      case 'achievementActivities50Desc':
+        return 'Complete 50 activities.';
+      case 'achievementLevel5Desc':
+        return 'Reach Level 5.';
+      case 'achievementXP1000Desc':
+        return 'Earn 1,000 total XP.';
+      case 'achievementPerfectScoreDesc':
+        return 'Get 100% on a quiz.';
+      case 'achievementExplorerDesc':
+        return 'Try all 4 content categories.';
+      case 'achievementFirstBadgeDesc':
+        return 'Earn your first badge.';
+      default:
+        return key;
+    }
+  }
+
+  @override
+  String badgeName(String key) {
+    switch (key) {
+      case 'badgeStarLearnerName':
+        return 'Star Learner';
+      case 'badgeStreakHeroName':
+        return 'Streak Hero';
+      case 'badgeActivityChampionName':
+        return 'Activity Champion';
+      case 'badgeQuizMasterName':
+        return 'Quiz Master';
+      case 'badgeExplorerName':
+        return 'Explorer';
+      case 'badgeLevelMasterName':
+        return 'Level Master';
+      default:
+        return key;
+    }
+  }
+
+  @override
+  String badgeDescription(String key) {
+    switch (key) {
+      case 'badgeStarLearnerDesc':
+        return 'Awarded for completing your first lesson.';
+      case 'badgeStreakHeroDesc':
+        return 'Awarded for maintaining a 7-day streak.';
+      case 'badgeActivityChampionDesc':
+        return 'Awarded for completing 10 activities.';
+      case 'badgeQuizMasterDesc':
+        return 'Awarded for getting a perfect quiz score.';
+      case 'badgeExplorerDesc':
+        return 'Awarded for exploring every content category.';
+      case 'badgeLevelMasterDesc':
+        return 'Awarded for reaching Level 5.';
+      default:
+        return key;
+    }
+  }
+
+  @override
+  String get rewardStoreTitle => 'Reward Store';
+
+  @override
+  String get rewardStoreCoinsLabel => 'Coins';
+
+  @override
+  String get rewardStoreFilterAll => 'All';
+
+  @override
+  String get rewardTypeAvatar => 'Avatar';
+
+  @override
+  String get rewardTypeFrame => 'Frame';
+
+  @override
+  String get rewardTypeBadge => 'Badge';
+
+  @override
+  String get rewardTypeSticker => 'Sticker';
+
+  @override
+  String get rewardTypeTheme => 'Theme';
+
+  @override
+  String rewardItemName(String itemId) {
+    switch (itemId) {
+      case 'av_robot':
+        return 'Robot';
+      case 'av_unicorn':
+        return 'Unicorn';
+      case 'av_astronaut':
+        return 'Astronaut';
+      case 'av_dragon':
+        return 'Dragon';
+      case 'fr_rainbow':
+        return 'Rainbow';
+      case 'fr_stars':
+        return 'Stars';
+      case 'fr_flowers':
+        return 'Flowers';
+      case 'bd_champion':
+        return 'Champion';
+      case 'bd_star':
+        return 'Star';
+      case 'bd_rocket':
+        return 'Rocket';
+      case 'st_heart':
+        return 'Heart';
+      case 'st_fire':
+        return 'Fire';
+      case 'st_lightning':
+        return 'Lightning';
+      case 'st_diamond':
+        return 'Diamond';
+      case 'th_ocean':
+        return 'Ocean';
+      case 'th_forest':
+        return 'Forest';
+      case 'th_galaxy':
+        return 'Galaxy';
+      default:
+        return itemId;
+    }
+  }
+
+  @override
+  String get rewardStoreAlreadyOwned => 'Already owned';
+
+  @override
+  String get rewardStoreAlreadyPending => 'Already waiting for parent approval';
+
+  @override
+  String get rewardStoreRequestSent => 'Request sent to parent';
+
+  @override
+  String rewardStoreNeedMoreCoinsMessage(int price, int currentCoins) =>
+      'Need $price coins, you have $currentCoins';
+
+  @override
+  String get rewardStoreRewardRedeemed => 'Reward redeemed';
+
+  @override
+  String get rewardStoreRequestNotFound => 'Request not found';
+
+  @override
+  String get rewardStoreItemMissing => 'Reward item is missing';
+
+  @override
+  String get rewardStoreNotEnoughCoinsApproval =>
+      'Not enough coins to approve this request';
+
+  @override
+  String rewardStoreItemApproved(String name) => '$name approved';
+
+  @override
+  String get rewardStoreRequestRejected => 'Request rejected';
+
+  @override
+  String get rewardStoreParentPinMissing =>
+      'Parent PIN is not set. Please set it in parent settings.';
+
+  @override
+  String get rewardStoreParentApprovalTitle => 'Parent Approval';
+
+  @override
+  String get rewardStoreParentPinLabel => 'Enter Parent PIN';
+
+  @override
+  String get rewardStoreVerifyAction => 'Verify';
+
+  @override
+  String get rewardStoreParentVerificationSuccess =>
+      'Parent verification successful';
+
+  @override
+  String get rewardStoreInvalidPin => 'Invalid PIN';
+
+  @override
+  String get rewardStoreWaitingForParentApproval =>
+      'Waiting for parent approval';
+
+  @override
+  String rewardStoreItemUnequipped(String name) => '$name unequipped';
+
+  @override
+  String rewardStoreItemEquipped(String name) => '$name equipped';
+
+  @override
+  String rewardStorePendingApprovals(int count) =>
+      'Pending Parent Approvals ($count)';
+
+  @override
+  String get rewardStoreParentUnlock => 'Parent Unlock';
+
+  @override
+  String rewardStoreRequestedAt(String dateTime) => 'Requested $dateTime';
+
+  @override
+  String get rewardStoreRejectAction => 'Reject';
+
+  @override
+  String get rewardStoreApproveAction => 'Approve';
+
+  @override
+  String get rewardStoreEquippedLabel => 'Equipped';
+
+  @override
+  String rewardStorePriceCoins(int coins) => 'Coins $coins';
+
+  @override
+  String get rewardStorePendingAction => 'Pending...';
+
+  @override
+  String get rewardStoreUnequipAction => 'Unequip';
+
+  @override
+  String get rewardStoreEquipAction => 'Equip';
+
+  @override
+  String get rewardStoreRequestParentAction => 'Request Parent';
+
+  @override
+  String get rewardStoreNeedMoreCoinsAction => 'Need more coins';
+
+  @override
+  String get rewardStoreRedeemAction => 'Redeem';
+
+  @override
+  String get parentSessionMissing =>
+      'Parent session is missing. Please sign in again.';
+
+  @override
+  String get deletedOfflineWillSync => 'Deleted offline. Will sync when online.';
+
+  @override
+  String get aiBuddyFallbackSummary =>
+      'AI Buddy is currently running in backend fallback mode, not a live provider-backed model.';
 }

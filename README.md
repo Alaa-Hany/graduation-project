@@ -1,571 +1,260 @@
 # Kinder World
 
-Kinder World is a multi-role educational and parental-control platform built with Flutter and FastAPI.
+Kinder World is a multi-role educational and parental-control platform built with Flutter (client) and FastAPI (backend).
 
-The project currently contains:
+This README reflects the current codebase as of the latest backend/Flutter updates. It is technical, accurate, and intended for reviewers and new contributors.
 
-- A Flutter application for public onboarding, parent mode, child mode, and admin mode
-- A FastAPI backend for authentication, child/parent management, subscriptions, support, analytics, and admin operations
-- Automated backend and Flutter checks through GitHub Actions
+## Project Overview
 
-This README is based on the current codebase, not on legacy documentation.
+The system supports three user contexts:
 
-## Overview
+- Parent: manages children, subscription, reports, and settings
+- Child: signs in with a picture-password flow and uses child-facing learning/play experiences
+- Admin: manages users, content, subscriptions, analytics, and system settings via RBAC
 
-Kinder World is structured around three distinct user contexts:
+Repository layout:
 
-- `Parent`: manages children, views reports, controls privacy and parental settings, handles support tickets, and manages subscription state
-- `Child`: signs in using a picture-password-based flow and uses a child-facing learning/play experience
-- `Admin`: uses a separate authentication system and RBAC permission model to manage users, children, content, support, subscriptions, analytics, and system settings
+- `kinderbackend/`: FastAPI backend, SQLAlchemy models, services, and pytest tests
+- `kinder_world_child_mode/`: Flutter app with Riverpod, GoRouter, local storage, and widget/unit tests
 
-The project is split into:
+## Current Architecture
 
-- `kinderbackend/`: FastAPI backend with SQLAlchemy models, service-layer logic, and pytest tests
-- `kinder_world_child_mode/`: Flutter client with Riverpod, GoRouter, local storage, and widget/unit tests
+### Backend
 
-## Key Features
+Layered FastAPI app:
 
-### Parent Flows
+- `routers/`: HTTP endpoints
+- `services/`: business logic and orchestration
+- `schemas/`: Pydantic request/response models
+- `models.py` + `admin_models.py`: SQLAlchemy models
+- `core/`: settings, logging, exceptions, system settings, validators, observability
 
-- Parent registration, login, refresh, logout
-- Parent profile update and password change
-- Parent PIN setup, verification, change, and reset request
-- Child profile creation, update, listing, and deletion
-- Parent dashboard, reports, notifications, privacy settings, and parental controls
-- Support ticket creation, history, detail, and replies
-- Subscription plan selection, activation, and basic billing-method management
-
-### Child Flows
-
-- Child registration and login endpoints
-- Picture-password-based child auth flow
-- Child session validation
-- Child change-password flow
-- Child-facing routes for home, learning, play, AI buddy, profile, achievements, and store
-
-### Admin Flows
-
-- Dedicated admin login, refresh, logout, and profile retrieval
-- RBAC-protected admin routes
-- Admin user management
-- Admin child management
-- Admin analytics overview and usage endpoints
-- Admin audit log access
-- Admin support ticket triage and replies
-- Admin CMS/content/category/quiz management
-- Admin subscription management
-- Admin system settings
-- Optional admin seed endpoint for development/test environments
-
-### Platform / Cross-Cutting
+Key infrastructure:
 
 - Request ID middleware
 - Centralized exception handling
-- Maintenance mode guard
-- Feature/plan gating on selected backend endpoints
-- Local-first storage in Flutter using Hive and secure/session storage
-
-## Architecture Summary
-
-### Backend
-
-The backend follows a practical layered structure:
-
-- `routers/`: HTTP endpoints and request wiring
-- `services/`: domain/business logic
-- `schemas/`: request/response validation with Pydantic
-- `models.py` + `admin_models.py`: SQLAlchemy models
-- `deps.py` / `admin_deps.py`: auth, RBAC, and database dependencies
-- `core/`: logging, settings, exception handling, system settings, validators, security helpers
-
-The current backend architecture is service-oriented rather than purely endpoint-driven. Recent refactors moved substantial logic out of routers into services, especially in admin auth and support flows.
-
-### Frontend
-
-The Flutter app uses:
-
-- `Riverpod` for state and dependency injection
-- `GoRouter` for navigation and access guards
-- `Hive` for local JSON-based persistence
-- `SharedPreferences` for preference/state flags
-- `SecureStorage` for auth/session data
-- Local-first loading patterns with background sync in selected areas
-
-The app is organized by feature domains:
-
-- `features/app_core`
-- `features/auth`
-- `features/child_mode`
-- `features/parent_mode`
-- `features/admin`
-- `features/system_pages`
-
-## Tech Stack
-
-### Backend
-
-- Python
-- FastAPI
-- SQLAlchemy
-- Pydantic v2
-- Alembic
-- pytest
-- python-jose
-- bcrypt
-- SQLite by default, PostgreSQL supported via `DATABASE_URL`
-
-### Frontend
-
-- Flutter
-- Dart
-- flutter_riverpod
-- go_router
-- dio
-- hive / hive_flutter
-- flutter_secure_storage
-- shared_preferences
-- logger
-- fl_chart
-
-### Tooling / CI
-
-- GitHub Actions
-- `dart analyze`
-- `flutter test`
-- `pytest`
-
-## Project Structure
-
-```text
-.
-├── .github/
-│   └── workflows/
-│       ├── backend-ci.yml
-│       └── flutter-ci.yml
-├── kinderbackend/
-│   ├── alembic/
-│   ├── core/
-│   ├── routers/
-│   ├── schemas/
-│   ├── services/
-│   ├── admin_models.py
-│   ├── auth.py
-│   ├── conftest.py
-│   ├── database.py
-│   ├── deps.py
-│   ├── main.py
-│   ├── models.py
-│   ├── pytest.ini
-│   └── test_*.py
-└── kinder_world_child_mode/
-    ├── assets/
-    ├── lib/
-    │   ├── core/
-    │   ├── features/
-    │   ├── routing/
-    │   ├── app.dart
-    │   ├── main.dart
-    │   └── router.dart
-    ├── test/
-    ├── pubspec.yaml
-    └── analysis_options.yaml
-```
-
-## Authentication & Roles
+- Startup config validation and schema verification
+- Health/readiness endpoints
+- Admin diagnostics endpoints
+- Observability event hooks (in-memory buffer + diagnostics access)
 
-### Parent Authentication
+### Frontend (Flutter)
 
-Parent auth uses JWT-based access and refresh tokens.
+Client architecture:
 
-Current parent auth-related backend endpoints include:
+- Riverpod for state and DI
+- GoRouter with auth + role guards
+- Hive + SharedPreferences for caching
+- SecureStorage for auth/session data
+- Backend-driven subscription gating (no local entitlement source of truth)
 
-- `POST /auth/register`
-- `POST /auth/login`
-- `POST /auth/refresh`
-- `GET /auth/me`
-- `PUT /auth/profile`
-- `POST /auth/change-password`
-- `POST /auth/logout`
+## Implemented Features (Current State)
 
-Additional parent security flows:
+### Parent Flows
 
-- `GET /auth/parent-pin/status`
-- `POST /auth/parent-pin/set`
-- `POST /auth/parent-pin/verify`
-- `POST /auth/parent-pin/change`
-- `POST /auth/parent-pin/reset-request`
+- Registration, login, refresh, logout
+- Parent PIN lifecycle (set/verify/change/reset)
+- Child creation, update, list, delete
+- Parent dashboard and reports (backend-driven)
+- Subscription lifecycle view, checkout, cancel, manage portal, billing history
+- Notifications, privacy settings, parental controls
+- Support ticket creation and replies
 
-The current code includes token-version-based revocation checks for access and refresh flows.
+### Child Flows
 
-### Child Authentication
+- Picture-password child login + session validation
+- Learning/play flows driven by backend content APIs
+- AI Buddy session UI connected to backend
+- Local coloring gallery (explicitly labeled as local content pack)
 
-Child auth is separate from parent auth and includes:
+### Admin Flows
 
-- `POST /auth/child/register`
-- `POST /auth/child/login`
-- `POST /auth/child/session/validate`
-- `POST /auth/child/change-password`
+- Admin auth (separate from parent/child)
+- RBAC-permission enforcement
+- Admin user and child management
+- Admin analytics and audit logs
+- Admin support triage
+- Admin CMS management (categories, content, quizzes)
+- Admin subscriptions overview and actions
+- Admin system settings
+- Admin diagnostics endpoints
+- Optional admin seed endpoint for dev/test only
 
-Child login uses a picture-password flow. Child session behavior exists in both backend and Flutter, but the implementation is not identical in all places and should be treated as an actively evolving area.
+## Payment & Subscription Status
 
-### Admin Authentication
+Implemented now:
 
-Admin auth is fully separate from parent/child auth:
+- Subscription lifecycle with status and timestamps
+- Billing history, subscription events, payment attempts
+- Stripe provider integration with checkout session and billing portal
+- Provider webhooks integration with signature verification + idempotency
+- Reconciliation job/service to detect provider/local drift
+- Refund workflow from admin
+- Backend snapshot and history endpoints consumed in Flutter
 
-- `POST /admin/auth/login`
-- `POST /admin/auth/refresh`
-- `POST /admin/auth/logout`
-- `GET /admin/auth/me`
+Key endpoints (backend):
 
-Admin access is protected through RBAC permissions enforced by backend dependencies and mirrored in Flutter route guards/UI visibility.
+- `GET /subscription/me`, `GET /subscription/history`
+- `POST /subscription/checkout`, `POST /subscription/activate`, `POST /subscription/cancel`
+- `POST /subscription/manage`, `POST /billing/portal`
+- `POST /webhooks/stripe`
 
-### Roles in Current Code
+Provider status:
 
-- `parent`
-- `child`
-- `admin` users with role/permission mappings in the admin subsystem
+- Production requires Stripe (`PAYMENT_PROVIDER=stripe`)
+- Internal/mock provider is allowed only in dev/test and blocked in production
 
-## Backend Overview
+Operational requirement:
 
-### Main App
+- Run `run_payment_reconciliation.py` on a schedule when enabled
+- Configure Stripe webhook secret and URL in production
 
-Backend entrypoint: `kinderbackend/main.py`
+## AI Buddy Status
 
-The app currently includes routers for:
+Current implementation:
 
-- public auth
-- parent auth
-- children
-- notifications
-- privacy
-- content/legal
-- support
-- subscriptions
-- billing methods
-- feature-gated reports/notifications/parental-controls/AI/downloads
-- admin auth
-- admin users
-- admin children
-- admin analytics
-- admin audit
-- admin support
-- admin CMS
-- admin subscriptions
-- admin settings
-- optional admin seed
+- Backend session + message persistence
+- Input/output moderation with refusal/safe-redirect handling
+- Parental visibility summary (metrics + summary text, no transcript access by default)
+- Retention policy enforced (messages retained for 30 days)
+- Fallback-only response generator (no external AI provider integrated)
 
-### Database Behavior
+UI behavior:
 
-- Default local database: `sqlite:///kinder.db`
-- PostgreSQL URLs are normalized to `postgresql+psycopg://...`
-- SQLite pragmas are configured for WAL / busy timeout / foreign keys
-- Alembic is present for migrations
-- Startup schema verification exists and can be skipped with env flags
+- Flutter UI shows explicit “fallback mode” messaging
+- Parent/admin surfaces show provider status and fallback details
 
-### Notable Backend Modules
+Provider integration:
 
-- `services/auth_service.py`: parent auth, profile, password, parent PIN
-- `services/child_service.py`: child registration/login/session/password and child profile operations
-- `services/support_ticket_service.py`: parent/admin support flows
-- `services/admin_auth_service.py`: admin auth flow and security logic
-- `services/subscription_service.py`: subscription state and plan selection logic
-- `services/analytics_service.py`: analytics ingestion and report construction
-- `core/system_settings.py`: maintenance mode, registration toggle, AI buddy toggle, default feature flags
+- External AI provider is not yet wired in code.
+- `AI_PROVIDER_MODE` and `AI_PROVIDER_API_KEY` are validated, but no external model adapter is implemented.
 
-### Feature Flags / System Toggles Present in Code
+## Content & CMS Status
 
-The system settings layer currently defines these defaults:
+Backend:
 
-- `maintenance_mode`
-- `registration_enabled`
-- `ai_buddy_enabled`
-- `feature_flags.support_center`
-- `feature_flags.analytics_dashboard`
-- `feature_flags.cms`
+- CMS-style content models with publish/draft states
+- Public pages via `/content/about`, `/content/help-faq`, `/legal/*`
+- Child content via `/content/child/*` (categories, items, quizzes)
 
-These are backend-side settings, not a full frontend feature-flag platform.
+Flutter:
 
-## Frontend Overview
+- Legal/help/about are fetched from backend and show empty states if not published
+- Child content flows rely on backend APIs for learn/play
+- Coloring gallery is a local asset pack and is explicitly labeled as local
 
-### App Entry
+## Analytics & Reports
 
-Flutter entrypoint: `kinder_world_child_mode/lib/main.dart`
+Backend:
 
-Startup behavior currently includes:
+- Activity and session ingestion via `/analytics/events` and `/analytics/sessions`
+- Reports via `/reports/basic` and `/reports/advanced`
+- Analytics retention window configurable via env
 
-- Hive initialization
-- opening key local boxes
-- secure storage preload
-- shared preferences init
-- logger injection
-- app-level error handling
+Flutter:
 
-### Routing
+- Parent reports and progress are backend-driven
+- Premium insight surfaces use rules-based backend outputs (not ML)
 
-GoRouter routes are split into:
+## Observability & Diagnostics
 
-- `routes_public.dart`
-- `routes_parent.dart`
-- `routes_child.dart`
-- `routes_admin.dart`
+Implemented:
 
-Routing guards currently enforce:
+- Request IDs on all API responses
+- Structured observability events captured in backend
+- Health endpoints:
+  - `/health`
+  - `/health/db`
+  - `/health/ready`
+- Admin diagnostics endpoints:
+  - `/admin/diagnostics/health`
+  - `/admin/diagnostics/events`
 
-- public vs authenticated entry
-- parent vs child separation
-- admin auth state
-- admin permission checks
-- parent PIN protection for parent routes
+## Testing / CI
 
-### Storage / State
+Backend:
 
-The current app uses:
+- `pytest` suite with coverage
+- Smoke test suite in `test_smoke_suite.py`
+- Launch verification runner: `run_launch_verification.py`
 
-- `Hive` boxes for cached child/profile/progress-related data
-- `SecureStorage` for auth/session data
-- `SharedPreferences` for preference and UI-related persisted state
-- Riverpod providers for repositories, controllers, and feature services
+Frontend:
 
-### Main Frontend Areas
+- Flutter widget/unit tests under `kinder_world_child_mode/test/`
+- Tests cover model parsing and UI states, including AI Buddy widgets
 
-- `features/app_core`: splash, language, onboarding, welcome
-- `features/auth`: parent/child auth screens
-- `features/child_mode`: child home, learn, play, AI buddy, profile, store, achievements
-- `features/parent_mode`: dashboard, reports, controls, settings, subscription, notifications, safety
-- `features/admin`: admin login and admin dashboard sections
-- `features/system_pages`: maintenance, help, legal, no-internet, data sync, error
+CI:
 
-## Testing
+- GitHub Actions for backend lint/tests and Flutter analyze/tests
 
-### Backend
+## Environment Configuration
 
-Backend tests use `pytest` with shared fixtures in `kinderbackend/conftest.py`.
+### Backend (`kinderbackend/.env`)
 
-Current backend suite characteristics:
+Core runtime:
 
-- test files live directly under `kinderbackend/`
-- DB tests use an in-memory SQLite engine through shared fixtures
-- auth/admin/RBAC/support/subscription/parent-child flows are covered
+- `ENVIRONMENT` (development|production)
+- `APP_LOG_LEVEL`, `APP_LOG_FILE`
+- `SKIP_SCHEMA_VERIFY`, `AUTO_RUN_MIGRATIONS`
+- `ALLOWED_ORIGINS`, `ALLOWED_ORIGIN_REGEX`, `CORS_ALLOW_CREDENTIALS`
 
-Local command:
+Auth:
 
-```bash
-cd kinderbackend
-python -m pytest -q
-```
+- `KINDER_JWT_SECRET` (required)
+- `JWT_ALGORITHM`
+- `JWT_PREVIOUS_SECRETS`
+- `JWT_ACTIVE_KID`
 
-On the current code snapshot, the backend suite passes locally with `98 passed`.
-
-### Flutter
-
-Flutter tests live under `kinder_world_child_mode/test/` and include:
-
-- unit tests
-- repository/session tests
-- widget tests
-- routing/startup tests
-- admin/parent/child flow tests
-
-Local commands:
-
-```bash
-cd kinder_world_child_mode
-dart analyze
-flutter test
-```
-
-Current state from local verification on this code snapshot:
-
-- `dart analyze` completes, but still reports one `info` suggestion
-- the full `flutter test` suite is **not fully green yet**; it currently has remaining failing tests
-- several targeted tests and newer regression tests do pass, but the full suite should be treated as still in stabilization
-
-## Running the Project Locally
-
-## 1. Backend Setup
-
-### Prerequisites
-
-- Python 3.11 recommended
-- pip
-- optional: PostgreSQL if you do not want SQLite
-
-### Install
-
-```bash
-cd kinderbackend
-python -m venv .venv
-```
-
-Windows:
-
-```bash
-.venv\Scripts\activate
-```
-
-Linux/macOS:
-
-```bash
-source .venv/bin/activate
-```
-
-Then install dependencies:
-
-```bash
-pip install --upgrade pip
-pip install -r requirements.txt
-```
-
-### Configure Environment
-
-Create a `.env` file in `kinderbackend/` based on `.env.example`.
-
-At minimum, set:
-
-```env
-KINDER_JWT_SECRET=CHANGE_ME_TO_A_REAL_SECRET
-```
-
-Optional but commonly useful for local dev:
-
-```env
-ENVIRONMENT=development
-DATABASE_URL=
-SKIP_SCHEMA_VERIFY=false
-AUTO_RUN_MIGRATIONS=false
-```
-
-If `DATABASE_URL` is empty, the backend falls back to local SQLite at `kinderbackend/kinder.db`.
-
-### Run Backend
-
-```bash
-cd kinderbackend
-python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-
-Backend root endpoint:
-
-- `GET /` → basic health response
-
-### Run Backend Tests
-
-```bash
-cd kinderbackend
-python -m pytest -q
-```
-
-## 2. Flutter Setup
-
-### Prerequisites
-
-- Flutter SDK
-- Dart SDK bundled with Flutter
-- Android Studio / Xcode / Chrome depending on target platform
-
-The project currently declares:
-
-- Dart: `>=3.0.0 <4.0.0`
-- Flutter: `>=3.10.0`
-
-### Install Dependencies
-
-```bash
-cd kinder_world_child_mode
-flutter pub get
-```
-
-### Configure Backend URL
-
-The app supports overriding the backend base URL with a Dart define:
-
-```bash
-flutter run --dart-define=API_BASE_URL=http://<HOST>:8000
-```
-
-This is important because the current default fallback in code is a LAN IP address, which is not suitable for most environments.
-
-### Run the App
-
-```bash
-cd kinder_world_child_mode
-flutter run --dart-define=API_BASE_URL=http://127.0.0.1:8000
-```
-
-### Analyze / Test
-
-```bash
-cd kinder_world_child_mode
-dart analyze
-flutter test
-```
-
-## Environment Variables
-
-## Backend (`kinderbackend/.env`)
-
-The codebase currently recognizes at least the following environment variables.
-
-### Runtime / Logging
-
-- `ENVIRONMENT`
-- `APP_LOG_FILE`
-- `APP_LOG_LEVEL`
-- `SKIP_SCHEMA_VERIFY`
-- `AUTO_RUN_MIGRATIONS`
-
-### Database
+Database:
 
 - `DATABASE_URL`
-- `DB_POOL_SIZE`
-- `DB_MAX_OVERFLOW`
-- `DB_POOL_RECYCLE_SECONDS`
+- `DB_POOL_SIZE`, `DB_MAX_OVERFLOW`, `DB_POOL_RECYCLE_SECONDS`
 
-### JWT / Auth
+Payment (Stripe):
 
-- `KINDER_JWT_SECRET`
-- `JWT_SECRET_KEY`
-- `SECRET_KEY`
-- `JWT_ALGORITHM`
-- `JWT_ACTIVE_KID`
-- `JWT_PREVIOUS_SECRETS`
+- `PAYMENT_PROVIDER` (internal|stripe)
+- `STRIPE_SECRET_KEY`
+- `STRIPE_PUBLISHABLE_KEY` (optional for backend readiness checks)
+- `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_CHECKOUT_SUCCESS_URL`
+- `STRIPE_CHECKOUT_CANCEL_URL`
+- `STRIPE_PORTAL_RETURN_URL`
+- `STRIPE_PRICE_PREMIUM_MONTHLY`
+- `STRIPE_PRICE_FAMILY_PLUS_MONTHLY`
+- `PAYMENT_RECONCILIATION_ENABLED`
+- `PAYMENT_RECONCILIATION_SCHEDULE`
 
-### Email Policy
+AI:
 
-- `EMAIL_DOMAIN_ALLOWLIST`
-- `EMAIL_DOMAIN_DENYLIST`
+- `AI_PROVIDER_MODE` (fallback|external|openai)
+- `AI_PROVIDER_API_KEY` (required for external modes)
 
-### Child Auth Hardening
-
-- `CHILD_AUTH_RATE_LIMIT_MAX_ATTEMPTS`
-- `CHILD_AUTH_RATE_LIMIT_WINDOW_SECONDS`
-- `CHILD_AUTH_SUSPICIOUS_THRESHOLD`
-- `CHILD_SESSION_TTL_MINUTES`
-- `CHILD_AUTH_DEVICE_BINDING_ENABLED`
-- `CHILD_AUTH_REQUIRE_DEVICE_ID`
-
-### Analytics Lifecycle
-
-- `ANALYTICS_RETENTION_DAYS`
-- `ANALYTICS_SUMMARY_RETENTION_DAYS`
-
-### Admin Seed / Admin Security
+Admin seed (dev/test only):
 
 - `ENABLE_ADMIN_SEED_ENDPOINT`
 - `ADMIN_SEED_SECRET`
-- `ADMIN_SEED_PASSWORD`
 - `ADMIN_SEED_EMAIL`
+- `ADMIN_SEED_PASSWORD`
 - `ADMIN_SEED_NAME`
+
+Security and policy:
+
+- `EMAIL_DOMAIN_ALLOWLIST`
+- `EMAIL_DOMAIN_DENYLIST`
+- `CHILD_AUTH_RATE_LIMIT_MAX_ATTEMPTS`
+- `CHILD_AUTH_RATE_LIMIT_WINDOW_SECONDS`
 - `ADMIN_AUTH_MAX_FAILED_ATTEMPTS`
 - `ADMIN_AUTH_LOCKOUT_MINUTES`
 - `ADMIN_SUSPICIOUS_FAILED_THRESHOLD`
 - `ADMIN_SENSITIVE_CONFIRMATION_REQUIRED`
 
-## Frontend
+Analytics lifecycle:
 
-The frontend currently uses one important build-time setting:
+- `ANALYTICS_RETENTION_DAYS`
 
-- `API_BASE_URL`
+### Frontend (Flutter)
+
+- `API_BASE_URL` (build-time)
 
 Example:
 
@@ -573,122 +262,32 @@ Example:
 flutter run --dart-define=API_BASE_URL=http://127.0.0.1:8000
 ```
 
-## API / Main Modules Summary
+## Operational Scripts
 
-### Parent / Auth
+Backend scripts (repository root under `kinderbackend/`):
 
-- `POST /auth/register`
-- `POST /auth/login`
-- `POST /auth/refresh`
-- `GET /auth/me`
-- `PUT /auth/profile`
-- `POST /auth/change-password`
-- `POST /auth/logout`
-- parent PIN endpoints under `/auth/parent-pin/*`
+- `run_launch_verification.py` – config + health + smoke checks
+- `run_payment_reconciliation.py` – reconciliation job for payment drift
+- `run_db_backup.py` / `run_db_restore.py` – backup + restore helpers
 
-### Child
+## Known Limitations
 
-- `POST /auth/child/register`
-- `POST /auth/child/login`
-- `POST /auth/child/session/validate`
-- `POST /auth/child/change-password`
-- `/children` CRUD for parent-owned child profiles
+These are real and current:
 
-### Parent Features
+- AI Buddy is fallback-only; no external AI provider adapter exists yet.
+- Production payments require Stripe configuration; internal provider is blocked in production.
+- CMS content must be published for public pages and child content to appear; otherwise UI shows empty states.
+- Coloring gallery content is local-only (explicitly labeled in UI).
+- Flutter still defaults to a LAN IP for `API_BASE_URL` if not overridden.
 
-- `/notifications`
-- `/privacy/settings`
-- `/parental-controls/*`
-- `/support/*`
-- `/subscription/*`
-- `/billing/methods`
-- `/reports/basic`
-- `/reports/advanced`
-- `/analytics/events`
-- `/analytics/sessions`
+## Next Steps (Optional)
 
-### Feature-Gated / Plan-Based Endpoints
+If needed for production readiness:
 
-- `/notifications/basic`
-- `/notifications/smart`
-- `/parental-controls/basic`
-- `/parental-controls/advanced`
-- `/ai/insights`
-- `/downloads/offline`
-- `/support/priority`
-
-### Admin
-
-- `/admin/auth/*`
-- `/admin/users*`
-- `/admin/children*`
-- `/admin/analytics/*`
-- `/admin/audit-logs`
-- `/admin/support/tickets*`
-- `/admin/categories`
-- `/admin/contents`
-- `/admin/quizzes`
-- `/admin/subscriptions*`
-- `/admin/settings*`
-- optional `/admin/seed`
-
-## CI
-
-The repository currently includes GitHub Actions workflows:
-
-- `.github/workflows/backend-ci.yml`
-- `.github/workflows/flutter-ci.yml`
-
-### Backend CI
-
-Runs on backend changes and currently performs:
-
-- dependency installation
-- Python source compile check
-- import smoke test
-- full pytest suite
-
-### Flutter CI
-
-Runs on Flutter changes and currently performs:
-
-- `flutter pub get`
-- `dart analyze`
-- `flutter test`
-
-Important: the Flutter workflow exists in code, but because the full Flutter test suite is not fully green on the current snapshot, Flutter CI should be expected to fail until the remaining test issues are resolved.
-
-## Current Status / Known Limitations
-
-These points are based on the current codebase behavior.
-
-- Backend test suite is in better shape than the full Flutter test suite.
-- The Flutter app still uses a hardcoded LAN IP fallback for `API_BASE_URL` if no `--dart-define` is supplied.
-- Billing portal functionality is not fully implemented:
-  - `POST /subscription/manage` returns `501`
-  - `POST /billing/portal` returns `501`
-- Some content/legal/help endpoints are static text/data rather than a full dynamic CMS-backed public content system.
-- Some premium/family endpoints currently return fixed/demo-style payloads rather than deeply integrated external services:
-  - AI insights
-  - offline downloads
-  - priority support metadata
-- The backend has system flags for maintenance mode, registration toggle, and AI buddy availability, but not every feature toggle path is part of a complete frontend admin control surface yet.
-- The codebase still contains technical debt warnings such as deprecated FastAPI startup event usage and multiple `datetime.utcnow()` usages in Python.
-- Full Flutter tests currently have remaining failures related to test harness/provider setup in some widget tests.
-
-## Future Improvements
-
-Based on the current code structure, reasonable next improvements would be:
-
-- Stabilize the remaining Flutter widget/integration tests so `flutter test` is fully green
-- Replace the default hardcoded Flutter API base URL fallback with environment-specific configuration
-- Complete billing portal and real payment-provider integration
-- Replace placeholder/static public legal/help content with managed content where needed
-- Continue extracting complex UI/state logic from large Flutter screens into smaller controllers/services
-- Migrate deprecated backend startup patterns to FastAPI lifespan APIs
-- Reduce remaining `datetime.utcnow()` deprecation warnings by moving to timezone-aware datetimes
-- Expand CI with coverage reporting and optional artifacts
+- Wire an external AI provider adapter for AI Buddy.
+- Ensure Stripe secrets + webhook + reconciliation schedule are configured in production.
+- Publish CMS content for legal/help/about and child learning content.
 
 ## Notes
 
-This README intentionally reflects the current codebase, including unfinished or placeholder areas. It should be treated as a technical status document for contributors, reviewers, and academic evaluation rather than a marketing page.
+This README is a technical status document. It intentionally avoids marketing language and reflects the current behavior of the repository.

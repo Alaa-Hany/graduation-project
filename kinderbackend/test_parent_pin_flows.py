@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import admin_models  # noqa: F401
-
 from auth import hash_password
 from models import SupportTicket
 
@@ -85,9 +84,7 @@ def test_parent_pin_status_set_verify_change_and_reset_request(
     assert ticket.subject == "Parent PIN reset request"
 
 
-def test_parent_pin_lockout_after_repeated_failures(
-    client, db, create_parent, auth_headers
-):
+def test_parent_pin_lockout_after_repeated_failures(client, db, create_parent, auth_headers):
     user = create_parent(email="lock.parent@gmail.com", name="Pin Parent", plan="FREE")
     user.parent_pin_hash = hash_password("2468")
     db.add(user)
@@ -122,6 +119,3 @@ def test_parent_pin_lockout_after_repeated_failures(
         headers=headers,
     )
     assert even_correct_while_locked.status_code == 423
-
-
-

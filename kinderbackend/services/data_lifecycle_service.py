@@ -5,8 +5,11 @@ from datetime import date, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
+from core.time_utils import to_db_utc, utc_now, utc_start_of_day
 from models import (
     ActivitySession,
+    AiBuddyMessage,
+    AiBuddySession,
     AiInteraction,
     ChildActivityEvent,
     ChildDailyActivitySummary,
@@ -33,7 +36,7 @@ def _summary_archive_after_days() -> int:
 
 
 def apply_tracking_retention(db: Session, *, now: datetime | None = None) -> dict:
-    now = now or datetime.utcnow()
+    now = to_db_utc(now or utc_now())
     archive_cutoff = now - timedelta(days=_archive_after_days())
     summary_cutoff = now.date() - timedelta(days=_summary_archive_after_days())
 
@@ -43,6 +46,8 @@ def apply_tracking_retention(db: Session, *, now: datetime | None = None) -> dic
         "activity_sessions_archived": 0,
         "screen_time_logs_archived": 0,
         "ai_interactions_archived": 0,
+        "ai_buddy_sessions_archived": 0,
+        "ai_buddy_messages_archived": 0,
         "daily_summaries_archived": 0,
     }
 
@@ -91,6 +96,26 @@ def apply_tracking_retention(db: Session, *, now: datetime | None = None) -> dic
         .update({AiInteraction.archived_at: now}, synchronize_session=False)
     )
 
+    touched["ai_buddy_sessions_archived"] = (
+        db.query(AiBuddySession)
+        .filter(
+            AiBuddySession.archived_at.is_(None),
+            AiBuddySession.retention_expires_at.is_not(None),
+            AiBuddySession.retention_expires_at < now,
+        )
+        .update({AiBuddySession.archived_at: now}, synchronize_session=False)
+    )
+
+    touched["ai_buddy_messages_archived"] = (
+        db.query(AiBuddyMessage)
+        .filter(
+            AiBuddyMessage.archived_at.is_(None),
+            AiBuddyMessage.retention_expires_at.is_not(None),
+            AiBuddyMessage.retention_expires_at < now,
+        )
+        .update({AiBuddyMessage.archived_at: now}, synchronize_session=False)
+    )
+
     touched["daily_summaries_archived"] = (
         db.query(ChildDailyActivitySummary)
         .filter(
@@ -119,7 +144,7 @@ def rebuild_daily_summary_for_child(
     if child is None:
         raise ValueError("Child not found")
 
-    start_dt = datetime.combine(day, datetime.min.time())
+    start_dt = utc_start_of_day(day)
     end_dt = start_dt + timedelta(days=1)
 
     sessions = (
@@ -155,11 +180,15 @@ def rebuild_daily_summary_for_child(
         summary = ChildDailyActivitySummary(child_id=child_id, summary_date=day)
         db.add(summary)
 
-    summary.screen_time_minutes = sum(max(int((item.duration_seconds or 0) / 60), 0) for item in sessions)
+    summary.screen_time_minutes = sum(
+        max(int((item.duration_seconds or 0) / 60), 0) for item in sessions
+    )
     summary.activities_completed = len(events)
     summary.lessons_completed = sum(1 for item in events if item.event_type == "lesson_completed")
     summary.mood_entries = sum(1 for item in events if item.event_type == "mood_entry")
-    summary.achievements_unlocked = sum(1 for item in events if item.event_type == "achievement_unlocked")
+    summary.achievements_unlocked = sum(
+        1 for item in events if item.event_type == "achievement_unlocked"
+    )
     summary.ai_interactions_count = (
         db.query(AiInteraction)
         .filter(
@@ -191,4 +220,3 @@ def rebuild_daily_summary_for_child(
         "ai_interactions_count": summary.ai_interactions_count,
         "data_source": summary.data_source,
     }
-

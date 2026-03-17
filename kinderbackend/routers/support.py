@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 
@@ -11,6 +11,7 @@ from models import User
 from services.support_ticket_service import support_ticket_service
 
 router = APIRouter(tags=["support"])
+
 
 class SupportRequest(BaseModel):
     subject: str

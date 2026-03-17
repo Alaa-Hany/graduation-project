@@ -2,6 +2,7 @@
 Import validation test - verifies all modules load without errors.
 Run from kinderbackend/ directory with the venv activated.
 """
+
 import os
 import sys
 

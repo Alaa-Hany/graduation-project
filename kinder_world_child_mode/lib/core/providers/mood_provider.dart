@@ -6,9 +6,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:kinder_world/app.dart';
+import 'package:kinder_world/core/api/api_providers.dart';
+import 'package:kinder_world/core/api/reports_api.dart';
 import 'package:kinder_world/core/models/mood_entry.dart';
 import 'package:kinder_world/core/repositories/mood_repository.dart';
 import 'package:kinder_world/core/repositories/child_repository.dart';
+import 'package:kinder_world/core/storage/secure_storage.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:logger/logger.dart';
 
@@ -87,14 +90,20 @@ class MoodState {
 class MoodNotifier extends StateNotifier<MoodState> {
   final MoodRepository _repo;
   final ChildRepository _childRepo;
+  final ReportsApi _reportsApi;
+  final SecureStorage _secureStorage;
   final Logger _logger;
 
   MoodNotifier({
     required MoodRepository moodRepository,
     required ChildRepository childRepository,
+    required ReportsApi reportsApi,
+    required SecureStorage secureStorage,
     required Logger logger,
   })  : _repo = moodRepository,
         _childRepo = childRepository,
+        _reportsApi = reportsApi,
+        _secureStorage = secureStorage,
         _logger = logger,
         super(const MoodState(isLoading: true));
 
@@ -127,19 +136,24 @@ class MoodNotifier extends StateNotifier<MoodState> {
   /// `currentMood` field via [ChildRepository].
   Future<void> recordMood(String childId, String mood) async {
     try {
+      final recordedAt = DateTime.now();
       final entry = MoodEntry(
-        id: '${childId}_${DateTime.now().millisecondsSinceEpoch}',
+        id: '${childId}_${recordedAt.millisecondsSinceEpoch}',
         childId: childId,
         mood: mood,
-        timestamp: DateTime.now(),
+        timestamp: recordedAt,
       );
 
       await _repo.addEntry(entry);
 
-      // Also update the child profile's currentMood field
       await _childRepo.updateMood(childId, mood);
+      await _syncMoodToBackend(
+        childId: childId,
+        mood: mood,
+        recordedAt: recordedAt,
+        clientEntryId: entry.id,
+      );
 
-      // Refresh state
       final recent = await _repo.getRecentEntries(childId, limit: 7);
       final counts = await _repo.getMoodCounts(childId, days: 7);
 
@@ -192,6 +206,76 @@ class MoodNotifier extends StateNotifier<MoodState> {
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   void clearError() => state = state.copyWith(clearError: true);
+
+  Future<void> _syncMoodToBackend({
+    required String childId,
+    required String mood,
+    required DateTime recordedAt,
+    required String clientEntryId,
+  }) async {
+    final numericChildId = int.tryParse(childId);
+    if (numericChildId == null) {
+      _logger.w('Skipping mood analytics sync for non-numeric child id: $childId');
+      return;
+    }
+
+    final parentAccessToken = await _resolveParentAccessToken();
+    if (parentAccessToken == null || parentAccessToken.isEmpty) {
+      _logger.w('Skipping mood analytics sync because no parent token is available');
+      return;
+    }
+
+    try {
+      await _reportsApi.ingestActivityEvent(
+        {
+          'child_id': numericChildId,
+          'event_type': 'mood_entry',
+          'occurred_at': recordedAt.toUtc().toIso8601String(),
+          'source': 'child_mode',
+          'mood_value': _moodValue(mood),
+          'metadata_json': {
+            'client_entry_id': clientEntryId,
+            'mood_label': mood,
+          },
+        },
+        parentAccessToken: parentAccessToken,
+      );
+    } catch (e) {
+      _logger.e('MoodNotifier backend sync error: $e');
+    }
+  }
+
+  Future<String?> _resolveParentAccessToken() async {
+    final storedParentToken = await _secureStorage.getParentAccessToken();
+    if (storedParentToken != null && storedParentToken.isNotEmpty) {
+      return storedParentToken;
+    }
+    final authToken = await _secureStorage.getAuthToken();
+    if (authToken != null &&
+        authToken.isNotEmpty &&
+        !authToken.startsWith('child_session_')) {
+      return authToken;
+    }
+    return null;
+  }
+
+  int _moodValue(String mood) {
+    switch (mood) {
+      case 'happy':
+        return 5;
+      case 'excited':
+        return 4;
+      case 'calm':
+        return 3;
+      case 'tired':
+        return 2;
+      case 'sad':
+      case 'angry':
+        return 1;
+      default:
+        return 3;
+    }
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -213,11 +297,15 @@ final moodNotifierProvider =
     StateNotifierProvider.autoDispose<MoodNotifier, MoodState>((ref) {
   final moodRepo = ref.watch(moodRepositoryProvider);
   final childRepo = ref.watch(childRepositoryProvider);
+  final reportsApi = ref.watch(reportsApiProvider);
+  final secureStorage = ref.watch(secureStorageProvider);
   final logger = ref.watch(loggerProvider);
 
   final notifier = MoodNotifier(
     moodRepository: moodRepo,
     childRepository: childRepo,
+    reportsApi: reportsApi,
+    secureStorage: secureStorage,
     logger: logger,
   );
 

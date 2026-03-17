@@ -87,7 +87,9 @@ def _require_parent_child(db: Session, parent: User, child_id: int) -> ChildProf
     return child
 
 
-def _create_default_child_setting(db: Session, parent: User, child: ChildProfile) -> ChildParentalControlSetting:
+def _create_default_child_setting(
+    db: Session, parent: User, child: ChildProfile
+) -> ChildParentalControlSetting:
     account = get_or_create_account_controls(db, parent)
     setting = ChildParentalControlSetting(
         parent_id=parent.id,
@@ -110,7 +112,9 @@ def _create_default_child_setting(db: Session, parent: User, child: ChildProfile
     return setting
 
 
-def _get_or_create_child_setting(db: Session, parent: User, child_id: int) -> ChildParentalControlSetting:
+def _get_or_create_child_setting(
+    db: Session, parent: User, child_id: int
+) -> ChildParentalControlSetting:
     child = _require_parent_child(db, parent, child_id)
     setting = (
         db.query(ChildParentalControlSetting)
@@ -124,7 +128,9 @@ def _get_or_create_child_setting(db: Session, parent: User, child_id: int) -> Ch
     return setting
 
 
-def _replace_schedule_rules(db: Session, setting: ChildParentalControlSetting, rules: Iterable) -> None:
+def _replace_schedule_rules(
+    db: Session, setting: ChildParentalControlSetting, rules: Iterable
+) -> None:
     db.query(ChildScheduleRule).filter(ChildScheduleRule.setting_id == setting.id).delete()
     for item in rules:
         db.add(
@@ -138,7 +144,9 @@ def _replace_schedule_rules(db: Session, setting: ChildParentalControlSetting, r
         )
 
 
-def _replace_blocked_apps(db: Session, setting: ChildParentalControlSetting, apps: Iterable) -> None:
+def _replace_blocked_apps(
+    db: Session, setting: ChildParentalControlSetting, apps: Iterable
+) -> None:
     db.query(ChildBlockedApp).filter(ChildBlockedApp.setting_id == setting.id).delete()
     for app in apps:
         db.add(
@@ -151,7 +159,9 @@ def _replace_blocked_apps(db: Session, setting: ChildParentalControlSetting, app
         )
 
 
-def _replace_blocked_sites(db: Session, setting: ChildParentalControlSetting, sites: Iterable) -> None:
+def _replace_blocked_sites(
+    db: Session, setting: ChildParentalControlSetting, sites: Iterable
+) -> None:
     db.query(ChildBlockedSite).filter(ChildBlockedSite.setting_id == setting.id).delete()
     for site in sites:
         db.add(
@@ -186,7 +196,9 @@ def child_setting_to_json(setting: ChildParentalControlSetting) -> dict:
                 "end_time": rule.end_time,
                 "is_allowed": rule.is_allowed,
             }
-            for rule in sorted(setting.schedule_rules or [], key=lambda x: (x.day_of_week, x.start_time))
+            for rule in sorted(
+                setting.schedule_rules or [], key=lambda x: (x.day_of_week, x.start_time)
+            )
         ],
         "blocked_apps": [
             {
@@ -195,7 +207,9 @@ def child_setting_to_json(setting: ChildParentalControlSetting) -> dict:
                 "app_name": app.app_name,
                 "reason": app.reason,
             }
-            for app in sorted(setting.blocked_apps or [], key=lambda x: (x.app_name or "", x.app_identifier))
+            for app in sorted(
+                setting.blocked_apps or [], key=lambda x: (x.app_name or "", x.app_identifier)
+            )
         ],
         "blocked_sites": [
             {
@@ -210,7 +224,9 @@ def child_setting_to_json(setting: ChildParentalControlSetting) -> dict:
             "enforcement_mode": setting.enforcement_mode,
             "device_status": setting.device_status,
             "pending_changes": setting.pending_changes,
-            "last_synced_at": setting.last_synced_at.isoformat() if setting.last_synced_at else None,
+            "last_synced_at": (
+                setting.last_synced_at.isoformat() if setting.last_synced_at else None
+            ),
         },
         "updated_at": setting.updated_at.isoformat() if setting.updated_at else None,
     }

@@ -98,7 +98,12 @@ class ChildParentalControlsPayload(BaseModel):
                 "device_status": "online",
                 "pending_changes": True,
                 "allowed_windows": [
-                    {"day_of_week": 1, "start_time": "16:00", "end_time": "18:00", "is_allowed": True}
+                    {
+                        "day_of_week": 1,
+                        "start_time": "16:00",
+                        "end_time": "18:00",
+                        "is_allowed": True,
+                    }
                 ],
                 "blocked_apps": [{"app_identifier": "com.social.app", "app_name": "Social App"}],
                 "blocked_sites": [{"domain": "example.com"}],

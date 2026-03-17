@@ -36,6 +36,10 @@ class SecureStorage {
   static const String _keyParentPin = 'parent_pin';
   static const String _keyParentPinVerified = 'parent_pin_verified';
   static const String _keyChildSession = 'child_session';
+  static const String _keyParentAccessToken = 'parent_access_token';
+  static const String _keyParentRefreshToken = 'parent_refresh_token';
+  static const String _keyParentId = 'parent_user_id';
+  static const String _keyParentEmail = 'parent_user_email';
   static const String _keyIsPremium = 'is_premium';
   static const String _keyPlanType = 'plan_type';
 
@@ -437,7 +441,88 @@ class SecureStorage {
     }
   }
 
+  Future<String?> getParentAccessToken() async {
+    try {
+      return await _storage.read(key: _keyParentAccessToken);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<bool> saveParentAccessToken(String token) async {
+    try {
+      await _storage.write(key: _keyParentAccessToken, value: token);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<String?> getParentRefreshToken() async {
+    try {
+      return await _storage.read(key: _keyParentRefreshToken);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<bool> saveParentRefreshToken(String token) async {
+    try {
+      await _storage.write(key: _keyParentRefreshToken, value: token);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<String?> getStoredParentId() async {
+    try {
+      return await _storage.read(key: _keyParentId);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<bool> saveStoredParentId(String parentId) async {
+    try {
+      await _storage.write(key: _keyParentId, value: parentId);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<String?> getStoredParentEmail() async {
+    try {
+      return await _storage.read(key: _keyParentEmail);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<bool> saveStoredParentEmail(String email) async {
+    try {
+      await _storage.write(key: _keyParentEmail, value: email);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> clearStoredParentSession() async {
+    try {
+      await _storage.delete(key: _keyParentAccessToken);
+      await _storage.delete(key: _keyParentRefreshToken);
+      await _storage.delete(key: _keyParentId);
+      await _storage.delete(key: _keyParentEmail);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   // ==================== PREMIUM STATUS ====================
+  // Legacy display cache only. Do not use for entitlement decisions.
 
   Future<bool?> getIsPremium() async {
     try {
@@ -471,6 +556,7 @@ class SecureStorage {
   }
 
   // ==================== PLAN TYPE ====================
+  // Legacy display cache only. Do not use for entitlement decisions.
 
   Future<String?> getPlanType() async {
     try {
@@ -675,9 +761,12 @@ class SecureStorage {
       await _storage.delete(key: _keyUserEmail);
       await _storage.delete(key: _keyChildSession);
       await _storage.delete(key: _keyParentPinVerified);
+      await _storage.delete(key: _keyIsPremium);
+      await _storage.delete(key: _keyPlanType);
+      await clearStoredParentSession();
       _clearSessionCaches();
 
-      // Preserve: child profiles, plan type, theme settings, privacy settings
+      // Preserve: child profiles, theme settings, privacy settings
       // These are accessible without authentication
       return true;
     } catch (e) {
@@ -705,8 +794,20 @@ class SecureStorage {
   }
 
   /// Backwards-compatible alias for getting the parent id (previous API used getParentId)
-  Future<String?> getParentId() async => getUserId();
+  Future<String?> getParentId() async {
+    final stored = await getStoredParentId();
+    if (stored != null && stored.isNotEmpty) {
+      return stored;
+    }
+    return getUserId();
+  }
 
   /// Backwards-compatible alias for getting the parent email
-  Future<String?> getParentEmail() async => getUserEmail();
+  Future<String?> getParentEmail() async {
+    final stored = await getStoredParentEmail();
+    if (stored != null && stored.isNotEmpty) {
+      return stored;
+    }
+    return getUserEmail();
+  }
 }

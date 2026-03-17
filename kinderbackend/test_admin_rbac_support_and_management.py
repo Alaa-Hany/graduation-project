@@ -5,10 +5,10 @@ settings, child management, user management, and subscription admin actions.
 
 from __future__ import annotations
 
-import admin_models  # noqa: F401
-import pytest
+from fastapi.testclient import TestClient
 
-from admin_auth import create_admin_access_token, create_admin_refresh_token
+import admin_models  # noqa: F401
+from admin_auth import create_admin_access_token
 from admin_models import AdminUser, AdminUserRole, AuditLog, Permission, Role, RolePermission
 from auth import create_access_token, hash_password, verify_password
 from models import ChildProfile, SupportTicket, User
@@ -59,7 +59,15 @@ def _create_custom_role(db, *, name: str, permissions: list[str]) -> Role:
     return role
 
 
-def _create_admin(db, *, email: str, password: str = "AdminPass123!", role_names: list[str] | None = None, role_ids: list[int] | None = None, is_active: bool = True) -> AdminUser:
+def _create_admin(
+    db,
+    *,
+    email: str,
+    password: str = "AdminPass123!",
+    role_names: list[str] | None = None,
+    role_ids: list[int] | None = None,
+    is_active: bool = True,
+) -> AdminUser:
     admin = AdminUser(
         email=email,
         password_hash=hash_password(password),
@@ -90,7 +98,9 @@ def _admin_headers(admin: AdminUser) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
-def _create_parent(db, *, email: str, plan: str = PLAN_FREE, name: str = "Parent User", is_active: bool = True) -> User:
+def _create_parent(
+    db, *, email: str, plan: str = PLAN_FREE, name: str = "Parent User", is_active: bool = True
+) -> User:
     user = User(
         email=email,
         password_hash=hash_password("Password123!"),
@@ -206,7 +216,9 @@ def test_admin_endpoints_reject_parent_tokens_and_enforce_permissions(client: Te
 def test_admin_support_ticket_assign_reply_close_and_audit(client: TestClient, db):
     _seed_builtin_rbac(db)
     super_admin = _create_admin(db, email="owner.admin@kinderworld.app", role_names=["super_admin"])
-    support_admin = _create_admin(db, email="support.admin@kinderworld.app", role_names=["support_admin"])
+    support_admin = _create_admin(
+        db, email="support.admin@kinderworld.app", role_names=["support_admin"]
+    )
     parent = _create_parent(db, email="support.parent@gmail.com", plan=PLAN_PREMIUM)
     ticket = _create_ticket(db, user_id=parent.id)
 
@@ -251,7 +263,9 @@ def test_admin_support_ticket_assign_reply_close_and_audit(client: TestClient, d
 def test_admin_user_management_subscription_and_refund_placeholder(client: TestClient, db):
     _seed_builtin_rbac(db)
     admin = _create_admin(db, email="manager.admin@kinderworld.app", role_names=["super_admin"])
-    parent = _create_parent(db, email="managed.parent@gmail.com", plan=PLAN_PREMIUM, name="Managed Parent")
+    parent = _create_parent(
+        db, email="managed.parent@gmail.com", plan=PLAN_PREMIUM, name="Managed Parent"
+    )
 
     users_list = client.get("/admin/users", headers=_admin_headers(admin))
     assert users_list.status_code == 200
@@ -351,7 +365,9 @@ def test_admin_settings_and_child_management_endpoints(client: TestClient, db):
     assert progress.status_code == 200
     assert progress.json()["summary"]["profile_active"] is True
 
-    activity_log = client.get(f"/admin/children/{child.id}/activity-log", headers=_admin_headers(admin))
+    activity_log = client.get(
+        f"/admin/children/{child.id}/activity-log", headers=_admin_headers(admin)
+    )
     assert activity_log.status_code == 200
     assert isinstance(activity_log.json()["entries"], list)
 
@@ -366,7 +382,9 @@ def test_admin_settings_and_child_management_endpoints(client: TestClient, db):
 def test_last_super_admin_protections_and_self_disable_guard(client: TestClient, db):
     _seed_builtin_rbac(db)
     super_admin = _create_admin(db, email="sole.super@kinderworld.app", role_names=["super_admin"])
-    manager_role = _create_custom_role(db, name="admins_manager", permissions=["admin.admins.manage"])
+    manager_role = _create_custom_role(
+        db, name="admins_manager", permissions=["admin.admins.manage"]
+    )
     manager = _create_admin(db, email="manager.only@kinderworld.app", role_ids=[manager_role.id])
 
     self_disable = client.post(
@@ -415,6 +433,3 @@ def test_admin_failed_login_tracks_security_metadata_and_audit(client: TestClien
     db.refresh(admin)
     assert admin.failed_login_attempts == 0
     assert admin.last_login_at is not None
-
-
-

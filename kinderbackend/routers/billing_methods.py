@@ -1,17 +1,18 @@
-from datetime import datetime
-
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from deps import get_db, get_current_user
-from models import PaymentMethod, User
+from deps import get_current_user, get_db
+from models import User
+from services.subscription_service import subscription_service
 
 router = APIRouter(prefix="/billing", tags=["billing"])
 
 
 class PaymentMethodIn(BaseModel):
-    label: str = Field(..., min_length=2, max_length=100)
+    label: str = Field("Payment method", min_length=2, max_length=100)
+    provider_method_id: str | None = None
+    set_default: bool = False
 
 
 @router.get("/methods")
@@ -19,18 +20,8 @@ def list_methods(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    methods = (
-        db.query(PaymentMethod)
-        .filter(PaymentMethod.user_id == user.id, PaymentMethod.deleted_at.is_(None))
-        .order_by(PaymentMethod.created_at.desc())
-        .all()
-    )
-    return {
-        "methods": [
-            {"id": m.id, "label": m.label, "created_at": m.created_at.isoformat()}
-            for m in methods
-        ]
-    }
+    methods = subscription_service.sync_payment_methods(db=db, user=user)
+    return {"methods": methods}
 
 
 @router.post("/methods")
@@ -39,11 +30,14 @@ def add_method(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    method = PaymentMethod(user_id=user.id, label=payload.label.strip())
-    db.add(method)
-    db.commit()
-    db.refresh(method)
-    return {"method": {"id": method.id, "label": method.label}}
+    method = subscription_service.add_payment_method(
+        db=db,
+        user=user,
+        label=payload.label,
+        provider_method_id=payload.provider_method_id,
+        set_default=payload.set_default,
+    )
+    return {"method": method}
 
 
 @router.delete("/methods/{method_id}")
@@ -52,18 +46,5 @@ def delete_method(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    method = (
-        db.query(PaymentMethod)
-        .filter(
-            PaymentMethod.id == method_id,
-            PaymentMethod.user_id == user.id,
-            PaymentMethod.deleted_at.is_(None),
-        )
-        .first()
-    )
-    if not method:
-        raise HTTPException(status_code=404, detail="Payment method not found")
-    method.deleted_at = datetime.utcnow()
-    db.add(method)
-    db.commit()
+    subscription_service.delete_payment_method(db=db, user=user, method_id=method_id)
     return {"success": True}

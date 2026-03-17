@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -9,10 +8,9 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from admin_deps import require_permission
+from admin_models import AdminUser, AdminUserRole, Permission, Role, RolePermission
 from admin_utils import (
-    build_admin_payload,
     build_pagination_payload,
-    permission_group_name,
     serialize_admin_user,
     serialize_permission,
     serialize_role,
@@ -21,9 +19,8 @@ from admin_utils import (
 from auth import hash_password
 from core.admin_rbac import ROLE_DEFS
 from core.admin_security import require_sensitive_action_confirmation
+from core.time_utils import db_utc_now
 from deps import get_db
-
-from admin_models import AdminUser, AdminUserRole, Permission, Role, RolePermission
 
 router = APIRouter(prefix="/admin", tags=["Admin RBAC"])
 
@@ -203,8 +200,8 @@ def create_admin_user(
         name=(payload.name or "").strip() or None,
         is_active=True,
         token_version=0,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=db_utc_now(),
+        updated_at=db_utc_now(),
     )
     db.add(item)
     db.flush()
@@ -254,7 +251,7 @@ def update_admin_user(
         item.password_hash = hash_password(payload.password)
         item.token_version = (item.token_version or 0) + 1
 
-    item.updated_at = datetime.utcnow()
+    item.updated_at = db_utc_now()
     db.add(item)
     db.flush()
     db.expire_all()
@@ -288,7 +285,7 @@ def disable_admin_user(
     before = serialize_admin_user(item, db)
     item.is_active = False
     item.token_version = (item.token_version or 0) + 1
-    item.updated_at = datetime.utcnow()
+    item.updated_at = db_utc_now()
     db.add(item)
     db.flush()
     db.expire_all()
@@ -318,7 +315,7 @@ def enable_admin_user(
     item = _get_admin_user_or_404(admin_user_id, db)
     before = serialize_admin_user(item, db)
     item.is_active = True
-    item.updated_at = datetime.utcnow()
+    item.updated_at = db_utc_now()
     db.add(item)
     db.flush()
     db.expire_all()
@@ -356,7 +353,7 @@ def assign_admin_role(
     )
     if mapping is None:
         db.add(AdminUserRole(admin_user_id=item.id, role_id=role.id))
-        item.updated_at = datetime.utcnow()
+        item.updated_at = db_utc_now()
         db.add(item)
 
     db.flush()
@@ -402,7 +399,7 @@ def remove_admin_role(
 
     before = serialize_admin_user(item, db)
     db.delete(mapping)
-    item.updated_at = datetime.utcnow()
+    item.updated_at = db_utc_now()
     db.add(item)
     db.flush()
     db.expire_all()
@@ -588,11 +585,7 @@ def update_role_permissions(
     for permission_id in permission_ids:
         _get_permission_or_404(permission_id, db)
 
-    existing = (
-        db.query(RolePermission)
-        .filter(RolePermission.role_id == role.id)
-        .all()
-    )
+    existing = db.query(RolePermission).filter(RolePermission.role_id == role.id).all()
     existing_permission_ids = {item.permission_id for item in existing}
     desired_permission_ids = set(permission_ids)
 

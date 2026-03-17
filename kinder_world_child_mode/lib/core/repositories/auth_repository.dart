@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:kinder_world/core/api/auth_api.dart';
 import 'package:kinder_world/core/models/user.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
@@ -102,16 +103,26 @@ class AuthRepository {
     final accessToken = data['access_token'];
     if (accessToken is String && accessToken.isNotEmpty) {
       await _secureStorage.saveAuthToken(accessToken);
+      if (user.role == UserRoles.parent) {
+        await _secureStorage.saveParentAccessToken(accessToken);
+      }
     }
 
     final refreshToken = data['refresh_token'];
     if (refreshToken is String && refreshToken.isNotEmpty) {
       await _secureStorage.saveRefreshToken(refreshToken);
+      if (user.role == UserRoles.parent) {
+        await _secureStorage.saveParentRefreshToken(refreshToken);
+      }
     }
 
     await _secureStorage.saveUserId(user.id);
     await _secureStorage.saveUserRole(user.role);
     await _secureStorage.saveUserEmail(user.email);
+    if (user.role == UserRoles.parent) {
+      await _secureStorage.saveStoredParentId(user.id);
+      await _secureStorage.saveStoredParentEmail(user.email);
+    }
     await _secureStorage.clearChildSession();
     await _secureStorage.clearParentPinVerification();
 
@@ -787,9 +798,15 @@ class AuthRepository {
   }
 
   // ==================== PREMIUM STATUS ====================
+  // Legacy wrappers kept for compatibility. Premium gating must use backend
+  // subscription snapshot providers instead of these local values.
 
   Future<bool?> getPremiumStatus() async {
     try {
+      if (kReleaseMode) {
+        _logger.w('Blocked local premium status read in release mode.');
+        return null;
+      }
       return await _secureStorage.getIsPremium();
     } catch (e) {
       _logger.e('Error getting premium status: $e');
@@ -799,6 +816,10 @@ class AuthRepository {
 
   Future<bool> savePremiumStatus(bool isPremium) async {
     try {
+      if (kReleaseMode) {
+        _logger.w('Blocked local premium status write in release mode.');
+        return false;
+      }
       return await _secureStorage.saveIsPremium(isPremium);
     } catch (e) {
       _logger.e('Error saving premium status: $e');
@@ -807,9 +828,15 @@ class AuthRepository {
   }
 
   // ==================== PLAN TYPE ====================
+  // Legacy wrappers kept for compatibility. Premium gating must use backend
+  // subscription snapshot providers instead of these local values.
 
   Future<String?> getPlanType() async {
     try {
+      if (kReleaseMode) {
+        _logger.w('Blocked local plan type read in release mode.');
+        return null;
+      }
       return await _secureStorage.getPlanType();
     } catch (e) {
       _logger.e('Error getting plan type: $e');
@@ -819,6 +846,10 @@ class AuthRepository {
 
   Future<bool> savePlanType(String planType) async {
     try {
+      if (kReleaseMode) {
+        _logger.w('Blocked local plan type write in release mode.');
+        return false;
+      }
       return await _secureStorage.savePlanType(planType);
     } catch (e) {
       _logger.e('Error saving plan type: $e');
@@ -838,6 +869,10 @@ class AuthRepository {
       final newToken = data['access_token'];
       if (newToken is String && newToken.isNotEmpty) {
         await _secureStorage.saveAuthToken(newToken);
+        final role = await _secureStorage.getUserRole();
+        if (role == UserRoles.parent) {
+          await _secureStorage.saveParentAccessToken(newToken);
+        }
         return newToken;
       }
 

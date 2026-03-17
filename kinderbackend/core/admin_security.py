@@ -28,4 +28,3 @@ def require_sensitive_action_confirmation(request: Request, *, action: str) -> N
                 },
             },
         )
-

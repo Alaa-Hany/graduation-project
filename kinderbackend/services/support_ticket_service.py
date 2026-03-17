@@ -1,14 +1,18 @@
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Optional
+from typing import TYPE_CHECKING, Protocol
 
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 from sqlalchemy.orm import Session, joinedload
 
 from admin_utils import build_pagination_payload, serialize_support_ticket, write_audit_log
-from models import SupportTicket, SupportTicketMessage
+from core.time_utils import db_utc_now
+from models import SupportTicket, SupportTicketMessage, User
 from notification_service import notify_support_ticket_updated
+from services.premium_behavior_service import premium_behavior_service
+
+if TYPE_CHECKING:
+    from admin_models import AdminUser
 
 SUPPORT_TICKET_CATEGORIES = {
     "login_issue",
@@ -25,17 +29,28 @@ SUPPORT_TICKET_STATUSES = {
 }
 
 
+class SupportTicketCreatePayload(Protocol):
+    subject: str
+    message: str
+    category: str
+    email: str | None
+
+
+class SupportTicketReplyPayload(Protocol):
+    message: str
+
+
+class SupportTicketAssignPayload(Protocol):
+    admin_user_id: int | None
+
+
 class SupportTicketService:
     def ticket_query(self, db: Session):
         return db.query(SupportTicket).options(
             joinedload(SupportTicket.user),
             joinedload(SupportTicket.assigned_admin),
-            joinedload(SupportTicket.thread_messages).joinedload(
-                SupportTicketMessage.admin_user
-            ),
-            joinedload(SupportTicket.thread_messages).joinedload(
-                SupportTicketMessage.user
-            ),
+            joinedload(SupportTicket.thread_messages).joinedload(SupportTicketMessage.admin_user),
+            joinedload(SupportTicket.thread_messages).joinedload(SupportTicketMessage.user),
         )
 
     def normalize_category(self, value: str) -> str:
@@ -104,7 +119,13 @@ class SupportTicketService:
             raise HTTPException(status_code=404, detail="Support ticket not found")
         return ticket
 
-    def create_contact_ticket(self, *, payload, user, db: Session) -> dict:
+    def create_contact_ticket(
+        self,
+        *,
+        payload: SupportTicketCreatePayload,
+        user: User,
+        db: Session,
+    ) -> dict[str, object]:
         subject, message = self.validate_support_text(payload.subject, payload.message)
         category = self.normalize_category(payload.category)
         email = payload.email or user.email
@@ -125,29 +146,38 @@ class SupportTicketService:
             "item": serialize_support_ticket(ticket, include_thread=True),
         }
 
-    def list_user_tickets(self, *, user, db: Session) -> dict:
+    def list_user_tickets(self, *, user: User, db: Session) -> dict[str, object]:
         items = (
             self.ticket_query(db)
             .filter(SupportTicket.user_id == user.id)
-            .order_by(SupportTicket.updated_at.desc(), SupportTicket.created_at.desc())
             .all()
         )
+        ranked = premium_behavior_service.rank_support_tickets(items)
         return {
-            "items": [serialize_support_ticket(ticket) for ticket in items],
+            "items": [serialize_support_ticket(item["ticket"]) for item in ranked],
             "summary": {
-                "total": len(items),
-                "open": sum(1 for ticket in items if ticket.status == "open"),
-                "in_progress": sum(1 for ticket in items if ticket.status == "in_progress"),
-                "resolved": sum(1 for ticket in items if ticket.status == "resolved"),
-                "closed": sum(1 for ticket in items if ticket.status == "closed"),
+                "total": len(ranked),
+                "open": sum(1 for item in ranked if item["ticket"].status == "open"),
+                "in_progress": sum(
+                    1 for item in ranked if item["ticket"].status == "in_progress"
+                ),
+                "resolved": sum(1 for item in ranked if item["ticket"].status == "resolved"),
+                "closed": sum(1 for item in ranked if item["ticket"].status == "closed"),
             },
         }
 
-    def get_user_ticket(self, *, ticket_id: int, user, db: Session) -> dict:
+    def get_user_ticket(self, *, ticket_id: int, user: User, db: Session) -> dict[str, object]:
         ticket = self.get_user_ticket_or_404(ticket_id=ticket_id, user_id=user.id, db=db)
         return {"item": serialize_support_ticket(ticket, include_thread=True)}
 
-    def reply_as_user(self, *, ticket_id: int, payload, user, db: Session) -> dict:
+    def reply_as_user(
+        self,
+        *,
+        ticket_id: int,
+        payload: SupportTicketReplyPayload,
+        user: User,
+        db: Session,
+    ) -> dict[str, object]:
         message = payload.message.strip()
         if len(message) < 3:
             raise HTTPException(
@@ -175,7 +205,7 @@ class SupportTicketService:
         )
         db.add(reply)
         ticket.status = "open" if ticket.status == "resolved" else ticket.status
-        ticket.updated_at = datetime.utcnow()
+        ticket.updated_at = db_utc_now()
         db.add(ticket)
         db.commit()
 
@@ -197,7 +227,7 @@ class SupportTicketService:
         page: int,
         page_size: int,
         db: Session,
-    ) -> dict:
+    ) -> dict[str, object]:
         query = self.ticket_query(db)
         normalized_status = status.strip().lower()
         if normalized_status:
@@ -210,24 +240,28 @@ class SupportTicketService:
                 raise HTTPException(status_code=422, detail="Invalid support category filter")
             query = query.filter(SupportTicket.category == normalized_category)
 
-        total = query.count()
-        items = (
-            query.order_by(SupportTicket.updated_at.desc(), SupportTicket.created_at.desc())
-            .offset((page - 1) * page_size)
-            .limit(page_size)
-            .all()
-        )
+        ranked = premium_behavior_service.rank_support_tickets(query.all())
+        total = len(ranked)
+        window = ranked[(page - 1) * page_size : page * page_size]
         return {
-            "items": [serialize_support_ticket(ticket) for ticket in items],
+            "items": [serialize_support_ticket(item["ticket"]) for item in window],
             "pagination": build_pagination_payload(page=page, page_size=page_size, total=total),
             "filters": {"status": normalized_status, "category": normalized_category},
         }
 
-    def get_admin_ticket(self, *, ticket_id: int, db: Session) -> dict:
+    def get_admin_ticket(self, *, ticket_id: int, db: Session) -> dict[str, object]:
         ticket = self.get_ticket_or_404(ticket_id=ticket_id, db=db)
         return {"item": serialize_support_ticket(ticket, include_thread=True)}
 
-    def reply_as_admin(self, *, ticket_id: int, payload, request, admin, db: Session) -> dict:
+    def reply_as_admin(
+        self,
+        *,
+        ticket_id: int,
+        payload: SupportTicketReplyPayload,
+        request: Request,
+        admin: AdminUser,
+        db: Session,
+    ) -> dict[str, object]:
         message = payload.message.strip()
         if not message:
             raise HTTPException(status_code=400, detail="Reply message is required")
@@ -244,7 +278,7 @@ class SupportTicketService:
         )
         db.add(reply)
         ticket.status = "in_progress"
-        ticket.updated_at = datetime.utcnow()
+        ticket.updated_at = db_utc_now()
         db.add(ticket)
         db.flush()
         notify_support_ticket_updated(
@@ -271,7 +305,14 @@ class SupportTicketService:
             "item": serialize_support_ticket(refreshed_ticket, include_thread=True),
         }
 
-    def resolve_as_admin(self, *, ticket_id: int, request, admin, db: Session) -> dict:
+    def resolve_as_admin(
+        self,
+        *,
+        ticket_id: int,
+        request: Request,
+        admin: AdminUser,
+        db: Session,
+    ) -> dict[str, object]:
         ticket = self.get_ticket_or_404(ticket_id=ticket_id, db=db)
         if ticket.status == "closed":
             raise HTTPException(status_code=400, detail="Closed tickets cannot be resolved")
@@ -279,7 +320,7 @@ class SupportTicketService:
 
         ticket.status = "resolved"
         ticket.closed_at = None
-        ticket.updated_at = datetime.utcnow()
+        ticket.updated_at = db_utc_now()
         db.add(ticket)
         db.flush()
         notify_support_ticket_updated(
@@ -306,14 +347,21 @@ class SupportTicketService:
             "item": serialize_support_ticket(refreshed_ticket, include_thread=True),
         }
 
-    def close_as_admin(self, *, ticket_id: int, request, admin, db: Session) -> dict:
+    def close_as_admin(
+        self,
+        *,
+        ticket_id: int,
+        request: Request,
+        admin: AdminUser,
+        db: Session,
+    ) -> dict[str, object]:
         ticket = self.get_ticket_or_404(ticket_id=ticket_id, db=db)
         if ticket.status == "closed":
             raise HTTPException(status_code=400, detail="Ticket is already closed")
         before = serialize_support_ticket(ticket, include_thread=True)
 
         ticket.status = "closed"
-        ticket.closed_at = datetime.utcnow()
+        ticket.closed_at = db_utc_now()
         ticket.updated_at = ticket.closed_at
         db.add(ticket)
         db.flush()
@@ -345,11 +393,11 @@ class SupportTicketService:
         self,
         *,
         ticket_id: int,
-        payload,
-        request,
-        admin,
+        payload: SupportTicketAssignPayload,
+        request: Request,
+        admin: AdminUser,
         db: Session,
-    ) -> dict:
+    ) -> dict[str, object]:
         from admin_models import AdminUser
 
         ticket = self.get_ticket_or_404(ticket_id=ticket_id, db=db)
@@ -365,7 +413,7 @@ class SupportTicketService:
         ticket.assigned_admin_id = assigned_admin.id
         if ticket.status == "open":
             ticket.status = "in_progress"
-        ticket.updated_at = datetime.utcnow()
+        ticket.updated_at = db_utc_now()
         db.add(ticket)
         db.flush()
         notify_support_ticket_updated(
@@ -394,4 +442,3 @@ class SupportTicketService:
 
 
 support_ticket_service = SupportTicketService()
-

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -11,6 +11,8 @@ from deps import get_db
 from services.support_ticket_service import support_ticket_service
 
 router = APIRouter(prefix="/admin/support/tickets", tags=["Admin Support"])
+
+
 class SupportReplyRequest(BaseModel):
     message: str
 

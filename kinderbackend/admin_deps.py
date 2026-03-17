@@ -12,16 +12,17 @@ Usage in routers:
     def endpoint(admin = Depends(require_permission("admin.users.view"))):
         ...
 """
+
 import logging
 from typing import Set
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError
 from sqlalchemy.orm import Session
 
-from auth import decode_token
 from admin_auth import ADMIN_TOKEN_TYPE
+from auth import decode_token
 from deps import get_db
 
 logger = logging.getLogger(__name__)
@@ -130,8 +131,10 @@ def require_admin():
         def dashboard(admin = Depends(require_admin())):
             ...
     """
+
     def _check(admin=Depends(get_current_admin)):
         return admin
+
     return _check
 
 
@@ -140,7 +143,7 @@ def _get_admin_permissions(admin_id: int, db: Session) -> Set[str]:
     Return the full set of permission names granted to an admin via their roles.
     Results are NOT cached — suitable for per-request RBAC checks.
     """
-    from admin_models import AdminUserRole, Role, RolePermission, Permission
+    from admin_models import AdminUserRole, Permission, Role, RolePermission
 
     rows = (
         db.query(Permission.name)
@@ -167,6 +170,7 @@ def require_permission(permission_name: str):
         401 — if not authenticated as admin
         403 — if authenticated but missing the required permission
     """
+
     def _check(
         admin=Depends(get_current_admin),
         db: Session = Depends(get_db),
@@ -175,7 +179,9 @@ def require_permission(permission_name: str):
         if permission_name not in permissions:
             logger.warning(
                 "Admin %s (id=%s) denied — missing permission '%s'",
-                admin.email, admin.id, permission_name,
+                admin.email,
+                admin.id,
+                permission_name,
             )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -186,4 +192,28 @@ def require_permission(permission_name: str):
                 },
             )
         return admin
+
     return _check
+
+
+def ensure_permission(*, admin, db: Session, permission_name: str) -> None:
+    """
+    Runtime permission check for conditional admin actions.
+    Mirrors require_permission() behavior without FastAPI dependency wiring.
+    """
+    permissions = _get_admin_permissions(admin.id, db)
+    if permission_name not in permissions:
+        logger.warning(
+            "Admin %s (id=%s) denied - missing permission '%s'",
+            admin.email,
+            admin.id,
+            permission_name,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "PERMISSION_DENIED",
+                "message": f"Permission '{permission_name}' is required",
+                "required_permission": permission_name,
+            },
+        )

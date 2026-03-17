@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
-import 'package:kinder_world/app.dart';
+import 'package:kinder_world/core/services/content_service.dart';
 import 'package:kinder_world/router.dart';
 
 class ParentAboutScreen extends ConsumerStatefulWidget {
@@ -25,18 +25,7 @@ class _ParentAboutScreenState extends ConsumerState<ParentAboutScreen> {
   }
 
   Future<String> _fetchAbout() async {
-    try {
-      final response =
-          await ref.read(networkServiceProvider).get<Map<String, dynamic>>(
-                '/content/about',
-              );
-      final data = response.data;
-      if (data != null && data['body'] != null) {
-        return data['body'].toString();
-      }
-    } catch (_) {}
-    // fallback text is resolved in build via l10n.aboutFallbackText
-    return '';
+    return ref.read(contentServiceProvider).getAbout();
   }
 
   void _openLegal(String type) {

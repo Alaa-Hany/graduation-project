@@ -4,7 +4,6 @@ import 'package:kinder_world/core/api/api_providers.dart';
 import 'package:kinder_world/core/models/user.dart';
 import 'package:kinder_world/core/repositories/auth_repository.dart';
 import 'package:kinder_world/core/services/auth_service.dart';
-import 'package:kinder_world/core/subscription/plan_info.dart';
 import 'package:kinder_world/app.dart';
 import 'package:logger/logger.dart';
 
@@ -393,37 +392,6 @@ class AuthController extends StateNotifier<AuthState> {
     } catch (e) {
       _logger.e('Error validating token: $e');
       return false;
-    }
-  }
-
-  Future<void> setPremiumStatus(bool isPremium) async {
-    await _authRepository.savePremiumStatus(isPremium);
-    final existingPlanType = await _authRepository.getPlanType();
-    if (!(isPremium && existingPlanType == 'family_plus')) {
-      await _authRepository.savePlanType(isPremium ? 'premium' : 'free');
-    }
-    final user = state.user;
-    if (user == null) return;
-    state = state.copyWith(
-      user: user.copyWith(
-        subscriptionStatus:
-            isPremium ? SubscriptionStatus.active : SubscriptionStatus.expired,
-      ),
-    );
-  }
-
-  Future<void> applyPlanSelection(PlanTier tier) async {
-    switch (tier) {
-      case PlanTier.free:
-        await setPremiumStatus(false);
-        break;
-      case PlanTier.premium:
-        await setPremiumStatus(true);
-        break;
-      case PlanTier.familyPlus:
-        await _authRepository.savePlanType('family_plus');
-        await setPremiumStatus(true);
-        break;
     }
   }
 }

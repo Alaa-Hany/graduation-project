@@ -1,5 +1,6 @@
 import 'package:kinder_world/core/api/subscription_api.dart';
 import 'package:kinder_world/core/cache/app_cache_store.dart';
+import 'package:kinder_world/core/models/payment_method_record.dart';
 import 'package:kinder_world/core/subscription/plan_info.dart';
 import 'package:logger/logger.dart';
 
@@ -18,29 +19,14 @@ class SubscriptionService {
 
   static const _scope = 'subscription';
   static const _subscriptionKey = 'current';
+  static const _historyKey = 'history';
   static const _plansKey = 'plans';
+  static const _paymentMethodsKey = 'payment_methods';
   static const _staleAfter = Duration(minutes: 10);
-
-  Future<bool> activateSubscription(PlanTier tier) async {
-    if (tier != PlanTier.free) {
-      _logger.w(
-        'Blocked activation for paid tier $tier because payment is not configured.',
-      );
-      return false;
-    }
-    try {
-      final response = await _subscriptionApi.selectPlan(
-        planType: _planTypeForTier(tier),
-      );
-      return response.isNotEmpty;
-    } catch (e) {
-      _logger.e('Error activating subscription: $e');
-      return false;
-    }
-  }
 
   Future<Map<String, dynamic>?> getSubscription({
     bool forceRefresh = false,
+    bool allowCachedOnError = false,
   }) async {
     final snapshot = _cacheStore.snapshot(
       scope: _scope,
@@ -64,10 +50,55 @@ class SubscriptionService {
       return data;
     } catch (e) {
       _logger.e('Error fetching subscription: $e');
-      if (snapshot.hasData) {
+      if (allowCachedOnError && snapshot.hasData) {
         return _cacheStore.readMap(
           scope: _scope,
           key: _subscriptionKey,
+        );
+      }
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>> refreshSubscription() async {
+    await _invalidateSubscriptionCache();
+    final data = await getSubscription(forceRefresh: true, allowCachedOnError: false);
+    if (data == null) {
+      throw StateError('Subscription snapshot is unavailable');
+    }
+    return data;
+  }
+
+  Future<Map<String, dynamic>?> getSubscriptionHistory({
+    bool forceRefresh = false,
+    bool allowCachedOnError = false,
+  }) async {
+    final snapshot = _cacheStore.snapshot(
+      scope: _scope,
+      key: _historyKey,
+      staleAfter: _staleAfter,
+    );
+    if (!forceRefresh && snapshot.hasData && !snapshot.isStale) {
+      return _cacheStore.readMap(
+        scope: _scope,
+        key: _historyKey,
+      );
+    }
+
+    try {
+      final data = await _subscriptionApi.getSubscriptionHistory();
+      await _cacheStore.storeMap(
+        scope: _scope,
+        key: _historyKey,
+        payload: data,
+      );
+      return data;
+    } catch (e) {
+      _logger.e('Error fetching subscription history: $e');
+      if (allowCachedOnError && snapshot.hasData) {
+        return _cacheStore.readMap(
+          scope: _scope,
+          key: _historyKey,
         );
       }
       return null;
@@ -109,14 +140,133 @@ class SubscriptionService {
     return [];
   }
 
-  Future<bool> openBillingPortal() async {
+  Future<String> openBillingPortal() async {
     try {
-      await _subscriptionApi.openBillingPortal();
-      return true;
+      final response = await _subscriptionApi.manageSubscription();
+      final url = response['url'] ??
+          response['portal_url'] ??
+          response['billing_portal_url'];
+      if (url is! String || url.isEmpty) {
+        throw StateError('Billing portal URL missing');
+      }
+      return url;
     } catch (e) {
       _logger.e('Error opening billing portal: $e');
-      return false;
+      rethrow;
+    } finally {
+      await _invalidateSubscriptionCache();
     }
+  }
+
+  Future<Map<String, dynamic>> selectPlan(PlanTier tier) async {
+    final response = await _subscriptionApi.selectPlan(
+      planType: _planTypeForTier(tier),
+    );
+    await _invalidateSubscriptionCache();
+    return response;
+  }
+
+  Future<Map<String, dynamic>> activatePlan(
+    PlanTier tier, {
+    String? sessionId,
+  }) async {
+    final response = await _subscriptionApi.activatePlan(
+      planType: _planTypeForTier(tier),
+      sessionId: sessionId,
+    );
+    await _invalidateSubscriptionCache();
+    return response;
+  }
+
+  Future<Map<String, dynamic>> cancelCurrentSubscription() async {
+    final response = await _subscriptionApi.cancelSubscription();
+    await _invalidateSubscriptionCache();
+    return response;
+  }
+
+  Future<String> manageCurrentSubscription() => openBillingPortal();
+
+  Future<CheckoutSession> startCheckout(PlanTier tier) async {
+    final response = await _subscriptionApi.createCheckoutSession(
+      planType: _planTypeForTier(tier),
+    );
+    final url = response['checkout_url'] ?? response['url'];
+    if (url is! String || url.isEmpty) {
+      throw StateError('Missing checkout_url from backend');
+    }
+    return CheckoutSession(
+      checkoutUrl: url,
+      sessionId: response['session_id']?.toString(),
+      provider: response['provider']?.toString() ?? 'internal',
+      planId: response['plan_id']?.toString(),
+    );
+  }
+
+  Future<List<PaymentMethodRecord>> listPaymentMethods({
+    bool forceRefresh = false,
+  }) async {
+    final snapshot = _cacheStore.snapshot(
+      scope: _scope,
+      key: _paymentMethodsKey,
+      staleAfter: _staleAfter,
+    );
+
+    if (!forceRefresh && snapshot.hasData && !snapshot.isStale) {
+      return _cacheStore
+          .readList(scope: _scope, key: _paymentMethodsKey)
+          .map((item) => PaymentMethodRecord.fromJson(
+                Map<String, dynamic>.from(item as Map),
+              ))
+          .toList();
+    }
+
+    try {
+      final data = await _subscriptionApi.getPaymentMethods();
+      await _cacheStore.storeList(
+        scope: _scope,
+        key: _paymentMethodsKey,
+        payload: data,
+      );
+      return data
+          .map((item) => PaymentMethodRecord.fromJson(item))
+          .toList();
+    } catch (e) {
+      _logger.e('Error fetching payment methods: $e');
+      if (snapshot.hasData) {
+        return _cacheStore
+            .readList(scope: _scope, key: _paymentMethodsKey)
+            .map((item) => PaymentMethodRecord.fromJson(
+                  Map<String, dynamic>.from(item as Map),
+                ))
+            .toList();
+      }
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> addPaymentMethod({
+    String? label,
+    String? providerMethodId,
+    bool setDefault = false,
+  }) async {
+    final response = await _subscriptionApi.addPaymentMethod(
+      label: label,
+      providerMethodId: providerMethodId,
+      setDefault: setDefault,
+    );
+    await _cacheStore.invalidate(scope: _scope, key: _paymentMethodsKey);
+    return response;
+  }
+
+  Future<void> deletePaymentMethod(int methodId) async {
+    await _subscriptionApi.deletePaymentMethod(methodId);
+    await _cacheStore.invalidate(scope: _scope, key: _paymentMethodsKey);
+  }
+
+  Future<void> _invalidateSubscriptionCache() async {
+    await _cacheStore.invalidate(scope: _scope, key: _subscriptionKey);
+    await _cacheStore.invalidate(scope: _scope, key: _historyKey);
+    await _cacheStore.invalidate(scope: _scope, key: _paymentMethodsKey);
   }
 
   String _planTypeForTier(PlanTier tier) {
@@ -129,4 +279,18 @@ class SubscriptionService {
         return 'free';
     }
   }
+}
+
+class CheckoutSession {
+  const CheckoutSession({
+    required this.checkoutUrl,
+    this.sessionId,
+    this.provider,
+    this.planId,
+  });
+
+  final String checkoutUrl;
+  final String? sessionId;
+  final String? provider;
+  final String? planId;
 }

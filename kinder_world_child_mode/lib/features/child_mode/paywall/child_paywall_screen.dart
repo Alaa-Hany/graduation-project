@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
-import 'package:kinder_world/core/providers/auth_controller.dart';
 import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/features/child_mode/paywall/payment_methods_screen.dart';
 
@@ -21,9 +20,12 @@ class _ChildPaywallScreenState extends ConsumerState<ChildPaywallScreen> {
     setState(() {
       _isProcessing = true;
     });
-    await ref.read(authControllerProvider.notifier).setPremiumStatus(true);
-    if (!mounted) return;
-    Navigator.of(context).pop(true);
+    _openPaymentMethods();
+    if (mounted) {
+      setState(() {
+        _isProcessing = false;
+      });
+    }
   }
 
   void _openPaymentMethods() {

@@ -1,9 +1,16 @@
 from datetime import datetime, timedelta, timezone
 
 import admin_models  # noqa: F401
-
 from auth import hash_password
-from models import ChildActivityEvent, ChildProfile, ChildSessionLog, Notification, PaymentMethod, SupportTicket, User
+from models import (
+    ChildActivityEvent,
+    ChildProfile,
+    ChildSessionLog,
+    Notification,
+    PaymentMethod,
+    SupportTicket,
+    User,
+)
 from plan_service import PLAN_FREE, PLAN_PREMIUM
 
 
@@ -154,6 +161,12 @@ def test_reports_with_recorded_analytics_data(client, db, auth_headers):
             "lesson_id": "lesson_math_01",
             "activity_name": "Numbers",
             "occurred_at": (start + timedelta(minutes=10)).isoformat().replace("+00:00", "Z"),
+            "duration_seconds": 1200,
+            "metadata_json": {
+                "score": 95,
+                "content_type": "lessons",
+                "completion_status": "completed",
+            },
         },
         headers=auth_headers(parent),
     )
@@ -190,7 +203,10 @@ def test_reports_with_recorded_analytics_data(client, db, auth_headers):
     assert basic_payload["data_availability"]["activities"] is True
     assert basic_payload["data_availability"]["lessons"] is True
     assert basic_payload["summary"]["screen_time_minutes_7d"] >= 20
+    assert basic_payload["summary"]["activities_completed_7d"] == 1
     assert basic_payload["summary"]["lessons_completed_7d"] >= 1
+    assert basic_payload["summary"]["average_score"] == 95.0
+    assert basic_payload["recent_sessions"][0]["title"] == "Numbers"
 
     advanced = client.get("/reports/advanced", headers=auth_headers(parent))
     assert advanced.status_code == 200
@@ -201,9 +217,72 @@ def test_reports_with_recorded_analytics_data(client, db, auth_headers):
     assert reports["achievements"]["total_unlocked"] >= 1
     assert len(reports["mood_trends"]) >= 1
     assert len(reports["child_summaries"]) == 1
+    assert reports["average_score"] == 95.0
+    assert reports["child_summaries"][0]["activities_completed_7d"] == 1
+    assert reports["recent_sessions"][0]["title"] == "Numbers"
+    assert reports["mood_counts"]["excited"] == 1
 
     assert db.query(ChildSessionLog).count() == 1
     assert db.query(ChildActivityEvent).count() == 3
 
 
+def test_reports_can_be_filtered_to_single_child(client, db, auth_headers):
+    parent = _create_parent(db, email="reports-filter@example.com", plan=PLAN_PREMIUM)
+    first_child = ChildProfile(
+        parent_id=parent.id,
+        name="Nour",
+        picture_password=["cat", "dog", "apple"],
+        age=8,
+        avatar="av1",
+        is_active=True,
+    )
+    second_child = ChildProfile(
+        parent_id=parent.id,
+        name="Youssef",
+        picture_password=["sun", "moon", "star"],
+        age=9,
+        avatar="av2",
+        is_active=True,
+    )
+    db.add_all([first_child, second_child])
+    db.commit()
+    db.refresh(first_child)
+    db.refresh(second_child)
 
+    now = datetime.now(timezone.utc).replace(microsecond=0)
+    client.post(
+        "/analytics/events",
+        json={
+            "child_id": first_child.id,
+            "event_type": "activity_completed",
+            "activity_name": "Shapes",
+            "occurred_at": now.isoformat().replace("+00:00", "Z"),
+            "metadata_json": {"score": 88, "content_type": "activities"},
+        },
+        headers=auth_headers(parent),
+    )
+    client.post(
+        "/analytics/events",
+        json={
+            "child_id": second_child.id,
+            "event_type": "activity_completed",
+            "activity_name": "Colors",
+            "occurred_at": now.isoformat().replace("+00:00", "Z"),
+            "metadata_json": {"score": 72, "content_type": "activities"},
+        },
+        headers=auth_headers(parent),
+    )
+
+    response = client.get(
+        "/reports/basic",
+        params={"child_id": first_child.id, "days": 7},
+        headers=auth_headers(parent),
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["selected_child_id"] == first_child.id
+    assert len(payload["children"]) == 1
+    assert payload["children"][0]["id"] == first_child.id
+    assert payload["summary"]["child_count"] == 1
+    assert payload["summary"]["average_score"] == 88.0

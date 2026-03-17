@@ -168,6 +168,15 @@ class AdminManagementRepository {
     return Map<String, dynamic>.from(response.data as Map);
   }
 
+  Future<Map<String, dynamic>> fetchChildAiBuddySummary(int childId) async {
+    final response = await _network.get(
+      '/admin/children/$childId/ai-buddy-summary',
+      options: await _adminOptions(),
+    );
+    final body = Map<String, dynamic>.from(response.data as Map);
+    return Map<String, dynamic>.from(body['item'] as Map? ?? const {});
+  }
+
   Future<AdminChildRecord> updateChild(
     int childId, {
     required String name,

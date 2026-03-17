@@ -1,12 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
+import 'package:kinder_world/core/models/faq_item.dart';
 import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/services/content_service.dart';
 import 'package:kinder_world/router.dart';
 
-class HelpSupportScreen extends StatelessWidget {
+class HelpSupportScreen extends ConsumerStatefulWidget {
   const HelpSupportScreen({super.key});
+
+  @override
+  ConsumerState<HelpSupportScreen> createState() => _HelpSupportScreenState();
+}
+
+class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
+  late Future<List<FaqItem>> _faqFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _faqFuture = ref.read(contentServiceProvider).getFaq();
+  }
+
+  List<FaqItem> _fallbackFaqs(AppLocalizations l10n) {
+    return [
+      FaqItem(id: '1', question: l10n.helpFaqQ1, answer: l10n.helpFaqA1),
+      FaqItem(id: '2', question: l10n.helpFaqQ2, answer: l10n.helpFaqA2),
+      FaqItem(id: '3', question: l10n.helpFaqQ3, answer: l10n.helpFaqA3),
+      FaqItem(id: '4', question: l10n.helpFaqQ4, answer: l10n.helpFaqA4),
+      FaqItem(id: '5', question: l10n.helpFaqQ5, answer: l10n.helpFaqA5),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -98,34 +124,24 @@ class HelpSupportScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-
-              _FAQItem(
-                question: AppLocalizations.of(context)!.helpFaqQ1,
-                answer: AppLocalizations.of(context)!.helpFaqA1,
-              ),
-              const SizedBox(height: 12),
-
-              _FAQItem(
-                question: AppLocalizations.of(context)!.helpFaqQ2,
-                answer: AppLocalizations.of(context)!.helpFaqA2,
-              ),
-              const SizedBox(height: 12),
-
-              _FAQItem(
-                question: AppLocalizations.of(context)!.helpFaqQ3,
-                answer: AppLocalizations.of(context)!.helpFaqA3,
-              ),
-              const SizedBox(height: 12),
-
-              _FAQItem(
-                question: AppLocalizations.of(context)!.helpFaqQ4,
-                answer: AppLocalizations.of(context)!.helpFaqA4,
-              ),
-              const SizedBox(height: 12),
-
-              _FAQItem(
-                question: AppLocalizations.of(context)!.helpFaqQ5,
-                answer: AppLocalizations.of(context)!.helpFaqA5,
+              FutureBuilder<List<FaqItem>>(
+                future: _faqFuture,
+                builder: (context, snapshot) {
+                  final items = snapshot.data?.isNotEmpty == true
+                      ? snapshot.data!
+                      : _fallbackFaqs(AppLocalizations.of(context)!);
+                  return Column(
+                    children: [
+                      for (var index = 0; index < items.length; index++) ...[
+                        _FAQItem(
+                          question: items[index].question,
+                          answer: items[index].answer,
+                        ),
+                        if (index != items.length - 1) const SizedBox(height: 12),
+                      ],
+                    ],
+                  );
+                },
               ),
 
               const SizedBox(height: 32),

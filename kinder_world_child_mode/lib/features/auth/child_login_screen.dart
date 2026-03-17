@@ -606,7 +606,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                             const SizedBox(width: 12),
                             DropdownButton<int>(
                               value: age,
-                              hint: Text('-'),
+                              hint: Text(l10n.placeholderDash),
                               items: List.generate(8, (i) => i + 5)
                                   .map(
                                     (value) => DropdownMenuItem(

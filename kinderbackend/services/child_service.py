@@ -5,13 +5,13 @@ from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from fastapi import HTTPException
 from jose import JWTError
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from auth import create_token, decode_token
-from core.errors import bad_request, forbidden, http_error, not_found, unauthorized, unprocessable
+from core.errors import forbidden, http_error, not_found, unauthorized, unprocessable
+from core.time_utils import db_utc_now, utc_now
 from core.validators import (
     normalize_email,
     resolve_child_age,
@@ -184,9 +184,7 @@ class ChildService:
     ) -> User:
         if parent_email:
             normalized_email = normalize_email(parent_email)
-            parent = (
-                db.query(User).filter(func.lower(User.email) == normalized_email).first()
-            )
+            parent = db.query(User).filter(func.lower(User.email) == normalized_email).first()
             if not parent:
                 raise not_found("Parent not found")
             return parent
@@ -313,7 +311,7 @@ class ChildService:
         if child.parent_id != parent.id:
             raise forbidden("Forbidden")
 
-        child.deleted_at = datetime.utcnow()
+        child.deleted_at = db_utc_now()
         child.is_active = False
         db.add(child)
         db.commit()
@@ -350,7 +348,7 @@ class ChildService:
         if payload.avatar is not None:
             child.avatar = payload.avatar
 
-        child.updated_at = datetime.utcnow()
+        child.updated_at = db_utc_now()
         db.add(child)
         db.commit()
         db.refresh(child)
@@ -390,7 +388,7 @@ class ChildService:
 
     def _build_child_session(self, *, child: ChildProfile, device_id: str | None) -> dict:
         ttl_minutes = self._session_ttl_minutes()
-        expires_at = datetime.utcnow() + timedelta(minutes=ttl_minutes)
+        expires_at = utc_now() + timedelta(minutes=ttl_minutes)
         token = create_token(
             str(child.id),
             minutes=ttl_minutes,
@@ -403,7 +401,7 @@ class ChildService:
         )
         return {
             "session_token": token,
-            "session_expires_at": expires_at.isoformat() + "Z",
+            "session_expires_at": expires_at.isoformat(),
             "session_ttl_minutes": ttl_minutes,
         }
 
@@ -560,7 +558,7 @@ class ChildService:
         validate_picture_password_length(payload.new_picture_password, length=3)
 
         child.picture_password = payload.new_picture_password
-        child.updated_at = datetime.utcnow()
+        child.updated_at = db_utc_now()
         db.add(child)
         db.commit()
         db.refresh(child)

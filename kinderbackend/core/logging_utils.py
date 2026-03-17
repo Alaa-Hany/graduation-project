@@ -26,10 +26,7 @@ def configure_logging(settings: Settings) -> None:
         handler.addFilter(request_filter)
         handler.setFormatter(
             logging.Formatter(
-                fmt=(
-                    "%(asctime)s %(levelname)s %(name)s "
-                    "request_id=%(request_id)s %(message)s"
-                )
+                fmt=("%(asctime)s %(levelname)s %(name)s " "request_id=%(request_id)s %(message)s")
             )
         )
 

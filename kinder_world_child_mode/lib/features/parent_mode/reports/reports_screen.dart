@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/app.dart';
+import 'package:kinder_world/core/models/ai_buddy_models.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
+import 'package:kinder_world/core/providers/ai_buddy_provider.dart';
 import 'package:kinder_world/core/providers/gamification_provider.dart';
 import 'package:kinder_world/core/providers/plan_provider.dart';
 import 'package:kinder_world/core/services/children_cache_service.dart';
@@ -15,7 +17,6 @@ import 'package:kinder_world/core/widgets/avatar_view.dart';
 import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/core/widgets/plan_status_banner.dart';
 import 'package:kinder_world/core/widgets/premium_section_upsell.dart';
-import 'package:kinder_world/features/parent_mode/reports/mood_report_section.dart';
 import 'package:kinder_world/features/parent_mode/reports/report_models.dart';
 import 'package:kinder_world/features/parent_mode/reports/report_service.dart';
 import 'package:kinder_world/router.dart';
@@ -37,9 +38,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   ChildProfile? _selectedChild;
   Future<List<ChildProfile>>? _childrenFuture;
   Future<ChildReportData>? _reportFuture;
+  Future<AiBuddyVisibilitySummary>? _aiBuddyFuture;
   bool _isResolvingParent = true;
   String? _reportKey;
+  String? _aiBuddyKey;
   final Map<String, ChildReportData> _reportCache = <String, ChildReportData>{};
+  final Map<String, AiBuddyVisibilitySummary> _aiBuddyCache =
+      <String, AiBuddyVisibilitySummary>{};
 
   @override
   void initState() {
@@ -48,16 +53,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   }
 
   void _resolveParentContext() {
-    final secureStorage = ref.read(secureStorageProvider);
-    final cachedParentId =
-        secureStorage.hasCachedUserId ? secureStorage.cachedUserId : null;
-    if (cachedParentId != null && cachedParentId.isNotEmpty) {
-      _childrenFuture = _loadChildrenForParent(cachedParentId);
-      _isResolvingParent = false;
-      return;
-    }
-
     Future<void>(() async {
+      final secureStorage = ref.read(secureStorageProvider);
       final parentId = await secureStorage.getParentId();
       if (!mounted) return;
       setState(() {
@@ -119,6 +116,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       _selectedChild = child;
       _reportFuture = null;
       _reportKey = null;
+      _aiBuddyFuture = null;
+      _aiBuddyKey = null;
     });
   }
 
@@ -129,6 +128,28 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       _reportFuture = null;
       _reportKey = null;
     });
+  }
+
+  Future<AiBuddyVisibilitySummary> _aiBuddyFutureFor(ChildProfile child) {
+    final key = child.id;
+    if (_aiBuddyKey == key && _aiBuddyFuture != null) {
+      return _aiBuddyFuture!;
+    }
+    final cached = _aiBuddyCache[key];
+    if (cached != null) {
+      _aiBuddyKey = key;
+      _aiBuddyFuture = Future<AiBuddyVisibilitySummary>.value(cached);
+      return _aiBuddyFuture!;
+    }
+    _aiBuddyKey = key;
+    _aiBuddyFuture = ref
+        .read(aiBuddyServiceProvider)
+        .getChildVisibilitySummary(childId: int.tryParse(child.id) ?? 0)
+        .then((value) {
+      _aiBuddyCache[key] = value;
+      return value;
+    });
+    return _aiBuddyFuture!;
   }
 
   void _showChildSelection(List<ChildProfile> children) {
@@ -328,15 +349,30 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                 const SizedBox(height: 16),
                                 _buildProgressCard(context, report),
                                 const SizedBox(height: 16),
-                                _buildGamificationSnapshot(
-                                    context, selectedChild.id),
-                                const SizedBox(height: 16),
-                                MoodReportSection(childId: selectedChild.id),
-                                const SizedBox(height: 16),
                                 _buildDailyTrendCard(context, report),
                                 const SizedBox(height: 16),
                                 _buildRecentSessionsCard(context, report),
                                 const SizedBox(height: 16),
+                                FutureBuilder<AiBuddyVisibilitySummary>(
+                                  future: _aiBuddyFutureFor(selectedChild),
+                                  builder: (context, aiSnapshot) {
+                                    if (aiSnapshot.connectionState ==
+                                            ConnectionState.waiting &&
+                                        aiSnapshot.data == null) {
+                                      return const SizedBox.shrink();
+                                    }
+                                    final aiSummary = aiSnapshot.data;
+                                    if (aiSummary == null) {
+                                      return const SizedBox.shrink();
+                                    }
+                                    return Column(
+                                      children: [
+                                        _buildAiBuddyCard(context, aiSummary),
+                                        const SizedBox(height: 16),
+                                      ],
+                                    );
+                                  },
+                                ),
                                 if (plan.hasAdvancedReports) ...[
                                   _buildAdvancedInsightsCard(context, report),
                                   const SizedBox(height: 16),
@@ -359,6 +395,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildGamificationSnapshot(BuildContext context, String childId) {
     final l10n = AppLocalizations.of(context)!;
     final gamState = ref.watch(childGamificationStateProvider(childId));
@@ -441,7 +478,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                               style: const TextStyle(fontSize: 14)),
                           const SizedBox(width: 4),
                           Text(
-                            _badgeName(b.nameKey),
+                            l10n.badgeName(b.nameKey),
                             style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -472,7 +509,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              _achievementName(a.titleKey),
+                              l10n.achievementTitle(a.titleKey),
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 13,
@@ -488,7 +525,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: Text(
-                              '+${a.xpReward} XP',
+                              l10n.gamificationXpReward(a.xpReward),
                               style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w800,
@@ -516,36 +553,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
         );
       },
     );
-  }
-
-  String _badgeName(String key) {
-    const names = {
-      'badgeFirstSteps': 'First Steps',
-      'badgeExplorer': 'Explorer',
-      'badgeStreakStar': 'Streak Star',
-      'badgeActivityChamp': 'Activity Champ',
-      'badgeLevelUp': 'Level Up',
-      'badgePerfectionist': 'Perfectionist',
-    };
-    return names[key] ?? key;
-  }
-
-  String _achievementName(String key) {
-    const names = {
-      'achievementFirstLessonTitle': 'First Lesson',
-      'achievementFirstActivityTitle': 'First Activity',
-      'achievementStreak3Title': '3-Day Streak',
-      'achievementStreak7Title': 'Week Warrior',
-      'achievementStreak30Title': 'Monthly Master',
-      'achievementActivities10Title': 'Activity Pro',
-      'achievementActivities50Title': 'Activity Legend',
-      'achievementLevel5Title': 'Level 5 Hero',
-      'achievementXP1000Title': '1,000 XP',
-      'achievementPerfectScoreTitle': 'Perfect Score',
-      'achievementExplorerTitle': 'Explorer',
-      'achievementFirstBadgeTitle': 'First Badge',
-    };
-    return names[key] ?? key;
   }
 
   Widget _buildPeriodSelector(BuildContext context) {
@@ -588,13 +595,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              isRecorded
+              child: Text(
+                isRecorded
                   ? l10n.recordedSessionsNotice
-                  : l10n.profileFallbackNotice,
-              style: TextStyle(
-                color: colors.onSurface,
-                fontWeight: FontWeight.w600,
+                  : l10n.noRecordedActivityYet,
+                style: TextStyle(
+                  color: colors.onSurface,
+                  fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -662,16 +669,17 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
             runSpacing: 12,
             children: [
               _MetaPill(
-                icon: Icons.trending_up_rounded,
-                label: '${l10n.level} ${report.child.level}',
+                icon: Icons.task_alt_rounded,
+                label: '${report.totalActivitiesCompleted} ${l10n.activities}',
               ),
               _MetaPill(
-                icon: Icons.local_fire_department_rounded,
-                label: '${report.child.streak} ${l10n.daysAgo}',
+                icon: Icons.menu_book_rounded,
+                label:
+                    '${report.totalLessonsCompleted} ${l10n.lessonsCompletedLabel}',
               ),
               _MetaPill(
-                icon: Icons.emoji_events_rounded,
-                label: '${report.child.xp} ${l10n.xp}',
+                icon: Icons.history_rounded,
+                label: '${report.totalSessions} ${l10n.recentActivities}',
               ),
               _MetaPill(
                 icon: Icons.check_circle_rounded,
@@ -681,7 +689,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
           ),
           const SizedBox(height: 16),
           LinearProgressIndicator(
-            value: report.child.xpProgress,
+            value: report.completionRate.clamp(0.0, 1.0),
             minHeight: 10,
             borderRadius: BorderRadius.circular(999),
           ),
@@ -820,6 +828,104 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     );
   }
 
+  Widget _buildAiBuddyCard(
+    BuildContext context,
+    AiBuddyVisibilitySummary summary,
+  ) {
+    final l10n = AppLocalizations.of(context)!;
+    final colors = Theme.of(context).colorScheme;
+    final provider = summary.provider;
+    final isFallback = !provider.configured || provider.status == 'fallback';
+    return ParentCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ParentSectionHeader(
+            title: l10n.aiBuddy,
+            subtitle: l10n.safety,
+          ),
+          if (isFallback) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: colors.tertiaryContainer.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: colors.tertiary.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline_rounded, size: 18, color: colors.tertiary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      provider.reason ?? l10n.aiBuddyFallbackSummary,
+                      style: TextStyle(color: colors.onTertiaryContainer, height: 1.3),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          Text(
+            summary.parentSummary,
+            style: TextStyle(color: colors.onSurfaceVariant),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _MetaPill(
+                icon: Icons.analytics_outlined,
+                label:
+                    '${summary.usageMetrics.sessionsCount} ${l10n.analyticsTitle}',
+              ),
+              _MetaPill(
+                icon: Icons.message_outlined,
+                label:
+                    '${summary.usageMetrics.messagesCount} ${l10n.recentActivities}',
+              ),
+              _MetaPill(
+                icon: Icons.shield_outlined,
+                label:
+                    '${summary.usageMetrics.refusalCount + summary.usageMetrics.safeRedirectCount} ${l10n.safety}',
+              ),
+              _MetaPill(
+                icon: Icons.schedule_rounded,
+                label:
+                    '${summary.retentionPolicy.messagesRetainedDays}d ${l10n.activityReports}',
+              ),
+            ],
+          ),
+          if (summary.recentFlags.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            ...summary.recentFlags.map(
+              (flag) => ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(
+                  flag.classification == 'needs_refusal'
+                      ? Icons.block_rounded
+                      : Icons.shield_outlined,
+                  color: flag.classification == 'needs_refusal'
+                      ? colors.error
+                      : colors.tertiary,
+                ),
+                title: Text(flag.topic ?? l10n.notAvailable),
+                subtitle: Text(flag.reason ?? l10n.notAvailable),
+                trailing: Text(_formatTimestamp(flag.occurredAt)),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildAdvancedInsightsCard(
       BuildContext context, ChildReportData report) {
     final l10n = AppLocalizations.of(context)!;
@@ -881,6 +987,16 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
         ],
       ),
     );
+  }
+
+  String _formatTimestamp(DateTime? value) {
+    if (value == null) return '—';
+    final local = value.toLocal();
+    final month = local.month.toString().padLeft(2, '0');
+    final day = local.day.toString().padLeft(2, '0');
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    return '${local.year}-$month-$day $hour:$minute';
   }
 
   String _contentTypeLabel(AppLocalizations l10n, String? type) {

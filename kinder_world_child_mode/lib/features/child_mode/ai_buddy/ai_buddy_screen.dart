@@ -1,37 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/models/ai_buddy_models.dart';
+import 'package:kinder_world/core/providers/ai_buddy_provider.dart';
+import 'package:kinder_world/core/providers/child_session_controller.dart';
+import 'package:kinder_world/core/services/ai_buddy_service.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
 
-class ChatMessage {
-  final String text;
-  final bool isUser;
-  final bool isTyping;
-  final DateTime timestamp;
-
-  const ChatMessage({
-    required this.text,
-    required this.isUser,
-    this.isTyping = false,
-    required this.timestamp,
-  });
-}
-
 class _QuickAction {
-  final String title;
-  final String emoji;
-  final Color color;
-  final String action;
-
   const _QuickAction({
     required this.title,
-    required this.emoji,
     required this.color,
+    required this.icon,
     required this.action,
   });
+
+  final String title;
+  final Color color;
+  final IconData icon;
+  final String action;
 }
 
 class AiBuddyScreen extends ConsumerStatefulWidget {
@@ -47,65 +38,14 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
   late final Animation<double> _pulseScale;
   late final Animation<double> _pulseGlow;
 
-  late List<ChatMessage> _messages;
-  bool _messagesInitialized = false;
-
   final TextEditingController _textCtrl = TextEditingController();
   final ScrollController _scrollCtrl = ScrollController();
-  bool _isVoiceMode = false;
 
-  List<_QuickAction> _getQuickActions(
-        BuildContext context,
-        AppLocalizations l10n,
-      ) =>
-      [
-        _QuickAction(
-          title: l10n.recommendLesson,
-          emoji: '📚',
-          color: context.childTheme.learning,
-          action: 'recommend_lesson',
-        ),
-        _QuickAction(
-          title: l10n.suggestGame,
-          emoji: '🎮',
-          color: context.childTheme.skill,
-          action: 'suggest_game',
-        ),
-        _QuickAction(
-          title: l10n.tellStory,
-          emoji: '📖',
-          color: context.childTheme.kindness,
-          action: 'tell_story',
-        ),
-        _QuickAction(
-          title: l10n.funFact,
-          emoji: '🧠',
-          color: context.childTheme.fun,
-          action: 'fun_fact',
-        ),
-        _QuickAction(
-          title: l10n.motivation,
-          emoji: '⭐',
-          color: context.childTheme.streak,
-          action: 'motivation',
-        ),
-      ];
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_messagesInitialized) {
-      final l10n = AppLocalizations.of(context)!;
-      _messages = [
-        ChatMessage(
-          text: l10n.aiWelcomeGreeting,
-          isUser: false,
-          timestamp: DateTime.now(),
-        ),
-      ];
-      _messagesInitialized = true;
-    }
-  }
+  AiBuddyConversation? _conversation;
+  bool _isLoading = true;
+  bool _isSending = false;
+  String? _error;
+  String? _unavailable;
 
   @override
   void initState() {
@@ -121,6 +61,10 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
     _pulseGlow = Tween<double>(begin: 0.3, end: 0.7).animate(
       CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
     );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadConversation();
+    });
   }
 
   @override
@@ -131,110 +75,179 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
     super.dispose();
   }
 
+  List<_QuickAction> _getQuickActions(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) {
+    final theme = context.childTheme;
+    return [
+      _QuickAction(
+        title: l10n.recommendLesson,
+        color: theme.learning,
+        icon: Icons.menu_book_rounded,
+        action: 'recommend_lesson',
+      ),
+      _QuickAction(
+        title: l10n.suggestGame,
+        color: theme.skill,
+        icon: Icons.games_rounded,
+        action: 'suggest_game',
+      ),
+      _QuickAction(
+        title: l10n.tellStory,
+        color: theme.kindness,
+        icon: Icons.auto_stories_rounded,
+        action: 'tell_story',
+      ),
+      _QuickAction(
+        title: l10n.funFact,
+        color: theme.fun,
+        icon: Icons.lightbulb_rounded,
+        action: 'fun_fact',
+      ),
+      _QuickAction(
+        title: l10n.motivation,
+        color: theme.streak,
+        icon: Icons.favorite_rounded,
+        action: 'motivation',
+      ),
+    ];
+  }
+
+  Future<void> _loadConversation({bool forceNew = false}) async {
+    final childId = int.tryParse(ref.read(currentChildIdProvider) ?? '');
+    if (childId == null) {
+      setState(() {
+        _isLoading = false;
+        _error = null;
+        _unavailable = AppLocalizations.of(context)!.aiBuddyNoActiveChildSession;
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _error = null;
+      _unavailable = null;
+    });
+
+    try {
+      final service = ref.read(aiBuddyServiceProvider);
+      final conversation = forceNew
+          ? await service.startSession(childId: childId, forceNew: true)
+          : await service.getOrStartCurrentSession(childId: childId);
+      if (!mounted) return;
+      setState(() {
+        _conversation = conversation;
+        _isLoading = false;
+      });
+      _scrollToBottom();
+    } on AiBuddyUnavailableException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _conversation = null;
+        _isLoading = false;
+        _unavailable = e.message;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _conversation = null;
+        _isLoading = false;
+        _error = e.toString();
+      });
+    }
+  }
+
+  Future<void> _sendMessage({
+    String? contentOverride,
+    String? quickAction,
+  }) async {
+    if (_isSending) return;
+    final childId = int.tryParse(ref.read(currentChildIdProvider) ?? '');
+    if (childId == null) {
+      setState(() {
+        _unavailable = AppLocalizations.of(context)!.aiBuddyNoActiveChildSession;
+      });
+      return;
+    }
+
+    final content = (contentOverride ?? _textCtrl.text).trim();
+    if (content.isEmpty) return;
+
+    var session = _conversation?.session;
+    if (session == null) {
+      await _loadConversation();
+      session = _conversation?.session;
+      if (session == null) {
+        return;
+      }
+    }
+
+    if (contentOverride == null) {
+      _textCtrl.clear();
+    }
+
+    setState(() {
+      _isSending = true;
+      _error = null;
+    });
+
+    try {
+      final result = await ref.read(aiBuddyServiceProvider).sendMessage(
+            sessionId: session.id,
+            childId: childId,
+            content: content,
+            quickAction: quickAction,
+            clientMessageId:
+                '${childId}_${DateTime.now().millisecondsSinceEpoch}',
+          );
+      if (!mounted) return;
+      final existingMessages = List<AiBuddyMessage>.from(
+        _conversation?.messages ?? const [],
+      );
+      existingMessages
+        ..add(result.userMessage)
+        ..add(result.assistantMessage);
+      setState(() {
+        _conversation = AiBuddyConversation(
+          session: result.session,
+          messages: existingMessages,
+          provider: result.provider,
+        );
+        _isSending = false;
+      });
+      _scrollToBottom();
+    } on AiBuddyUnavailableException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isSending = false;
+        _unavailable = e.message;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isSending = false;
+        _error = e.toString();
+      });
+    }
+  }
+
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollCtrl.hasClients) {
         _scrollCtrl.animateTo(
           _scrollCtrl.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 250),
           curve: Curves.easeOut,
         );
       }
     });
   }
 
-  void _sendMessage() {
-    final text = _textCtrl.text.trim();
-    if (text.isEmpty) return;
-
-    setState(() {
-      _messages.add(
-        ChatMessage(
-          text: text,
-          isUser: true,
-          timestamp: DateTime.now(),
-        ),
-      );
-      _textCtrl.clear();
-    });
-    _scrollToBottom();
-    _simulateResponse(text);
-  }
-
-  void _simulateResponse(String userMessage) {
-    setState(() {
-      _messages.add(
-        ChatMessage(
-          text: '...',
-          isUser: false,
-          isTyping: true,
-          timestamp: DateTime.now(),
-        ),
-      );
-    });
-    _scrollToBottom();
-
-    Future.delayed(const Duration(milliseconds: 1800), () {
-      if (!mounted) return;
-      setState(() {
-        _messages.removeWhere((m) => m.isTyping);
-        _messages.add(
-          ChatMessage(
-            text: _generateResponse(userMessage),
-            isUser: false,
-            timestamp: DateTime.now(),
-          ),
-        );
-      });
-      _scrollToBottom();
-    });
-  }
-
-  String _generateResponse(String message) {
-    final l10n = AppLocalizations.of(context)!;
-    final lower = message.toLowerCase();
-
-    if (lower.contains('math') || lower.contains('رياض')) {
-      return l10n.aiMathResponse;
-    }
-    if (lower.contains('story') || lower.contains('قص')) {
-      return l10n.aiStoryResponse;
-    }
-    if (lower.contains('game') || lower.contains('لعب')) {
-      return l10n.aiGameResponse;
-    }
-    if (lower.contains('sad') ||
-        lower.contains('upset') ||
-        lower.contains('حزين') ||
-        lower.contains('زعلان')) {
-      return l10n.aiSadResponse;
-    }
-    if (lower.contains('tired') || lower.contains('تعب')) {
-      return l10n.aiTiredResponse;
-    }
-    return l10n.aiDefaultResponse;
-  }
-
-  void _handleQuickAction(String action) {
-    final l10n = AppLocalizations.of(context)!;
-    final responses = {
-      'recommend_lesson': l10n.aiQuickActionLessonResponse,
-      'suggest_game': l10n.aiQuickActionGameResponse,
-      'tell_story': l10n.aiQuickActionStoryResponse,
-      'fun_fact': l10n.aiQuickActionFactResponse,
-      'motivation': l10n.aiQuickActionMotivationResponse,
-    };
-
-    setState(() {
-      _messages.add(
-        ChatMessage(
-          text: responses[action] ?? l10n.aiQuickActionFallbackResponse,
-          isUser: false,
-          timestamp: DateTime.now(),
-        ),
-      );
-    });
-    _scrollToBottom();
+  String _formatTime(DateTime? value) {
+    if (value == null) return '';
+    return DateFormat('h:mm a').format(value);
   }
 
   @override
@@ -249,8 +262,12 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
           children: [
             _buildHeader(colors, l10n),
             _buildQuickActions(context, colors, l10n),
+            if (_conversation?.provider != null &&
+                (!_conversation!.provider.configured ||
+                    _conversation!.provider.status != 'ready'))
+              _buildProviderBanner(colors, _conversation!.provider, l10n),
             const Divider(height: 1),
-            Expanded(child: _buildChatList(colors)),
+            Expanded(child: _buildBody(colors, l10n)),
             _buildInputBar(colors, l10n),
           ],
         ),
@@ -261,6 +278,24 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
   Widget _buildHeader(ColorScheme colors, AppLocalizations l10n) {
     final childTheme = context.childTheme;
     final textTheme = Theme.of(context).textTheme;
+    final child = ref.watch(currentChildProvider);
+    final provider = _conversation?.provider;
+    final isFallback =
+        provider != null && (!provider.configured || provider.status == 'fallback');
+    final isUnavailable = provider != null && provider.status == 'unavailable';
+    final statusText = provider == null
+        ? l10n.aiBuddyOnline
+        : isUnavailable
+            ? l10n.aiBuddyStatusUnavailable
+            : isFallback
+                ? l10n.aiBuddyStatusFallbackOnly
+                : l10n.aiBuddyOnline;
+    final statusColor = isUnavailable
+        ? colors.error
+        : isFallback
+            ? colors.tertiary
+            : childTheme.success;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
@@ -286,7 +321,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
             children: [
               AnimatedBuilder(
                 animation: _pulseCtrl,
-                builder: (context, child) => Transform.scale(
+                builder: (context, childWidget) => Transform.scale(
                   scale: _pulseScale.value,
                   child: Container(
                     width: 64,
@@ -303,15 +338,15 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: childTheme.buddyStart
-                              .withValues(alpha: _pulseGlow.value),
+                          color:
+                              childTheme.buddyStart.withValues(alpha: _pulseGlow.value),
                           blurRadius: 20,
                           spreadRadius: 4,
                         ),
                       ],
                     ),
                     child: const Center(
-                      child: Text('🤖', style: TextStyle(fontSize: 28)),
+                      child: Icon(Icons.smart_toy_rounded, size: 30, color: Colors.white),
                     ),
                   ),
                 ),
@@ -339,25 +374,20 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: childTheme.success
-                                .withValues(alpha: 0.12),
+                            color: statusColor.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                Icons.circle,
-                                size: 7,
-                                color: childTheme.success,
-                              ),
+                              Icon(Icons.circle, size: 7, color: statusColor),
                               const SizedBox(width: 4),
                               Text(
-                                l10n.aiBuddyOnline,
+                                statusText,
                                 style: textTheme.labelSmall?.copyWith(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: childTheme.success,
+                                  color: statusColor,
                                 ),
                               ),
                             ],
@@ -367,7 +397,13 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      l10n.aiCompanionSubtitle,
+                      child == null
+                          ? (isFallback
+                              ? l10n.aiBuddyFallbackSubtitle
+                              : l10n.aiCompanionSubtitle)
+                          : (isFallback
+                              ? l10n.aiBuddyFallbackSubtitleFor(child.name)
+                              : l10n.aiCompanionSubtitleWithName(child.name)),
                       style: textTheme.bodySmall?.copyWith(
                         fontSize: 13,
                         color: colors.onSurfaceVariant,
@@ -407,66 +443,272 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
           scrollDirection: Axis.horizontal,
           itemCount: actions.length,
           separatorBuilder: (_, __) => const SizedBox(width: 10),
-          itemBuilder: (_, i) => _buildQuickActionCard(actions[i]),
+          itemBuilder: (_, i) => InkWell(
+            onTap: _isLoading || _isSending || _unavailable != null
+                ? null
+                : () => _sendMessage(
+                      contentOverride: actions[i].title,
+                      quickAction: actions[i].action,
+                    ),
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              width: 90,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: actions[i].color.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: actions[i].color.withValues(alpha: 0.25),
+                  width: 1.2,
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(actions[i].icon, color: actions[i].color, size: 24),
+                  const SizedBox(height: 5),
+                  Text(
+                    actions[i].title,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: actions[i].color,
+                      height: 1.2,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildQuickActionCard(_QuickAction action) {
-    return InkWell(
-      onTap: () => _handleQuickAction(action.action),
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        width: 90,
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: action.color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: action.color.withValues(alpha: 0.25),
-            width: 1.2,
+  Widget _buildProviderBanner(
+    ColorScheme colors,
+    AiBuddyProviderStatus provider,
+    AppLocalizations l10n,
+  ) {
+    final isFallback = !provider.configured || provider.status == 'fallback';
+    final isUnavailable = provider.status == 'unavailable';
+    final title = isUnavailable
+        ? l10n.aiBuddyBannerUnavailableTitle
+        : isFallback
+            ? l10n.aiBuddyBannerFallbackTitle
+            : l10n.aiBuddyBannerOnlineTitle;
+    final description = provider.reason ??
+        (isFallback
+            ? l10n.aiBuddyBannerFallbackDescription
+            : l10n.aiBuddyBannerOnlineDescription);
+    final bannerColor = isUnavailable
+        ? colors.errorContainer
+        : colors.tertiaryContainer.withValues(alpha: 0.6);
+    final bannerIconColor = isUnavailable ? colors.error : colors.tertiary;
+    final bannerTextColor =
+        isUnavailable ? colors.onErrorContainer : colors.onTertiaryContainer;
+
+    return Container(
+      width: double.infinity,
+      color: bannerColor,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline_rounded, size: 18, color: bannerIconColor),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              '$title. $description',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: bannerTextColor,
+                    height: 1.35,
+                  ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBody(ColorScheme colors, AppLocalizations l10n) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_unavailable != null) {
+      return _StateCard(
+        icon: Icons.cloud_off_rounded,
+        title: l10n.aiBuddyUnavailableTitle,
+        subtitle: _unavailable!,
+        buttonLabel: l10n.retry,
+        onPressed: _loadConversation,
+      );
+    }
+    if (_error != null) {
+      return _StateCard(
+        icon: Icons.error_outline_rounded,
+        title: l10n.error,
+        subtitle: _error!,
+        buttonLabel: l10n.retry,
+        onPressed: _loadConversation,
+      );
+    }
+
+    final conversation = _conversation;
+    if (conversation == null || !conversation.hasSession) {
+      return _StateCard(
+        icon: Icons.chat_bubble_outline_rounded,
+        title: l10n.aiBuddyNoConversationTitle,
+        subtitle: l10n.aiBuddyNoConversationSubtitle,
+        buttonLabel: l10n.aiBuddyStartSessionAction,
+        onPressed: () => _loadConversation(forceNew: true),
+      );
+    }
+
+    if (conversation.messages.isEmpty) {
+      return _StateCard(
+        icon: Icons.mark_chat_read_outlined,
+        title: l10n.aiBuddyNoMessagesTitle,
+        subtitle: l10n.aiBuddyNoMessagesSubtitle,
+        buttonLabel: l10n.aiBuddyRefreshAction,
+        onPressed: _loadConversation,
+      );
+    }
+
+    return ListView.builder(
+      controller: _scrollCtrl,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      itemCount: conversation.messages.length + (_isSending ? 1 : 0),
+      itemBuilder: (_, i) {
+        if (_isSending && i == conversation.messages.length) {
+          return _TypingBubble(colors: colors);
+        }
+        final message = conversation.messages[i];
+        return message.isUser
+            ? _UserBubble(
+                colors: colors,
+                text: message.content,
+                timeLabel: _formatTime(message.createdAt),
+              )
+            : _BuddyBubble(
+                colors: colors,
+                text: message.content,
+                timeLabel: _formatTime(message.createdAt),
+              );
+      },
+    );
+  }
+
+  Widget _buildInputBar(ColorScheme colors, AppLocalizations l10n) {
+    final childTheme = context.childTheme;
+    final disabled = _isLoading || _isSending || _unavailable != null;
+    final provider = _conversation?.provider;
+    final isFallback =
+        provider != null && (!provider.configured || provider.status == 'fallback');
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border(
+          top: BorderSide(
+            color: colors.outlineVariant.withValues(alpha: 0.5),
+            width: 1,
           ),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
           children: [
-            Text(action.emoji, style: const TextStyle(fontSize: 22)),
-            const SizedBox(height: 5),
-            Text(
-              action.title,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: action.color,
-                height: 1.2,
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
+                  color: colors.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                child: TextField(
+                  controller: _textCtrl,
+                  decoration: InputDecoration(
+                    hintText: disabled
+                        ? l10n.aiBuddyUnavailableHint
+                        : isFallback
+                            ? l10n.aiBuddySafeModeHint
+                            : l10n.askKinderAnything,
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 11),
+                  ),
+                  style: TextStyle(
+                    fontSize: AppConstants.fontSize,
+                    color: colors.onSurface,
+                  ),
+                  onSubmitted: (_) => _sendMessage(),
+                  enabled: !disabled,
+                  minLines: 1,
+                  maxLines: 4,
+                ),
               ),
-              textAlign: TextAlign.center,
-              maxLines: 2,
+            ),
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: disabled ? null : _sendMessage,
+              borderRadius: BorderRadius.circular(22),
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: disabled
+                        ? [
+                            colors.surfaceContainerHighest,
+                            colors.surfaceContainerHighest,
+                          ]
+                        : [childTheme.buddyStart, childTheme.buddyEnd],
+                  ),
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: disabled
+                      ? const []
+                      : [
+                          BoxShadow(
+                            color: childTheme.buddyStart.withValues(alpha: 0.35),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                ),
+                child: Icon(
+                  Icons.send_rounded,
+                  color: disabled
+                      ? colors.onSurfaceVariant
+                      : childTheme.buddyStart.onColor,
+                  size: 20,
+                ),
+              ),
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildChatList(ColorScheme colors) {
-    return ListView.builder(
-      controller: _scrollCtrl,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      itemCount: _messages.length,
-      itemBuilder: (_, i) => _buildMessageRow(_messages[i], colors),
-    );
-  }
+class _BuddyBubble extends StatelessWidget {
+  const _BuddyBubble({
+    required this.colors,
+    required this.text,
+    required this.timeLabel,
+  });
 
-  Widget _buildMessageRow(ChatMessage msg, ColorScheme colors) {
-    if (msg.isUser) {
-      return _buildUserBubble(msg, colors);
-    }
-    return _buildBuddyBubble(msg, colors);
-  }
+  final ColorScheme colors;
+  final String text;
+  final String timeLabel;
 
-  Widget _buildBuddyBubble(ChatMessage msg, ColorScheme colors) {
+  @override
+  Widget build(BuildContext context) {
     final childTheme = context.childTheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -484,7 +726,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
               shape: BoxShape.circle,
             ),
             child: const Center(
-              child: Text('🤖', style: TextStyle(fontSize: 14)),
+              child: Icon(Icons.smart_toy_rounded, size: 16, color: Colors.white),
             ),
           ),
           Flexible(
@@ -501,32 +743,98 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
                   bottomRight: Radius.circular(18),
                   bottomLeft: Radius.circular(4),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: colors.shadow.withValues(alpha: 0.06),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    text,
+                    style: TextStyle(
+                      fontSize: AppConstants.fontSize,
+                      color: colors.onSurface,
+                      height: 1.4,
+                    ),
                   ),
+                  if (timeLabel.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      timeLabel,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
+                    ),
+                  ],
                 ],
               ),
-              child: msg.isTyping
-                  ? const TypingDotsIndicator()
-                  : Text(
-                      msg.text,
-                      style: TextStyle(
-                        fontSize: AppConstants.fontSize,
-                        color: colors.onSurface,
-                        height: 1.4,
-                      ),
-                    ),
             ),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildUserBubble(ChatMessage msg, ColorScheme colors) {
+class _TypingBubble extends StatelessWidget {
+  const _TypingBubble({required this.colors});
+
+  final ColorScheme colors;
+
+  @override
+  Widget build(BuildContext context) {
+    final childTheme = context.childTheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            margin: const EdgeInsetsDirectional.only(end: 8),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [childTheme.buddyStart, childTheme.buddyEnd],
+              ),
+              shape: BoxShape.circle,
+            ),
+            child: const Center(
+              child: Icon(Icons.smart_toy_rounded, size: 16, color: Colors.white),
+            ),
+          ),
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: colors.surfaceContainerHighest,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(18),
+                  topRight: Radius.circular(18),
+                  bottomRight: Radius.circular(18),
+                  bottomLeft: Radius.circular(4),
+                ),
+              ),
+              child: const TypingDotsIndicator(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UserBubble extends StatelessWidget {
+  const _UserBubble({
+    required this.colors,
+    required this.text,
+    required this.timeLabel,
+  });
+
+  final ColorScheme colors;
+  final String text;
+  final String timeLabel;
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Row(
@@ -553,21 +861,28 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
                   bottomLeft: Radius.circular(18),
                   bottomRight: Radius.circular(4),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: colors.primary.withValues(alpha: 0.25),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
               ),
-              child: Text(
-                msg.text,
-                style: TextStyle(
-                  fontSize: AppConstants.fontSize,
-                  color: colors.onPrimary,
-                  height: 1.4,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    text,
+                    style: TextStyle(
+                      fontSize: AppConstants.fontSize,
+                      color: colors.onPrimary,
+                      height: 1.4,
+                    ),
+                  ),
+                  if (timeLabel.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      timeLabel,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: colors.onPrimary.withValues(alpha: 0.8),
+                          ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ),
@@ -575,102 +890,63 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
       ),
     );
   }
+}
 
-  Widget _buildInputBar(ColorScheme colors, AppLocalizations l10n) {
-    final childTheme = context.childTheme;
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        border: Border(
-          top: BorderSide(
-            color: colors.outlineVariant.withValues(alpha: 0.5),
-            width: 1,
+class _StateCard extends StatelessWidget {
+  const _StateCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.buttonLabel,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String buttonLabel;
+  final Future<void> Function() onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: colors.outlineVariant),
           ),
-        ),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Row(
-          children: [
-            InkWell(
-              onTap: () => setState(() => _isVoiceMode = !_isVoiceMode),
-              borderRadius: BorderRadius.circular(14),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: _isVoiceMode
-                      ? childTheme.buddyStart.withValues(alpha: 0.15)
-                      : colors.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(
-                  _isVoiceMode ? Icons.mic_rounded : Icons.mic_none_rounded,
-                  size: 22,
-                  color: _isVoiceMode
-                      ? childTheme.buddyStart
-                      : colors.onSurfaceVariant,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                decoration: BoxDecoration(
-                  color: colors.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(22),
-                ),
-                child: TextField(
-                  controller: _textCtrl,
-                  decoration: InputDecoration(
-                    hintText: _isVoiceMode
-                        ? l10n.tapMicToSpeak
-                        : l10n.askKinderAnything,
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 11),
-                  ),
-                  style: TextStyle(
-                    fontSize: AppConstants.fontSize,
-                    color: colors.onSurface,
-                  ),
-                  onSubmitted: (_) => _sendMessage(),
-                  enabled: !_isVoiceMode,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            InkWell(
-              onTap: _sendMessage,
-              borderRadius: BorderRadius.circular(22),
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [childTheme.buddyStart, childTheme.buddyEnd],
-                  ),
-                  borderRadius: BorderRadius.circular(22),
-                  boxShadow: [
-                    BoxShadow(
-                      color: childTheme.buddyStart.withValues(alpha: 0.35),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 30, color: colors.primary),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
                     ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.send_rounded,
-                  color: childTheme.buddyStart.onColor,
-                  size: 20,
-                ),
+                textAlign: TextAlign.center,
               ),
-            ),
-          ],
+              const SizedBox(height: 6),
+              Text(
+                subtitle,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              FilledButton(
+                onPressed: () => onPressed(),
+                child: Text(buttonLabel),
+              ),
+            ],
+          ),
         ),
       ),
     );

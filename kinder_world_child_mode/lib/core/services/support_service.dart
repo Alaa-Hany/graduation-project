@@ -113,15 +113,16 @@ class SupportService {
 
   Future<List<Map<String, dynamic>>> getFaq() async {
     try {
-      final response = await _networkService.get<List<dynamic>>(
-        '/support/faq',
+      final response = await _networkService.get<Map<String, dynamic>>(
+        '/content/help-faq',
       );
 
-      if (response.data == null) {
+      final rawItems = response.data?['items'];
+      if (rawItems is! List) {
         return [];
       }
 
-      return (response.data as List)
+      return rawItems
           .map<Map<String, dynamic>>(
             (e) => e is Map<String, dynamic> ? e : {},
           )

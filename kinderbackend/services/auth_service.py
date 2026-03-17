@@ -1,5 +1,5 @@
-﻿import logging
-from datetime import datetime, timedelta
+import logging
+from datetime import timedelta
 from typing import Any
 
 from fastapi import HTTPException
@@ -9,22 +9,20 @@ from sqlalchemy.orm import Session
 
 from auth import (
     create_access_token,
-    decode_token,
     create_refresh_token,
+    decode_token,
     hash_password,
     verify_password,
 )
-from core.validators import (
-    normalize_email,
-    validate_email_domain,
-    validate_password_policy as core_validate_password_policy,
-    validate_pin_format,
-)
 from core.system_settings import require_registration_enabled
+from core.time_utils import db_utc_now, ensure_utc, utc_now
+from core.validators import normalize_email, validate_email_domain
+from core.validators import validate_password_policy as core_validate_password_policy
+from core.validators import validate_pin_format
 from models import SupportTicket, User
 from plan_service import PLAN_FREE
-from serializers import user_to_json
 from schemas.auth import LoginIn, RefreshIn, RegisterIn
+from serializers import user_to_json
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +43,7 @@ class AuthService:
         if db.query(User).filter(func.lower(User.email) == normalized_email).first():
             raise HTTPException(status_code=400, detail="Email already registered")
 
-        now = datetime.utcnow()
+        now = db_utc_now()
         user = User(
             email=normalized_email,
             password_hash=hash_password(payload.password),
@@ -74,7 +72,7 @@ class AuthService:
         if not user or not verify_password(payload.password, user.password_hash):
             raise HTTPException(status_code=401, detail="Invalid credentials")
 
-        user.updated_at = datetime.utcnow()
+        user.updated_at = db_utc_now()
         db.add(user)
         db.commit()
         db.refresh(user)
@@ -205,11 +203,11 @@ class AuthService:
         locked_until = getattr(user, "parent_pin_locked_until", None)
         if locked_until is None:
             return None
-        return locked_until.isoformat()
+        return ensure_utc(locked_until).isoformat()
 
     def _is_parent_pin_locked(self, user: User) -> bool:
         locked_until = getattr(user, "parent_pin_locked_until", None)
-        return locked_until is not None and locked_until > datetime.utcnow()
+        return locked_until is not None and ensure_utc(locked_until) > utc_now()
 
     @staticmethod
     def _reset_parent_pin_failures(user: User) -> None:
@@ -220,7 +218,7 @@ class AuthService:
         failed_attempts = int(getattr(user, "parent_pin_failed_attempts", 0) or 0) + 1
         user.parent_pin_failed_attempts = failed_attempts
         if failed_attempts >= PARENT_PIN_MAX_ATTEMPTS:
-            user.parent_pin_locked_until = datetime.utcnow() + timedelta(
+            user.parent_pin_locked_until = db_utc_now() + timedelta(
                 minutes=PARENT_PIN_LOCKOUT_MINUTES
             )
             return self._locked_until_iso(user)
@@ -248,7 +246,7 @@ class AuthService:
 
         try:
             user.parent_pin_hash = hash_password(payload.pin)
-            user.parent_pin_updated_at = datetime.utcnow()
+            user.parent_pin_updated_at = db_utc_now()
             self._reset_parent_pin_failures(user)
             db.add(user)
             db.commit()
@@ -336,7 +334,7 @@ class AuthService:
 
         try:
             user.parent_pin_hash = hash_password(payload.new_pin)
-            user.parent_pin_updated_at = datetime.utcnow()
+            user.parent_pin_updated_at = db_utc_now()
             self._reset_parent_pin_failures(user)
             db.add(user)
             db.commit()

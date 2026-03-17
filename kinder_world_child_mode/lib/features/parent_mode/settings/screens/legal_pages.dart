@@ -50,7 +50,7 @@ class ParentCoppaScreen extends StatelessWidget {
   }
 }
 
-class _ParentLegalPage extends ConsumerWidget {
+class _ParentLegalPage extends ConsumerStatefulWidget {
   final String title;
   final String endpoint;
   final String placeholder;
@@ -64,10 +64,36 @@ class _ParentLegalPage extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ParentLegalPage> createState() => _ParentLegalPageState();
+}
+
+class _ParentLegalPageState extends ConsumerState<_ParentLegalPage> {
+  Future<Map<String, dynamic>>? _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _loadContent();
+  }
+
+  Future<Map<String, dynamic>> _loadContent() {
+    return ref
+        .read(networkServiceProvider)
+        .get<Map<String, dynamic>>(widget.endpoint)
+        .then((value) => value.data ?? {});
+  }
+
+  void _refresh() {
+    setState(() {
+      _future = _loadContent();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final config = style.config(context, AppLocalizations.of(context)!);
+    final config = widget.style.config(context, AppLocalizations.of(context)!);
 
     return Scaffold(
       backgroundColor: config.baseBackground,
@@ -75,7 +101,7 @@ class _ParentLegalPage extends ConsumerWidget {
         backgroundColor: config.baseBackground,
         elevation: 0,
         title: Text(
-          title,
+          widget.title,
           style: textTheme.titleMedium?.copyWith(
             fontSize: AppConstants.fontSize,
             fontWeight: FontWeight.bold,
@@ -84,21 +110,26 @@ class _ParentLegalPage extends ConsumerWidget {
         actions: [
           IconButton(
             icon: Icon(Icons.refresh, color: colors.onSurface),
-            onPressed: () {},
+            onPressed: _refresh,
           ),
         ],
       ),
       body: SafeArea(
         child: FutureBuilder<Map<String, dynamic>>(
-          future: ref
-              .read(networkServiceProvider)
-              .get<Map<String, dynamic>>(endpoint)
-              .then((value) => value.data ?? {}),
+          future: _future,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
-            final body = snapshot.data?['body']?.toString();
+            if (snapshot.hasError) {
+              return _EmptyState(
+                message: AppLocalizations.of(context)!.connectionError,
+                accent: config.accent,
+                textColor: colors.onSurfaceVariant,
+              );
+            }
+            final body = (snapshot.data?['body'] ?? snapshot.data?['content'])
+                ?.toString();
             return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
               child: Column(
@@ -118,7 +149,7 @@ class _ParentLegalPage extends ConsumerWidget {
                     accent: config.accent,
                     child: body == null || body.isEmpty
                         ? _EmptyState(
-                            message: placeholder,
+                            message: widget.placeholder,
                             accent: config.accent,
                             textColor: colors.onSurfaceVariant,
                           )

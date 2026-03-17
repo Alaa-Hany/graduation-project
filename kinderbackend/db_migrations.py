@@ -3,13 +3,13 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
+from sqlalchemy import inspect
+from sqlalchemy.engine import Engine
+
 from alembic import command
 from alembic.config import Config
 from alembic.runtime.migration import MigrationContext
 from alembic.script import ScriptDirectory
-from sqlalchemy import inspect
-from sqlalchemy.engine import Engine
-
 from database import BASE_DIR, DATABASE_URL, Base
 
 
@@ -46,7 +46,9 @@ def _is_legacy_schema_without_alembic_version(engine: Engine) -> bool:
     return len(expected_tables.intersection(table_names)) > 0
 
 
-def verify_database_schema(engine: Engine, logger: logging.Logger, *, auto_upgrade: bool = False) -> None:
+def verify_database_schema(
+    engine: Engine, logger: logging.Logger, *, auto_upgrade: bool = False
+) -> None:
     config = _build_alembic_config()
     expected_heads = _script_heads(config)
     current_heads = _db_heads(engine)

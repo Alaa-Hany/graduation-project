@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends, Request
@@ -11,6 +10,7 @@ from admin_deps import require_permission
 from admin_utils import serialize_system_setting, write_audit_log
 from core.admin_security import require_sensitive_action_confirmation
 from core.system_settings import DEFAULT_SYSTEM_SETTINGS, ensure_default_settings
+from core.time_utils import db_utc_now
 from deps import get_db
 from models import SystemSetting
 
@@ -76,7 +76,7 @@ def update_admin_settings(
         item = existing[key]
         item.value_json = value
         item.updated_by = admin.id
-        item.updated_at = datetime.utcnow()
+        item.updated_at = db_utc_now()
         db.add(item)
 
     db.flush()

@@ -34,6 +34,9 @@ class SupportTicketRecord {
     required this.category,
     required this.status,
     required this.replyCount,
+    this.priorityLevel = 'low',
+    this.priorityScore = 0,
+    this.priorityReason = '',
     this.email,
     this.createdAt,
     this.updatedAt,
@@ -48,6 +51,9 @@ class SupportTicketRecord {
   final String category;
   final String status;
   final int replyCount;
+  final String priorityLevel;
+  final int priorityScore;
+  final String priorityReason;
   final String? email;
   final String? createdAt;
   final String? updatedAt;
@@ -66,6 +72,9 @@ class SupportTicketRecord {
       category: json['category'] as String? ?? 'general_inquiry',
       status: json['status'] as String? ?? 'open',
       replyCount: json['reply_count'] as int? ?? 0,
+      priorityLevel: json['priority_level'] as String? ?? 'low',
+      priorityScore: json['priority_score'] as int? ?? 0,
+      priorityReason: json['priority_reason'] as String? ?? '',
       email: json['email'] as String?,
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,

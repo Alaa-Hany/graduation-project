@@ -28,6 +28,7 @@ abstract class AppLocalizations {
   String get connectionError;
   String get success;
   String get retry;
+  String get placeholderDash;
   String get noInternet;
   String get offlineMode;
   String get noInternetDescription;
@@ -36,6 +37,8 @@ abstract class AppLocalizations {
   String get offlineSavedGames;
   String get offlineStories;
   String get offlineProgressTracking;
+  String get localContentLabel;
+  String get localContentSubtitle;
   String get checkingConnection;
   String get stillNoConnection;
   String get tryAgain;
@@ -391,6 +394,9 @@ abstract class AppLocalizations {
   String get addPaymentMethod;
   String get removePaymentMethod;
   String get openPaymentPortal;
+  String get setAsDefault;
+  String get paymentProviderMethodIdOptional;
+  String get paymentMethodDefaultLabel;
 
   // ✅ parameterized strings (NEW)
   String yearsOld(int age);
@@ -995,8 +1001,28 @@ abstract class AppLocalizations {
   String get aiBuddyName;
   String get aiBuddyOnline;
   String get aiCompanionSubtitle;
+  String aiCompanionSubtitleWithName(String name);
   String get tapMicToSpeak;
   String get askKinderAnything;
+  String get aiBuddyStatusUnavailable;
+  String get aiBuddyStatusFallbackOnly;
+  String get aiBuddyFallbackSubtitle;
+  String aiBuddyFallbackSubtitleFor(String name);
+  String get aiBuddyBannerUnavailableTitle;
+  String get aiBuddyBannerFallbackTitle;
+  String get aiBuddyBannerOnlineTitle;
+  String get aiBuddyBannerFallbackDescription;
+  String get aiBuddyBannerOnlineDescription;
+  String get aiBuddyUnavailableTitle;
+  String get aiBuddyNoConversationTitle;
+  String get aiBuddyNoConversationSubtitle;
+  String get aiBuddyStartSessionAction;
+  String get aiBuddyNoMessagesTitle;
+  String get aiBuddyNoMessagesSubtitle;
+  String get aiBuddyRefreshAction;
+  String get aiBuddyUnavailableHint;
+  String get aiBuddySafeModeHint;
+  String get aiBuddyNoActiveChildSession;
   String get aiInitialGreeting;
   String get aiWelcomeGreeting;
   String get aiMathResponse;
@@ -1698,6 +1724,76 @@ abstract class AppLocalizations {
   String get gamificationSeeAllAchievements;
   String get gamificationRecentBadges;
   String get gamificationProgressSection;
+  String get gamificationMyBadges;
+  String get gamificationDayStreak;
+  String get gamificationNoStreak;
+  String gamificationUnlockedOn(String date);
+  String gamificationXpReward(int xp);
+  String gamificationCompactLevel(int level);
+  String gamificationCompactStreak(int days);
+  String gamificationLevelWithEmoji(String emoji, int level);
+  String get gamificationMaxLevel;
+  String gamificationXpToLevel(int xp, int level);
+  String get gamificationAwesome;
+  String achievementTitle(String key);
+  String achievementDescription(String key);
+  String badgeName(String key);
+  String badgeDescription(String key);
+  String get achievementsCollectBadgesSubtitle;
+  String get achievementsUnlockedTitle;
+  String get achievementsUnlockedSubtitle;
+  String get achievementsEmpty;
+  String get achievementsUpcomingTitle;
+  String get achievementsUpcomingSubtitle;
+  String get achievementsAllUnlocked;
+
+  // Reward Store
+  String get rewardStoreTitle;
+  String get rewardStoreCoinsLabel;
+  String get rewardStoreFilterAll;
+  String get rewardTypeAvatar;
+  String get rewardTypeFrame;
+  String get rewardTypeBadge;
+  String get rewardTypeSticker;
+  String get rewardTypeTheme;
+  String rewardItemName(String itemId);
+  String get rewardStoreAlreadyOwned;
+  String get rewardStoreAlreadyPending;
+  String get rewardStoreRequestSent;
+  String rewardStoreNeedMoreCoinsMessage(int price, int currentCoins);
+  String get rewardStoreRewardRedeemed;
+  String get rewardStoreRequestNotFound;
+  String get rewardStoreItemMissing;
+  String get rewardStoreNotEnoughCoinsApproval;
+  String rewardStoreItemApproved(String name);
+  String get rewardStoreRequestRejected;
+  String get rewardStoreParentPinMissing;
+  String get rewardStoreParentApprovalTitle;
+  String get rewardStoreParentPinLabel;
+  String get rewardStoreVerifyAction;
+  String get rewardStoreParentVerificationSuccess;
+  String get rewardStoreInvalidPin;
+  String get rewardStoreWaitingForParentApproval;
+  String rewardStoreItemUnequipped(String name);
+  String rewardStoreItemEquipped(String name);
+  String rewardStorePendingApprovals(int count);
+  String get rewardStoreParentUnlock;
+  String rewardStoreRequestedAt(String dateTime);
+  String get rewardStoreRejectAction;
+  String get rewardStoreApproveAction;
+  String get rewardStoreEquippedLabel;
+  String rewardStorePriceCoins(int coins);
+  String get rewardStorePendingAction;
+  String get rewardStoreUnequipAction;
+  String get rewardStoreEquipAction;
+  String get rewardStoreRequestParentAction;
+  String get rewardStoreNeedMoreCoinsAction;
+  String get rewardStoreRedeemAction;
+
+  // Misc launch cleanup
+  String get parentSessionMissing;
+  String get deletedOfflineWillSync;
+  String get aiBuddyFallbackSummary;
 
   // ── Accessibility ─────────────────────────────────────────────────────────
   String get accessibilitySettings;

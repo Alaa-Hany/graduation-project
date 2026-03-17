@@ -115,9 +115,8 @@ class _MemoryProgressRepository extends ProgressRepository {
 }
 
 class _FailingNetworkService extends NetworkService {
-  _FailingNetworkService({required SecureStorage secureStorage})
+  _FailingNetworkService({required super.secureStorage})
       : super(
-          secureStorage: secureStorage,
           logger: Logger(),
         );
 

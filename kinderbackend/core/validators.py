@@ -1,5 +1,5 @@
-from datetime import date
 import os
+from datetime import date
 from typing import Optional
 
 from core.errors import bad_request, unprocessable
@@ -22,11 +22,7 @@ def normalize_email(email: str) -> str:
 def _parse_domain_csv(value: str | None) -> set[str]:
     if not value:
         return set()
-    return {
-        item.strip().lower()
-        for item in value.split(",")
-        if item and item.strip()
-    }
+    return {item.strip().lower() for item in value.split(",") if item and item.strip()}
 
 
 def validate_email_domain(email: str) -> None:
@@ -41,9 +37,7 @@ def validate_email_domain(email: str) -> None:
         raise bad_request("Email domain is not allowed")
 
     if allowlist and domain not in allowlist:
-        raise bad_request(
-            "Email domain is not allowed by policy"
-        )
+        raise bad_request("Email domain is not allowed by policy")
 
 
 def resolve_child_age(age: Optional[int], dob: Optional[date]) -> Optional[int]:
@@ -70,14 +64,10 @@ def validate_password_policy(password: str) -> tuple[bool, str]:
             f"Password must be at least {PASSWORD_COMPLEXITY_RULES['min_length']} characters",
         )
 
-    if PASSWORD_COMPLEXITY_RULES["require_uppercase"] and not any(
-        c.isupper() for c in password
-    ):
+    if PASSWORD_COMPLEXITY_RULES["require_uppercase"] and not any(c.isupper() for c in password):
         return False, "Password must contain at least one uppercase letter"
 
-    if PASSWORD_COMPLEXITY_RULES["require_digit"] and not any(
-        c.isdigit() for c in password
-    ):
+    if PASSWORD_COMPLEXITY_RULES["require_digit"] and not any(c.isdigit() for c in password):
         return False, "Password must contain at least one digit"
 
     if PASSWORD_COMPLEXITY_RULES["require_special"]:

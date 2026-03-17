@@ -58,9 +58,7 @@ class ChildUpdate(BaseModel):
 
     @field_validator("picture_password", mode="before")
     @classmethod
-    def _normalize_picture_password(
-        cls, value: Optional[List[str]]
-    ) -> Optional[List[str]]:
+    def _normalize_picture_password(cls, value: Optional[List[str]]) -> Optional[List[str]]:
         if value is None:
             return None
         cleaned = [item.strip() for item in value if isinstance(item, str) and item.strip()]

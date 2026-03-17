@@ -34,6 +34,9 @@ class AdminSupportTicket {
     required this.category,
     required this.status,
     required this.replyCount,
+    this.priorityLevel = 'low',
+    this.priorityScore = 0,
+    this.priorityReason = '',
     this.userId,
     this.email,
     this.assignedAdminId,
@@ -61,6 +64,9 @@ class AdminSupportTicket {
   final String? updatedAt;
   final String? closedAt;
   final int replyCount;
+  final String priorityLevel;
+  final int priorityScore;
+  final String priorityReason;
   final String? lastMessageAt;
   final String? preview;
   final List<AdminSupportThreadEntry> thread;
@@ -85,6 +91,9 @@ class AdminSupportTicket {
       updatedAt: json['updated_at'] as String?,
       closedAt: json['closed_at'] as String?,
       replyCount: json['reply_count'] as int? ?? 0,
+      priorityLevel: json['priority_level'] as String? ?? 'low',
+      priorityScore: json['priority_score'] as int? ?? 0,
+      priorityReason: json['priority_reason'] as String? ?? '',
       lastMessageAt: json['last_message_at'] as String?,
       preview: json['preview'] as String?,
       thread: (json['thread'] as List<dynamic>? ?? const [])

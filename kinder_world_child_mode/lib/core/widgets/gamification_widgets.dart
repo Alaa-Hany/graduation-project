@@ -7,6 +7,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kinder_world/core/localization/app_localizations.dart';
 // Import gamification models with alias to avoid conflict with Flutter's Badge
 import 'package:kinder_world/core/models/achievement.dart' as gam
     show Badge, Achievement, LevelThresholds;
@@ -85,16 +86,18 @@ class _XPProgressBarState extends State<XPProgressBar>
     final isMaxLevel = widget.level >= gam.LevelThresholds.maxLevel;
 
     if (widget.compact) {
-      return _buildCompact(colors, childTheme, isMaxLevel);
+      return _buildCompact(context, colors, childTheme, isMaxLevel);
     }
     return _buildFull(context, theme, colors, childTheme, isMaxLevel);
   }
 
   Widget _buildCompact(
+    BuildContext context,
     ColorScheme colors,
     ChildThemeTokens childTheme,
     bool isMaxLevel,
   ) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         GamLevelCircle(level: widget.level, size: 32),
@@ -115,7 +118,7 @@ class _XPProgressBarState extends State<XPProgressBar>
         ),
         const SizedBox(width: 8),
         Text(
-          '${widget.xp} XP',
+          l10n.gamificationXpReward(widget.xp).replaceFirst('+', ''),
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
@@ -133,6 +136,7 @@ class _XPProgressBarState extends State<XPProgressBar>
     ChildThemeTokens childTheme,
     bool isMaxLevel,
   ) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -164,8 +168,10 @@ class _XPProgressBarState extends State<XPProgressBar>
                     Row(
                       children: [
                         Text(
-                          '${gam.LevelThresholds.emojiForLevel(widget.level)} '
-                          'Level ${widget.level}',
+                          l10n.gamificationLevelWithEmoji(
+                            gam.LevelThresholds.emojiForLevel(widget.level),
+                            widget.level,
+                          ),
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w800,
                             color: childTheme.skill,
@@ -193,8 +199,11 @@ class _XPProgressBarState extends State<XPProgressBar>
                     const SizedBox(height: 2),
                     Text(
                       isMaxLevel
-                          ? '👑 Max Level!'
-                          : '${widget.xpToNext} XP to Level ${widget.level + 1}',
+                          ? l10n.gamificationMaxLevel
+                          : l10n.gamificationXpToLevel(
+                              widget.xpToNext,
+                              widget.level + 1,
+                            ),
                       style: TextStyle(
                         fontSize: 12,
                         color: colors.onSurfaceVariant,
@@ -216,7 +225,7 @@ class _XPProgressBarState extends State<XPProgressBar>
                     ),
                   ),
                   Text(
-                    'XP',
+                    l10n.xp,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -351,6 +360,7 @@ class _StreakCounterState extends State<StreakCounter>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final childTheme = context.childTheme;
     final colors = Theme.of(context).colorScheme;
     final hasStreak = widget.streak > 0;
@@ -419,7 +429,7 @@ class _StreakCounterState extends State<StreakCounter>
                 ),
               ),
               Text(
-                hasStreak ? 'Day Streak' : 'No Streak',
+                hasStreak ? l10n.gamificationDayStreak : l10n.gamificationNoStreak,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -452,6 +462,7 @@ class BadgeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isEarned = badge.isEarned;
     final color = isEarned ? badge.color : Theme.of(context).colorScheme.outline;
 
@@ -490,7 +501,7 @@ class BadgeChip extends StatelessWidget {
           SizedBox(
             width: size + 8,
             child: Text(
-              badge.nameKey,
+              l10n.badgeName(badge.nameKey),
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -520,6 +531,7 @@ class BadgesRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final badges = ref.watch(allBadgesProvider);
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
@@ -532,7 +544,7 @@ class BadgesRow extends ConsumerWidget {
           children: [
             Expanded(
               child: Text(
-                '🎖️ My Badges',
+                l10n.gamificationMyBadges,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w800,
                 ),
@@ -542,7 +554,7 @@ class BadgesRow extends ConsumerWidget {
               TextButton(
                 onPressed: onViewAll,
                 child: Text(
-                  'View All',
+                  l10n.viewAll,
                   style: TextStyle(
                     color: colors.primary,
                     fontWeight: FontWeight.w700,
@@ -585,6 +597,7 @@ class AchievementCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final colors = theme.colorScheme;
     final childTheme = context.childTheme;
     final isUnlocked = achievement.isUnlocked;
@@ -620,7 +633,7 @@ class AchievementCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _localizedTitle(achievement.titleKey),
+                    l10n.achievementTitle(achievement.titleKey),
                     style: theme.textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: isUnlocked
@@ -650,7 +663,7 @@ class AchievementCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  '+${achievement.xpReward} XP',
+                  l10n.gamificationXpReward(achievement.xpReward),
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -702,7 +715,7 @@ class AchievementCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    '+${achievement.xpReward} XP',
+                    l10n.gamificationXpReward(achievement.xpReward),
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -717,7 +730,7 @@ class AchievementCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            _localizedTitle(achievement.titleKey),
+            l10n.achievementTitle(achievement.titleKey),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w800,
               color: isUnlocked ? colors.onSurface : colors.onSurfaceVariant,
@@ -725,7 +738,7 @@ class AchievementCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            _localizedDesc(achievement.descriptionKey),
+            l10n.achievementDescription(achievement.descriptionKey),
             style: theme.textTheme.bodySmall?.copyWith(
               color: colors.onSurfaceVariant,
               height: 1.4,
@@ -742,7 +755,7 @@ class AchievementCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  'Unlocked ${_formatDate(achievement.unlockedAt!)}',
+                  l10n.gamificationUnlockedOn(_formatDate(achievement.unlockedAt!)),
                   style: TextStyle(
                     fontSize: 11,
                     color: context.successColor,
@@ -755,42 +768,6 @@ class AchievementCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _localizedTitle(String key) {
-    const titles = {
-      'achievementFirstLessonTitle': '📖 First Lesson',
-      'achievementFirstActivityTitle': '🎯 First Activity',
-      'achievementStreak3Title': '🔥 3-Day Streak',
-      'achievementStreak7Title': '🔥 Week Warrior',
-      'achievementStreak30Title': '🌟 Monthly Master',
-      'achievementActivities10Title': '🏅 Activity Pro',
-      'achievementActivities50Title': '🏆 Activity Legend',
-      'achievementLevel5Title': '⚡ Level 5 Hero',
-      'achievementXP1000Title': '💰 XP Millionaire',
-      'achievementPerfectScoreTitle': '💯 Perfect Score',
-      'achievementExplorerTitle': '🗺️ Explorer',
-      'achievementFirstBadgeTitle': '🎖️ First Badge',
-    };
-    return titles[key] ?? key;
-  }
-
-  String _localizedDesc(String key) {
-    const descs = {
-      'achievementFirstLessonDesc': 'Complete your very first lesson!',
-      'achievementFirstActivityDesc': 'Complete your first activity!',
-      'achievementStreak3Desc': 'Use the app 3 days in a row',
-      'achievementStreak7Desc': 'Use the app 7 days in a row',
-      'achievementStreak30Desc': 'Use the app 30 days in a row',
-      'achievementActivities10Desc': 'Complete 10 activities',
-      'achievementActivities50Desc': 'Complete 50 activities',
-      'achievementLevel5Desc': 'Reach Level 5',
-      'achievementXP1000Desc': 'Earn 1,000 total XP',
-      'achievementPerfectScoreDesc': 'Get 100% on a quiz',
-      'achievementExplorerDesc': 'Try all 4 content categories',
-      'achievementFirstBadgeDesc': 'Earn your first badge',
-    };
-    return descs[key] ?? key;
   }
 
   String _formatDate(DateTime date) {
@@ -808,6 +785,7 @@ class GamificationSummaryBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final gamState = ref.watch(currentGamificationStateProvider);
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final childTheme = context.childTheme;
@@ -832,19 +810,20 @@ class GamificationSummaryBar extends ConsumerWidget {
         children: [
           GamStatPill(
             emoji: gam.LevelThresholds.emojiForLevel(gamState.level),
-            value: 'Lv ${gamState.level}',
+            value: l10n.gamificationCompactLevel(gamState.level),
             color: childTheme.skill,
           ),
           const SizedBox(width: 8),
           GamStatPill(
             emoji: '⭐',
-            value: '${gamState.totalXP} XP',
+            value:
+                l10n.gamificationXpReward(gamState.totalXP).replaceFirst('+', ''),
             color: childTheme.xp,
           ),
           const SizedBox(width: 8),
           GamStatPill(
             emoji: gamState.streak > 0 ? '🔥' : '💤',
-            value: '${gamState.streak}d',
+            value: l10n.gamificationCompactStreak(gamState.streak),
             color: gamState.streak > 0
                 ? childTheme.streak
                 : colors.onSurfaceVariant,
@@ -986,6 +965,7 @@ class _LevelUpDialogState extends State<LevelUpDialog>
   Widget build(BuildContext context) {
     final emoji = gam.LevelThresholds.emojiForLevel(widget.newLevel);
     final title = gam.LevelThresholds.titleForLevel(widget.newLevel);
+    final l10n = AppLocalizations.of(context)!;
     final childTheme = context.childTheme;
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
@@ -1024,7 +1004,7 @@ class _LevelUpDialogState extends State<LevelUpDialog>
               ),
               const SizedBox(height: 12),
               Text(
-                'LEVEL UP!',
+                l10n.gamificationLevelUp,
                 style: textTheme.headlineSmall?.copyWith(
                   fontSize: 28,
                   fontWeight: FontWeight.w900,
@@ -1034,7 +1014,7 @@ class _LevelUpDialogState extends State<LevelUpDialog>
               ),
               const SizedBox(height: 8),
               Text(
-                '$emoji Level ${widget.newLevel}',
+                l10n.gamificationLevelWithEmoji(emoji, widget.newLevel),
                 style: textTheme.titleLarge?.copyWith(
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
@@ -1059,7 +1039,7 @@ class _LevelUpDialogState extends State<LevelUpDialog>
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  '+${widget.xpAwarded} XP earned!',
+                  l10n.gamificationXpReward(widget.xpAwarded),
                   style: textTheme.labelLarge?.copyWith(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -1084,7 +1064,7 @@ class _LevelUpDialogState extends State<LevelUpDialog>
                     ),
                   ),
                   child: Text(
-                    'Awesome! 🎉',
+                    l10n.gamificationAwesome,
                     style: textTheme.labelLarge?.copyWith(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
@@ -1180,6 +1160,7 @@ class _AchievementUnlockedBannerState extends State<AchievementUnlockedBanner>
   @override
   Widget build(BuildContext context) {
     final childTheme = context.childTheme;
+    final l10n = AppLocalizations.of(context)!;
     final textTheme = Theme.of(context).textTheme;
     final bannerTextColor = childTheme.xp.onColor;
     return SlideTransition(
@@ -1218,7 +1199,7 @@ class _AchievementUnlockedBannerState extends State<AchievementUnlockedBanner>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          '🏆 Achievement Unlocked!',
+                          l10n.gamificationAchievementUnlocked,
                           style: textTheme.labelSmall?.copyWith(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
@@ -1226,7 +1207,7 @@ class _AchievementUnlockedBannerState extends State<AchievementUnlockedBanner>
                           ),
                         ),
                         Text(
-                          _titleFor(widget.achievement.titleKey),
+                          l10n.achievementTitle(widget.achievement.titleKey),
                           style: textTheme.titleSmall?.copyWith(
                             fontSize: 15,
                             fontWeight: FontWeight.w900,
@@ -1244,7 +1225,7 @@ class _AchievementUnlockedBannerState extends State<AchievementUnlockedBanner>
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
-                      '+${widget.achievement.xpReward} XP',
+                      l10n.gamificationXpReward(widget.achievement.xpReward),
                       style: textTheme.labelMedium?.copyWith(
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
@@ -1261,23 +1242,6 @@ class _AchievementUnlockedBannerState extends State<AchievementUnlockedBanner>
     );
   }
 
-  String _titleFor(String key) {
-    const titles = {
-      'achievementFirstLessonTitle': 'First Lesson Complete!',
-      'achievementFirstActivityTitle': 'First Activity Done!',
-      'achievementStreak3Title': '3-Day Streak!',
-      'achievementStreak7Title': 'Week Warrior!',
-      'achievementStreak30Title': 'Monthly Master!',
-      'achievementActivities10Title': 'Activity Pro!',
-      'achievementActivities50Title': 'Activity Legend!',
-      'achievementLevel5Title': 'Level 5 Hero!',
-      'achievementXP1000Title': '1,000 XP Earned!',
-      'achievementPerfectScoreTitle': 'Perfect Score!',
-      'achievementExplorerTitle': 'Explorer!',
-      'achievementFirstBadgeTitle': 'First Badge Earned!',
-    };
-    return titles[key] ?? key;
-  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

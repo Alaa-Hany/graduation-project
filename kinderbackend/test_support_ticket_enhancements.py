@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import admin_models  # noqa: F401
-
 from models import SupportTicket, SupportTicketMessage
 
 
@@ -44,13 +43,15 @@ def test_parent_support_ticket_creation_history_detail_and_reply(
     assert reply.json()["item"]["reply_count"] == 1
     assert reply.json()["item"]["thread"][-1]["author_type"] == "user"
 
-    stored = db.query(SupportTicketMessage).filter(SupportTicketMessage.ticket_id == created_ticket["id"]).one()
+    stored = (
+        db.query(SupportTicketMessage)
+        .filter(SupportTicketMessage.ticket_id == created_ticket["id"])
+        .one()
+    )
     assert stored.user_id == parent.id
 
 
-def test_parent_support_validation_and_cross_user_access(
-    client, db, create_parent, auth_headers
-):
+def test_parent_support_validation_and_cross_user_access(client, db, create_parent, auth_headers):
     owner = create_parent(email="owner@gmail.com")
     other = create_parent(email="other@gmail.com")
 
@@ -188,6 +189,3 @@ def test_admin_support_filters_resolve_and_closed_reply_guard(
         headers=admin_headers(admin),
     )
     assert invalid_filter.status_code == 422
-
-
-

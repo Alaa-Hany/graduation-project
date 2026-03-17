@@ -130,7 +130,7 @@ void main() {
       tester.element(find.byType(ParentForgotPasswordScreen)),
     )!;
 
-    await tester.enterText(find.byType(TextFormField), 'parent@yahoo.com');
+    await tester.enterText(find.byType(TextFormField), 'parent-at-gmail');
     await _tapVisibleText(tester, l10n.sendResetLink);
     await tester.pump(const Duration(milliseconds: 100));
 

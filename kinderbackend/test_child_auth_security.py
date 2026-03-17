@@ -1,6 +1,5 @@
-from datetime import datetime
-
 from auth import hash_password
+from core.time_utils import db_utc_now
 from models import ChildProfile, User
 from plan_service import PLAN_FREE
 
@@ -13,8 +12,8 @@ def _create_parent(db, email: str = "child.auth.parent@example.com") -> User:
         role="parent",
         plan=PLAN_FREE,
         is_active=True,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=db_utc_now(),
+        updated_at=db_utc_now(),
     )
     db.add(user)
     db.commit()

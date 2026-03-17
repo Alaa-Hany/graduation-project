@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime, time
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
@@ -9,6 +8,7 @@ from sqlalchemy.orm import Session, joinedload
 from admin_deps import require_permission
 from admin_models import AuditLog
 from admin_utils import build_pagination_payload, parse_optional_date, serialize_audit_log
+from core.time_utils import utc_end_of_day, utc_start_of_day
 from deps import get_db
 
 router = APIRouter(prefix="/admin/audit-logs", tags=["Admin Audit"])
@@ -37,11 +37,11 @@ def list_audit_logs(
 
     parsed_from = parse_optional_date(date_from)
     if parsed_from is not None:
-        query = query.filter(AuditLog.created_at >= datetime.combine(parsed_from, time.min))
+        query = query.filter(AuditLog.created_at >= utc_start_of_day(parsed_from))
 
     parsed_to = parse_optional_date(date_to)
     if parsed_to is not None:
-        query = query.filter(AuditLog.created_at <= datetime.combine(parsed_to, time.max))
+        query = query.filter(AuditLog.created_at <= utc_end_of_day(parsed_to))
 
     total = query.count()
     items = (

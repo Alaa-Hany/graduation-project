@@ -18,9 +18,9 @@ os.environ.setdefault("SKIP_SCHEMA_VERIFY", "true")
 
 @pytest.fixture(scope="session")
 def test_db():
-    from database import Base
-    import models  # noqa: F401
     import admin_models  # noqa: F401
+    import models  # noqa: F401
+    from database import Base
 
     engine = create_engine(
         "sqlite:///:memory:",
@@ -47,9 +47,9 @@ def db(test_db):
 
 @pytest.fixture
 def client(db):
+    import main as main_module
     from deps import get_db
     from main import app
-    import main as main_module
 
     def override_get_db():
         return db
@@ -80,9 +80,8 @@ def reset_global_state():
 
 @pytest.fixture
 def create_parent(db):
-    from datetime import datetime
-
     from auth import hash_password
+    from core.time_utils import db_utc_now
     from models import User
     from plan_service import PLAN_FREE
 
@@ -101,8 +100,8 @@ def create_parent(db):
             role="parent",
             plan=plan,
             is_active=is_active,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=db_utc_now(),
+            updated_at=db_utc_now(),
         )
         db.add(user)
         db.commit()
@@ -158,9 +157,7 @@ def seed_builtin_rbac(db):
     def _seed_builtin_rbac():
         permission_by_name: dict[str, Permission] = {}
         for permission_name, description in PERMISSION_DEFS:
-            permission = (
-                db.query(Permission).filter(Permission.name == permission_name).first()
-            )
+            permission = db.query(Permission).filter(Permission.name == permission_name).first()
             if permission is None:
                 permission = Permission(name=permission_name, description=description)
                 db.add(permission)

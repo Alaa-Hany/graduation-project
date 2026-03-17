@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -17,8 +16,10 @@ from admin_utils import (
     write_audit_log,
 )
 from core.admin_security import require_sensitive_action_confirmation
+from core.time_utils import db_utc_now
 from deps import get_db
 from models import ChildProfile, User
+from services.ai_buddy_visibility import ai_buddy_visibility_service
 
 router = APIRouter(prefix="/admin/children", tags=["Admin Children"])
 
@@ -115,7 +116,7 @@ def update_admin_child(
     if payload.date_of_birth is not None:
         child.date_of_birth = parse_optional_date(payload.date_of_birth)
 
-    child.updated_at = datetime.utcnow()
+    child.updated_at = db_utc_now()
     db.add(child)
     write_audit_log(
         db=db,
@@ -144,7 +145,7 @@ def deactivate_admin_child(
     before = serialize_child_detail(child)
     if hasattr(child, "is_active"):
         child.is_active = False
-    child.updated_at = datetime.utcnow()
+    child.updated_at = db_utc_now()
     db.add(child)
     write_audit_log(
         db=db,
@@ -195,3 +196,18 @@ def get_admin_child_activity_log(
         .all()
     )
     return build_child_activity_log(child, audit_logs)
+
+
+@router.get("/{child_id}/ai-buddy-summary")
+def get_admin_child_ai_buddy_summary(
+    child_id: int,
+    db: Session = Depends(get_db),
+    admin=Depends(require_permission("admin.children.view")),
+):
+    child = _get_child_or_404(child_id, db)
+    return {
+        "item": ai_buddy_visibility_service.build_admin_summary(
+            db=db,
+            child_id=child.id,
+        )
+    }

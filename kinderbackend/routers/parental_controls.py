@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from deps import get_db, get_current_user
+from deps import get_current_user, get_db
 from models import User
 from schemas.parental_controls import (
     AccountParentalControlsPayload,

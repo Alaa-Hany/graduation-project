@@ -7,9 +7,10 @@ Run with: pytest test_auth_and_features.py -v
 
 import pytest
 from sqlalchemy.orm import Session
+
+from auth import create_access_token, hash_password, verify_password
 from models import User
-from auth import hash_password, verify_password, create_access_token
-from plan_service import PLAN_FREE, PLAN_PREMIUM, PLAN_FAMILY_PLUS
+from plan_service import PLAN_FAMILY_PLUS, PLAN_FREE, PLAN_PREMIUM
 
 
 # Test User Fixtures
@@ -86,10 +87,13 @@ def family_plus_user_token(family_plus_user):
 # CHANGE PASSWORD ENDPOINT TESTS
 # ============================================================================
 
+
 class TestChangePasswordSuccess:
     """Test successful password change scenarios."""
 
-    def test_change_password_valid(self, client, free_user: User, free_user_token: str, db: Session):
+    def test_change_password_valid(
+        self, client, free_user: User, free_user_token: str, db: Session
+    ):
         """Test successful password change with valid credentials."""
         response = client.post(
             "/auth/change-password",
@@ -98,7 +102,7 @@ class TestChangePasswordSuccess:
                 "newPassword": "NewPass456!",
                 "confirmPassword": "NewPass456!",
             },
-            headers={"Authorization": f"Bearer {free_user_token}"}
+            headers={"Authorization": f"Bearer {free_user_token}"},
         )
 
         assert response.status_code == 200
@@ -111,7 +115,9 @@ class TestChangePasswordSuccess:
         assert verify_password("NewPass456!", free_user.password_hash)
         assert not verify_password("CurrentPass123!", free_user.password_hash)
 
-    def test_change_password_with_complex_characters(self, client, free_user: User, free_user_token: str, db: Session):
+    def test_change_password_with_complex_characters(
+        self, client, free_user: User, free_user_token: str, db: Session
+    ):
         """Test password change with complex special characters."""
         response = client.post(
             "/auth/change-password",
@@ -120,7 +126,7 @@ class TestChangePasswordSuccess:
                 "newPassword": "C0mpl3x@P#ssw0rd",
                 "confirmPassword": "C0mpl3x@P#ssw0rd",
             },
-            headers={"Authorization": f"Bearer {free_user_token}"}
+            headers={"Authorization": f"Bearer {free_user_token}"},
         )
 
         assert response.status_code == 200
@@ -140,7 +146,7 @@ class TestChangePasswordValidation:
                 "newPassword": "Short1!",  # 7 chars
                 "confirmPassword": "Short1!",
             },
-            headers={"Authorization": f"Bearer {free_user_token}"}
+            headers={"Authorization": f"Bearer {free_user_token}"},
         )
 
         assert response.status_code == 422
@@ -155,7 +161,7 @@ class TestChangePasswordValidation:
                 "newPassword": "noupppercase123!",
                 "confirmPassword": "noupppercase123!",
             },
-            headers={"Authorization": f"Bearer {free_user_token}"}
+            headers={"Authorization": f"Bearer {free_user_token}"},
         )
 
         assert response.status_code == 422
@@ -170,7 +176,7 @@ class TestChangePasswordValidation:
                 "newPassword": "NoDigitPass!",
                 "confirmPassword": "NoDigitPass!",
             },
-            headers={"Authorization": f"Bearer {free_user_token}"}
+            headers={"Authorization": f"Bearer {free_user_token}"},
         )
 
         assert response.status_code == 422
@@ -185,7 +191,7 @@ class TestChangePasswordValidation:
                 "newPassword": "NoSpecial123",
                 "confirmPassword": "NoSpecial123",
             },
-            headers={"Authorization": f"Bearer {free_user_token}"}
+            headers={"Authorization": f"Bearer {free_user_token}"},
         )
 
         assert response.status_code == 422
@@ -204,7 +210,7 @@ class TestChangePasswordErrors:
                 "newPassword": "NewPass456!",
                 "confirmPassword": "NewPass456!",
             },
-            headers={"Authorization": f"Bearer {free_user_token}"}
+            headers={"Authorization": f"Bearer {free_user_token}"},
         )
 
         assert response.status_code == 401
@@ -219,7 +225,7 @@ class TestChangePasswordErrors:
                 "newPassword": "NewPass456!",
                 "confirmPassword": "DifferentPass789!",
             },
-            headers={"Authorization": f"Bearer {free_user_token}"}
+            headers={"Authorization": f"Bearer {free_user_token}"},
         )
 
         assert response.status_code == 400
@@ -233,7 +239,7 @@ class TestChangePasswordErrors:
                 "currentPassword": "CurrentPass123!",
                 "newPassword": "NewPass456!",
                 "confirmPassword": "NewPass456!",
-            }
+            },
         )
 
         assert response.status_code == 401
@@ -247,7 +253,7 @@ class TestChangePasswordErrors:
                 "newPassword": "NewPass456!",
                 "confirmPassword": "NewPass456!",
             },
-            headers={"Authorization": "Bearer invalid_token_xyz"}
+            headers={"Authorization": "Bearer invalid_token_xyz"},
         )
 
         assert response.status_code == 401
@@ -257,14 +263,14 @@ class TestChangePasswordErrors:
 # FEATURE GATING TESTS - FREE USER
 # ============================================================================
 
+
 class TestFreeUserFeatures:
     """Test feature access for FREE plan users."""
 
     def test_free_user_can_access_basic_reports(self, client, free_user_token: str):
         """FREE user CAN access basic_reports."""
         response = client.get(
-            "/reports/basic",
-            headers={"Authorization": f"Bearer {free_user_token}"}
+            "/reports/basic", headers={"Authorization": f"Bearer {free_user_token}"}
         )
         assert response.status_code == 200
         assert response.json()["access_level"] == "basic"
@@ -272,8 +278,7 @@ class TestFreeUserFeatures:
     def test_free_user_can_access_basic_notifications(self, client, free_user_token: str):
         """FREE user CAN access basic_notifications."""
         response = client.get(
-            "/notifications/basic",
-            headers={"Authorization": f"Bearer {free_user_token}"}
+            "/notifications/basic", headers={"Authorization": f"Bearer {free_user_token}"}
         )
         assert response.status_code == 200
         assert response.json()["access_level"] == "basic"
@@ -281,8 +286,7 @@ class TestFreeUserFeatures:
     def test_free_user_can_access_basic_parental_controls(self, client, free_user_token: str):
         """FREE user CAN access basic_parental_controls."""
         response = client.get(
-            "/parental-controls/basic",
-            headers={"Authorization": f"Bearer {free_user_token}"}
+            "/parental-controls/basic", headers={"Authorization": f"Bearer {free_user_token}"}
         )
         assert response.status_code == 200
         assert response.json()["access_level"] == "basic"
@@ -290,8 +294,7 @@ class TestFreeUserFeatures:
     def test_free_user_cannot_access_advanced_reports(self, client, free_user_token: str):
         """FREE user CANNOT access advanced_reports."""
         response = client.get(
-            "/reports/advanced",
-            headers={"Authorization": f"Bearer {free_user_token}"}
+            "/reports/advanced", headers={"Authorization": f"Bearer {free_user_token}"}
         )
         assert response.status_code == 403
         assert response.json()["detail"]["code"] == "FEATURE_NOT_AVAILABLE"
@@ -299,32 +302,28 @@ class TestFreeUserFeatures:
     def test_free_user_cannot_access_smart_notifications(self, client, free_user_token: str):
         """FREE user CANNOT access smart_notifications."""
         response = client.get(
-            "/notifications/smart",
-            headers={"Authorization": f"Bearer {free_user_token}"}
+            "/notifications/smart", headers={"Authorization": f"Bearer {free_user_token}"}
         )
         assert response.status_code == 403
 
     def test_free_user_cannot_access_ai_insights(self, client, free_user_token: str):
         """FREE user CANNOT access ai_insights."""
         response = client.get(
-            "/ai/insights",
-            headers={"Authorization": f"Bearer {free_user_token}"}
+            "/ai/insights", headers={"Authorization": f"Bearer {free_user_token}"}
         )
         assert response.status_code == 403
 
     def test_free_user_cannot_access_offline_downloads(self, client, free_user_token: str):
         """FREE user CANNOT access offline_downloads."""
         response = client.get(
-            "/downloads/offline",
-            headers={"Authorization": f"Bearer {free_user_token}"}
+            "/downloads/offline", headers={"Authorization": f"Bearer {free_user_token}"}
         )
         assert response.status_code == 403
 
     def test_free_user_cannot_access_priority_support(self, client, free_user_token: str):
         """FREE user CANNOT access priority_support."""
         response = client.get(
-            "/support/priority",
-            headers={"Authorization": f"Bearer {free_user_token}"}
+            "/support/priority", headers={"Authorization": f"Bearer {free_user_token}"}
         )
         assert response.status_code == 403
 
@@ -333,28 +332,34 @@ class TestFreeUserFeatures:
 # FEATURE GATING TESTS - PREMIUM USER
 # ============================================================================
 
+
 class TestPremiumUserFeatures:
     """Test feature access for PREMIUM plan users."""
 
     def test_premium_inherits_free_features(self, client, premium_user_token: str):
         """PREMIUM user inherits all FREE tier features."""
         # Basic reports
-        response = client.get("/reports/basic", headers={"Authorization": f"Bearer {premium_user_token}"})
+        response = client.get(
+            "/reports/basic", headers={"Authorization": f"Bearer {premium_user_token}"}
+        )
         assert response.status_code == 200
 
         # Basic notifications
-        response = client.get("/notifications/basic", headers={"Authorization": f"Bearer {premium_user_token}"})
+        response = client.get(
+            "/notifications/basic", headers={"Authorization": f"Bearer {premium_user_token}"}
+        )
         assert response.status_code == 200
 
         # Basic parental controls
-        response = client.get("/parental-controls/basic", headers={"Authorization": f"Bearer {premium_user_token}"})
+        response = client.get(
+            "/parental-controls/basic", headers={"Authorization": f"Bearer {premium_user_token}"}
+        )
         assert response.status_code == 200
 
     def test_premium_user_can_access_advanced_reports(self, client, premium_user_token: str):
         """PREMIUM user CAN access advanced_reports."""
         response = client.get(
-            "/reports/advanced",
-            headers={"Authorization": f"Bearer {premium_user_token}"}
+            "/reports/advanced", headers={"Authorization": f"Bearer {premium_user_token}"}
         )
         assert response.status_code == 200
         assert response.json()["access_level"] == "advanced"
@@ -362,8 +367,7 @@ class TestPremiumUserFeatures:
     def test_premium_user_can_access_smart_notifications(self, client, premium_user_token: str):
         """PREMIUM user CAN access smart_notifications."""
         response = client.get(
-            "/notifications/smart",
-            headers={"Authorization": f"Bearer {premium_user_token}"}
+            "/notifications/smart", headers={"Authorization": f"Bearer {premium_user_token}"}
         )
         assert response.status_code == 200
         assert response.json()["access_level"] == "smart"
@@ -371,24 +375,21 @@ class TestPremiumUserFeatures:
     def test_premium_user_can_access_ai_insights(self, client, premium_user_token: str):
         """PREMIUM user CAN access ai_insights."""
         response = client.get(
-            "/ai/insights",
-            headers={"Authorization": f"Bearer {premium_user_token}"}
+            "/ai/insights", headers={"Authorization": f"Bearer {premium_user_token}"}
         )
         assert response.status_code == 200
 
     def test_premium_user_can_access_offline_downloads(self, client, premium_user_token: str):
         """PREMIUM user CAN access offline_downloads."""
         response = client.get(
-            "/downloads/offline",
-            headers={"Authorization": f"Bearer {premium_user_token}"}
+            "/downloads/offline", headers={"Authorization": f"Bearer {premium_user_token}"}
         )
         assert response.status_code == 200
 
     def test_premium_user_cannot_access_priority_support(self, client, premium_user_token: str):
         """PREMIUM user CANNOT access priority_support (FAMILY_PLUS only)."""
         response = client.get(
-            "/support/priority",
-            headers={"Authorization": f"Bearer {premium_user_token}"}
+            "/support/priority", headers={"Authorization": f"Bearer {premium_user_token}"}
         )
         assert response.status_code == 403
 
@@ -396,6 +397,7 @@ class TestPremiumUserFeatures:
 # ============================================================================
 # FEATURE GATING TESTS - FAMILY PLUS USER
 # ============================================================================
+
 
 class TestFamilyPlusUserFeatures:
     """Test feature access for FAMILY_PLUS plan users."""
@@ -416,25 +418,23 @@ class TestFamilyPlusUserFeatures:
 
         for endpoint in endpoints:
             response = client.get(
-                endpoint,
-                headers={"Authorization": f"Bearer {family_plus_user_token}"}
+                endpoint, headers={"Authorization": f"Bearer {family_plus_user_token}"}
             )
-            assert response.status_code == 200, f"Endpoint {endpoint} should be accessible for FAMILY_PLUS"
+            assert (
+                response.status_code == 200
+            ), f"Endpoint {endpoint} should be accessible for FAMILY_PLUS"
 
 
 # ============================================================================
 # INTEGRATION TESTS
 # ============================================================================
 
+
 class TestIntegration:
     """Integration tests combining password change and feature access."""
 
     def test_user_can_change_password_and_access_features_with_new_token(
-        self,
-        client,
-        free_user: User,
-        free_user_token: str,
-        db: Session
+        self, client, free_user: User, free_user_token: str, db: Session
     ):
         """User can change password and still access their features."""
         # Change password
@@ -445,14 +445,13 @@ class TestIntegration:
                 "newPassword": "NewPass456!",
                 "confirmPassword": "NewPass456!",
             },
-            headers={"Authorization": f"Bearer {free_user_token}"}
+            headers={"Authorization": f"Bearer {free_user_token}"},
         )
         assert response.status_code == 200
 
         # Old token should be revoked after password change.
         revoked = client.get(
-            "/reports/basic",
-            headers={"Authorization": f"Bearer {free_user_token}"}
+            "/reports/basic", headers={"Authorization": f"Bearer {free_user_token}"}
         )
         assert revoked.status_code == 401
 
@@ -471,16 +470,9 @@ class TestIntegration:
         )
         assert response.status_code == 200
 
-    def test_invalid_password_prevents_feature_access(
-        self,
-        client,
-        free_user_token: str
-    ):
+    def test_invalid_password_prevents_feature_access(self, client, free_user_token: str):
         """Invalid token prevents all feature access."""
-        response = client.get(
-            "/reports/basic",
-            headers={"Authorization": "Bearer invalid"}
-        )
+        response = client.get("/reports/basic", headers={"Authorization": "Bearer invalid"})
         assert response.status_code == 401
 
 
@@ -488,10 +480,13 @@ class TestIntegration:
 # DATABASE PERSISTENCE TESTS
 # ============================================================================
 
+
 class TestDatabasePersistence:
     """Test that changes persist correctly in database."""
 
-    def test_password_hash_persists_in_database(self, client, free_user: User, free_user_token: str, db: Session):
+    def test_password_hash_persists_in_database(
+        self, client, free_user: User, free_user_token: str, db: Session
+    ):
         """Verify password hash is actually stored in database."""
         # Change password
         response = client.post(
@@ -501,7 +496,7 @@ class TestDatabasePersistence:
                 "newPassword": "NewPass456!",
                 "confirmPassword": "NewPass456!",
             },
-            headers={"Authorization": f"Bearer {free_user_token}"}
+            headers={"Authorization": f"Bearer {free_user_token}"},
         )
         assert response.status_code == 200
 
@@ -520,6 +515,3 @@ class TestDatabasePersistence:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])
-
-
-

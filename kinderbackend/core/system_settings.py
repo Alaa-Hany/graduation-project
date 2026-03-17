@@ -57,7 +57,8 @@ def ensure_default_settings(db: Session) -> dict[str, SystemSetting]:
 
 def get_bool_setting(db: Session, key: str, default: bool) -> bool:
     existing = ensure_default_settings(db)
-    raw = existing.get(key).value_json if key in existing else default
+    setting = existing.get(key)
+    raw = setting.value_json if setting is not None else default
     return _coerce_bool(raw, default)
 
 

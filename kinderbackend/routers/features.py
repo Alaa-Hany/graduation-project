@@ -1,15 +1,16 @@
 import logging
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
+from core.system_settings import require_ai_buddy_enabled
 from deps import get_current_user, get_db, require_feature
 from models import User
 from schemas.analytics import ActivityEventIn, SessionLogIn
-from core.system_settings import require_ai_buddy_enabled
-from services.notification_service import notification_service
 from services.analytics_service import analytics_service
+from services.notification_service import notification_service
 from services.parental_controls_service import list_parent_child_controls
+from services.premium_behavior_service import premium_behavior_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["features"])
@@ -46,20 +47,29 @@ def ingest_session_log(
 
 @router.get("/reports/basic")
 def get_basic_reports(
+    child_id: int | None = Query(None),
+    days: int = Query(7, ge=1, le=365),
     user: User = Depends(require_feature("basic_reports")),
     db: Session = Depends(get_db),
 ):
     logger.info("Basic reports requested by user %s", user.id)
-    return analytics_service.build_basic_report(db=db, user=user)
+    return analytics_service.build_basic_report(db=db, user=user, child_id=child_id, days=days)
 
 
 @router.get("/reports/advanced")
 def advanced_reports(
+    child_id: int | None = Query(None),
+    days: int = Query(30, ge=1, le=365),
     user: User = Depends(require_feature("advanced_reports")),
     db: Session = Depends(get_db),
 ):
     logger.info("Advanced reports requested by user %s", user.id)
-    return analytics_service.build_advanced_report(db=db, user=user)
+    return analytics_service.build_advanced_report(
+        db=db,
+        user=user,
+        child_id=child_id,
+        days=days,
+    )
 
 
 # ===============================
@@ -68,23 +78,29 @@ def advanced_reports(
 
 
 @router.get("/notifications/basic")
-def get_notifications(user: User = Depends(require_feature("basic_notifications"))):
+def get_notifications(
+    user: User = Depends(require_feature("basic_notifications")),
+    db: Session = Depends(get_db),
+):
     """
     Get basic notifications (Free users).
     Includes system alerts, weekly summaries.
     """
     logger.info(f"Basic notifications requested by user {user.id}")
-    return notification_service.get_basic_feature_notifications(user=user)
+    return notification_service.get_basic_feature_notifications(db=db, user=user)
 
 
 @router.get("/notifications/smart")
-def get_smart_notifications(user: User = Depends(require_feature("smart_notifications"))):
+def get_smart_notifications(
+    user: User = Depends(require_feature("smart_notifications")),
+    db: Session = Depends(get_db),
+):
     """
     Get AI-driven smart notifications (Premium+ only).
     Includes behavioral insights, anomaly alerts, predictive warnings.
     """
     logger.info(f"Smart notifications requested by user {user.id}")
-    return notification_service.get_smart_feature_notifications(user=user)
+    return notification_service.get_smart_feature_notifications(db=db, user=user)
 
 
 # ===============================
@@ -135,7 +151,11 @@ def get_basic_parental_controls(
                 "count": len(control["blocked_apps"]),
             }
         )
-    return {"controls": controls, "access_level": "basic", "data_source": "backend_parental_controls"}
+    return {
+        "controls": controls,
+        "access_level": "basic",
+        "data_source": "backend_parental_controls",
+    }
 
 
 @router.get("/parental-controls/advanced")
@@ -180,23 +200,17 @@ def get_ai_insights(
     """Get AI-powered insights (Premium+ only)."""
     require_ai_buddy_enabled(db)
     logger.info(f"AI insights requested by user {user.id}")
-    return {
-        "insights": [
-            "Bedtime recommendations: Consider moving bedtime 30 minutes earlier (based on sleep goals)",
-            "App suggestion: Try 'Khan Academy' - matches educational interests",
-        ]
-    }
+    return premium_behavior_service.build_ai_insights(db=db, user=user)
 
 
 @router.get("/downloads/offline")
-def offline_downloads(user: User = Depends(require_feature("offline_downloads"))):
+def offline_downloads(
+    user: User = Depends(require_feature("offline_downloads")),
+    db: Session = Depends(get_db),
+):
     """Download content for offline use (Premium+ only)."""
     logger.info(f"Offline download requested by user {user.id}")
-    return {
-        "status": "downloads enabled",
-        "quota_mb": 500,
-        "used_mb": 120
-    }
+    return premium_behavior_service.build_offline_downloads(db=db, user=user)
 
 
 # ===============================
@@ -205,11 +219,10 @@ def offline_downloads(user: User = Depends(require_feature("offline_downloads"))
 
 
 @router.get("/support/priority")
-def get_priority_support(user: User = Depends(require_feature("priority_support"))):
+def get_priority_support(
+    user: User = Depends(require_feature("priority_support")),
+    db: Session = Depends(get_db),
+):
     """Priority support ticket access (Family Plus only)."""
     logger.info(f"Priority support requested by user {user.id}")
-    return {
-        "support_level": "priority",
-        "response_time_hours": 2,
-        "support_channels": ["email", "chat", "phone"]
-    }
+    return premium_behavior_service.build_priority_support(db=db, user=user)

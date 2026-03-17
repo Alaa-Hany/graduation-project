@@ -7,9 +7,10 @@ Endpoints:
   POST /admin/auth/logout   - invalidate refresh tokens (bump token_version)
   GET  /admin/auth/me       - return current admin profile + roles + permissions
 """
+
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 
@@ -55,7 +56,11 @@ def admin_login(
 
 
 @router.post("/refresh", response_model=AdminTokenResponse, summary="Refresh admin access token")
-def admin_refresh(payload: AdminRefreshRequest, db: Session = Depends(get_db), rate_limit_check: None = Depends(auth_rate_limit)):
+def admin_refresh(
+    payload: AdminRefreshRequest,
+    db: Session = Depends(get_db),
+    rate_limit_check: None = Depends(auth_rate_limit),
+):
     """
     Exchange a valid admin refresh token for a new access token.
 

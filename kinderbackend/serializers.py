@@ -1,14 +1,15 @@
+from datetime import date, datetime
 from typing import Dict, Optional
-from datetime import date
 
+from core.time_utils import ensure_utc
 from models import ChildProfile, Notification, User
 from plan_service import get_plan_features, get_plan_limits, get_user_plan
 
 
-def _iso_z(dt: Optional[object]) -> Optional[str]:
+def _iso_z(dt: Optional[datetime]) -> Optional[str]:
     if not dt:
         return None
-    s = dt.isoformat()
+    s = ensure_utc(dt).isoformat()
     if s.endswith("Z") or s.endswith("+00:00"):
         return s
     return s + "Z"

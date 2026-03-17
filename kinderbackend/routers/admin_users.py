@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 from typing import Optional
-from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload, selectinload
 
-from admin_deps import require_permission
+from admin_deps import ensure_permission, require_permission
 from admin_utils import (
     build_pagination_payload,
     build_user_activity,
@@ -17,8 +16,10 @@ from admin_utils import (
 )
 from auth import hash_password
 from core.admin_security import require_sensitive_action_confirmation
+from core.time_utils import db_utc_now
 from deps import get_db
 from models import User
+from services.subscription_service import subscription_service
 
 router = APIRouter(prefix="/admin/users", tags=["Admin Users"])
 
@@ -74,10 +75,7 @@ def list_admin_users(
 
     total = query.count()
     items = (
-        query.order_by(User.created_at.desc())
-        .offset((page - 1) * page_size)
-        .limit(page_size)
-        .all()
+        query.order_by(User.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
     )
 
     return {
@@ -105,6 +103,15 @@ def update_admin_user(
     db: Session = Depends(get_db),
     admin=Depends(require_permission("admin.users.edit")),
 ):
+    action = "user.edit"
+    if payload.plan is not None:
+        require_sensitive_action_confirmation(request, action="user.override_plan")
+        ensure_permission(
+            admin=admin,
+            db=db,
+            permission_name="admin.subscription.override",
+        )
+        action = "user.override_plan"
     user = _get_user_or_404(user_id, db)
     before = serialize_user_detail(user)
 
@@ -123,15 +130,20 @@ def update_admin_user(
         user.name = payload.name.strip()
 
     if payload.plan is not None:
-        user.plan = payload.plan.strip().upper()
+        subscription_service.admin_override_subscription(
+            db=db,
+            user=user,
+            plan=payload.plan.strip().upper(),
+            source="admin_user_edit",
+        )
 
-    user.updated_at = datetime.utcnow()
+    user.updated_at = db_utc_now()
     db.add(user)
     write_audit_log(
         db=db,
         request=request,
         admin=admin,
-        action="user.edit",
+        action=action,
         entity_type="user",
         entity_id=user.id,
         before_json=before,
@@ -154,7 +166,7 @@ def disable_admin_user(
     before = serialize_user_detail(user)
     user.is_active = False
     user.token_version = (user.token_version or 0) + 1
-    user.updated_at = datetime.utcnow()
+    user.updated_at = db_utc_now()
     db.add(user)
     write_audit_log(
         db=db,
@@ -182,7 +194,7 @@ def enable_admin_user(
     user = _get_user_or_404(user_id, db)
     before = serialize_user_detail(user)
     user.is_active = True
-    user.updated_at = datetime.utcnow()
+    user.updated_at = db_utc_now()
     db.add(user)
     write_audit_log(
         db=db,
@@ -213,7 +225,7 @@ def reset_admin_user_password(
     before = {"id": user.id, "email": user.email}
     user.password_hash = hash_password(temp_password)
     user.token_version = (user.token_version or 0) + 1
-    user.updated_at = datetime.utcnow()
+    user.updated_at = db_utc_now()
     db.add(user)
     write_audit_log(
         db=db,

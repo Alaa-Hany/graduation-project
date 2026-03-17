@@ -10,14 +10,15 @@ It seeds:
   - role-permission mappings
   - one default super admin
 """
+
 import os
-from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from auth import hash_password
 from core.admin_rbac import PERMISSION_DEFS, ROLE_DEFS
+from core.time_utils import db_utc_now
 from deps import get_db
 
 router = APIRouter(prefix="/admin", tags=["Admin Seed"])
@@ -32,6 +33,7 @@ SEED_SECRET = os.getenv("ADMIN_SEED_SECRET", "").strip()
 DEFAULT_ADMIN_EMAIL = os.getenv("ADMIN_SEED_EMAIL", "admin@kinderworld.app").strip()
 DEFAULT_ADMIN_PASSWORD = os.getenv("ADMIN_SEED_PASSWORD", "").strip()
 DEFAULT_ADMIN_NAME = os.getenv("ADMIN_SEED_NAME", "Super Admin").strip() or "Super Admin"
+
 
 @router.post("/seed", summary="Seed admin roles, permissions, and default super admin")
 def seed_admin_system(secret: str, db: Session = Depends(get_db)):
@@ -68,11 +70,7 @@ def seed_admin_system(secret: str, db: Session = Depends(get_db)):
 
     permission_by_name: dict[str, Permission] = {}
     for permission_name, description in PERMISSION_DEFS:
-        permission = (
-            db.query(Permission)
-            .filter(Permission.name == permission_name)
-            .first()
-        )
+        permission = db.query(Permission).filter(Permission.name == permission_name).first()
         if permission is None:
             permission = Permission(name=permission_name, description=description)
             db.add(permission)
@@ -100,14 +98,9 @@ def seed_admin_system(secret: str, db: Session = Depends(get_db)):
         role_by_name[role_name] = role
 
         expected_permission_ids = {
-            permission_by_name[permission_name].id
-            for permission_name in permission_names
+            permission_by_name[permission_name].id for permission_name in permission_names
         }
-        existing_mappings = (
-            db.query(RolePermission)
-            .filter(RolePermission.role_id == role.id)
-            .all()
-        )
+        existing_mappings = db.query(RolePermission).filter(RolePermission.role_id == role.id).all()
         for mapping in existing_mappings:
             if mapping.permission_id not in expected_permission_ids:
                 db.delete(mapping)
@@ -132,14 +125,10 @@ def seed_admin_system(secret: str, db: Session = Depends(get_db)):
                 )
                 created_role_permissions += 1
 
-    admin = (
-        db.query(AdminUser)
-        .filter(AdminUser.email == DEFAULT_ADMIN_EMAIL)
-        .first()
-    )
+    admin = db.query(AdminUser).filter(AdminUser.email == DEFAULT_ADMIN_EMAIL).first()
 
     if admin is None:
-        now = datetime.utcnow()
+        now = db_utc_now()
         admin = AdminUser(
             email=DEFAULT_ADMIN_EMAIL,
             password_hash=hash_password(DEFAULT_ADMIN_PASSWORD),
@@ -161,7 +150,7 @@ def seed_admin_system(secret: str, db: Session = Depends(get_db)):
             admin.name = DEFAULT_ADMIN_NAME
             admin_changed = True
         if admin_changed:
-            admin.updated_at = datetime.utcnow()
+            admin.updated_at = db_utc_now()
             db.add(admin)
             updated_admins += 1
 

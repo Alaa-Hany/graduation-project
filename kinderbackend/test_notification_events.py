@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import admin_models  # noqa: F401
-
 from models import Notification, SupportTicket
 
 
@@ -79,6 +78,3 @@ def test_subscription_changes_create_notifications_and_are_listed(
     assert payload["summary"]["unread_count"] == 3
     assert payload["notifications"][0]["type"] == "SUBSCRIPTION_UPDATED"
     assert payload["notifications"][0]["child_id"] is None
-
-
-

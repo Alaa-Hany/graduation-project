@@ -54,4 +54,3 @@ ROLE_DEFS: Final[dict[str, list[str]]] = {
         "admin.analytics.view",
     ],
 }
-
