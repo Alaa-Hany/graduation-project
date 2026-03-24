@@ -62,8 +62,12 @@ def test_admin_analytics_usage_uses_range_specific_cache(monkeypatch: pytest.Mon
     monkeypatch.setattr(admin_analytics, "_build_analytics_usage_payload", fake_build)
 
     week_first = admin_analytics.get_analytics_usage(range_name="week", db=object(), admin=object())
-    week_second = admin_analytics.get_analytics_usage(range_name="week", db=object(), admin=object())
-    month_value = admin_analytics.get_analytics_usage(range_name="month", db=object(), admin=object())
+    week_second = admin_analytics.get_analytics_usage(
+        range_name="week", db=object(), admin=object()
+    )
+    month_value = admin_analytics.get_analytics_usage(
+        range_name="month", db=object(), admin=object()
+    )
 
     assert week_first == {"range": "week", "points": []}
     assert week_second == week_first

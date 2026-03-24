@@ -84,8 +84,7 @@ def rate_limit(
         client_ip = _client_ip(request)
         key = f"ip:{client_ip}:{request.url.path}"
         resolved_message = (
-            message
-            or f"Too many requests. Limit: {max_requests} per {window_seconds} seconds"
+            message or f"Too many requests. Limit: {max_requests} per {window_seconds} seconds"
         )
 
         if not rate_limiter.is_allowed(key, max_requests, window_seconds):
@@ -124,8 +123,7 @@ def user_rate_limit(
         user_id = getattr(user, "id", "unknown")
         key = f"user:{user_id}:{request.url.path}"
         resolved_message = (
-            message
-            or f"Too many requests. Limit: {max_requests} per {window_seconds} seconds"
+            message or f"Too many requests. Limit: {max_requests} per {window_seconds} seconds"
         )
 
         if not rate_limiter.is_allowed(key, max_requests, window_seconds):

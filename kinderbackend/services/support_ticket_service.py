@@ -209,7 +209,9 @@ class SupportTicketService:
             },
         }
 
-    def get_user_ticket(self, *, ticket_id: int, user: User, db: Session) -> SupportTicketItemPayload:
+    def get_user_ticket(
+        self, *, ticket_id: int, user: User, db: Session
+    ) -> SupportTicketItemPayload:
         ticket = self.get_user_ticket_or_404(ticket_id=ticket_id, user_id=user.id, db=db)
         return {"item": serialize_support_ticket(ticket, include_thread=True)}
 

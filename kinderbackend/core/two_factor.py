@@ -62,12 +62,15 @@ def verify_totp_code(
     current_time = for_time if for_time is not None else time.time()
     for offset in range(-window, window + 1):
         candidate_time = current_time + (offset * period_seconds)
-        if generate_totp_code(
-            secret,
-            for_time=candidate_time,
-            digits=digits,
-            period_seconds=period_seconds,
-        ) == normalized_code:
+        if (
+            generate_totp_code(
+                secret,
+                for_time=candidate_time,
+                digits=digits,
+                period_seconds=period_seconds,
+            )
+            == normalized_code
+        ):
             return True
     return False
 

@@ -131,7 +131,9 @@ def test_deleting_user_preserves_subscription_history(db) -> None:
     db.delete(user)
     db.commit()
 
-    assert db.query(SubscriptionProfile).filter(SubscriptionProfile.id == profile.id).first() is None
+    assert (
+        db.query(SubscriptionProfile).filter(SubscriptionProfile.id == profile.id).first() is None
+    )
 
     preserved_event = db.query(SubscriptionEvent).filter(SubscriptionEvent.id == event.id).one()
     assert preserved_event.user_id is None

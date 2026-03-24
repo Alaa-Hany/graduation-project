@@ -65,10 +65,7 @@ def _stringify_tag(value: Any) -> str:
 
 
 def _normalize_tags(fields: dict[str, Any]) -> dict[str, str]:
-    return {
-        key: _stringify_tag(value)
-        for key, value in _filter_fields(fields).items()
-    }
+    return {key: _stringify_tag(value) for key, value in _filter_fields(fields).items()}
 
 
 def _metric_key(
@@ -196,12 +193,24 @@ def observe_duration(name: str, *, category: str, **tags: Any):
     except Exception:
         duration_ms = int((time.perf_counter() - started) * 1000)
         record_counter(name=f"{name}.count", category=category, outcome="error", **tags)
-        record_timing(name=f"{name}.duration_ms", duration_ms=duration_ms, category=category, outcome="error", **tags)
+        record_timing(
+            name=f"{name}.duration_ms",
+            duration_ms=duration_ms,
+            category=category,
+            outcome="error",
+            **tags,
+        )
         raise
     else:
         duration_ms = int((time.perf_counter() - started) * 1000)
         record_counter(name=f"{name}.count", category=category, outcome="success", **tags)
-        record_timing(name=f"{name}.duration_ms", duration_ms=duration_ms, category=category, outcome="success", **tags)
+        record_timing(
+            name=f"{name}.duration_ms",
+            duration_ms=duration_ms,
+            category=category,
+            outcome="success",
+            **tags,
+        )
 
 
 def get_recent_events(
@@ -268,7 +277,9 @@ def get_metrics(
     for item in items:
         if normalized_category and str(item.get("category") or "").lower() != normalized_category:
             continue
-        if normalized_prefix and not str(item.get("name") or "").lower().startswith(normalized_prefix):
+        if normalized_prefix and not str(item.get("name") or "").lower().startswith(
+            normalized_prefix
+        ):
             continue
         if item.get("type") == "timing":
             count = int(item.get("count") or 0)

@@ -73,9 +73,7 @@ class AdminAuthMessages:
 class SubscriptionMessages:
     INVALID_PLAN = "Invalid plan"
     PLAN_ID_OR_TYPE_REQUIRED = "plan_id or plan_type is required"
-    PENDING_PLAN_SELECTION_MISMATCH = (
-        "Requested plan does not match the pending checkout selection"
-    )
+    PENDING_PLAN_SELECTION_MISMATCH = "Requested plan does not match the pending checkout selection"
     SESSION_ID_REQUIRED_FOR_ACTIVATION = "session_id is required to activate this plan"
     PAYMENT_NOT_COMPLETED = "Payment is not completed yet"
     NO_REFUNDABLE_PAYMENT = "No refundable payment found"

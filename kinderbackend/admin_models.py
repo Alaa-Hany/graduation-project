@@ -51,7 +51,9 @@ class AdminUser(Base):
         Boolean, default=False, nullable=False, server_default=text("false")
     )
     locked_until = Column(UTCDateTime(), nullable=True)
-    two_factor_enabled = Column(Boolean, default=False, nullable=False, server_default=text("false"))
+    two_factor_enabled = Column(
+        Boolean, default=False, nullable=False, server_default=text("false")
+    )
     two_factor_method = Column(String, nullable=True)
     two_factor_secret = Column(EncryptedString(), nullable=True)
     two_factor_confirmed_at = Column(UTCDateTime(), nullable=True)
@@ -156,7 +158,12 @@ class AuditLog(Base):
 
     __tablename__ = "audit_logs"
     __table_args__ = (
-        Index("ix_audit_logs_entity_type_entity_id_created_at", "entity_type", "entity_id", "created_at"),
+        Index(
+            "ix_audit_logs_entity_type_entity_id_created_at",
+            "entity_type",
+            "entity_id",
+            "created_at",
+        ),
     )
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)

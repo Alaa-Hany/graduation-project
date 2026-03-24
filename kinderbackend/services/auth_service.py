@@ -362,7 +362,9 @@ class AuthService:
         self._validate_parent_pin_format(payload.pin)
         self._validate_parent_pin_format(payload.confirm_pin)
         if payload.pin != payload.confirm_pin:
-            raise HTTPException(status_code=400, detail=AuthMessages.PIN_CONFIRMATION_DOES_NOT_MATCH)
+            raise HTTPException(
+                status_code=400, detail=AuthMessages.PIN_CONFIRMATION_DOES_NOT_MATCH
+            )
 
         try:
             user.parent_pin_hash = hash_password(payload.pin)
@@ -446,7 +448,9 @@ class AuthService:
         self._validate_parent_pin_format(payload.new_pin)
         self._validate_parent_pin_format(payload.confirm_pin)
         if payload.new_pin != payload.confirm_pin:
-            raise HTTPException(status_code=400, detail=AuthMessages.PIN_CONFIRMATION_DOES_NOT_MATCH)
+            raise HTTPException(
+                status_code=400, detail=AuthMessages.PIN_CONFIRMATION_DOES_NOT_MATCH
+            )
         if payload.current_pin == payload.new_pin:
             raise HTTPException(status_code=400, detail=AuthMessages.NEW_PIN_MUST_BE_DIFFERENT)
         if not verify_password(payload.current_pin, user.parent_pin_hash):

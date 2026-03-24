@@ -136,7 +136,9 @@ def test_manage_subscription_rejects_accounts_without_billing_customer(
     event_types = [item["event_type"] for item in history_payload["events"]]
     assert "manage_request" in event_types
     assert "failure" in event_types
-    failure_event = next(item for item in history_payload["events"] if item["event_type"] == "failure")
+    failure_event = next(
+        item for item in history_payload["events"] if item["event_type"] == "failure"
+    )
     assert failure_event["details_json"]["operation"] == "billing_portal"
     assert failure_event["details_json"]["code"] == "NO_CUSTOMER"
 
@@ -164,7 +166,9 @@ def test_billing_portal_rejects_accounts_without_billing_customer(
     event_types = [item["event_type"] for item in history_payload["events"]]
     assert "manage_request" in event_types
     assert "failure" in event_types
-    failure_event = next(item for item in history_payload["events"] if item["event_type"] == "failure")
+    failure_event = next(
+        item for item in history_payload["events"] if item["event_type"] == "failure"
+    )
     assert failure_event["source"] == "billing_portal"
     assert failure_event["details_json"]["operation"] == "billing_portal"
     assert failure_event["details_json"]["code"] == "NO_CUSTOMER"

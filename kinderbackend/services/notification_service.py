@@ -107,7 +107,9 @@ class NotificationService:
         base_query = db.query(Notification).filter(Notification.user_id == user.id)
         query = base_query.order_by(Notification.created_at.desc()).offset(offset).limit(limit)
         unread_count = base_query.filter(Notification.is_read.is_(False)).count()
-        notifications: list[NotificationPayload] = [notification_to_json(item) for item in query.all()]
+        notifications: list[NotificationPayload] = [
+            notification_to_json(item) for item in query.all()
+        ]
         return {
             "notifications": notifications,
             "summary": {

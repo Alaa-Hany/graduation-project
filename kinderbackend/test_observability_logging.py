@@ -76,7 +76,8 @@ def test_request_middleware_logs_correlated_fields(caplog, client) -> None:
     request_logs = [
         record
         for record in caplog.records
-        if record.name == "core.request_id_middleware" and record.getMessage() == "http_request_completed"
+        if record.name == "core.request_id_middleware"
+        and record.getMessage() == "http_request_completed"
     ]
     assert request_logs
     record = request_logs[-1]

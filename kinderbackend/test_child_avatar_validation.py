@@ -6,7 +6,9 @@ import io
 from PIL import Image
 
 
-def _png_data_url(*, width: int = 4, height: int = 4, color: tuple[int, int, int] = (10, 20, 30)) -> str:
+def _png_data_url(
+    *, width: int = 4, height: int = 4, color: tuple[int, int, int] = (10, 20, 30)
+) -> str:
     buffer = io.BytesIO()
     Image.new("RGB", (width, height), color=color).save(buffer, format="PNG")
     encoded = base64.b64encode(buffer.getvalue()).decode("ascii")
@@ -101,7 +103,10 @@ def test_child_create_rejects_malformed_inline_avatar_image(client, create_paren
         headers=headers,
     )
     assert response.status_code == 422
-    assert any("avatar image data is not valid base64" in error["msg"] for error in response.json()["detail"])
+    assert any(
+        "avatar image data is not valid base64" in error["msg"]
+        for error in response.json()["detail"]
+    )
 
 
 def test_child_create_rejects_avatar_content_type_mismatch(client, create_parent, auth_headers):
@@ -142,7 +147,10 @@ def test_child_create_rejects_oversized_inline_avatar_image(client, create_paren
         headers=headers,
     )
     assert response.status_code == 422
-    assert any("avatar image exceeds the 2 MB size limit" in error["msg"] for error in response.json()["detail"])
+    assert any(
+        "avatar image exceeds the 2 MB size limit" in error["msg"]
+        for error in response.json()["detail"]
+    )
 
 
 def test_admin_child_update_rejects_malformed_avatar_image(
@@ -165,4 +173,7 @@ def test_admin_child_update_rejects_malformed_avatar_image(
         headers=admin_headers(admin),
     )
     assert response.status_code == 422
-    assert any("avatar image data is not valid base64" in error["msg"] for error in response.json()["detail"])
+    assert any(
+        "avatar image data is not valid base64" in error["msg"]
+        for error in response.json()["detail"]
+    )

@@ -162,29 +162,37 @@ class EnhancedAIProvider:
         messages = [{"role": "system", "content": ENHANCED_CHILD_FRIENDLY_SYSTEM_PROMPT}]
 
         if is_arabic:
-            messages.append({
-                "role": "system",
-                "content": "Please respond in Arabic. Keep the language simple and appropriate for children.",
-            })
+            messages.append(
+                {
+                    "role": "system",
+                    "content": "Please respond in Arabic. Keep the language simple and appropriate for children.",
+                }
+            )
 
         if child_name:
-            messages.append({
-                "role": "system",
-                "content": f"You are talking to a child named {child_name}. Use their name occasionally.",
-            })
+            messages.append(
+                {
+                    "role": "system",
+                    "content": f"You are talking to a child named {child_name}. Use their name occasionally.",
+                }
+            )
 
         if child_age:
             age_guidance = self._get_age_guidance(child_age)
-            messages.append({
-                "role": "system",
-                "content": f"The child is {child_age} years old. {age_guidance}",
-            })
+            messages.append(
+                {
+                    "role": "system",
+                    "content": f"The child is {child_age} years old. {age_guidance}",
+                }
+            )
 
         if quick_action and quick_action in QUICK_ACTION_PROMPTS_ENHANCED:
-            messages.append({
-                "role": "system",
-                "content": QUICK_ACTION_PROMPTS_ENHANCED[quick_action],
-            })
+            messages.append(
+                {
+                    "role": "system",
+                    "content": QUICK_ACTION_PROMPTS_ENHANCED[quick_action],
+                }
+            )
 
         if recent_messages:
             context = "Here are the recent messages from this conversation:\n"
@@ -205,7 +213,9 @@ class EnhancedAIProvider:
         else:
             return "Can handle more complex topics and longer explanations."
 
-    def generate_greeting(self, *, child_name: str | None = None, is_arabic: bool = False) -> EnhancedAIResponse:
+    def generate_greeting(
+        self, *, child_name: str | None = None, is_arabic: bool = False
+    ) -> EnhancedAIResponse:
         prompt = "Say a friendly, short greeting to start a conversation"
         if child_name:
             prompt += f" with a child named {child_name}"

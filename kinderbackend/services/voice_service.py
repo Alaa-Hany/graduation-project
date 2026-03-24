@@ -46,6 +46,7 @@ class VoiceService:
 
         try:
             from openai import OpenAI
+
             self._client = OpenAI(api_key=settings.ai_provider_api_key)
             return self._client
         except ImportError:

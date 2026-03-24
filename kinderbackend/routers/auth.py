@@ -98,9 +98,7 @@ class ParentPinSetRequest(BaseModel):
         max_length=PARENT_PIN_LENGTH,
     )
 
-    model_config = ConfigDict(
-        json_schema_extra={"example": {"pin": "1234", "confirm_pin": "1234"}}
-    )
+    model_config = ConfigDict(json_schema_extra={"example": {"pin": "1234", "confirm_pin": "1234"}})
 
 
 class ParentPinVerifyRequest(BaseModel):

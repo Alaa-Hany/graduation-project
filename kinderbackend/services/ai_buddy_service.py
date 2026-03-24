@@ -299,9 +299,7 @@ class AiBuddyService:
                     quick_action=quick_action,
                     recent_messages=recent_messages,
                 )
-                output_moderation = self._moderation_service.moderate_output(
-                    text=generated.content
-                )
+                output_moderation = self._moderation_service.moderate_output(text=generated.content)
                 log_with_context(
                     logger,
                     logging.INFO,
@@ -354,9 +352,7 @@ class AiBuddyService:
                 assistant_response_source = "safety_policy"
                 assistant_intent = "safety_response"
                 assistant_metadata["action_taken"] = (
-                    "refusal"
-                    if moderation.classification == "needs_refusal"
-                    else "safe_redirect"
+                    "refusal" if moderation.classification == "needs_refusal" else "safe_redirect"
                 )
                 log_with_context(
                     logger,

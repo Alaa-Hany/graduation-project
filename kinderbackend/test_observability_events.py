@@ -1,6 +1,12 @@
 from __future__ import annotations
 
-from core.observability import clear_events, clear_metrics, emit_event, get_metrics, observe_duration
+from core.observability import (
+    clear_events,
+    clear_metrics,
+    emit_event,
+    get_metrics,
+    observe_duration,
+)
 from core.request_context import reset_request_id, set_request_id
 
 

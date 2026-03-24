@@ -45,6 +45,4 @@ def test_production_https_requests_receive_hsts(client, monkeypatch) -> None:
         monkeypatch.setattr(main, "settings", original_settings)
 
     assert response.status_code == 200
-    assert response.headers["strict-transport-security"] == (
-        "max-age=63072000; includeSubDomains"
-    )
+    assert response.headers["strict-transport-security"] == ("max-age=63072000; includeSubDomains")

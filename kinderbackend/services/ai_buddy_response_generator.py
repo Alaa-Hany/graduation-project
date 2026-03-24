@@ -57,8 +57,7 @@ class _AiBuddyBackend(Protocol):
 class _InternalFallbackAiBuddyBackend:
     _arabic_pattern = re.compile(r"[\u0600-\u06ff]")
     _default_reason = (
-        "AI Buddy is running in safe fallback mode. "
-        "No external AI provider is configured yet."
+        "AI Buddy is running in safe fallback mode. " "No external AI provider is configured yet."
     )
 
     def __init__(self, *, content_service=ai_buddy_content_service) -> None:
@@ -256,9 +255,7 @@ class _InternalFallbackAiBuddyBackend:
                     f"{prefix}I can help with that. We could try the {activity['title_en']} activity, "
                     "or I can tell you a story, suggest a game, or share a fun fact."
                 )
-            return (
-                f"{prefix}I can help with that. Tell me if you want a lesson idea, a game, a story, or a fun fact."
-            )
+            return f"{prefix}I can help with that. Tell me if you want a lesson idea, a game, a story, or a fun fact."
         return (
             f'{prefix}I heard you say: "{message[:80]}". '
             "I can help with learning, stories, games, and kind encouragement."
@@ -472,9 +469,7 @@ class AiBuddyResponseGenerator:
         *,
         child_name: str | None = None,
     ) -> AiBuddyGeneratedResponse:
-        response = self._run_with_fallback(
-            lambda backend: backend.greeting(child_name=child_name)
-        )
+        response = self._run_with_fallback(lambda backend: backend.greeting(child_name=child_name))
         logger.info(
             "ai_buddy_greeting response_source=%s safety_status=%s provider=%s",
             response.response_source,

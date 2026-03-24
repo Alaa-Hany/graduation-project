@@ -48,24 +48,38 @@ class TTSResponse(BaseModel):
 
 
 @router.post("/transcribe", response_model=ASRResponse)
-async def transcribe_audio(request: ASRRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+async def transcribe_audio(
+    request: ASRRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)
+):
     try:
-        result = await voice_service.transcribe(audio_base64=request.audio_base64, language=request.language)
-        return ASRResponse(text=result.text, language=result.language, confidence=result.confidence, success=True)
+        result = await voice_service.transcribe(
+            audio_base64=request.audio_base64, language=request.language
+        )
+        return ASRResponse(
+            text=result.text, language=result.language, confidence=result.confidence, success=True
+        )
     except Exception as exc:
         logger.error("ASR failed: %s", str(exc))
-        return ASRResponse(text="", language=request.language, confidence=0.0, success=False, error=str(exc))
+        return ASRResponse(
+            text="", language=request.language, confidence=0.0, success=False, error=str(exc)
+        )
 
 
 @router.post("/synthesize", response_model=TTSResponse)
-async def synthesize_speech(request: TTSRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+async def synthesize_speech(
+    request: TTSRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)
+):
     try:
         language = request.language
         if language == "auto":
             language = voice_service.detect_language_from_text(request.text)
 
-        result = await voice_service.synthesize(text=request.text, language=language, speed=request.speed)
-        return TTSResponse(audio_base64=result.audio_base64, content_type=result.content_type, success=True)
+        result = await voice_service.synthesize(
+            text=request.text, language=language, speed=request.speed
+        )
+        return TTSResponse(
+            audio_base64=result.audio_base64, content_type=result.content_type, success=True
+        )
     except Exception as exc:
         logger.error("TTS failed: %s", str(exc))
         return TTSResponse(audio_base64="", content_type="audio/mp3", success=False, error=str(exc))
