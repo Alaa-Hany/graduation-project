@@ -23,6 +23,9 @@ bool isAdminPresentationRoute(String? route) {
   if (adminPresentationMenuRoutes.contains(route)) {
     return true;
   }
+  if (adminPresentationHiddenRoutes.contains(route)) {
+    return true;
+  }
   return route.startsWith('${Routes.adminUsers}/') ||
       route.startsWith('${Routes.adminChildren}/');
 }

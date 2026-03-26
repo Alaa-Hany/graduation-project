@@ -705,29 +705,37 @@ class _RewardStoreScreenState extends ConsumerState<RewardStoreScreen> {
             ),
           ),
           Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.all(12),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 0.8,
-              ),
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                final item = items[index];
-                final owned = storeState.ownedIds.contains(item.id);
-                final equipped =
-                    storeState.equippedByType[item.type] == item.id;
-                final pending = storeState.pendingRequests
-                    .any((row) => row.itemId == item.id);
-                return _StoreItemCard(
-                  item: item,
-                  owned: owned,
-                  equipped: equipped,
-                  pendingApproval: pending,
-                  coins: storeState.coins,
-                  onAction: () => _handleAction(item, owned, equipped, pending),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 420;
+                final mainAxisExtent = compact ? 262.0 : 236.0;
+
+                return GridView.builder(
+                  padding: const EdgeInsets.all(12),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    mainAxisExtent: mainAxisExtent,
+                  ),
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    final owned = storeState.ownedIds.contains(item.id);
+                    final equipped =
+                        storeState.equippedByType[item.type] == item.id;
+                    final pending = storeState.pendingRequests
+                        .any((row) => row.itemId == item.id);
+                    return _StoreItemCard(
+                      item: item,
+                      owned: owned,
+                      equipped: equipped,
+                      pendingApproval: pending,
+                      coins: storeState.coins,
+                      onAction: () =>
+                          _handleAction(item, owned, equipped, pending),
+                    );
+                  },
                 );
               },
             ),

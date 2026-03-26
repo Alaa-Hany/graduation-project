@@ -177,9 +177,8 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
     final overview = _snapshot?.overview;
     final totalUsers = (overview?.kpis['total_users'] as num?)?.toInt();
     final totalChildren = (overview?.kpis['active_children'] as num?)?.toInt();
-    final openTickets =
-        (overview?.kpis['open_tickets'] as num?)?.toInt() ??
-            _snapshot?.pendingTickets.length;
+    final openTickets = (overview?.kpis['open_tickets'] as num?)?.toInt() ??
+        _snapshot?.pendingTickets.length;
     final activitiesToday =
         (overview?.kpis['activities_today'] as num?)?.toInt();
 
@@ -376,6 +375,42 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
                       ),
                     ),
                   ],
+                ),
+              ],
+              if (admin?.permissions.isNotEmpty == true) ...[
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.verified_user_outlined,
+                      size: 18,
+                      color: colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      l10n.adminDashboardPermissionsTitle,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: admin!.permissions.map((permission) {
+                        return Chip(
+                          label: Text(permission),
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                        );
+                      }).toList(),
+                    ),
+                  ),
                 ),
               ],
             ],
@@ -720,4 +755,3 @@ class _SupportQueue extends StatelessWidget {
     );
   }
 }
-

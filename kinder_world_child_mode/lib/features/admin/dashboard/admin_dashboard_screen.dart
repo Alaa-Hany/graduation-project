@@ -3,12 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/features/admin/audit/admin_audit_logs_screen.dart';
+import 'package:kinder_world/features/admin/admins/admin_admin_management_screen.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/children/admin_child_details_screen.dart';
 import 'package:kinder_world/features/admin/children/admin_children_screen.dart';
+import 'package:kinder_world/features/admin/content/admin_content_management_screen.dart';
 import 'package:kinder_world/features/admin/dashboard/admin_home_tab.dart';
 import 'package:kinder_world/features/admin/dashboard/admin_presentation_scope.dart';
 import 'package:kinder_world/features/admin/dashboard/admin_sidebar.dart';
+import 'package:kinder_world/features/admin/reports/admin_analytics_screen.dart';
+import 'package:kinder_world/features/admin/settings/admin_system_settings_screen.dart';
+import 'package:kinder_world/features/admin/subscriptions/admin_subscriptions_screen.dart';
 import 'package:kinder_world/features/admin/support/admin_support_tickets_screen.dart';
 import 'package:kinder_world/features/admin/users/admin_user_details_screen.dart';
 import 'package:kinder_world/features/admin/users/admin_users_screen.dart';
@@ -257,8 +262,21 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
       }
     }
     if (path == Routes.adminChildren) return const AdminChildrenScreen();
+    if (path == Routes.adminContent) {
+      return const AdminContentManagementScreen();
+    }
+    if (path == Routes.adminReports) return const AdminAnalyticsScreen();
     if (path == Routes.adminSupport) return const AdminSupportTicketsScreen();
+    if (path == Routes.adminSubscriptions) {
+      return const AdminSubscriptionsScreen();
+    }
+    if (path == Routes.adminAdmins) {
+      return const AdminAdminManagementScreen();
+    }
     if (path == Routes.adminAudit) return const AdminAuditLogsScreen();
+    if (path == Routes.adminSettings) {
+      return const AdminSystemSettingsScreen();
+    }
     return const AdminHomeTab();
   }
 

@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:kinder_world/core/models/achievement.dart';
@@ -12,7 +11,8 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() async {
-    await TestHarness.ensureHiveReady(boxes: const <String>['gamification_data']);
+    await TestHarness.ensureHiveReady(
+        boxes: const <String>['gamification_data']);
   });
 
   setUp(() async {
