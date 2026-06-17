@@ -36,3 +36,19 @@ kinderbackend/htmlcov/
 kinder_world_child_mode/.flutter-plugins
 kinder_world_child_mode/.flutter-plugins-dependencies
 kinderbackend/kinder.db.backup_*
+# Flutter
+.dart_tool/
+build/
+
+# Android
+.gradle/
+**/android/.gradle/
+
+# APKs
+*.apk
+*.aab
+
+# Python
+.venv/
+__pycache__/
+*.pyc
