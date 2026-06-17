@@ -19,6 +19,10 @@ class AuthState {
   final bool isAuthenticated;
   final bool requiresTwoFactor;
   final String? twoFactorMethod;
+  final bool requiresEmailVerification;
+  final String? pendingVerificationEmail;
+  final DateTime? otpExpiresAt;
+  final DateTime? resendAvailableAt;
 
   const AuthState({
     this.user,
@@ -27,6 +31,10 @@ class AuthState {
     this.isAuthenticated = false,
     this.requiresTwoFactor = false,
     this.twoFactorMethod,
+    this.requiresEmailVerification = false,
+    this.pendingVerificationEmail,
+    this.otpExpiresAt,
+    this.resendAvailableAt,
   });
 
   AuthState copyWith({
@@ -36,6 +44,10 @@ class AuthState {
     bool? isAuthenticated,
     bool? requiresTwoFactor,
     Object? twoFactorMethod = _sentinel,
+    bool? requiresEmailVerification,
+    Object? pendingVerificationEmail = _sentinel,
+    Object? otpExpiresAt = _sentinel,
+    Object? resendAvailableAt = _sentinel,
   }) {
     return AuthState(
       user: user ?? this.user,
@@ -46,6 +58,17 @@ class AuthState {
       twoFactorMethod: identical(twoFactorMethod, _sentinel)
           ? this.twoFactorMethod
           : twoFactorMethod as String?,
+      requiresEmailVerification:
+          requiresEmailVerification ?? this.requiresEmailVerification,
+      pendingVerificationEmail: identical(pendingVerificationEmail, _sentinel)
+          ? this.pendingVerificationEmail
+          : pendingVerificationEmail as String?,
+      otpExpiresAt: identical(otpExpiresAt, _sentinel)
+          ? this.otpExpiresAt
+          : otpExpiresAt as DateTime?,
+      resendAvailableAt: identical(resendAvailableAt, _sentinel)
+          ? this.resendAvailableAt
+          : resendAvailableAt as DateTime?,
     );
   }
 
@@ -103,6 +126,10 @@ class AuthController extends StateNotifier<AuthState> {
       error: null,
       requiresTwoFactor: false,
       twoFactorMethod: null,
+      requiresEmailVerification: false,
+      pendingVerificationEmail: null,
+      otpExpiresAt: null,
+      resendAvailableAt: null,
     );
 
     try {
@@ -137,6 +164,9 @@ class AuthController extends StateNotifier<AuthState> {
         error: _formatParentAuthError(e),
         requiresTwoFactor: e.requiresTwoFactor,
         twoFactorMethod: e.twoFactorMethod,
+        requiresEmailVerification: e.requiresEmailVerification,
+        pendingVerificationEmail: e.pendingEmail,
+        resendAvailableAt: e.resendAvailableAt,
       );
       return false;
     } catch (e) {
@@ -152,20 +182,77 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   /// Register new parent account
-  Future<bool> registerParent({
+  Future<PendingParentVerification?> registerParent({
     required String name,
     required String email,
     required String password,
     required String confirmPassword,
   }) async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(
+      isLoading: true,
+      error: null,
+      requiresEmailVerification: false,
+      pendingVerificationEmail: null,
+      otpExpiresAt: null,
+      resendAvailableAt: null,
+    );
 
     try {
-      final user = await _authRepository.registerParent(
+      final pending = await _authRepository.registerParent(
         name: name,
         email: email.trim().toLowerCase(),
         password: password,
         confirmPassword: confirmPassword,
+      );
+
+      if (pending != null) {
+        state = state.copyWith(
+          isLoading: false,
+          requiresEmailVerification: true,
+          pendingVerificationEmail: pending.email,
+          otpExpiresAt: pending.otpExpiresAt,
+          resendAvailableAt: pending.resendAvailableAt,
+          error: pending.message ?? AuthUiMessages.verificationCodeSent,
+        );
+        _logger.d('Parent registration pending verification: ${pending.email}');
+        return pending;
+      } else {
+        state = state.copyWith(
+          isLoading: false,
+          error: AuthUiMessages.registrationFailedCheckInfo,
+        );
+        return null;
+      }
+    } on ParentAuthException catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: _formatParentAuthError(e),
+        requiresEmailVerification: e.requiresEmailVerification,
+        pendingVerificationEmail: e.pendingEmail,
+        otpExpiresAt: e.otpExpiresAt,
+        resendAvailableAt: e.resendAvailableAt,
+      );
+      return null;
+    } catch (e) {
+      _logger.e('Parent registration error: $e');
+      state = state.copyWith(
+        isLoading: false,
+        error: AuthUiMessages.registrationFailedTryAgain,
+      );
+      return null;
+    }
+  }
+
+  Future<bool> verifyParentEmailOtp({
+    required String email,
+    required String otp,
+  }) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      final user = await _authRepository.verifyParentEmailOtp(
+        email: email.trim().toLowerCase(),
+        otp: otp.trim(),
       );
 
       if (user != null) {
@@ -173,24 +260,67 @@ class AuthController extends StateNotifier<AuthState> {
           user: user,
           isAuthenticated: true,
           isLoading: false,
+          requiresEmailVerification: false,
+          pendingVerificationEmail: null,
+          otpExpiresAt: null,
+          resendAvailableAt: null,
         );
-        _logger.d('Parent registration successful: ${user.id}');
         return true;
-      } else {
-        state = state.copyWith(
-          isLoading: false,
-          error: AuthUiMessages.registrationFailedCheckInfo,
-        );
-        return false;
       }
+
+      state = state.copyWith(
+        isLoading: false,
+        error: AuthUiMessages.verificationCodeInvalid,
+      );
+      return false;
     } on ParentAuthException catch (e) {
       state = state.copyWith(
         isLoading: false,
         error: _formatParentAuthError(e),
+        requiresEmailVerification: true,
+        pendingVerificationEmail: e.pendingEmail ?? email.trim().toLowerCase(),
+        otpExpiresAt: e.otpExpiresAt,
+        resendAvailableAt: e.resendAvailableAt,
       );
       return false;
     } catch (e) {
-      _logger.e('Parent registration error: $e');
+      _logger.e('Parent OTP verification error: $e');
+      state = state.copyWith(
+        isLoading: false,
+        error: AuthUiMessages.verificationCodeInvalid,
+      );
+      return false;
+    }
+  }
+
+  Future<bool> resendParentEmailOtp({required String email}) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      final pending = await _authRepository.resendParentEmailOtp(
+        email: email.trim().toLowerCase(),
+      );
+      state = state.copyWith(
+        isLoading: false,
+        requiresEmailVerification: true,
+        pendingVerificationEmail: pending?.email ?? email.trim().toLowerCase(),
+        otpExpiresAt: pending?.otpExpiresAt,
+        resendAvailableAt: pending?.resendAvailableAt,
+        error: pending?.message ?? AuthUiMessages.verificationCodeResent,
+      );
+      return true;
+    } on ParentAuthException catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: _formatParentAuthError(e),
+        requiresEmailVerification: true,
+        pendingVerificationEmail: e.pendingEmail ?? email.trim().toLowerCase(),
+        otpExpiresAt: e.otpExpiresAt,
+        resendAvailableAt: e.resendAvailableAt,
+      );
+      return false;
+    } catch (e) {
+      _logger.e('Parent OTP resend error: $e');
       state = state.copyWith(
         isLoading: false,
         error: AuthUiMessages.registrationFailedTryAgain,
@@ -311,6 +441,10 @@ class AuthController extends StateNotifier<AuthState> {
         isAuthenticated: false,
         isLoading: false,
         error: null,
+        requiresEmailVerification: false,
+        pendingVerificationEmail: null,
+        otpExpiresAt: null,
+        resendAvailableAt: null,
       );
 
       _logger.d('User logged out successfully');
@@ -363,7 +497,10 @@ class AuthController extends StateNotifier<AuthState> {
   Future<void> refreshUser() async {
     try {
       final user = await _authRepository.getCurrentUser();
-      state = state.copyWith(user: user);
+      state = state.copyWith(
+        user: user,
+        isAuthenticated: user != null,
+      );
     } catch (e) {
       _logger.e('Error refreshing user: $e');
     }
@@ -375,6 +512,7 @@ class AuthController extends StateNotifier<AuthState> {
       error: null,
       requiresTwoFactor: false,
       twoFactorMethod: null,
+      requiresEmailVerification: false,
     );
   }
 

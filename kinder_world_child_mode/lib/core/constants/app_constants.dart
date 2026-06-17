@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class AppSpacing {
   AppSpacing._();
 
@@ -58,9 +60,9 @@ class AppConstants {
     'APP_ENV',
     defaultValue: 'development',
   );
-  static const String _developmentBaseUrl = String.fromEnvironment(
+  static const String _developmentBaseUrlOverride = String.fromEnvironment(
     'DEV_API_BASE_URL',
-    defaultValue: 'http://192.168.42.128:8000',
+    defaultValue: '',
   );
   static const String _stagingBaseUrl = String.fromEnvironment(
     'STAGING_API_BASE_URL',
@@ -96,6 +98,19 @@ class AppConstants {
       default:
         return _developmentBaseUrl;
     }
+  }
+
+  static String get _developmentBaseUrl {
+    if (_developmentBaseUrlOverride.isNotEmpty) {
+      return _developmentBaseUrlOverride;
+    }
+
+    if (kIsWeb) {
+      final host = Uri.base.host.isNotEmpty ? Uri.base.host : '127.0.0.1';
+      return 'http://$host:8000';
+    }
+
+    return 'http://192.168.42.128:8000';
   }
 
   static String _requiredBaseUrl({

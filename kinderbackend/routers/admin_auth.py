@@ -10,13 +10,19 @@ Endpoints:
 
 import logging
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import AliasChoices, BaseModel, EmailStr, Field, field_validator
 from sqlalchemy.orm import Session
 
+from admin_auth import create_admin_access_token, create_admin_refresh_token
+from admin_models import AdminUser, AdminUserRole
 from admin_deps import get_current_admin
+from admin_utils import build_admin_payload
+from auth import hash_password
+from core.time_utils import db_utc_now
 from deps import get_db
 from rate_limit import auth_rate_limit
+from routers.admin_seed import ensure_builtin_admin_rbac
 from services.admin_auth_service import admin_auth_service
 
 logger = logging.getLogger(__name__)
@@ -87,6 +93,16 @@ class TwoFactorActionResponse(TwoFactorStatusResponse):
     message: str
 
 
+class AdminBootstrapRequest(BaseModel):
+    email: EmailStr
+    password: str = Field(..., min_length=8)
+    name: str | None = None
+
+
+class AdminBootstrapStatusResponse(BaseModel):
+    can_bootstrap: bool
+
+
 @router.post("/login", response_model=AdminLoginResponse, summary="Admin login")
 def admin_login(
     payload: AdminLoginRequest,
@@ -95,6 +111,59 @@ def admin_login(
     rate_limit_check: None = Depends(auth_rate_limit),
 ):
     return admin_auth_service.login(payload=payload, request=request, db=db)
+
+
+@router.get(
+    "/bootstrap/status",
+    response_model=AdminBootstrapStatusResponse,
+    summary="Check whether the first admin account can be created",
+)
+def admin_bootstrap_status(db: Session = Depends(get_db)):
+    return {"can_bootstrap": db.query(AdminUser.id).first() is None}
+
+
+@router.post(
+    "/bootstrap",
+    response_model=AdminLoginResponse,
+    summary="Create the first admin account",
+)
+def admin_bootstrap(
+    payload: AdminBootstrapRequest,
+    db: Session = Depends(get_db),
+    rate_limit_check: None = Depends(auth_rate_limit),
+):
+    if db.query(AdminUser.id).first() is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="The first admin account has already been created",
+        )
+
+    seeded = ensure_builtin_admin_rbac(db)
+    role_by_name = seeded["role_by_name"]
+    now = db_utc_now()
+    admin = AdminUser(
+        email=payload.email.strip().lower(),
+        password_hash=hash_password(payload.password),
+        name=(payload.name or "").strip() or "Super Admin",
+        is_active=True,
+        token_version=0,
+        created_at=now,
+        updated_at=now,
+    )
+    db.add(admin)
+    db.flush()
+
+    super_admin_role = role_by_name["super_admin"]
+    db.add(AdminUserRole(admin_user_id=admin.id, role_id=super_admin_role.id))
+    db.commit()
+    db.refresh(admin)
+
+    return {
+        "access_token": create_admin_access_token(admin.id, admin.token_version),
+        "refresh_token": create_admin_refresh_token(admin.id, admin.token_version),
+        "token_type": "bearer",
+        "admin": build_admin_payload(admin, db),
+    }
 
 
 @router.post("/refresh", response_model=AdminTokenResponse, summary="Refresh admin access token")

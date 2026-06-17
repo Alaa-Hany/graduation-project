@@ -71,17 +71,8 @@ def test_register_respects_email_allowlist_policy(client, monkeypatch):
     assert allowed.status_code == 200
 
 
-def test_login_accepts_uppercase_email(client):
-    register = client.post(
-        "/auth/register",
-        json={
-            "name": "Login Case",
-            "email": "Login.Case@Gmail.COM",
-            "password": "Password123!",
-            "confirmPassword": "Password123!",
-        },
-    )
-    assert register.status_code == 200
+def test_login_accepts_uppercase_email(client, create_parent):
+    create_parent(email="login.case@gmail.com", password="Password123!", name="Login Case")
 
     response = client.post(
         "/auth/login",

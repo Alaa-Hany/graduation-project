@@ -10,6 +10,7 @@ import 'package:kinder_world/features/auth/child_login_screen.dart';
 import 'package:kinder_world/features/auth/parent_forgot_password_screen.dart';
 import 'package:kinder_world/features/auth/parent_login_screen.dart';
 import 'package:kinder_world/features/auth/parent_register_screen.dart';
+import 'package:kinder_world/features/auth/parent_verify_email_screen.dart';
 import 'package:kinder_world/features/auth/user_type_selection_screen.dart';
 import 'package:kinder_world/features/child_mode/profile/achievements_screen.dart';
 import 'package:kinder_world/features/child_mode/store/reward_store_screen.dart';
@@ -50,6 +51,15 @@ List<RouteBase> buildPublicRoutes() {
     GoRoute(
       path: Routes.parentRegister,
       builder: (context, state) => const ParentRegisterScreen(),
+    ),
+    GoRoute(
+      path: Routes.parentVerifyEmail,
+      builder: (context, state) {
+        final extra = state.extra;
+        final email =
+            extra is Map<String, dynamic> ? extra['email']?.toString() : null;
+        return ParentVerifyEmailScreen(initialEmail: email);
+      },
     ),
     GoRoute(
       path: Routes.parentForgotPassword,

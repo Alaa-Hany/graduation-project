@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
+import 'package:kinder_world/core/providers/maintenance_mode_provider.dart';
 import 'package:kinder_world/core/providers/parent_pin_provider.dart';
 import 'package:logger/logger.dart';
 
@@ -44,7 +45,9 @@ String? requiredAdminPermissionForPath(String path) {
 }
 
 bool isParentAuthRoute(String path) {
-  return path == Routes.parentLogin || path == Routes.parentRegister;
+  return path == Routes.parentLogin ||
+      path == Routes.parentRegister ||
+      path == Routes.parentVerifyEmail;
 }
 
 bool isAnyChildRoute(String path) => path.startsWith('/child/');
@@ -70,18 +73,24 @@ class RouterRefreshListenable extends ChangeNotifier {
       parentPinProvider,
       (_, __) => notifyListeners(),
     );
+    _maintenanceSubscription = ref.listen<bool>(
+      maintenanceModeProvider,
+      (_, __) => notifyListeners(),
+    );
   }
 
   final Ref ref;
   late final ProviderSubscription<AdminAuthState> _adminSubscription;
   late final ProviderSubscription<AuthState> _authSubscription;
   late final ProviderSubscription<ParentPinState> _parentPinSubscription;
+  late final ProviderSubscription<bool> _maintenanceSubscription;
 
   @override
   void dispose() {
     _adminSubscription.close();
     _authSubscription.close();
     _parentPinSubscription.close();
+    _maintenanceSubscription.close();
     super.dispose();
   }
 }
@@ -94,6 +103,11 @@ Future<String?> appRedirect({
 }) async {
   final path = state.uri.path;
   final adminAuthState = ref.read(adminAuthProvider);
+  final isMaintenanceMode = ref.read(maintenanceModeProvider);
+
+  if (isMaintenanceMode && !isAdminRoute(path) && path != Routes.maintenance) {
+    return Routes.maintenance;
+  }
 
   if (isPublicRoute(path)) return null;
 

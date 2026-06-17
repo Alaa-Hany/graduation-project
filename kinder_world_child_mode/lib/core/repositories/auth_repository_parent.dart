@@ -59,7 +59,7 @@ mixin _AuthRepositoryParentMixin on _AuthRepositorySupportMixin {
   }
 
   /// Register new parent account
-  Future<User?> registerParent({
+  Future<PendingParentVerification?> registerParent({
     required String name,
     required String email,
     required String password,
@@ -91,25 +91,20 @@ mixin _AuthRepositoryParentMixin on _AuthRepositorySupportMixin {
         password: password,
         confirmPassword: confirmPassword,
       );
-      final data = payload.raw;
-      if (data.isEmpty) {
+      if (!payload.success || payload.email.isEmpty) {
         _logger.e('Registration failed: empty response');
         throw const ParentAuthException(
           message: AuthUiMessages.registrationFailedEmptyServerResponse,
         );
       }
 
-      final user =
-          await _persistAuthFromResponse(Map<String, dynamic>.from(data));
-      if (user == null) {
-        _logger.e('Registration failed: invalid user data');
-        throw const ParentAuthException(
-          message: AuthUiMessages.registrationFailedInvalidUserData,
-        );
-      }
-
-      _logger.d('Parent registration successful: ${user.id}');
-      return user;
+      _logger.d('Parent registration pending verification: ${payload.email}');
+      return PendingParentVerification(
+        email: payload.email,
+        message: payload.message,
+        otpExpiresAt: payload.otpExpiresAt,
+        resendAvailableAt: payload.resendAvailableAt,
+      );
     } on DioException catch (e) {
       final statusCode = e.response?.statusCode;
       final resolvedMessage =
@@ -120,12 +115,66 @@ mixin _AuthRepositoryParentMixin on _AuthRepositorySupportMixin {
       throw ParentAuthException(
         message: resolvedMessage,
         statusCode: statusCode,
+        requiresEmailVerification: _isParentEmailVerificationRequired(e),
+        pendingEmail: _extractErrorDetailMap(e)?['email']?.toString(),
+        resendAvailableAt: _extractResendAvailableAt(e),
       );
     } on ParentAuthException {
       rethrow;
     } catch (e) {
       _logger.e('Parent registration error: $e');
       return null;
+    }
+  }
+
+  Future<User?> verifyParentEmailOtp({
+    required String email,
+    required String otp,
+  }) async {
+    try {
+      final payload = await _authApi.verifyEmailOtp(email: email, otp: otp);
+      final user = await _persistAuthFromResponse(
+          Map<String, dynamic>.from(payload.raw));
+      if (user == null) {
+        throw const ParentAuthException(
+          message: AuthUiMessages.registrationFailedInvalidUserData,
+        );
+      }
+      return user;
+    } on DioException catch (e) {
+      throw ParentAuthException(
+        message:
+            _extractErrorMessage(e) ?? AuthUiMessages.verificationCodeInvalid,
+        statusCode: e.response?.statusCode,
+        requiresEmailVerification: true,
+        pendingEmail: email.trim().toLowerCase(),
+        resendAvailableAt: _extractResendAvailableAt(e),
+      );
+    }
+  }
+
+  Future<PendingParentVerification?> resendParentEmailOtp({
+    required String email,
+  }) async {
+    try {
+      final payload = await _authApi.resendEmailOtp(email: email);
+      return PendingParentVerification(
+        email: payload.email,
+        message: payload.message,
+        otpExpiresAt: payload.otpExpiresAt,
+        resendAvailableAt: payload.resendAvailableAt,
+      );
+    } on DioException catch (e) {
+      throw ParentAuthException(
+        message: _extractErrorMessage(e) ??
+            (_isOtpResendCooldown(e)
+                ? AuthUiMessages.verificationCodeCooldown
+                : AuthUiMessages.registrationFailedTryAgain),
+        statusCode: e.response?.statusCode,
+        requiresEmailVerification: true,
+        pendingEmail: email.trim().toLowerCase(),
+        resendAvailableAt: _extractResendAvailableAt(e),
+      );
     }
   }
 

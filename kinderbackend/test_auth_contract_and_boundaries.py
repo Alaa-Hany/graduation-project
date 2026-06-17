@@ -36,9 +36,10 @@ def test_register_accepts_snake_case_confirm_password(client):
 
     assert response.status_code == 200
     body = response.json()
-    assert body["user"]["email"] == "snake.parent@example.com"
-    assert body["access_token"]
-    assert body["refresh_token"]
+    assert body["email"] == "snake.parent@example.com"
+    assert body["verification_required"] is True
+    assert body["otp_expires_at"]
+    assert body["resend_available_at"]
 
 
 def test_register_schema_rejects_blank_confirm_password_after_trim():
@@ -58,18 +59,14 @@ def test_register_schema_rejects_blank_confirm_password_after_trim():
     assert any(error["msg"] == "Value error, value must not be blank" for error in errors)
 
 
-def test_change_password_revokes_existing_refresh_token(client):
-    register = client.post(
-        "/auth/register",
-        json={
-            "name": "Refresh Parent",
-            "email": "refresh.parent@example.com",
-            "password": "Password123!",
-            "confirm_password": "Password123!",
-        },
+def test_change_password_revokes_existing_refresh_token(client, create_parent):
+    parent = create_parent(email="refresh.parent@example.com", password="Password123!")
+    login = client.post(
+        "/auth/login",
+        json={"email": parent.email, "password": "Password123!"},
     )
-    assert register.status_code == 200
-    register_body = register.json()
+    assert login.status_code == 200
+    login_body = login.json()
 
     change = client.post(
         "/auth/change-password",
@@ -78,13 +75,13 @@ def test_change_password_revokes_existing_refresh_token(client):
             "new_password": "NewPassword123!",
             "confirm_password": "NewPassword123!",
         },
-        headers={"Authorization": f"Bearer {register_body['access_token']}"},
+        headers={"Authorization": f"Bearer {login_body['access_token']}"},
     )
     assert change.status_code == 200
 
     refresh = client.post(
         "/auth/refresh",
-        json={"refresh_token": register_body["refresh_token"]},
+        json={"refresh_token": login_body["refresh_token"]},
     )
     assert refresh.status_code == 401
     assert refresh.json()["detail"] == "Invalid refresh token"
@@ -207,3 +204,46 @@ def test_admin_refresh_rejects_parent_refresh_token(client, create_parent):
     )
     assert response.status_code == 401
     assert response.json()["detail"] == "Invalid refresh token type"
+
+
+def test_admin_bootstrap_creates_first_super_admin(client):
+    status_response = client.get("/admin/auth/bootstrap/status")
+    assert status_response.status_code == 200
+    assert status_response.json() == {"can_bootstrap": True}
+
+    response = client.post(
+        "/admin/auth/bootstrap",
+        json={
+            "email": "first.admin@example.com",
+            "password": "AdminPass123!",
+            "name": "First Admin",
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["access_token"]
+    assert body["refresh_token"]
+    assert body["admin"]["email"] == "first.admin@example.com"
+    assert "super_admin" in body["admin"]["roles"]
+
+    after_status = client.get("/admin/auth/bootstrap/status")
+    assert after_status.status_code == 200
+    assert after_status.json() == {"can_bootstrap": False}
+
+
+def test_admin_bootstrap_rejects_when_admin_exists(client, seed_builtin_rbac, create_admin):
+    seed_builtin_rbac()
+    create_admin(email="existing.admin@example.com", role_names=["super_admin"])
+
+    response = client.post(
+        "/admin/auth/bootstrap",
+        json={
+            "email": "second.admin@example.com",
+            "password": "AdminPass123!",
+            "name": "Second Admin",
+        },
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "The first admin account has already been created"

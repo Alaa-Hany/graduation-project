@@ -199,3 +199,23 @@ def support_write_rate_limit():
         message="Too many support actions. Please try again later.",
         scope="support_write",
     )
+
+
+def email_otp_verify_rate_limit():
+    """IP-based throttling for email OTP verification."""
+    return rate_limit(
+        max_requests=10,
+        window_seconds=300,
+        message="Too many OTP verification attempts. Please try again later.",
+        scope="email_otp_verify",
+    )
+
+
+def email_otp_resend_rate_limit():
+    """IP-based throttling for email OTP resend requests."""
+    return rate_limit(
+        max_requests=5,
+        window_seconds=300,
+        message="Too many OTP resend requests. Please try again later.",
+        scope="email_otp_resend",
+    )

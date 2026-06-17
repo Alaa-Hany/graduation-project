@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
+import 'package:kinder_world/core/providers/maintenance_mode_provider.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/features/system_pages/widgets/system_page_layout.dart';
 import 'package:kinder_world/router.dart';
@@ -182,6 +183,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen>
           height: 52,
           child: FilledButton.icon(
             onPressed: () {
+              ref.read(maintenanceModeControllerProvider.notifier).clear();
               if (context.canPop()) {
                 context.pop();
               } else {

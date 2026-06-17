@@ -5,6 +5,7 @@ import 'package:kinder_world/core/models/public_content.dart';
 import 'package:kinder_world/core/repositories/public_content_repository.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
+import 'package:kinder_world/core/widgets/cloudinary_video_player_view.dart';
 import 'package:kinder_world/features/child_mode/profile/child_profile_screen.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
 
@@ -299,7 +300,7 @@ class _FeaturedContentCard extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   _Thumbnail(
-                    url: item.thumbnailUrl,
+                    url: item.effectiveThumbnailUrl,
                     icon: _contentIcon(item.contentType),
                     color: accent,
                   ),
@@ -378,7 +379,7 @@ class _PlayableContentCard extends StatelessWidget {
       child: Row(
         children: [
           _Thumbnail(
-            url: item.thumbnailUrl,
+            url: item.effectiveThumbnailUrl,
             icon: _contentIcon(item.contentType),
             color: tagColor,
           ),
@@ -522,6 +523,55 @@ class _PlayContentDetailScreenState
                       ),
                 ),
               ),
+              if (item.hasVideo) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: colors.surface,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: colors.outlineVariant),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.playVideoSectionTitle,
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                      ),
+                      if ((item.effectiveVideoProvider ??
+                              item.videoHostTier ??
+                              '')
+                          .isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            if ((item.effectiveVideoProvider ?? '').isNotEmpty)
+                              _VideoMetaChip(
+                                label: item.effectiveVideoProvider!,
+                                icon: Icons.cloud_outlined,
+                              ),
+                            if ((item.videoHostTier ?? '').isNotEmpty)
+                              _VideoMetaChip(
+                                label: item.videoHostTier!,
+                                icon: Icons.speed_rounded,
+                              ),
+                          ],
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                      CloudinaryVideoPlayerView(
+                        videoUrl: item.preferredVideoUrl!,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               if (item.quizzes.isNotEmpty) ...[
                 const SizedBox(height: 20),
                 ChildSectionHeader(title: l10n.playPublishedQuizzes),
@@ -577,10 +627,11 @@ class _PlayDetailHero extends StatelessWidget {
   Widget build(BuildContext context) {
     final accent =
         _categoryColor(item.category?.slug ?? item.contentType, context);
-    final hasRemoteImage = item.thumbnailUrl != null &&
-        item.thumbnailUrl!.trim().isNotEmpty &&
-        (item.thumbnailUrl!.startsWith('http://') ||
-            item.thumbnailUrl!.startsWith('https://'));
+    final thumbnailUrl = item.effectiveThumbnailUrl;
+    final hasRemoteImage = thumbnailUrl != null &&
+        thumbnailUrl.trim().isNotEmpty &&
+        (thumbnailUrl.startsWith('http://') ||
+            thumbnailUrl.startsWith('https://'));
 
     return Container(
       height: 220,
@@ -597,7 +648,7 @@ class _PlayDetailHero extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         child: hasRemoteImage
             ? Image.network(
-                item.thumbnailUrl!,
+                thumbnailUrl,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => _PlayDetailHeroFallback(
                   icon: _contentIcon(item.contentType),
@@ -608,6 +659,43 @@ class _PlayDetailHero extends StatelessWidget {
                 icon: _contentIcon(item.contentType),
                 color: accent,
               ),
+      ),
+    );
+  }
+}
+
+class _VideoMetaChip extends StatelessWidget {
+  const _VideoMetaChip({
+    required this.label,
+    required this.icon,
+  });
+
+  final String label;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: colors.onSurfaceVariant),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: colors.onSurface,
+            ),
+          ),
+        ],
       ),
     );
   }

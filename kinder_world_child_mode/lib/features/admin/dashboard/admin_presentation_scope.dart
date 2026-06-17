@@ -4,17 +4,16 @@ const Set<String> adminPresentationMenuRoutes = {
   Routes.adminDashboard,
   Routes.adminUsers,
   Routes.adminChildren,
-  Routes.adminSupport,
-  Routes.adminAudit,
-};
-
-const Set<String> adminPresentationHiddenRoutes = {
   Routes.adminContent,
   Routes.adminReports,
+  Routes.adminSupport,
   Routes.adminSubscriptions,
+  Routes.adminAudit,
   Routes.adminAdmins,
   Routes.adminSettings,
 };
+
+const Set<String> adminPresentationHiddenRoutes = {};
 
 bool isAdminPresentationRoute(String? route) {
   if (route == null || route.isEmpty) {

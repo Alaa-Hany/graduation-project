@@ -9,6 +9,7 @@ import 'package:kinder_world/core/utils/password_policy.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
 import 'package:kinder_world/core/widgets/auth_widgets.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
+import 'package:kinder_world/routing/route_paths.dart';
 
 class ParentRegisterScreen extends ConsumerStatefulWidget {
   const ParentRegisterScreen({super.key});
@@ -98,7 +99,7 @@ class _ParentRegisterScreenState extends ConsumerState<ParentRegisterScreen>
     final authController = ref.read(authControllerProvider.notifier);
     setState(() => _isLoading = true);
 
-    final success = await authController.registerParent(
+    final pending = await authController.registerParent(
       name: _nameController.text.trim(),
       email: _emailController.text.trim().toLowerCase(),
       password: _passwordController.text,
@@ -107,8 +108,7 @@ class _ParentRegisterScreenState extends ConsumerState<ParentRegisterScreen>
 
     if (mounted) {
       setState(() => _isLoading = false);
-      if (success) {
-        final l10n = AppLocalizations.of(context)!;
+      if (pending != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -118,7 +118,7 @@ class _ParentRegisterScreenState extends ConsumerState<ParentRegisterScreen>
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    l10n.accountCreatedWelcome,
+                    'Verification code sent to ${pending.email}',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -132,7 +132,10 @@ class _ParentRegisterScreenState extends ConsumerState<ParentRegisterScreen>
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
         );
-        context.go('/parent/dashboard');
+        context.go(
+          Routes.parentVerifyEmail,
+          extra: {'email': pending.email},
+        );
       } else {
         final error = ref.read(authControllerProvider).error;
         _showError(error ?? AppLocalizations.of(context)!.registrationFailed);

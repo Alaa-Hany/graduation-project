@@ -1,24 +1,30 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/models/public_content.dart';
+import 'package:kinder_world/core/repositories/public_content_repository.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
+import 'package:kinder_world/core/widgets/cloudinary_video_player_view.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
 import 'package:kinder_world/features/child_mode/learn/coloring_page_screen.dart';
 import 'package:kinder_world/features/child_mode/learn/coloring_progress_storage.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
 
-class ColoringGalleryScreen extends StatefulWidget {
+class ColoringGalleryScreen extends ConsumerStatefulWidget {
   const ColoringGalleryScreen({super.key});
 
   @override
-  State<ColoringGalleryScreen> createState() => _ColoringGalleryScreenState();
+  ConsumerState<ColoringGalleryScreen> createState() =>
+      _ColoringGalleryScreenState();
 }
 
-class _ColoringGalleryScreenState extends State<ColoringGalleryScreen> {
+class _ColoringGalleryScreenState extends ConsumerState<ColoringGalleryScreen> {
   String _selectedLevel = 'All';
   final Map<String, ColoringProgressData> _progressBySvgPath = {};
   final Map<String, SvgColoringTemplate> _templateBySvgPath = {};
+  late Future<List<PublicContentItem>> _cmsVideosFuture;
 
   static const List<String> _levels = [
     'All',
@@ -98,7 +104,15 @@ class _ColoringGalleryScreenState extends State<ColoringGalleryScreen> {
   @override
   void initState() {
     super.initState();
+    _cmsVideosFuture = _loadCmsVideos();
     _loadGalleryProgress();
+  }
+
+  Future<List<PublicContentItem>> _loadCmsVideos() async {
+    return ref.read(publicContentRepositoryProvider).fetchItems(
+          categorySlug: 'coloring',
+          contentType: 'video',
+        );
   }
 
   Future<void> _loadGalleryProgress() async {
@@ -227,8 +241,13 @@ class _ColoringGalleryScreenState extends State<ColoringGalleryScreen> {
               ),
               const SizedBox(height: 14),
               Expanded(
-                child: _filteredItems.isEmpty
-                    ? Center(
+                child: FutureBuilder<List<PublicContentItem>>(
+                  future: _cmsVideosFuture,
+                  builder: (context, snapshot) {
+                    final cmsVideos =
+                        snapshot.data ?? const <PublicContentItem>[];
+                    if (_filteredItems.isEmpty && cmsVideos.isEmpty) {
+                      return Center(
                         child: Container(
                           margin: const EdgeInsets.symmetric(horizontal: 24),
                           padding: const EdgeInsets.symmetric(
@@ -255,11 +274,15 @@ class _ColoringGalleryScreenState extends State<ColoringGalleryScreen> {
                             ),
                           ),
                         ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: _filteredItems.length,
-                        itemBuilder: (context, index) {
+                      );
+                    }
+
+                    return ListView(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      children: [
+                        ...cmsVideos
+                            .map((item) => _CmsColoringVideoCard(item: item)),
+                        ...List.generate(_filteredItems.length, (index) {
                           final item = _filteredItems[index];
                           final svgPath = item['svg']!;
                           final progress = _progressBySvgPath[svgPath];
@@ -284,12 +307,379 @@ class _ColoringGalleryScreenState extends State<ColoringGalleryScreen> {
                               await _loadGalleryProgress();
                             },
                           );
-                        },
-                      ),
+                        }),
+                      ],
+                    );
+                  },
+                ),
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CmsColoringVideoCard extends StatelessWidget {
+  const _CmsColoringVideoCard({required this.item});
+
+  final PublicContentItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = Localizations.localeOf(context)
+            .languageCode
+            .toLowerCase()
+            .startsWith('ar')
+        ? item.titleAr
+        : item.titleEn;
+    final description = (Localizations.localeOf(context)
+                .languageCode
+                .toLowerCase()
+                .startsWith('ar')
+            ? (item.descriptionAr ?? item.descriptionEn ?? '')
+            : (item.descriptionEn ?? item.descriptionAr ?? ''))
+        .trim();
+    final compact = MediaQuery.sizeOf(context).width < 390;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: Colors.white.withValuesCompat(alpha: 0.96),
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF95D5FF).withValuesCompat(alpha: 0.35),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(30),
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => _ColoringVideoPlayerScreen(item: item),
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: compact ? 17 : 18,
+                          fontWeight: FontWeight.w900,
+                          fontFamily: 'Comic Sans MS',
+                          color: const Color(0xFF0B4A75),
+                        ),
+                      ),
+                      if (description.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Text(
+                          description,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            height: 1.45,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFA5E17F),
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFA5E17F)
+                                  .withValuesCompat(alpha: 0.55),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: const Text(
+                          'Tap to Watch',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontFamily: 'Comic Sans MS',
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  width: compact ? 52 : 58,
+                  height: compact ? 52 : 58,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFD66B),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFFD66B)
+                            .withValuesCompat(alpha: 0.7),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.play_arrow_rounded,
+                    color: const Color(0xFF8B4E00),
+                    size: compact ? 30 : 34,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ColoringVideoPlayerScreen extends StatelessWidget {
+  const _ColoringVideoPlayerScreen({required this.item});
+
+  final PublicContentItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final locale = Localizations.localeOf(context).languageCode.toLowerCase();
+    final isArabic = locale.startsWith('ar');
+    final title = isArabic ? item.titleAr : item.titleEn;
+    final description = (isArabic
+            ? (item.descriptionAr ?? item.descriptionEn ?? '')
+            : (item.descriptionEn ?? item.descriptionAr ?? ''))
+        .trim();
+    final videoUrl = (item.preferredVideoUrl ?? '').trim();
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFF8E1),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.arrow_back_ios,
+                      color: Color(0xFF9C27B0),
+                    ),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  Expanded(
+                    child: Text(
+                      title,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF9C27B0),
+                        fontFamily: 'Comic Sans MS',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 40),
+                ],
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: ChildHeader(
+                compact: true,
+                padding: EdgeInsets.only(bottom: 12),
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  children: [
+                    if (videoUrl.isNotEmpty)
+                      Column(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(25),
+                            child:
+                                CloudinaryVideoPlayerView(videoUrl: videoUrl),
+                          ),
+                          const SizedBox(height: 16),
+                          if (description.isNotEmpty)
+                            Text(
+                              description,
+                              style: TextStyle(
+                                fontSize: 15,
+                                height: 1.5,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                        ],
+                      )
+                    else
+                      Container(
+                        height: 250,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(25),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF9C27B0)
+                                  .withValuesCompat(alpha: 0.2),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(25),
+                              child: Container(
+                                color: Colors.grey[200],
+                                child: Icon(
+                                  Icons.play_circle_outline,
+                                  size: 60,
+                                  color: Colors.grey[400],
+                                ),
+                              ),
+                            ),
+                            Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF9C27B0),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF9C27B0)
+                                        .withValuesCompat(alpha: 0.35),
+                                    blurRadius: 15,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.play_arrow,
+                                color: Colors.white,
+                                size: 40,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(height: 30),
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(25),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValuesCompat(alpha: 0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange[100],
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.star,
+                                  color: Colors.orange[700],
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              const Text(
+                                "Let's Watch!",
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 15),
+                          Text(
+                            description.isNotEmpty
+                                ? description
+                                : 'Follow the video and enjoy coloring step by step.',
+                            style: TextStyle(
+                              fontSize: 16,
+                              height: 1.5,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF9C27B0),
+                                foregroundColor: Colors.white,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 18),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                              child: const Text(
+                                'I am done',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

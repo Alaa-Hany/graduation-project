@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/models/admin_cms_models.dart';
 import 'package:kinder_world/core/models/admin_subscription_models.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/management/admin_management_repository.dart';
+import 'package:kinder_world/features/admin/shared/admin_control_center_panel.dart';
 import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
 import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
+import 'package:go_router/go_router.dart';
+import 'package:kinder_world/router.dart';
 
 class AdminSystemSettingsScreen extends ConsumerStatefulWidget {
   const AdminSystemSettingsScreen({super.key});
@@ -21,6 +25,7 @@ class _AdminSystemSettingsScreenState
   bool _loading = true;
   String? _error;
   AdminSystemSettingsPayload? _payload;
+  List<AdminCmsAxisSummary> _axes = const [];
 
   @override
   void initState() {
@@ -34,12 +39,17 @@ class _AdminSystemSettingsScreenState
       _error = null;
     });
     try {
-      final payload = await ref
-          .read(adminManagementRepositoryProvider)
-          .fetchAdminSettings();
+      final repo = ref.read(adminManagementRepositoryProvider);
+      final results = await Future.wait<dynamic>([
+        repo.fetchAdminSettings(),
+        repo.fetchCmsCatalog(),
+      ]);
+      final payload = results[0] as AdminSystemSettingsPayload;
+      final catalog = results[1] as AdminCmsCatalogResponse;
       if (!mounted) return;
       setState(() {
         _payload = payload;
+        _axes = catalog.axes;
         _loading = false;
       });
     } catch (e) {
@@ -67,6 +77,34 @@ class _AdminSystemSettingsScreenState
       return const AdminPermissionPlaceholder();
     }
 
+    final colorScheme = Theme.of(context).colorScheme;
+    final contextActions = [
+      AdminControlCenterAction(
+        icon: Icons.auto_stories_outlined,
+        label: l10n.adminSidebarContent,
+        route: Routes.adminContent,
+        accent: colorScheme.tertiaryContainer,
+      ),
+      AdminControlCenterAction(
+        icon: Icons.people_outline,
+        label: l10n.adminSidebarUsers,
+        route: Routes.adminUsers,
+        accent: colorScheme.primaryContainer,
+      ),
+      AdminControlCenterAction(
+        icon: Icons.insights_outlined,
+        label: l10n.adminSidebarReports,
+        route: Routes.adminReports,
+        accent: colorScheme.secondaryContainer,
+      ),
+      AdminControlCenterAction(
+        icon: Icons.workspace_premium_outlined,
+        label: l10n.adminSidebarSubscriptions,
+        route: Routes.adminSubscriptions,
+        accent: colorScheme.surfaceContainerHigh,
+      ),
+    ];
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -84,6 +122,17 @@ class _AdminSystemSettingsScreenState
             ],
           ),
           const SizedBox(height: 24),
+          AdminControlCenterPanel(
+            title: l10n.adminDashboard,
+            actions: contextActions,
+            axes: _axes,
+            categoriesLabel: l10n.adminCmsCategoriesTab,
+            contentsLabel: l10n.adminCmsContentsTab,
+            quizzesLabel: l10n.adminCmsQuizzesTab,
+            onAxisTap: (_) => context.go(Routes.adminContent),
+          ),
+          if (contextActions.isNotEmpty || _axes.isNotEmpty)
+            const SizedBox(height: 24),
           if (_loading)
             const AdminLoadingState()
           else if (_error != null)

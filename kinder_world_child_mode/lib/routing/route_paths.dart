@@ -9,6 +9,7 @@ class Routes {
   static const selectUserType = '/select-user-type';
   static const parentLogin = '/parent/login';
   static const parentRegister = '/parent/register';
+  static const parentVerifyEmail = '/parent/verify-email';
   static const parentForgotPassword = '/parent/forgot-password';
   static const childLogin = '/child/login';
   static const childForgotPassword = '/child/forgot-password';

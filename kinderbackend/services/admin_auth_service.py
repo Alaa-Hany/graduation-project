@@ -7,7 +7,12 @@ from fastapi import HTTPException, Request, status
 from jose import JWTError
 from sqlalchemy.orm import Session
 
-from admin_auth import ADMIN_TOKEN_TYPE, create_admin_access_token, create_admin_refresh_token
+from admin_auth import (
+    REFRESH_TOKEN_TYPE,
+    create_admin_access_token,
+    create_admin_refresh_token,
+    decode_admin_token,
+)
 from admin_utils import build_admin_payload, write_audit_log
 from auth import decode_token, verify_password
 from core.message_catalog import AdminAuthMessages
@@ -185,15 +190,15 @@ class AdminAuthService:
         from admin_models import AdminUser
 
         try:
-            decoded = decode_token(payload.refresh_token)
-        except JWTError as exc:
+            decoded = decode_admin_token(payload.refresh_token)
+        except Exception as exc:
             logger.warning("Admin refresh token decode failed: %s", exc)
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=AdminAuthMessages.INVALID_OR_EXPIRED_REFRESH_TOKEN,
             )
 
-        if decoded.get("token_type") != ADMIN_TOKEN_TYPE:
+        if decoded.get("role") != "admin" or decoded.get("type") != REFRESH_TOKEN_TYPE:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=AdminAuthMessages.INVALID_REFRESH_TOKEN_TYPE,

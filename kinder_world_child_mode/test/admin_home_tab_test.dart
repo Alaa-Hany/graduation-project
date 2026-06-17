@@ -94,6 +94,7 @@ class _FakeAdminManagementRepository extends AdminManagementRepository {
     String search = '',
     String status = 'all',
     int? categoryId,
+    String axisKey = '',
     String contentType = '',
     int page = 1,
   }) async {
@@ -116,6 +117,8 @@ void main() {
       permissions: [
         'admin.users.view',
         'admin.children.view',
+        'admin.content.view',
+        'admin.analytics.view',
       ],
     );
 
@@ -149,6 +152,8 @@ void main() {
 
     expect(find.textContaining('Welcome back'), findsOneWidget);
     expect(find.text('Overview'), findsOneWidget);
+    expect(find.text('Content'), findsWidgets);
+    expect(find.text('Reports'), findsWidgets);
     expect(find.text('Your permissions'), findsOneWidget);
   });
 }

@@ -16,6 +16,44 @@ class AuthSessionPayload {
   final Map<String, dynamic> raw;
 }
 
+class PendingVerificationPayload {
+  const PendingVerificationPayload({
+    required this.success,
+    required this.email,
+    required this.verificationRequired,
+    this.message,
+    this.otpExpiresAt,
+    this.resendAvailableAt,
+    required this.raw,
+  });
+
+  final bool success;
+  final String email;
+  final bool verificationRequired;
+  final String? message;
+  final DateTime? otpExpiresAt;
+  final DateTime? resendAvailableAt;
+  final Map<String, dynamic> raw;
+}
+
+class OtpActionPayload {
+  const OtpActionPayload({
+    required this.success,
+    required this.email,
+    this.message,
+    this.otpExpiresAt,
+    this.resendAvailableAt,
+    required this.raw,
+  });
+
+  final bool success;
+  final String email;
+  final String? message;
+  final DateTime? otpExpiresAt;
+  final DateTime? resendAvailableAt;
+  final Map<String, dynamic> raw;
+}
+
 class ChildLoginPayload {
   const ChildLoginPayload({
     required this.success,
@@ -62,7 +100,7 @@ class AuthApi {
     return _toSessionPayload(response.data);
   }
 
-  Future<AuthSessionPayload> register({
+  Future<PendingVerificationPayload> register({
     required String name,
     required String email,
     required String password,
@@ -77,7 +115,33 @@ class AuthApi {
         'confirm_password': confirmPassword,
       },
     );
+    return _toPendingVerificationPayload(response.data);
+  }
+
+  Future<AuthSessionPayload> verifyEmailOtp({
+    required String email,
+    required String otp,
+  }) async {
+    final response = await _network.post<Map<String, dynamic>>(
+      '/auth/verify-email-otp',
+      data: {
+        'email': email.trim().toLowerCase(),
+        'otp': otp.trim(),
+      },
+    );
     return _toSessionPayload(response.data);
+  }
+
+  Future<OtpActionPayload> resendEmailOtp({
+    required String email,
+  }) async {
+    final response = await _network.post<Map<String, dynamic>>(
+      '/auth/resend-email-otp',
+      data: {
+        'email': email.trim().toLowerCase(),
+      },
+    );
+    return _toOtpActionPayload(response.data);
   }
 
   Future<Map<String, dynamic>> refresh({
@@ -271,6 +335,41 @@ class AuthApi {
       user: Map<String, dynamic>.from(
         body['user'] as Map? ?? const <String, dynamic>{},
       ),
+      raw: body,
+    );
+  }
+
+  PendingVerificationPayload _toPendingVerificationPayload(
+    Map<String, dynamic>? data,
+  ) {
+    final body = Map<String, dynamic>.from(data ?? const {});
+    return PendingVerificationPayload(
+      success: body['success'] == true,
+      email: body['email']?.toString() ?? '',
+      verificationRequired: body['verification_required'] == true,
+      message: body['message']?.toString(),
+      otpExpiresAt: body['otp_expires_at'] is String
+          ? DateTime.tryParse(body['otp_expires_at'] as String)
+          : null,
+      resendAvailableAt: body['resend_available_at'] is String
+          ? DateTime.tryParse(body['resend_available_at'] as String)
+          : null,
+      raw: body,
+    );
+  }
+
+  OtpActionPayload _toOtpActionPayload(Map<String, dynamic>? data) {
+    final body = Map<String, dynamic>.from(data ?? const {});
+    return OtpActionPayload(
+      success: body['success'] == true,
+      email: body['email']?.toString() ?? '',
+      message: body['message']?.toString(),
+      otpExpiresAt: body['otp_expires_at'] is String
+          ? DateTime.tryParse(body['otp_expires_at'] as String)
+          : null,
+      resendAvailableAt: body['resend_available_at'] is String
+          ? DateTime.tryParse(body['resend_available_at'] as String)
+          : null,
       raw: body,
     );
   }

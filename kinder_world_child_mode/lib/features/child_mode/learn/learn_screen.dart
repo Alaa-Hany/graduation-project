@@ -1,20 +1,36 @@
 // ignore_for_file: prefer_const_constructors
+import 'dart:async';
+import 'dart:math' as math;
+
+import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/models/activity.dart';
+import 'package:kinder_world/core/models/public_content.dart';
 import 'package:kinder_world/core/providers/content_controller.dart';
+import 'package:kinder_world/core/providers/child_session_controller.dart';
+import 'package:kinder_world/core/providers/progress_controller.dart';
+import 'package:kinder_world/core/repositories/public_content_repository.dart';
 import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
-import 'package:kinder_world/core/widgets/child_header.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/widgets/child_header.dart';
+import 'package:kinder_world/core/widgets/cloudinary_video_player_view.dart';
 import 'package:kinder_world/features/child_mode/learn/data/learn_catalog.dart';
 import 'package:kinder_world/features/child_mode/learn/coloring_gallery_screen.dart';
 import 'package:kinder_world/routing/route_paths.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 part 'widgets/learn_screen_sections.dart';
 part 'learn_support_screens.dart';
+part 'arcade_fun_games.dart';
+part 'puzzle_world_game.dart';
+part 'memory_match_game.dart';
 
 class LearnScreen extends ConsumerStatefulWidget {
   const LearnScreen({super.key});
@@ -60,7 +76,11 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
   @override
   Widget build(BuildContext context) {
     final contentState = ref.watch(contentControllerProvider);
-    final searchEntries = _buildSearchEntries(contentState.activities);
+    final publicCategoriesState = ref.watch(publicContentCategoriesProvider);
+    final publicCategories =
+        publicCategoriesState.valueOrNull ?? const <PublicContentCategory>[];
+    final searchEntries =
+        _buildSearchEntries(contentState.activities, publicCategories);
     final results =
         _filterSearchResults(contentState.activities, searchEntries);
 
@@ -85,7 +105,9 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
                       _handleSubmittedQuery(context, value, searchEntries),
                 ),
                 const SizedBox(height: 16),
-                if (contentState.isLoading && contentState.activities.isEmpty)
+                if ((contentState.isLoading &&
+                        contentState.activities.isEmpty) ||
+                    publicCategoriesState.isLoading)
                   const Padding(
                     padding: EdgeInsets.only(bottom: 16),
                     child: LinearProgressIndicator(),
@@ -113,6 +135,7 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
                   child: _LearnResultsGrid(
                     results: results,
                     activities: contentState.activities,
+                    publicCategories: publicCategories,
                     localizedTitleBuilder: (title) =>
                         _localizedSearchTitle(context, title),
                     onOpenSearchResult: (result) =>
@@ -188,13 +211,41 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
       context.push('${Routes.childLearn}/lesson/$lessonId');
       return;
     }
+    final categorySlug = result['categorySlug']?.toString();
+    final axisKey = result['axisKey']?.toString();
+    if (categorySlug != null &&
+        categorySlug.isNotEmpty &&
+        axisKey != null &&
+        axisKey.isNotEmpty) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => CmsCategoryContentScreen(
+            categorySlug: categorySlug,
+            axisKey: axisKey,
+            title: result['title']?.toString() ?? categorySlug,
+          ),
+        ),
+      );
+      return;
+    }
     _openCategory(context, result['route'] as String);
   }
 
-  List<Map<String, dynamic>> _buildSearchEntries(List<Activity> activities) {
+  List<Map<String, dynamic>> _buildSearchEntries(
+    List<Activity> activities,
+    List<PublicContentCategory> publicCategories,
+  ) {
     final entries = _searchItems
         .map((item) => Map<String, dynamic>.from(item))
         .toList(growable: true);
+    for (final category in publicCategories) {
+      entries.add({
+        'title': _categoryDisplayTitle(category),
+        'route': category.axisKey,
+        'axisKey': category.axisKey,
+        'categorySlug': category.slug,
+      });
+    }
     for (final activity in activities) {
       entries.add({
         'title': activity.title,
@@ -203,6 +254,15 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
       });
     }
     return entries;
+  }
+
+  String _categoryDisplayTitle(PublicContentCategory category) {
+    final locale = Localizations.localeOf(context).languageCode.toLowerCase();
+    final preferred =
+        locale.startsWith('ar') ? category.titleAr : category.titleEn;
+    final fallback =
+        locale.startsWith('ar') ? category.titleEn : category.titleAr;
+    return preferred.trim().isNotEmpty ? preferred : fallback;
   }
 
   String _localizedSearchTitle(BuildContext context, String title) {

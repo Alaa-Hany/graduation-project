@@ -45,12 +45,34 @@ class ParentAuthException implements Exception {
   final int? statusCode;
   final bool requiresTwoFactor;
   final String? twoFactorMethod;
+  final bool requiresEmailVerification;
+  final String? pendingEmail;
+  final DateTime? otpExpiresAt;
+  final DateTime? resendAvailableAt;
 
   const ParentAuthException({
     required this.message,
     this.statusCode,
     this.requiresTwoFactor = false,
     this.twoFactorMethod,
+    this.requiresEmailVerification = false,
+    this.pendingEmail,
+    this.otpExpiresAt,
+    this.resendAvailableAt,
+  });
+}
+
+class PendingParentVerification {
+  final String email;
+  final String? message;
+  final DateTime? otpExpiresAt;
+  final DateTime? resendAvailableAt;
+
+  const PendingParentVerification({
+    required this.email,
+    this.message,
+    this.otpExpiresAt,
+    this.resendAvailableAt,
   });
 }
 

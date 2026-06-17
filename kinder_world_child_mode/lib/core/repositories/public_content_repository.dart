@@ -81,6 +81,11 @@ final publicContentRepositoryProvider =
   );
 });
 
+final publicContentCategoriesProvider =
+    FutureProvider.autoDispose<List<PublicContentCategory>>((ref) async {
+  return ref.watch(publicContentRepositoryProvider).fetchCategories();
+});
+
 List<Map<String, dynamic>> _items(Object? value) {
   if (value is! List) {
     return const <Map<String, dynamic>>[];

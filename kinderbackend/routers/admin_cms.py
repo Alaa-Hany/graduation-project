@@ -4,33 +4,42 @@ import re
 from typing import Any, Optional
 from urllib.parse import urlparse
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
 from pydantic import BaseModel, Field
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
-from admin_deps import require_permission
+from admin_deps import ensure_permission, get_current_admin, require_permission
 from admin_utils import (
+    CONTENT_AXIS_METADATA,
     build_pagination_payload,
+    normalize_content_axis_key,
+    serialize_content_axis_summary,
     serialize_content_category,
     serialize_content_item,
     serialize_quiz,
     write_audit_log,
 )
+from core.settings import settings
 from core.admin_security import require_sensitive_action_confirmation
 from core.observability import emit_event
 from core.time_utils import db_utc_now
 from deps import get_db
 from models import ContentCategory, ContentItem, Quiz
+from services.media_service import MediaServiceError, media_service
 
 router = APIRouter(tags=["Admin CMS"])
 
-CONTENT_STATUSES = {"draft", "review", "published"}
+CONTENT_STATUSES = {"draft", "ready", "review", "published", "archived"}
+PUBLISHED_STATUS = "published"
+READY_STATUS = "ready"
+ARCHIVED_STATUS = "archived"
 CONTENT_TYPES = {"lesson", "story", "video", "activity", "page"}
 AGE_GROUP_PATTERN = re.compile(r"^\s*(\d{1,2}\s*-\s*\d{1,2}|\d{1,2}\+)\s*$")
 
 
 class CategoryCreateRequest(BaseModel):
+    axis_key: str
     slug: Optional[str] = None
     title_en: str
     title_ar: str
@@ -39,6 +48,7 @@ class CategoryCreateRequest(BaseModel):
 
 
 class CategoryUpdateRequest(BaseModel):
+    axis_key: Optional[str] = None
     slug: Optional[str] = None
     title_en: Optional[str] = None
     title_ar: Optional[str] = None
@@ -58,6 +68,10 @@ class ContentCreateRequest(BaseModel):
     body_en: Optional[str] = None
     body_ar: Optional[str] = None
     thumbnail_url: Optional[str] = None
+    video_url: Optional[str] = None
+    video_provider: Optional[str] = None
+    video_public_id: Optional[str] = None
+    video_duration_seconds: Optional[int] = None
     age_group: Optional[str] = None
     metadata_json: Optional[dict[str, Any]] = None
 
@@ -74,6 +88,10 @@ class ContentUpdateRequest(BaseModel):
     body_en: Optional[str] = None
     body_ar: Optional[str] = None
     thumbnail_url: Optional[str] = None
+    video_url: Optional[str] = None
+    video_provider: Optional[str] = None
+    video_public_id: Optional[str] = None
+    video_duration_seconds: Optional[int] = None
     age_group: Optional[str] = None
     metadata_json: Optional[dict[str, Any]] = None
 
@@ -126,7 +144,7 @@ def _require_text(value: Optional[str], field_label: str) -> str:
 def _normalize_status(value: str) -> str:
     normalized = value.strip().lower()
     if normalized not in CONTENT_STATUSES:
-        raise _error("Status must be draft, review, or published")
+        raise _error("Status must be draft, ready, review, published, or archived")
     return normalized
 
 
@@ -139,6 +157,18 @@ def _normalize_content_type(value: Optional[str]) -> Optional[str]:
     return normalized
 
 
+def _normalize_axis_key_or_error(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    trimmed = value.strip()
+    if not trimmed:
+        return None
+    try:
+        return normalize_content_axis_key(trimmed)
+    except ValueError as exc:
+        raise _error(str(exc))
+
+
 def _validate_thumbnail_url(value: Optional[str]) -> Optional[str]:
     trimmed = _trim_or_none(value)
     if trimmed is None:
@@ -147,6 +177,35 @@ def _validate_thumbnail_url(value: Optional[str]) -> Optional[str]:
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
         raise _error("Thumbnail URL must be a valid http or https URL")
     return trimmed
+
+
+def _validate_video_url(value: Optional[str]) -> Optional[str]:
+    trimmed = _trim_or_none(value)
+    if trimmed is None:
+        return None
+    parsed = urlparse(trimmed)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise _error("Video URL must be a valid http or https URL")
+    return trimmed
+
+
+def _validate_video_provider(value: Optional[str]) -> Optional[str]:
+    trimmed = _trim_or_none(value)
+    if trimmed is None:
+        return None
+    return trimmed.lower()
+
+
+def _validate_video_public_id(value: Optional[str]) -> Optional[str]:
+    return _trim_or_none(value)
+
+
+def _validate_video_duration_seconds(value: Optional[int]) -> Optional[int]:
+    if value is None:
+        return None
+    if value < 0:
+        raise _error("Video duration must not be negative")
+    return value
 
 
 def _validate_age_group(value: Optional[str]) -> Optional[str]:
@@ -243,19 +302,83 @@ def _validate_questions_json(
 
 def _validate_publishable_content(
     *,
+    content_type: Optional[str],
     title_en: Optional[str],
     title_ar: Optional[str],
     body_en: Optional[str],
     body_ar: Optional[str],
+    video_url: Optional[str],
 ) -> None:
     if _trim_or_none(title_en) is None:
         raise _error("Published content must include an English title")
     if _trim_or_none(title_ar) is None:
         raise _error("Published content must include an Arabic title")
-    if _trim_or_none(body_en) is None:
-        raise _error("Published content must include an English body")
-    if _trim_or_none(body_ar) is None:
-        raise _error("Published content must include an Arabic body")
+    normalized_type = (content_type or "").strip().lower()
+    if normalized_type != "video":
+        if _trim_or_none(body_en) is None:
+            raise _error("Published content must include an English body")
+        if _trim_or_none(body_ar) is None:
+            raise _error("Published content must include an Arabic body")
+    if normalized_type == "video" and _trim_or_none(video_url) is None:
+        raise _error("Published video content must include a video URL")
+
+
+def _normalized_content_media_payload(
+    *,
+    video_url: Optional[str],
+    video_provider: Optional[str],
+    video_public_id: Optional[str],
+    video_duration_seconds: Optional[int],
+    metadata_json: dict[str, Any],
+) -> tuple[Optional[str], Optional[str], Optional[str], Optional[int], dict[str, Any]]:
+    normalized_metadata = dict(metadata_json or {})
+    normalized_video_url = _validate_video_url(video_url or normalized_metadata.get("video_url"))
+    normalized_video_provider = _validate_video_provider(
+        video_provider or normalized_metadata.get("video_provider")
+    )
+    normalized_video_public_id = _validate_video_public_id(
+        video_public_id or normalized_metadata.get("video_public_id")
+    )
+    normalized_duration = _validate_video_duration_seconds(
+        video_duration_seconds
+        if video_duration_seconds is not None
+        else normalized_metadata.get("duration_seconds")
+    )
+
+    for key in ("video_url", "video_provider", "video_public_id"):
+        normalized_metadata.pop(key, None)
+    if normalized_video_url is not None:
+        normalized_metadata["video_url"] = normalized_video_url
+    if normalized_video_provider is not None:
+        normalized_metadata["video_provider"] = normalized_video_provider
+    if normalized_video_public_id is not None:
+        normalized_metadata["video_public_id"] = normalized_video_public_id
+    if normalized_duration is not None:
+        normalized_metadata["duration_seconds"] = normalized_duration
+
+    return (
+        normalized_video_url,
+        normalized_video_provider,
+        normalized_video_public_id,
+        normalized_duration,
+        normalized_metadata,
+    )
+
+
+def _ensure_content_media_upload_permission(*, admin, db: Session) -> None:
+    for permission_name in ("admin.content.create", "admin.content.edit"):
+        try:
+            ensure_permission(admin=admin, db=db, permission_name=permission_name)
+            return
+        except HTTPException:
+            continue
+    raise HTTPException(
+        status_code=403,
+        detail={
+            "code": "PERMISSION_DENIED",
+            "required_any": ["admin.content.create", "admin.content.edit"],
+        },
+    )
 
 
 def _categories_query(db: Session):
@@ -263,6 +386,17 @@ def _categories_query(db: Session):
         joinedload(ContentCategory.contents),
         joinedload(ContentCategory.quizzes),
     )
+
+
+def _category_axis_groups(categories: list[ContentCategory]) -> list[dict[str, Any]]:
+    grouped: dict[str, list[ContentCategory]] = {key: [] for key in CONTENT_AXIS_METADATA}
+    for category in categories:
+        axis_key = normalize_content_axis_key(getattr(category, "axis_key", None))
+        grouped.setdefault(axis_key, []).append(category)
+    return [
+        serialize_content_axis_summary(axis_key, categories=grouped.get(axis_key, []))
+        for axis_key in CONTENT_AXIS_METADATA
+    ]
 
 
 def _contents_query(db: Session):
@@ -341,16 +475,27 @@ def _ensure_content_slug_available(
 
 @router.get("/admin/categories")
 def list_categories(
+    axis_key: str = Query(""),
     db: Session = Depends(get_db),
     admin=Depends(require_permission("admin.content.view")),
 ):
-    items = (
+    query = _categories_query(db).filter(ContentCategory.deleted_at.is_(None))
+    normalized_axis_key = None
+    if axis_key.strip():
+        normalized_axis_key = _normalize_axis_key_or_error(axis_key)
+        query = query.filter(ContentCategory.axis_key == normalized_axis_key)
+    items = query.order_by(ContentCategory.axis_key.asc(), func.lower(ContentCategory.title_en)).all()
+    all_categories = (
         _categories_query(db)
         .filter(ContentCategory.deleted_at.is_(None))
-        .order_by(func.lower(ContentCategory.title_en))
+        .order_by(ContentCategory.axis_key.asc(), func.lower(ContentCategory.title_en))
         .all()
     )
-    return {"items": [serialize_content_category(item) for item in items]}
+    return {
+        "items": [serialize_content_category(item) for item in items],
+        "axes": _category_axis_groups(all_categories),
+        "filters": {"axis_key": normalized_axis_key},
+    }
 
 
 @router.post("/admin/categories")
@@ -360,6 +505,9 @@ def create_category(
     db: Session = Depends(get_db),
     admin=Depends(require_permission("admin.content.create")),
 ):
+    axis_key = _normalize_axis_key_or_error(payload.axis_key)
+    if axis_key is None:
+        raise _error("Axis key is required")
     title_en = _require_text(payload.title_en, "English title")
     title_ar = _require_text(payload.title_ar, "Arabic title")
     slug = _slugify(payload.slug or title_en)
@@ -371,6 +519,7 @@ def create_category(
         raise _error("Category slug already exists")
 
     category = ContentCategory(
+        axis_key=axis_key,
         slug=slug,
         title_en=title_en,
         title_ar=title_ar,
@@ -408,6 +557,8 @@ def update_category(
     category = _get_category_or_404(category_id, db)
     before = serialize_content_category(category)
 
+    if payload.axis_key is not None:
+        category.axis_key = _normalize_axis_key_or_error(payload.axis_key) or category.axis_key
     if payload.slug is not None:
         slug = _slugify(payload.slug)
         if not slug:
@@ -496,6 +647,7 @@ def list_contents(
     status_filter: str = Query("", alias="status"),
     slug: str = Query(""),
     category_id: Optional[int] = Query(None),
+    axis_key: str = Query(""),
     content_type: str = Query(""),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
@@ -519,6 +671,13 @@ def list_contents(
         query = query.filter(ContentItem.status == _normalize_status(status_filter))
     if category_id is not None:
         query = query.filter(ContentItem.category_id == category_id)
+    normalized_axis_key = None
+    if axis_key.strip():
+        normalized_axis_key = _normalize_axis_key_or_error(axis_key)
+        query = query.join(ContentItem.category).filter(
+            ContentCategory.axis_key == normalized_axis_key,
+            ContentCategory.deleted_at.is_(None),
+        )
     if content_type.strip():
         query = query.filter(ContentItem.content_type == _normalize_content_type(content_type))
 
@@ -537,6 +696,7 @@ def list_contents(
             "slug": slug.strip().lower(),
             "status": status_filter.strip().lower(),
             "category_id": category_id,
+            "axis_key": normalized_axis_key,
             "content_type": content_type.strip().lower(),
         },
     }
@@ -550,6 +710,65 @@ def get_content(
 ):
     content = _get_content_or_404(content_id, db)
     return {"item": serialize_content_item(content, include_quizzes=True)}
+
+
+@router.post("/admin/media/videos/upload")
+async def upload_admin_content_video(
+    request: Request,
+    file: UploadFile = File(...),
+    axis_key: str | None = Form(default=None),
+    category_slug: str | None = Form(default=None),
+    content_slug: str | None = Form(default=None),
+    db: Session = Depends(get_db),
+    admin=Depends(get_current_admin),
+):
+    _ensure_content_media_upload_permission(admin=admin, db=db)
+    filename = (file.filename or "video").strip() or "video"
+    mime_type = (file.content_type or "").strip().lower()
+    if mime_type and not mime_type.startswith("video/"):
+        raise _error("Uploaded file must be a video", status_code=415)
+
+    file_bytes = await file.read()
+    max_bytes = settings.media_max_upload_size_mb * 1024 * 1024
+    if len(file_bytes) > max_bytes:
+        raise _error(
+            f"Uploaded video exceeds the {settings.media_max_upload_size_mb} MB limit",
+            status_code=413,
+        )
+
+    normalized_axis_key = _normalize_axis_key_or_error(axis_key)
+    try:
+        asset = media_service.upload_video(
+            file_bytes=file_bytes,
+            filename=filename,
+            axis_key=normalized_axis_key,
+            category_slug=_trim_or_none(category_slug),
+            content_slug=_trim_or_none(content_slug),
+            mime_type=mime_type or None,
+        )
+    except MediaServiceError as exc:
+        raise _error(str(exc), status_code=503) from exc
+
+    payload = asset.to_payload()
+    write_audit_log(
+        db=db,
+        request=request,
+        admin=admin,
+        action="content.media.upload",
+        entity_type="content_media",
+        entity_id=asset.public_id,
+        after_json=payload,
+    )
+    db.commit()
+    emit_event(
+        "cms.content.video_uploaded",
+        category="cms",
+        admin_id=admin.id,
+        axis_key=normalized_axis_key,
+        public_id=asset.public_id,
+        provider=asset.provider,
+    )
+    return {"success": True, "item": payload}
 
 
 @router.post("/admin/contents")
@@ -576,13 +795,28 @@ def create_content(
     thumbnail_url = _validate_thumbnail_url(payload.thumbnail_url)
     age_group = _validate_age_group(payload.age_group)
     metadata_json = _validate_metadata_json(payload.metadata_json)
+    (
+        video_url,
+        video_provider,
+        video_public_id,
+        video_duration_seconds,
+        metadata_json,
+    ) = _normalized_content_media_payload(
+        video_url=payload.video_url,
+        video_provider=payload.video_provider,
+        video_public_id=payload.video_public_id,
+        video_duration_seconds=payload.video_duration_seconds,
+        metadata_json=metadata_json,
+    )
 
-    if status_value == "published":
+    if status_value == PUBLISHED_STATUS:
         _validate_publishable_content(
+            content_type=content_type,
             title_en=title_en,
             title_ar=title_ar,
             body_en=body_en,
             body_ar=body_ar,
+            video_url=video_url,
         )
 
     content = ContentItem(
@@ -597,13 +831,17 @@ def create_content(
         body_en=body_en,
         body_ar=body_ar,
         thumbnail_url=thumbnail_url,
+        video_url=video_url,
+        video_provider=video_provider,
+        video_public_id=video_public_id,
+        video_duration_seconds=video_duration_seconds,
         age_group=age_group,
         metadata_json=metadata_json,
         created_by=admin.id,
         updated_by=admin.id,
         created_at=db_utc_now(),
         updated_at=db_utc_now(),
-        published_at=db_utc_now() if status_value == "published" else None,
+        published_at=db_utc_now() if status_value == PUBLISHED_STATUS else None,
     )
     db.add(content)
     db.flush()
@@ -660,17 +898,42 @@ def update_content(
         content.body_ar = _trim_or_none(payload.body_ar)
     if payload.thumbnail_url is not None:
         content.thumbnail_url = _validate_thumbnail_url(payload.thumbnail_url)
+    if payload.video_url is not None:
+        content.video_url = _validate_video_url(payload.video_url)
+    if payload.video_provider is not None:
+        content.video_provider = _validate_video_provider(payload.video_provider)
+    if payload.video_public_id is not None:
+        content.video_public_id = _validate_video_public_id(payload.video_public_id)
+    if payload.video_duration_seconds is not None:
+        content.video_duration_seconds = _validate_video_duration_seconds(
+            payload.video_duration_seconds
+        )
     if payload.age_group is not None:
         content.age_group = _validate_age_group(payload.age_group)
     if payload.metadata_json is not None:
         content.metadata_json = _validate_metadata_json(payload.metadata_json)
+    (
+        content.video_url,
+        content.video_provider,
+        content.video_public_id,
+        content.video_duration_seconds,
+        content.metadata_json,
+    ) = _normalized_content_media_payload(
+        video_url=content.video_url,
+        video_provider=content.video_provider,
+        video_public_id=content.video_public_id,
+        video_duration_seconds=content.video_duration_seconds,
+        metadata_json=content.metadata_json or {},
+    )
 
-    if content.status == "published":
+    if content.status == PUBLISHED_STATUS:
         _validate_publishable_content(
+            content_type=content.content_type,
             title_en=content.title_en,
             title_ar=content.title_ar,
             body_en=content.body_en,
             body_ar=content.body_ar,
+            video_url=content.video_url,
         )
         content.published_at = content.published_at or db_utc_now()
     else:
@@ -706,14 +969,16 @@ def publish_content(
     require_sensitive_action_confirmation(request, action="content.publish")
     content = _get_content_or_404(content_id, db)
     _validate_publishable_content(
+        content_type=content.content_type,
         title_en=content.title_en,
         title_ar=content.title_ar,
         body_en=content.body_en,
         body_ar=content.body_ar,
+        video_url=content.video_url,
     )
 
     before = serialize_content_item(content, include_quizzes=True)
-    content.status = "published"
+    content.status = PUBLISHED_STATUS
     content.published_at = db_utc_now()
     content.updated_by = admin.id
     content.updated_at = db_utc_now()
@@ -752,7 +1017,7 @@ def unpublish_content(
     require_sensitive_action_confirmation(request, action="content.unpublish")
     content = _get_content_or_404(content_id, db)
     before = serialize_content_item(content, include_quizzes=True)
-    content.status = "draft"
+    content.status = READY_STATUS
     content.published_at = None
     content.updated_by = admin.id
     content.updated_at = db_utc_now()
@@ -822,6 +1087,7 @@ def delete_content(
 def list_quizzes(
     status_filter: str = Query("", alias="status"),
     category_id: Optional[int] = Query(None),
+    axis_key: str = Query(""),
     content_id: Optional[int] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
@@ -833,6 +1099,13 @@ def list_quizzes(
         query = query.filter(Quiz.status == _normalize_status(status_filter))
     if category_id is not None:
         query = query.filter(Quiz.category_id == category_id)
+    normalized_axis_key = None
+    if axis_key.strip():
+        normalized_axis_key = _normalize_axis_key_or_error(axis_key)
+        query = query.join(Quiz.category).filter(
+            ContentCategory.axis_key == normalized_axis_key,
+            ContentCategory.deleted_at.is_(None),
+        )
     if content_id is not None:
         query = query.filter(Quiz.content_id == content_id)
 
@@ -846,6 +1119,12 @@ def list_quizzes(
     return {
         "items": [serialize_quiz(item) for item in items],
         "pagination": build_pagination_payload(page=page, page_size=page_size, total=total),
+        "filters": {
+            "status": status_filter.strip().lower(),
+            "category_id": category_id,
+            "axis_key": normalized_axis_key,
+            "content_id": content_id,
+        },
     }
 
 

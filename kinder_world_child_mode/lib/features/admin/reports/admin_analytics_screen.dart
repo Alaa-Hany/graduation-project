@@ -2,13 +2,17 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/admin_analytics_overview.dart';
+import 'package:kinder_world/core/models/admin_cms_models.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/management/admin_management_repository.dart';
+import 'package:kinder_world/features/admin/shared/admin_control_center_panel.dart';
 import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
 import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
+import 'package:kinder_world/router.dart';
 
 class AdminAnalyticsScreen extends ConsumerStatefulWidget {
   const AdminAnalyticsScreen({super.key});
@@ -24,6 +28,7 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
   String? _error;
   AdminAnalyticsOverview? _overview;
   AdminAnalyticsUsage? _usage;
+  List<AdminCmsAxisSummary> _axes = const [];
 
   @override
   void initState() {
@@ -38,12 +43,19 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
     });
     try {
       final repo = ref.read(adminManagementRepositoryProvider);
-      final overview = await repo.fetchAnalyticsOverview();
-      final usage = await repo.fetchAnalyticsUsage(_range);
+      final results = await Future.wait<dynamic>([
+        repo.fetchAnalyticsOverview(),
+        repo.fetchAnalyticsUsage(_range),
+        repo.fetchCmsCatalog(),
+      ]);
+      final overview = results[0] as AdminAnalyticsOverview;
+      final usage = results[1] as AdminAnalyticsUsage;
+      final catalog = results[2] as AdminCmsCatalogResponse;
       if (!mounted) return;
       setState(() {
         _overview = overview;
         _usage = usage;
+        _axes = catalog.axes;
         _loading = false;
       });
     } catch (e) {
@@ -64,6 +76,32 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
     }
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final contextActions = [
+      AdminControlCenterAction(
+        icon: Icons.auto_stories_outlined,
+        label: l10n.adminSidebarContent,
+        route: Routes.adminContent,
+        accent: cs.tertiaryContainer,
+      ),
+      AdminControlCenterAction(
+        icon: Icons.people_outline,
+        label: l10n.adminSidebarUsers,
+        route: Routes.adminUsers,
+        accent: cs.primaryContainer,
+      ),
+      AdminControlCenterAction(
+        icon: Icons.support_agent_outlined,
+        label: l10n.adminSidebarSupport,
+        route: Routes.adminSupport,
+        accent: cs.errorContainer,
+      ),
+      AdminControlCenterAction(
+        icon: Icons.tune_outlined,
+        label: l10n.adminSidebarSettings,
+        route: Routes.adminSettings,
+        accent: cs.surfaceContainerHigh,
+      ),
+    ];
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -85,6 +123,17 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
           const SizedBox(height: 20),
 
           // â”€â”€ Range selector â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          AdminControlCenterPanel(
+            title: l10n.adminDashboard,
+            actions: contextActions,
+            axes: _axes,
+            categoriesLabel: l10n.adminCmsCategoriesTab,
+            contentsLabel: l10n.adminCmsContentsTab,
+            quizzesLabel: l10n.adminCmsQuizzesTab,
+            onAxisTap: (_) => context.go(Routes.adminContent),
+          ),
+          if (contextActions.isNotEmpty || _axes.isNotEmpty)
+            const SizedBox(height: 20),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: SegmentedButton<String>(

@@ -5,6 +5,7 @@ import 'package:kinder_world/core/models/admin_management_activity.dart';
 import 'package:kinder_world/core/models/admin_parent_user.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/management/admin_management_repository.dart';
+import 'package:kinder_world/features/admin/shared/admin_form_dialog.dart';
 import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
 import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
 
@@ -72,10 +73,63 @@ class _AdminUserDetailsScreenState
     }
   }
 
+  Future<void> _resetPassword() async {
+    final l10n = AppLocalizations.of(context)!;
+    final user = _user;
+    if (user == null) return;
+    final passwordController = TextEditingController();
+
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AdminFormDialog(
+            title: l10n.adminUsersResetPasswordTitle,
+            submitLabel: l10n.adminUsersResetPasswordAction,
+            onSubmit: () => Navigator.of(context).pop(true),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  l10n.adminUsersResetPasswordHint,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: passwordController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: l10n.adminUsersPasswordField,
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ) ??
+        false;
+
+    if (!confirmed || !mounted) return;
+
+    final temporaryPassword =
+        await ref.read(adminManagementRepositoryProvider).resetUserPassword(
+              user.id,
+              newPassword: passwordController.text.trim(),
+            );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          l10n.adminUsersResetPasswordSuccess(temporaryPassword),
+        ),
+        duration: const Duration(seconds: 6),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final admin = ref.watch(currentAdminProvider);
+    final canEdit = admin?.hasPermission('admin.users.edit') ?? false;
     if (!(admin?.hasPermission('admin.users.view') ?? false)) {
       return const AdminPermissionPlaceholder();
     }
@@ -105,6 +159,19 @@ class _AdminUserDetailsScreenState
             l10n.adminUsersDetailTitle(_user!.email),
             style: Theme.of(context).textTheme.headlineSmall,
           ),
+          const SizedBox(height: 12),
+          if (canEdit)
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                FilledButton.icon(
+                  onPressed: _resetPassword,
+                  icon: const Icon(Icons.lock_reset_rounded, size: 18),
+                  label: Text(l10n.adminUsersResetPasswordAction),
+                ),
+              ],
+            ),
           const SizedBox(height: 20),
           Wrap(
             spacing: 16,

@@ -100,6 +100,7 @@ class _FakeAdminManagementRepository extends AdminManagementRepository {
     String search = '',
     String status = 'all',
     int? categoryId,
+    String axisKey = '',
     String contentType = '',
     int page = 1,
   }) async {
@@ -151,13 +152,16 @@ BoxDecoration _findGradientDecoration(
   for (final element in elements) {
     final widget = element.widget;
     final decoration = switch (widget) {
-      Container(:final decoration?) when decoration is BoxDecoration => decoration,
-      AnimatedContainer(:final decoration?) when decoration is BoxDecoration => decoration,
+      Container(:final decoration?) when decoration is BoxDecoration =>
+        decoration,
+      AnimatedContainer(:final decoration?) when decoration is BoxDecoration =>
+        decoration,
       _ => null,
     };
     if (decoration is BoxDecoration && decoration.gradient is LinearGradient) {
       final gradient = decoration.gradient! as LinearGradient;
-      if (gradient.colors.isNotEmpty && gradient.colors.first == expectedStartColor) {
+      if (gradient.colors.isNotEmpty &&
+          gradient.colors.first == expectedStartColor) {
         return decoration;
       }
     }
@@ -280,7 +284,8 @@ void main() {
       return decoration is BoxDecoration &&
           decoration.color == theme.colorScheme.surface;
     });
-    expect((parentCard.decoration! as BoxDecoration).color, theme.colorScheme.surface);
+    expect((parentCard.decoration! as BoxDecoration).color,
+        theme.colorScheme.surface);
 
     final chipContainer = containers
         .map((element) => element.widget)

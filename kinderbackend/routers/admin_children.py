@@ -168,6 +168,33 @@ def deactivate_admin_child(
     return {"success": True, "item": serialize_child_detail(child)}
 
 
+@router.delete("/{child_id}")
+def delete_admin_child(
+    child_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    admin=Depends(require_permission("admin.children.delete")),
+):
+    require_sensitive_action_confirmation(request, action="child.delete")
+    child = _get_child_or_404(child_id, db)
+    before = serialize_child_detail(child)
+    entity_id = child.id
+    db.delete(child)
+    db.flush()
+    write_audit_log(
+        db=db,
+        request=request,
+        admin=admin,
+        action="child.delete",
+        entity_type="child",
+        entity_id=entity_id,
+        before_json=before,
+        after_json={"id": entity_id, "deleted": True},
+    )
+    db.commit()
+    return {"success": True, "deleted_child_id": entity_id}
+
+
 @router.get("/{child_id}/progress")
 def get_admin_child_progress(
     child_id: int,

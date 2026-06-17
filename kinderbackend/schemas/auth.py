@@ -100,6 +100,40 @@ class LoginIn(AuthSchemaBase):
     )
 
 
+class VerifyEmailOtpIn(AuthSchemaBase):
+    email: EmailStr
+    otp: str = Field(..., min_length=6, max_length=6)
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "email": "parent@example.com",
+                "otp": "123456",
+            }
+        }
+    )
+
+    @field_validator("otp", mode="before")
+    @classmethod
+    def _normalize_otp(cls, value: str) -> str:
+        normalized = "".join(char for char in value.strip() if char.isdigit())
+        if len(normalized) != 6:
+            raise ValueError("otp must be exactly 6 digits")
+        return normalized
+
+
+class ResendEmailOtpIn(AuthSchemaBase):
+    email: EmailStr
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "email": "parent@example.com",
+            }
+        }
+    )
+
+
 class RefreshIn(AuthSchemaBase):
     refresh_token: str = Field(..., min_length=1)
 
@@ -208,6 +242,8 @@ class UserOut(BaseModel):
     role: str
     name: str | None = None
     is_active: bool
+    email_verified: bool
+    email_verified_at: str | None = None
     plan: str
     limits: dict[str, Any]
     features: dict[str, Any]
@@ -247,6 +283,35 @@ class AuthTokenResponse(BaseModel):
         }
     )
 
+
+class PendingVerificationResponse(BaseModel):
+    success: bool
+    message: str
+    email: EmailStr
+    verification_required: bool
+    otp_expires_at: str | None = None
+    resend_available_at: str | None = None
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "success": True,
+                "message": "Registration successful. Verify your email with the OTP we sent.",
+                "email": "parent@example.com",
+                "verification_required": True,
+                "otp_expires_at": "2026-03-24T10:05:00+00:00",
+                "resend_available_at": "2026-03-24T10:01:00+00:00",
+            }
+        }
+    )
+
+
+class OtpActionResponse(BaseModel):
+    success: bool
+    message: str
+    email: EmailStr
+    otp_expires_at: str | None = None
+    resend_available_at: str | None = None
 
 class AccessTokenResponse(BaseModel):
     access_token: str

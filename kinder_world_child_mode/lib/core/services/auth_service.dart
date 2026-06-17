@@ -74,7 +74,7 @@ class AuthService {
     );
   }
 
-  Future<User?> registerParent({
+  Future<PendingParentVerification?> registerParent({
     required String name,
     required String email,
     required String password,
@@ -86,6 +86,19 @@ class AuthService {
       password: password,
       confirmPassword: confirmPassword,
     );
+  }
+
+  Future<User?> verifyParentEmailOtp({
+    required String email,
+    required String otp,
+  }) async {
+    return await _repository.verifyParentEmailOtp(email: email, otp: otp);
+  }
+
+  Future<PendingParentVerification?> resendParentEmailOtp({
+    required String email,
+  }) async {
+    return await _repository.resendParentEmailOtp(email: email);
   }
 
   Future<bool> logout() async {

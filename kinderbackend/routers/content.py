@@ -5,6 +5,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
 
+from admin_utils import normalize_content_axis_key, serialize_content_axis_summary
 from deps import get_db
 from models import ContentCategory, ContentItem, Quiz
 
@@ -61,8 +62,11 @@ def _serialize_public_category(category: ContentCategory) -> dict[str, Any]:
         for item in (category.quizzes or [])
         if item.deleted_at is None and item.status == "published" and item.published_at is not None
     ]
+    axis_key = normalize_content_axis_key(getattr(category, "axis_key", None))
     return {
         "id": category.id,
+        "axis_key": axis_key,
+        "axis": serialize_content_axis_summary(axis_key),
         "slug": category.slug,
         "title_en": category.title_en,
         "title_ar": category.title_ar,
@@ -74,10 +78,14 @@ def _serialize_public_category(category: ContentCategory) -> dict[str, Any]:
 
 
 def _serialize_public_quiz(quiz: Quiz) -> dict[str, Any]:
+    axis_key = None
+    if quiz.category is not None:
+        axis_key = normalize_content_axis_key(getattr(quiz.category, "axis_key", None))
     return {
         "id": quiz.id,
         "content_id": quiz.content_id,
         "category_id": quiz.category_id,
+        "axis_key": axis_key,
         "title_en": quiz.title_en,
         "title_ar": quiz.title_ar,
         "description_en": quiz.description_en,
@@ -93,10 +101,14 @@ def _serialize_public_content_item(
     *,
     include_quizzes: bool = False,
 ) -> dict[str, Any]:
+    axis_key = None
+    if content.category is not None:
+        axis_key = normalize_content_axis_key(getattr(content.category, "axis_key", None))
     payload = {
         "id": content.id,
         "slug": content.slug,
         "category_id": content.category_id,
+        "axis_key": axis_key,
         "content_type": content.content_type,
         "title_en": content.title_en,
         "title_ar": content.title_ar,
@@ -105,6 +117,10 @@ def _serialize_public_content_item(
         "body_en": content.body_en,
         "body_ar": content.body_ar,
         "thumbnail_url": content.thumbnail_url,
+        "video_url": getattr(content, "video_url", None),
+        "video_provider": getattr(content, "video_provider", None),
+        "video_public_id": getattr(content, "video_public_id", None),
+        "video_duration_seconds": getattr(content, "video_duration_seconds", None),
         "age_group": content.age_group,
         "metadata_json": content.metadata_json or {},
         "category": (

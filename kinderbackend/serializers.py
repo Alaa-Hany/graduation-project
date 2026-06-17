@@ -31,12 +31,17 @@ def _age_from_dob(dob: Optional[date]) -> Optional[int]:
 
 def user_to_json(user: User) -> Dict:
     plan = get_user_plan(user)
+    email_verified = bool(getattr(user, "email_verified", False)) or (
+        bool(getattr(user, "is_active", False)) and not getattr(user, "email_otp_hash", None)
+    )
     return {
         "id": user.id,
         "email": user.email,
         "role": user.role,
         "name": user.name,
         "is_active": bool(user.is_active),
+        "email_verified": email_verified,
+        "email_verified_at": _iso_z(getattr(user, "email_verified_at", None)),
         "plan": plan,
         "limits": get_plan_limits(plan),
         "features": get_plan_features(plan),

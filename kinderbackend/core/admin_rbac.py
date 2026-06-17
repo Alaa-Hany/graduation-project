@@ -5,8 +5,10 @@ from typing import Final
 PERMISSION_DEFS: Final[list[tuple[str, str]]] = [
     ("admin.content.view", "View content categories, content items, and quizzes"),
     ("admin.users.view", "View parent/child user accounts"),
+    ("admin.users.create", "Create parent user accounts"),
     ("admin.users.edit", "Edit parent/child user accounts"),
     ("admin.users.ban", "Ban/unban parent/child user accounts"),
+    ("admin.users.delete", "Delete parent user accounts"),
     ("admin.children.view", "View child profiles"),
     ("admin.children.edit", "Edit child profiles"),
     ("admin.children.delete", "Delete child profiles"),

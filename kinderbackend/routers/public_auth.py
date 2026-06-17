@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from deps import get_current_user, get_db
 from models import User
 from rate_limit import auth_rate_limit
+from rate_limit import email_otp_resend_rate_limit, email_otp_verify_rate_limit
 from schemas.auth import (
     AccessTokenResponse,
     AuthTokenResponse,
@@ -13,11 +14,21 @@ from schemas.auth import (
     ChildSessionValidateIn,
     CurrentUserResponse,
     LoginIn,
+    OtpActionResponse,
+    PendingVerificationResponse,
     RefreshIn,
     RegisterIn,
+    ResendEmailOtpIn,
+    VerifyEmailOtpIn,
 )
 from serializers import user_to_json
-from services.auth_service import login_parent, refresh_parent_access_token, register_parent
+from services.auth_service import (
+    login_parent,
+    refresh_parent_access_token,
+    register_parent,
+    resend_parent_email_otp,
+    verify_parent_email_otp,
+)
 from services.child_service import (
     change_child_password,
     login_child,
@@ -27,14 +38,16 @@ from services.child_service import (
 
 router = APIRouter()
 auth_rate_limit_check = Depends(auth_rate_limit())
+email_otp_verify_rate_limit_check = Depends(email_otp_verify_rate_limit())
+email_otp_resend_rate_limit_check = Depends(email_otp_resend_rate_limit())
 
 
 @router.post(
     "/auth/register",
-    response_model=AuthTokenResponse,
+    response_model=PendingVerificationResponse,
     summary="Register Parent Account",
-    description="Create a new parent account and return the initial access and refresh tokens.",
-    response_description="Parent authentication payload with tokens and normalized user data.",
+    description="Create a new parent account, send a 6-digit OTP to the email address, and keep the account inactive until verification succeeds.",
+    response_description="Pending verification payload with OTP timing metadata.",
 )
 def register(
     payload: RegisterIn,
@@ -42,6 +55,36 @@ def register(
     rate_limit_check: None = auth_rate_limit_check,
 ):
     return register_parent(payload, db)
+
+
+@router.post(
+    "/auth/verify-email-otp",
+    response_model=AuthTokenResponse,
+    summary="Verify Parent Email OTP",
+    description="Verify the OTP sent during registration, activate the parent account, and return access and refresh tokens.",
+    response_description="Parent authentication payload after successful email verification.",
+)
+def verify_email_otp(
+    payload: VerifyEmailOtpIn,
+    db: Session = Depends(get_db),
+    rate_limit_check: None = email_otp_verify_rate_limit_check,
+):
+    return verify_parent_email_otp(payload, db)
+
+
+@router.post(
+    "/auth/resend-email-otp",
+    response_model=OtpActionResponse,
+    summary="Resend Parent Email OTP",
+    description="Resend the registration OTP email for a pending parent account, respecting resend cooldown rules.",
+    response_description="OTP resend status with updated expiry and cooldown timestamps.",
+)
+def resend_email_otp(
+    payload: ResendEmailOtpIn,
+    db: Session = Depends(get_db),
+    rate_limit_check: None = email_otp_resend_rate_limit_check,
+):
+    return resend_parent_email_otp(payload, db)
 
 
 @router.post(

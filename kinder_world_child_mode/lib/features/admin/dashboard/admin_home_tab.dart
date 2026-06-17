@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/admin_analytics_overview.dart';
 import 'package:kinder_world/core/models/admin_audit_log.dart';
+import 'package:kinder_world/core/models/admin_cms_models.dart';
 import 'package:kinder_world/core/models/admin_support_ticket.dart';
 import 'package:kinder_world/core/widgets/app_skeleton_widgets.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
@@ -55,6 +56,11 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
     return admin.isSuperAdmin || admin.hasPermission(permission);
   }
 
+  bool _canOpen(dynamic admin, String permission) {
+    if (admin == null) return false;
+    return admin.hasPermission(permission);
+  }
+
   void _setDashboardLoadingState({required bool refresh}) {
     setState(() {
       _loading = !refresh;
@@ -98,6 +104,13 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
         loader: () => repo.fetchSupportTickets(status: 'in_progress', page: 1),
         errors: sectionErrors,
       ),
+      _loadOptionalSection(
+        admin: admin,
+        permission: 'admin.content.view',
+        section: 'content_axes',
+        loader: () => repo.fetchCmsCatalog(),
+        errors: sectionErrors,
+      ),
     ]);
 
     final overview = results[0] as AdminAnalyticsOverview?;
@@ -106,6 +119,7 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
         results[2] as AdminPagedResponse<AdminSupportTicket>?;
     final inProgressTicketResponse =
         results[3] as AdminPagedResponse<AdminSupportTicket>?;
+    final cmsCatalog = results[4] as AdminCmsCatalogResponse?;
 
     return _AdminDashboardSnapshot(
       overview: overview,
@@ -114,6 +128,7 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
         openTickets: openTicketResponse?.items ?? const [],
         inProgressTickets: inProgressTicketResponse?.items ?? const [],
       ),
+      axes: cmsCatalog?.axes ?? const [],
       sectionErrors: sectionErrors,
     );
   }
@@ -181,6 +196,78 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
         _snapshot?.pendingTickets.length;
     final activitiesToday =
         (overview?.kpis['activities_today'] as num?)?.toInt();
+    final totalAxisContents = (_snapshot?.axes ?? const <AdminCmsAxisSummary>[])
+        .fold<int>(0, (sum, axis) => sum + axis.contentCount);
+    final actionCards = <_DashboardActionCardData>[
+      if (_canOpen(admin, 'admin.users.view'))
+        _DashboardActionCardData(
+          icon: Icons.people_outline,
+          label: l10n.adminSidebarUsers,
+          route: Routes.adminUsers,
+          accent: colorScheme.primaryContainer,
+          metric: _formatCompact(totalUsers),
+        ),
+      if (_canOpen(admin, 'admin.children.view'))
+        _DashboardActionCardData(
+          icon: Icons.child_care_outlined,
+          label: l10n.adminSidebarChildren,
+          route: Routes.adminChildren,
+          accent: colorScheme.secondaryContainer,
+          metric: _formatCompact(totalChildren),
+        ),
+      if (_canOpen(admin, 'admin.content.view'))
+        _DashboardActionCardData(
+          icon: Icons.auto_stories_outlined,
+          label: l10n.adminSidebarContent,
+          route: Routes.adminContent,
+          accent: colorScheme.tertiaryContainer,
+          metric: _formatCompact(totalAxisContents),
+        ),
+      if (_canOpen(admin, 'admin.analytics.view'))
+        _DashboardActionCardData(
+          icon: Icons.insights_outlined,
+          label: l10n.adminSidebarReports,
+          route: Routes.adminReports,
+          accent: colorScheme.primary.withValuesCompat(alpha: 0.12),
+          metric: _formatCompact(activitiesToday),
+        ),
+      if (_canOpen(admin, 'admin.support.view'))
+        _DashboardActionCardData(
+          icon: Icons.support_agent_outlined,
+          label: l10n.adminSidebarSupport,
+          route: Routes.adminSupport,
+          accent: colorScheme.errorContainer,
+          metric: _formatCompact(openTickets),
+        ),
+      if (_canOpen(admin, 'admin.subscription.view'))
+        _DashboardActionCardData(
+          icon: Icons.workspace_premium_outlined,
+          label: l10n.adminSidebarSubscriptions,
+          route: Routes.adminSubscriptions,
+          accent: colorScheme.secondary.withValuesCompat(alpha: 0.14),
+        ),
+      if (_canOpen(admin, 'admin.audit.view'))
+        _DashboardActionCardData(
+          icon: Icons.history_rounded,
+          label: l10n.adminSidebarAudit,
+          route: Routes.adminAudit,
+          accent: colorScheme.surfaceContainerHighest,
+        ),
+      if (_canOpen(admin, 'admin.admins.manage'))
+        _DashboardActionCardData(
+          icon: Icons.manage_accounts_outlined,
+          label: l10n.adminSidebarAdmins,
+          route: Routes.adminAdmins,
+          accent: colorScheme.primary.withValuesCompat(alpha: 0.16),
+        ),
+      if (_canOpen(admin, 'admin.settings.edit'))
+        _DashboardActionCardData(
+          icon: Icons.tune_outlined,
+          label: l10n.adminSidebarSettings,
+          route: Routes.adminSettings,
+          accent: colorScheme.surfaceContainerHigh,
+        ),
+    ];
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -259,6 +346,12 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
                               : const Icon(Icons.refresh_rounded, size: 18),
                           label: Text(l10n.adminRefreshTooltip),
                         ),
+                        for (final card in actionCards.take(compact ? 4 : 6))
+                          FilledButton.tonalIcon(
+                            onPressed: () => context.go(card.route),
+                            icon: Icon(card.icon, size: 18),
+                            label: Text(card.label),
+                          ),
                       ],
                     ),
                     if (admin?.roles.isNotEmpty == true) ...[
@@ -338,6 +431,24 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
                 ],
               ),
               const SizedBox(height: 24),
+              if (actionCards.isNotEmpty) ...[
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: actionCards.map((card) {
+                        return _DashboardActionCard(
+                          width: cardWidth,
+                          data: card,
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
               if (_loading)
                 const AdminOverviewSkeleton()
               else if (_error != null)
@@ -346,6 +457,33 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
                   onRetry: _loadDashboard,
                 )
               else ...[
+                if (_snapshot?.axes.isNotEmpty == true) ...[
+                  _SectionCard(
+                    width: double.infinity,
+                    title: l10n.adminCmsTitle,
+                    icon: Icons.auto_stories_outlined,
+                    actionLabel: l10n.adminSidebarContent,
+                    onAction: () => context.go(Routes.adminContent),
+                    child: Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children:
+                          (_snapshot?.axes ?? const <AdminCmsAxisSummary>[])
+                              .map(
+                                (axis) => _AxisOverviewCard(
+                                  width: cardWidth,
+                                  axis: axis,
+                                  categoriesLabel: l10n.adminCmsCategoriesTab,
+                                  contentsLabel: l10n.adminCmsContentsTab,
+                                  quizzesLabel: l10n.adminCmsQuizzesTab,
+                                  onTap: () => context.go(Routes.adminContent),
+                                ),
+                              )
+                              .toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
                 Wrap(
                   spacing: 12,
                   runSpacing: 12,
@@ -502,23 +640,118 @@ class _StatCard extends StatelessWidget {
   }
 }
 
+class _DashboardActionCardData {
+  const _DashboardActionCardData({
+    required this.icon,
+    required this.label,
+    required this.route,
+    required this.accent,
+    this.metric,
+  });
+
+  final IconData icon;
+  final String label;
+  final String route;
+  final Color accent;
+  final String? metric;
+}
+
+class _DashboardActionCard extends StatelessWidget {
+  const _DashboardActionCard({
+    required this.width,
+    required this.data,
+  });
+
+  final double width;
+  final _DashboardActionCardData data;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return SizedBox(
+      width: width,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => context.go(data.route),
+        child: Ink(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: colorScheme.outlineVariant.withValuesCompat(alpha: 0.5),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: data.accent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  data.icon,
+                  color: colorScheme.onSurface,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if ((data.metric ?? '').isNotEmpty)
+                      Text(
+                        data.metric!,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    Text(
+                      data.label,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_rounded,
+                size: 18,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _AdminDashboardSnapshot {
   const _AdminDashboardSnapshot({
     required this.overview,
     required this.auditLogs,
     required this.pendingTickets,
+    required this.axes,
     required this.sectionErrors,
   });
 
   final AdminAnalyticsOverview? overview;
   final List<AdminAuditLog> auditLogs;
   final List<AdminSupportTicket> pendingTickets;
+  final List<AdminCmsAxisSummary> axes;
   final List<String> sectionErrors;
 
   bool get hasVisibleData {
     return overview != null ||
         auditLogs.isNotEmpty ||
-        pendingTickets.isNotEmpty;
+        pendingTickets.isNotEmpty ||
+        axes.isNotEmpty;
   }
 }
 
@@ -752,6 +985,135 @@ class _SupportQueue extends StatelessWidget {
           ),
         );
       }).toList(),
+    );
+  }
+}
+
+class _AxisOverviewCard extends StatelessWidget {
+  const _AxisOverviewCard({
+    required this.width,
+    required this.axis,
+    required this.categoriesLabel,
+    required this.contentsLabel,
+    required this.quizzesLabel,
+    this.onTap,
+  });
+
+  final double width;
+  final AdminCmsAxisSummary axis;
+  final String categoriesLabel;
+  final String contentsLabel;
+  final String quizzesLabel;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return SizedBox(
+      width: width,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Ink(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerLowest,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: colorScheme.outlineVariant.withValuesCompat(alpha: 0.6),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                axis.titleEn.isNotEmpty ? axis.titleEn : axis.key,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              if (axis.titleAr.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  axis.titleAr,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _AxisMetricChip(
+                    icon: Icons.category_outlined,
+                    label: categoriesLabel,
+                    value: axis.categoryCount,
+                  ),
+                  _AxisMetricChip(
+                    icon: Icons.article_outlined,
+                    label: contentsLabel,
+                    value: axis.contentCount,
+                  ),
+                  _AxisMetricChip(
+                    icon: Icons.quiz_outlined,
+                    label: quizzesLabel,
+                    value: axis.quizCount,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AxisMetricChip extends StatelessWidget {
+  const _AxisMetricChip({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final int value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: colorScheme.primary),
+          const SizedBox(width: 6),
+          Text(
+            '$label: ',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          Text(
+            '$value',
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

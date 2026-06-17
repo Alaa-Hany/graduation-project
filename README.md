@@ -365,6 +365,7 @@ pip install -r requirements-dev.txt
 Minimal local environment:
 
 - create `kinderbackend/.env`
+- copy values from `kinderbackend/.env.example`
 - set `KINDER_JWT_SECRET`
 
 Optional local settings:
@@ -375,6 +376,12 @@ DATABASE_URL=
 SKIP_SCHEMA_VERIFY=false
 AUTO_RUN_MIGRATIONS=false
 ```
+
+Optional integrations:
+
+- Email OTP verification uses SMTP settings such as `SMTP_HOST`, `SMTP_USERNAME`, and `SMTP_PASSWORD`.
+- Admin video uploads use Cloudinary settings such as `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET`.
+- If these optional settings are empty, the rest of the local app can still run, but email delivery and media uploads will not be fully configured.
 
 Run:
 
@@ -426,6 +433,21 @@ Common backend environment variables recognized in code include:
 - `JWT_PREVIOUS_SECRETS`
 - `SKIP_SCHEMA_VERIFY`
 - `AUTO_RUN_MIGRATIONS`
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_USERNAME`
+- `SMTP_PASSWORD`
+- `SMTP_FROM_EMAIL`
+- `SMTP_FROM_NAME`
+- `SMTP_USE_SSL`
+- `SMTP_USE_TLS`
+- `EMAIL_OTP_EXPIRES_MINUTES`
+- `EMAIL_OTP_RESEND_COOLDOWN_SECONDS`
+- `CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
+- `CLOUDINARY_MEDIA_ROOT_FOLDER`
+- `MEDIA_MAX_UPLOAD_SIZE_MB`
 - `EMAIL_DOMAIN_ALLOWLIST`
 - `EMAIL_DOMAIN_DENYLIST`
 - `CHILD_AUTH_RATE_LIMIT_MAX_ATTEMPTS`

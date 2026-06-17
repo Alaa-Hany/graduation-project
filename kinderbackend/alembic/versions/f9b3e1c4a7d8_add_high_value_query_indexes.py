@@ -12,7 +12,9 @@ from alembic import op
 revision = "f9b3e1c4a7d8"
 down_revision = "e5a1b7c9d2f4"
 branch_labels = None
-depends_on = None
+# This migration adds indexes on subscription/billing tables created on a sibling
+# Alembic branch, so it must wait for that branch to be applied first.
+depends_on = "e1a5c7b9d3f2"
 
 
 def upgrade() -> None:

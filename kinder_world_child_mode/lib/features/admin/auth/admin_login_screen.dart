@@ -42,6 +42,121 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
     }
   }
 
+  Future<void> _showBootstrapDialog() async {
+    final l10n = AppLocalizations.of(context)!;
+    final formKey = GlobalKey<FormState>();
+    final nameController = TextEditingController();
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+    bool obscurePassword = true;
+
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => StatefulBuilder(
+            builder: (dialogContext, setDialogState) => AlertDialog(
+              title: Text(l10n.adminAdminsCreateTitle),
+              content: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: nameController,
+                      textInputAction: TextInputAction.next,
+                      decoration: InputDecoration(
+                        labelText: l10n.adminAdminsNameField,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      decoration: InputDecoration(
+                        labelText: l10n.adminAdminsEmailField,
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return l10n.adminEmailRequired;
+                        }
+                        if (!value.contains('@')) {
+                          return l10n.adminEmailInvalid;
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: passwordController,
+                      obscureText: obscurePassword,
+                      textInputAction: TextInputAction.done,
+                      decoration: InputDecoration(
+                        labelText: l10n.adminAdminsPasswordField,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            obscurePassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
+                          onPressed: () => setDialogState(
+                            () => obscurePassword = !obscurePassword,
+                          ),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return l10n.adminPasswordRequired;
+                        }
+                        if (value.trim().length < 8) {
+                          return l10n.passwordTooShortRegister;
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  child: Text(l10n.cancel),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    if (formKey.currentState?.validate() ?? false) {
+                      Navigator.of(dialogContext).pop(true);
+                    }
+                  },
+                  child: Text(l10n.adminAdminsCreateAction),
+                ),
+              ],
+            ),
+          ),
+        ) ??
+        false;
+
+    if (!confirmed || !mounted) {
+      nameController.dispose();
+      emailController.dispose();
+      passwordController.dispose();
+      return;
+    }
+
+    final success = await ref.read(adminAuthProvider.notifier).bootstrap(
+          email: emailController.text.trim(),
+          password: passwordController.text,
+          name: nameController.text.trim(),
+        );
+
+    nameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+
+    if (success && mounted) {
+      context.go(Routes.adminDashboard);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -172,6 +287,21 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                                         style: const TextStyle(fontSize: 16),
                                       ),
                               ),
+                              if (authState.canBootstrap) ...[
+                                const SizedBox(height: 12),
+                                OutlinedButton(
+                                  onPressed: authState.isLoading
+                                      ? null
+                                      : _showBootstrapDialog,
+                                  style: OutlinedButton.styleFrom(
+                                    minimumSize: const Size.fromHeight(48),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  child: Text(l10n.adminAdminsCreateAction),
+                                ),
+                              ],
                             ],
                           ),
                         ),

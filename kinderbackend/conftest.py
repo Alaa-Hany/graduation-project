@@ -84,6 +84,14 @@ def reset_global_state():
     _DEVICE_BINDINGS.clear()
 
 
+@pytest.fixture(autouse=True)
+def stub_email_delivery(monkeypatch):
+    monkeypatch.setattr(
+        "services.email_delivery_service.email_delivery_service.send_email",
+        lambda **kwargs: None,
+    )
+
+
 @pytest.fixture
 def create_parent(db):
     from auth import hash_password
@@ -106,6 +114,8 @@ def create_parent(db):
             role="parent",
             plan=plan,
             is_active=is_active,
+            email_verified=is_active,
+            email_verified_at=db_utc_now() if is_active else None,
             created_at=db_utc_now(),
             updated_at=db_utc_now(),
         )

@@ -29,6 +29,11 @@ class User(Base):
     name = Column(String, nullable=True)
     role = Column(String, nullable=False, default="parent")
     is_active = Column(Boolean, default=True, nullable=False)
+    email_verified = Column(Boolean, default=False, nullable=False, server_default=false())
+    email_verified_at = Column(UTCDateTime(), nullable=True)
+    email_otp_hash = Column(String, nullable=True)
+    email_otp_expires_at = Column(UTCDateTime(), nullable=True)
+    email_otp_last_sent_at = Column(UTCDateTime(), nullable=True)
     is_premium = Column(Boolean, default=False, nullable=False, server_default=false())
     plan = Column(String, nullable=False, default="FREE", server_default=text("'FREE'"))
 
@@ -766,6 +771,13 @@ class ContentCategory(Base):
     __tablename__ = "categories"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    axis_key = Column(
+        String,
+        nullable=False,
+        default="educational",
+        server_default=text("'educational'"),
+        index=True,
+    )
     slug = Column(String, unique=True, nullable=False, index=True)
     title_en = Column(String, nullable=False)
     title_ar = Column(String, nullable=False)
@@ -810,6 +822,10 @@ class ContentItem(Base):
     body_en = Column(String, nullable=True)
     body_ar = Column(String, nullable=True)
     thumbnail_url = Column(String, nullable=True)
+    video_url = Column(String, nullable=True)
+    video_provider = Column(String, nullable=True)
+    video_public_id = Column(String, nullable=True, index=True)
+    video_duration_seconds = Column(Integer, nullable=True)
     age_group = Column(String, nullable=True)
     metadata_json = Column(JSON, nullable=True)
     created_by = Column(

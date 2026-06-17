@@ -60,6 +60,45 @@ class AdminAuthRepository {
   })  : _adminApi = adminApi,
         _storage = storage;
 
+  Future<bool> canBootstrap() async {
+    try {
+      final body = await _adminApi.bootstrapStatus();
+      return body['can_bootstrap'] == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<AdminAuthResult> bootstrap({
+    required String email,
+    required String password,
+    String? name,
+  }) async {
+    try {
+      final body = await _adminApi.bootstrap(
+        email: email,
+        password: password,
+        name: name,
+      );
+      final accessToken = body['access_token'] as String;
+      final refreshToken = body['refresh_token'] as String;
+      final adminJson = Map<String, dynamic>.from(body['admin'] as Map);
+      final admin = AdminUser.fromJson(adminJson);
+
+      await _persistSession(admin, accessToken, refreshToken);
+
+      return AdminAuthResult.ok(
+        admin: admin,
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+      );
+    } on DioException catch (e) {
+      return AdminAuthResult.fail(_extractError(e));
+    } catch (e) {
+      return AdminAuthResult.fail(AdminAuthUiMessages.unexpectedError(e));
+    }
+  }
+
   Future<AdminAuthResult> login({
     required String email,
     required String password,
@@ -212,6 +251,25 @@ class AdminAuthRepository {
         return detail['message'] as String? ??
             AdminAuthUiMessages.requestFailed;
       }
+      if (detail is List && detail.isNotEmpty) {
+        final first = detail.first;
+        if (first is Map) {
+          final message = first['msg']?.toString().trim();
+          if (message != null && message.isNotEmpty) {
+            return message;
+          }
+        }
+        return detail.map((item) => item.toString()).join(', ');
+      }
+      if (data['message'] != null) {
+        final message = data['message'].toString().trim();
+        if (message.isNotEmpty) {
+          return message;
+        }
+      }
+    }
+    if (data is String && data.trim().isNotEmpty) {
+      return data.trim();
     }
     switch (e.response?.statusCode) {
       case 401:

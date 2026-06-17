@@ -44,6 +44,19 @@ def test_real_script_heads_load_from_repo_config() -> None:
     assert len(heads) == 1
 
 
+def test_high_value_indexes_migration_waits_for_subscription_schema() -> None:
+    migration_path = (
+        Path(__file__).resolve().parent
+        / "alembic"
+        / "versions"
+        / "f9b3e1c4a7d8_add_high_value_query_indexes.py"
+    )
+    namespace: dict[str, object] = {}
+    exec(migration_path.read_text(), namespace)
+
+    assert namespace["depends_on"] == "e1a5c7b9d3f2"
+
+
 def test_verify_database_schema_uses_single_expected_head(monkeypatch: pytest.MonkeyPatch) -> None:
     logger = logging.getLogger("migration-test")
     monkeypatch.setattr(db_migrations, "_load_expected_heads", lambda _config: ("head_1",))

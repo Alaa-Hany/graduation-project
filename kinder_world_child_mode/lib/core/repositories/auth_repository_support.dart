@@ -3,6 +3,8 @@ part of 'auth_repository.dart';
 mixin _AuthRepositorySupportMixin {
   static const _parentTwoFactorRequiredCode = 'PARENT_TWO_FACTOR_REQUIRED';
   static const _parentInvalidTwoFactorCode = 'PARENT_INVALID_TWO_FACTOR_CODE';
+  static const _emailVerificationRequiredCode = 'EMAIL_VERIFICATION_REQUIRED';
+  static const _otpResendCooldownCode = 'OTP_RESEND_COOLDOWN';
 
   SecureStorage get _secureStorage;
   AuthApi get _authApi;
@@ -176,6 +178,14 @@ mixin _AuthRepositorySupportMixin {
     return _extractErrorDetailCode(e) == _parentInvalidTwoFactorCode;
   }
 
+  bool _isParentEmailVerificationRequired(DioException e) {
+    return _extractErrorDetailCode(e) == _emailVerificationRequiredCode;
+  }
+
+  bool _isOtpResendCooldown(DioException e) {
+    return _extractErrorDetailCode(e) == _otpResendCooldownCode;
+  }
+
   DateTime? _extractLockedUntil(DioException e) {
     final data = e.response?.data;
     if (data is Map) {
@@ -186,6 +196,15 @@ mixin _AuthRepositorySupportMixin {
       if (data['locked_until'] is String) {
         return DateTime.tryParse(data['locked_until'].toString());
       }
+    }
+    return null;
+  }
+
+  DateTime? _extractResendAvailableAt(DioException e) {
+    final detail = _extractErrorDetailMap(e);
+    final value = detail?['resend_available_at'];
+    if (value is String) {
+      return DateTime.tryParse(value);
     }
     return null;
   }

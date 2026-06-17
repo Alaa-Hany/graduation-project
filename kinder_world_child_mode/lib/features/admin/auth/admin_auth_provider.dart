@@ -15,6 +15,7 @@ class AdminAuthState {
   final String? errorMessage;
   final bool requiresTwoFactor;
   final String? twoFactorMethod;
+  final bool canBootstrap;
 
   const AdminAuthState({
     this.status = AdminAuthStatus.initial,
@@ -22,6 +23,7 @@ class AdminAuthState {
     this.errorMessage,
     this.requiresTwoFactor = false,
     this.twoFactorMethod,
+    this.canBootstrap = false,
   });
 
   bool get isAuthenticated =>
@@ -37,6 +39,7 @@ class AdminAuthState {
     bool? requiresTwoFactor,
     bool clearTwoFactor = false,
     String? twoFactorMethod,
+    bool? canBootstrap,
   }) {
     return AdminAuthState(
       status: status ?? this.status,
@@ -47,6 +50,7 @@ class AdminAuthState {
           : (requiresTwoFactor ?? this.requiresTwoFactor),
       twoFactorMethod:
           clearTwoFactor ? null : (twoFactorMethod ?? this.twoFactorMethod),
+      canBootstrap: canBootstrap ?? this.canBootstrap,
     );
   }
 
@@ -78,14 +82,19 @@ class AdminAuthNotifier extends StateNotifier<AdminAuthState> {
   Future<void> _restoreSession() async {
     state = state.copyWith(status: AdminAuthStatus.loading);
     try {
+      final canBootstrap = await _repo.canBootstrap();
       final admin = await _repo.restoreSession();
       if (admin != null) {
         state = AdminAuthState(
           status: AdminAuthStatus.authenticated,
           admin: admin,
+          canBootstrap: canBootstrap,
         );
       } else {
-        state = const AdminAuthState(status: AdminAuthStatus.unauthenticated);
+        state = AdminAuthState(
+          status: AdminAuthStatus.unauthenticated,
+          canBootstrap: canBootstrap,
+        );
       }
     } catch (_) {
       state = const AdminAuthState(status: AdminAuthStatus.unauthenticated);
@@ -114,6 +123,7 @@ class AdminAuthNotifier extends StateNotifier<AdminAuthState> {
       state = AdminAuthState(
         status: AdminAuthStatus.authenticated,
         admin: result.admin,
+        canBootstrap: false,
       );
       return true;
     } else {
@@ -122,9 +132,45 @@ class AdminAuthNotifier extends StateNotifier<AdminAuthState> {
         errorMessage: result.error,
         requiresTwoFactor: result.requiresTwoFactor,
         twoFactorMethod: result.twoFactorMethod,
+        canBootstrap: state.canBootstrap,
       );
       return false;
     }
+  }
+
+  Future<bool> bootstrap({
+    required String email,
+    required String password,
+    String? name,
+  }) async {
+    state = state.copyWith(
+      status: AdminAuthStatus.loading,
+      clearError: true,
+      clearTwoFactor: true,
+    );
+
+    final result = await _repo.bootstrap(
+      email: email,
+      password: password,
+      name: name,
+    );
+
+    if (result.success && result.admin != null) {
+      state = AdminAuthState(
+        status: AdminAuthStatus.authenticated,
+        admin: result.admin,
+        canBootstrap: false,
+      );
+      return true;
+    }
+
+    final canBootstrap = await _repo.canBootstrap();
+    state = AdminAuthState(
+      status: AdminAuthStatus.unauthenticated,
+      errorMessage: result.error,
+      canBootstrap: canBootstrap,
+    );
+    return false;
   }
 
   /// Logout — clears local session and calls backend.
@@ -132,7 +178,11 @@ class AdminAuthNotifier extends StateNotifier<AdminAuthState> {
     state = state.copyWith(status: AdminAuthStatus.loading);
     await _repo.logout();
     _navigationController.clearHistory(seedLocation: '/admin/login');
-    state = const AdminAuthState(status: AdminAuthStatus.unauthenticated);
+    final canBootstrap = await _repo.canBootstrap();
+    state = AdminAuthState(
+      status: AdminAuthStatus.unauthenticated,
+      canBootstrap: canBootstrap,
+    );
   }
 
   /// Refresh the access token silently.
@@ -166,6 +216,7 @@ class AdminAuthNotifier extends StateNotifier<AdminAuthState> {
       state = AdminAuthState(
         status: AdminAuthStatus.unauthenticated,
         errorMessage: result.error,
+        canBootstrap: state.canBootstrap,
       );
     }
   }

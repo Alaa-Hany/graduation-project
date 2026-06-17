@@ -8,6 +8,7 @@ import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/utils/email_validation.dart';
 import 'package:kinder_world/core/widgets/auth_widgets.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
+import 'package:kinder_world/routing/route_paths.dart';
 
 class ParentLoginScreen extends ConsumerStatefulWidget {
   const ParentLoginScreen({super.key});
@@ -91,9 +92,18 @@ class _ParentLoginScreenState extends ConsumerState<ParentLoginScreen>
     if (mounted) {
       setState(() => _isLoading = false);
       if (success) {
-        context.go('/parent/dashboard');
+        context.go(Routes.parentDashboard);
       } else {
-        final error = ref.read(authControllerProvider).error;
+        final authState = ref.read(authControllerProvider);
+        if (authState.requiresEmailVerification &&
+            (authState.pendingVerificationEmail?.isNotEmpty ?? false)) {
+          context.go(
+            Routes.parentVerifyEmail,
+            extra: {'email': authState.pendingVerificationEmail},
+          );
+          return;
+        }
+        final error = authState.error;
         _showError(error ?? AppLocalizations.of(context)!.loginFailed);
       }
     }

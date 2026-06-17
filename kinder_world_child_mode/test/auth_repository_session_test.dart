@@ -155,7 +155,7 @@ class _FakeAuthApi extends AuthApi {
 
   final SecureStorage storage;
   AuthSessionPayload? loginPayload;
-  AuthSessionPayload? registerPayload;
+  PendingVerificationPayload? registerPayload;
   ChildLoginPayload? childLoginPayload;
   Map<String, dynamic>? refreshPayload;
   Map<String, dynamic>? childSessionValidationPayload;
@@ -184,13 +184,19 @@ class _FakeAuthApi extends AuthApi {
   }
 
   @override
-  Future<AuthSessionPayload> register({
+  Future<PendingVerificationPayload> register({
     required String name,
     required String email,
     required String password,
     required String confirmPassword,
   }) async {
-    return registerPayload!;
+    return registerPayload ??
+        PendingVerificationPayload(
+          success: true,
+          email: email,
+          verificationRequired: true,
+          raw: const <String, dynamic>{},
+        );
   }
 
   @override

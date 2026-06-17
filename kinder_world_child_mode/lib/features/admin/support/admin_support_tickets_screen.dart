@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/models/admin_cms_models.dart';
 import 'package:kinder_world/core/models/admin_support_ticket.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/management/admin_management_repository.dart';
 import 'package:kinder_world/features/admin/shared/admin_confirm_dialog.dart';
+import 'package:kinder_world/features/admin/shared/admin_control_center_panel.dart';
 import 'package:kinder_world/features/admin/shared/admin_filter_bar.dart';
 import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
 import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
 import 'package:kinder_world/features/admin/shared/admin_table_widgets.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
 import 'package:kinder_world/core/widgets/material_compat.dart';
+import 'package:kinder_world/router.dart';
 
 class AdminSupportTicketsScreen extends ConsumerStatefulWidget {
   const AdminSupportTicketsScreen({super.key});
@@ -31,6 +35,7 @@ class _AdminSupportTicketsScreenState
   String? _error;
   String? _detailError;
   List<AdminSupportTicket> _tickets = const [];
+  List<AdminCmsAxisSummary> _axes = const [];
   Map<String, dynamic> _pagination = const {};
   AdminSupportTicket? _selectedTicket;
 
@@ -47,12 +52,17 @@ class _AdminSupportTicketsScreenState
       _detailError = null;
     });
     try {
-      final response =
-          await ref.read(adminManagementRepositoryProvider).fetchSupportTickets(
-                status: _status,
-                category: _category,
-                page: _page,
-              );
+      final repo = ref.read(adminManagementRepositoryProvider);
+      final results = await Future.wait<dynamic>([
+        repo.fetchSupportTickets(
+          status: _status,
+          category: _category,
+          page: _page,
+        ),
+        repo.fetchCmsCatalog(),
+      ]);
+      final response = results[0] as AdminPagedResponse<AdminSupportTicket>;
+      final catalog = results[1] as AdminCmsCatalogResponse;
       AdminSupportTicket? selected = _selectedTicket;
       final targetId = selectTicketId ?? _selectedTicket?.id;
       if (targetId != null) {
@@ -64,6 +74,7 @@ class _AdminSupportTicketsScreenState
       if (!mounted) return;
       setState(() {
         _tickets = response.items;
+        _axes = catalog.axes;
         _pagination = response.pagination;
         _selectedTicket =
             selected ?? (_tickets.isNotEmpty ? _tickets.first : null);
@@ -212,6 +223,27 @@ class _AdminSupportTicketsScreenState
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= 1100;
+        final colorScheme = Theme.of(context).colorScheme;
+        final contextActions = [
+          AdminControlCenterAction(
+            icon: Icons.auto_stories_outlined,
+            label: l10n.adminSidebarContent,
+            route: Routes.adminContent,
+            accent: colorScheme.tertiaryContainer,
+          ),
+          AdminControlCenterAction(
+            icon: Icons.people_outline,
+            label: l10n.adminSidebarUsers,
+            route: Routes.adminUsers,
+            accent: colorScheme.primaryContainer,
+          ),
+          AdminControlCenterAction(
+            icon: Icons.insights_outlined,
+            label: l10n.adminSidebarReports,
+            route: Routes.adminReports,
+            accent: colorScheme.secondaryContainer,
+          ),
+        ];
         return SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -229,6 +261,18 @@ class _AdminSupportTicketsScreenState
                 ],
               ),
               const SizedBox(height: 20),
+              AdminControlCenterPanel(
+                title: l10n.adminDashboard,
+                actions: contextActions,
+                axes: _category == 'child_content_issue' ? _axes : const [],
+                categoriesLabel: l10n.adminCmsCategoriesTab,
+                contentsLabel: l10n.adminCmsContentsTab,
+                quizzesLabel: l10n.adminCmsQuizzesTab,
+                onAxisTap: (_) => context.go(Routes.adminContent),
+              ),
+              if (contextActions.isNotEmpty ||
+                  (_category == 'child_content_issue' && _axes.isNotEmpty))
+                const SizedBox(height: 20),
               AdminFilterBar(
                 children: [
                   SizedBox(

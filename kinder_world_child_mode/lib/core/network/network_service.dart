@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:dio/dio.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/foundation.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
 import 'package:kinder_world/core/utils/session_token_utils.dart';
@@ -12,6 +13,7 @@ class NetworkService {
   final Connectivity _connectivity;
   final SecureStorage _secureStorage;
   final Logger _logger;
+  final void Function(bool isMaintenanceMode)? _onMaintenanceModeChanged;
   final Random _random = Random();
   final Set<CancelToken> _managedCancelTokens = <CancelToken>{};
 
@@ -20,10 +22,12 @@ class NetworkService {
     Connectivity? connectivity,
     required SecureStorage secureStorage,
     Logger? logger,
+    void Function(bool isMaintenanceMode)? onMaintenanceModeChanged,
   })  : _dio = dio ?? Dio(),
         _connectivity = connectivity ?? Connectivity(),
         _secureStorage = secureStorage,
-        _logger = logger ?? Logger() {
+        _logger = logger ?? Logger(),
+        _onMaintenanceModeChanged = onMaintenanceModeChanged {
     _setupDio();
   }
 
@@ -81,12 +85,14 @@ class NetworkService {
               'url': options.uri.toString(),
               'method': options.method,
               'path': options.path,
+              'request_body': _serializeForLog(options.data),
               'retry': options.extra['retryCount'] ?? 0,
             },
           );
           handler.next(options);
         },
         onResponse: (response, handler) {
+          _onMaintenanceModeChanged?.call(false);
           final requestId =
               response.requestOptions.extra['requestId']?.toString() ??
                   response.headers.value('X-Request-ID') ??
@@ -107,6 +113,14 @@ class NetworkService {
           handler.next(response);
         },
         onError: (error, handler) {
+          final detail = error.response?.data;
+          if (error.response?.statusCode == 503 &&
+              detail is Map<String, dynamic> &&
+              detail['detail'] is Map<String, dynamic> &&
+              (detail['detail'] as Map<String, dynamic>)['code'] ==
+                  'APP_MAINTENANCE_MODE') {
+            _onMaintenanceModeChanged?.call(true);
+          }
           final requestId =
               error.requestOptions.extra['requestId']?.toString() ?? 'unknown';
           _logError(
@@ -118,6 +132,8 @@ class NetworkService {
               'status_code': error.response?.statusCode,
               'error_type': error.type.name,
               'message': error.message ?? 'unknown_error',
+              'request_body': _serializeForLog(error.requestOptions.data),
+              'response_body': _serializeForLog(error.response?.data),
               'retry': error.requestOptions.extra['retryCount'] ?? 0,
               'duration_ms': _requestDurationMs(error.requestOptions),
             },
@@ -211,6 +227,21 @@ class NetworkService {
       parts.add('${entry.key}=$safeValue');
     }
     return parts.join(' ');
+  }
+
+  String? _serializeForLog(Object? value) {
+    if (value == null) {
+      return null;
+    }
+    final text = value.toString().replaceAll('\n', ' ').trim();
+    if (text.isEmpty) {
+      return null;
+    }
+    const maxLength = 500;
+    if (text.length <= maxLength) {
+      return text;
+    }
+    return '${text.substring(0, maxLength)}...';
   }
 
   bool _shouldAttachAuthToken(String? token) {
@@ -396,6 +427,8 @@ class NetworkService {
         'status_code': e.response?.statusCode,
         'error_type': e.type.name,
         'message': e.message ?? 'unknown_error',
+        'request_body': _serializeForLog(e.requestOptions.data),
+        'response_body': _serializeForLog(e.response?.data),
       },
     );
   }
@@ -436,9 +469,14 @@ class RetryInterceptor extends Interceptor {
       if (retryCount < maxRetries) {
         final requestId =
             err.requestOptions.extra['requestId']?.toString() ?? 'unknown';
+        final useAltDevPort = _shouldUseAltDevPort(
+          err,
+          retryCount: retryCount,
+        );
         logger.w(
           'event=http.retry.scheduled request_id=$requestId method=${err.requestOptions.method} '
-          'path=${err.requestOptions.path} attempt=${retryCount + 1} max_retries=$maxRetries',
+          'path=${err.requestOptions.path} attempt=${retryCount + 1} max_retries=$maxRetries'
+          '${useAltDevPort ? ' fallback_port=8001' : ''}',
         );
 
         // Keep retries responsive so the app does not feel frozen on transient failures.
@@ -452,26 +490,18 @@ class RetryInterceptor extends Interceptor {
         }
 
         // Clone request with incremented retry count
-        final options = Options(
-          method: err.requestOptions.method,
-          headers: err.requestOptions.headers,
-          extra: {
-            ...err.requestOptions.extra,
-            'retryCount': retryCount + 1,
-          },
-        );
-
         try {
-          final response = await dio.request(
-            err.requestOptions.path,
-            data: err.requestOptions.data,
-            queryParameters: err.requestOptions.queryParameters,
-            options: options,
-            cancelToken: err.requestOptions.cancelToken,
+          final response = await dio.fetch<dynamic>(
+            _buildRetryRequestOptions(
+              err.requestOptions,
+              retryCount: retryCount + 1,
+              useAltDevPort: useAltDevPort,
+            ),
           );
           logger.i(
             'event=http.retry.success request_id=$requestId method=${err.requestOptions.method} '
-            'path=${err.requestOptions.path} attempt=${retryCount + 1}',
+            'path=${err.requestOptions.path} attempt=${retryCount + 1}'
+            '${useAltDevPort ? ' fallback_port=8001' : ''}',
           );
           handler.resolve(response);
           return;
@@ -488,9 +518,45 @@ class RetryInterceptor extends Interceptor {
   }
 
   bool _shouldRetry(DioException err) {
-    return err.type == DioExceptionType.connectionTimeout ||
+    return err.type == DioExceptionType.connectionError ||
+        err.type == DioExceptionType.connectionTimeout ||
         err.type == DioExceptionType.receiveTimeout ||
         err.type == DioExceptionType.sendTimeout ||
         (err.response?.statusCode != null && err.response!.statusCode! >= 500);
+  }
+
+  bool _shouldUseAltDevPort(
+    DioException err, {
+    required int retryCount,
+  }) {
+    if (!kIsWeb || retryCount != 0) {
+      return false;
+    }
+    if (err.type != DioExceptionType.connectionError) {
+      return false;
+    }
+    final uri = err.requestOptions.uri;
+    return uri.scheme == 'http' &&
+        uri.port == 8000 &&
+        (uri.host == '127.0.0.1' ||
+            uri.host == 'localhost' ||
+            uri.host == Uri.base.host);
+  }
+
+  RequestOptions _buildRetryRequestOptions(
+    RequestOptions source, {
+    required int retryCount,
+    required bool useAltDevPort,
+  }) {
+    final nextUri = useAltDevPort ? source.uri.replace(port: 8001) : source.uri;
+    return source.copyWith(
+      path: nextUri.toString(),
+      baseUrl: '',
+      extra: {
+        ...source.extra,
+        'retryCount': retryCount,
+        if (useAltDevPort) 'baseUrlFallback': '8001',
+      },
+    );
   }
 }

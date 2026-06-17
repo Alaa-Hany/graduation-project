@@ -12,6 +12,15 @@ abstract final class AuthUiMessages {
       'Registration failed: empty server response';
   static const registrationFailedInvalidUserData =
       'Registration failed: invalid user data';
+  static const emailVerificationRequired =
+      'Email verification is required before login';
+  static const verificationCodeInvalid = 'Invalid or expired OTP';
+  static const verificationCodeSent =
+      'We sent a verification code to your email.';
+  static const verificationCodeResent =
+      'A new verification code has been sent.';
+  static const verificationCodeCooldown =
+      'Please wait before requesting another code.';
   static const passwordsDoNotMatch = 'Passwords do not match';
   static const passwordMinLength = 'Password must be at least 8 characters';
   static const parentAuthenticationRequired =

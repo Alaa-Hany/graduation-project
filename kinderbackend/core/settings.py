@@ -106,6 +106,11 @@ class Settings:
     admin_auth_lockout_minutes: int
     admin_suspicious_failed_threshold: int
     admin_sensitive_confirmation_required: bool
+    cloudinary_cloud_name: str | None
+    cloudinary_api_key: str | None
+    cloudinary_api_secret: str | None
+    cloudinary_media_root_folder: str
+    media_max_upload_size_mb: int
     payment_provider: str
     stripe_secret_key: str | None
     stripe_publishable_key: str | None
@@ -180,6 +185,16 @@ class Settings:
         admin_sensitive_confirmation_required = _as_bool(
             os.getenv("ADMIN_SENSITIVE_CONFIRMATION_REQUIRED"),
             default=False,
+        )
+        cloudinary_cloud_name = (os.getenv("CLOUDINARY_CLOUD_NAME") or "").strip() or None
+        cloudinary_api_key = (os.getenv("CLOUDINARY_API_KEY") or "").strip() or None
+        cloudinary_api_secret = (os.getenv("CLOUDINARY_API_SECRET") or "").strip() or None
+        cloudinary_media_root_folder = (
+            (os.getenv("CLOUDINARY_MEDIA_ROOT_FOLDER") or "kinderworld").strip() or "kinderworld"
+        )
+        media_max_upload_size_mb = max(
+            _as_int(os.getenv("MEDIA_MAX_UPLOAD_SIZE_MB"), 200),
+            1,
         )
         payment_provider = (os.getenv("PAYMENT_PROVIDER") or "internal").strip().lower()
         stripe_secret_key = (os.getenv("STRIPE_SECRET_KEY") or "").strip() or None
@@ -313,6 +328,11 @@ class Settings:
             admin_auth_lockout_minutes=admin_auth_lockout_minutes,
             admin_suspicious_failed_threshold=admin_suspicious_failed_threshold,
             admin_sensitive_confirmation_required=admin_sensitive_confirmation_required,
+            cloudinary_cloud_name=cloudinary_cloud_name,
+            cloudinary_api_key=cloudinary_api_key,
+            cloudinary_api_secret=cloudinary_api_secret,
+            cloudinary_media_root_folder=cloudinary_media_root_folder,
+            media_max_upload_size_mb=media_max_upload_size_mb,
             payment_provider=payment_provider,
             stripe_secret_key=stripe_secret_key,
             stripe_publishable_key=stripe_publishable_key,

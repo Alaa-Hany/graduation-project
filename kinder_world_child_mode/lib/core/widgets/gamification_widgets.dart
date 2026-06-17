@@ -913,13 +913,15 @@ class LevelUpDialog extends StatefulWidget {
   });
 
   static Future<void> show(
-    BuildContext context, {
+    NavigatorState navigator, {
     required int newLevel,
     required int xpAwarded,
     required VoidCallback onDismiss,
   }) {
+    final context = navigator.context;
     return showDialog(
       context: context,
+      useRootNavigator: true,
       barrierDismissible: false,
       barrierColor:
           Theme.of(context).colorScheme.scrim.withValuesCompat(alpha: 0.54),
@@ -1006,8 +1008,8 @@ class _LevelUpDialogState extends State<LevelUpDialog>
                 animation: _starAnim,
                 builder: (_, __) => Transform.scale(
                   scale: _starAnim.value,
-                  child:
-                      const Text('\u2728\u2B50\u2728', style: TextStyle(fontSize: 32)),
+                  child: const Text('\u2728\u2B50\u2728',
+                      style: TextStyle(fontSize: 32)),
                 ),
               ),
               const SizedBox(height: 12),
@@ -1103,14 +1105,16 @@ class AchievementUnlockedBanner extends StatefulWidget {
   });
 
   static OverlayEntry show(
-    BuildContext context, {
+    OverlayState overlay, {
     required gam.Achievement achievement,
     required VoidCallback onDismiss,
   }) {
+    final mediaQuery = MediaQuery.maybeOf(overlay.context);
+    final topInset = mediaQuery?.padding.top ?? 0;
     late OverlayEntry entry;
     entry = OverlayEntry(
       builder: (_) => Positioned(
-        top: MediaQuery.of(context).padding.top + 12,
+        top: topInset + 12,
         left: 16,
         right: 16,
         child: AchievementUnlockedBanner(
@@ -1122,7 +1126,7 @@ class AchievementUnlockedBanner extends StatefulWidget {
         ),
       ),
     );
-    Overlay.of(context).insert(entry);
+    overlay.insert(entry);
     // Auto-dismiss after 3.5 seconds
     Future.delayed(const Duration(milliseconds: 3500), () {
       if (entry.mounted) {
@@ -1271,30 +1275,50 @@ class GamificationRewardListener extends ConsumerStatefulWidget {
 class _GamificationRewardListenerState
     extends ConsumerState<GamificationRewardListener> {
   bool _isShowingReward = false;
+  late final ProviderSubscription<ActivityResult?> _rewardSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _rewardSubscription = ref.listenManual<ActivityResult?>(
+      pendingRewardProvider,
+      (_, next) {
+        if (next == null || _isShowingReward || !mounted) return;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted || _isShowingReward) return;
+          _showRewards(next);
+        });
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _rewardSubscription.close();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<ActivityResult?>(pendingRewardProvider, (prev, next) {
-      if (next == null || _isShowingReward) return;
-      _showRewards(next);
-    });
-
     return widget.child;
   }
 
   Future<void> _showRewards(ActivityResult result) async {
     if (!mounted) return;
     _isShowingReward = true;
-
+    final overlay = Overlay.maybeOf(context, rootOverlay: true);
+    final navigator = Navigator.of(context, rootNavigator: true);
     // Show achievement banners first (staggered)
-    for (final achievement in result.newlyUnlockedAchievements) {
-      if (!mounted) break;
-      AchievementUnlockedBanner.show(
-        context,
-        achievement: achievement,
-        onDismiss: () {},
-      );
-      await Future.delayed(const Duration(milliseconds: 800));
+    if (overlay != null) {
+      for (final achievement in result.newlyUnlockedAchievements) {
+        if (!mounted) break;
+        AchievementUnlockedBanner.show(
+          overlay,
+          achievement: achievement,
+          onDismiss: () {},
+        );
+        await Future.delayed(const Duration(milliseconds: 800));
+      }
     }
 
     // Then show level-up dialog if applicable
@@ -1302,7 +1326,7 @@ class _GamificationRewardListenerState
       await Future.delayed(const Duration(milliseconds: 400));
       if (mounted) {
         await LevelUpDialog.show(
-          context,
+          navigator,
           newLevel: result.newLevel,
           xpAwarded: result.xpAwarded,
           onDismiss: () {},

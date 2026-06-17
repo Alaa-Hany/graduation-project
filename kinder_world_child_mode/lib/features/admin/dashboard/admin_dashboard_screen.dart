@@ -48,6 +48,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     final authState = ref.watch(adminAuthProvider);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final sectionTitle = _sectionTitle(l10n);
+    final sectionIcon = _sectionIcon();
 
     if (authState.status == AdminAuthStatus.initial ||
         authState.status == AdminAuthStatus.loading) {
@@ -115,11 +117,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                             colorScheme.primary.withValuesCompat(alpha: 0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(
-                        Icons.admin_panel_settings_outlined,
-                        color: colorScheme.primary,
-                        size: 20,
-                      ),
+                      child: Icon(sectionIcon,
+                          color: colorScheme.primary, size: 20),
                     ),
                     const SizedBox(width: 12),
                     Flexible(
@@ -127,7 +126,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            l10n.adminDashboard,
+                            sectionTitle,
                             overflow: TextOverflow.ellipsis,
                             style: theme.textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.w900,
@@ -138,7 +137,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                           ),
                           if (!compact)
                             Text(
-                              l10n.adminDashboardSubtitle,
+                              l10n.adminDashboard,
                               overflow: TextOverflow.ellipsis,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 fontSize: 12,
@@ -236,6 +235,40 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             ),
       ),
     );
+  }
+
+  String _sectionTitle(AppLocalizations l10n) {
+    final path = _selectedRoute;
+    if (path.startsWith(Routes.adminUsers)) return l10n.adminSidebarUsers;
+    if (path.startsWith(Routes.adminChildren)) return l10n.adminSidebarChildren;
+    if (path == Routes.adminContent) return l10n.adminSidebarContent;
+    if (path == Routes.adminReports) return l10n.adminSidebarReports;
+    if (path == Routes.adminSupport) return l10n.adminSidebarSupport;
+    if (path == Routes.adminSubscriptions) {
+      return l10n.adminSidebarSubscriptions;
+    }
+    if (path == Routes.adminAudit) return l10n.adminSidebarAudit;
+    if (path == Routes.adminAdmins) return l10n.adminSidebarAdmins;
+    if (path == Routes.adminSettings) return l10n.adminSidebarSettings;
+    return l10n.adminSidebarOverview;
+  }
+
+  IconData _sectionIcon() {
+    final path = _selectedRoute;
+    if (path.startsWith(Routes.adminUsers)) return Icons.people_outline;
+    if (path.startsWith(Routes.adminChildren)) {
+      return Icons.child_care_outlined;
+    }
+    if (path == Routes.adminContent) return Icons.auto_stories_outlined;
+    if (path == Routes.adminReports) return Icons.insights_outlined;
+    if (path == Routes.adminSupport) return Icons.support_agent_outlined;
+    if (path == Routes.adminSubscriptions) {
+      return Icons.workspace_premium_outlined;
+    }
+    if (path == Routes.adminAudit) return Icons.history_rounded;
+    if (path == Routes.adminAdmins) return Icons.manage_accounts_outlined;
+    if (path == Routes.adminSettings) return Icons.tune_outlined;
+    return Icons.admin_panel_settings_outlined;
   }
 
   Widget _buildBody() {

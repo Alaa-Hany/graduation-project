@@ -126,6 +126,7 @@ class _LearnResultsGrid extends StatelessWidget {
   const _LearnResultsGrid({
     required this.results,
     required this.activities,
+    required this.publicCategories,
     required this.localizedTitleBuilder,
     required this.onOpenSearchResult,
     required this.onOpenCategory,
@@ -133,6 +134,7 @@ class _LearnResultsGrid extends StatelessWidget {
 
   final List<Map<String, dynamic>> results;
   final List<Activity> activities;
+  final List<PublicContentCategory> publicCategories;
   final String Function(String title) localizedTitleBuilder;
   final ValueChanged<Map<String, dynamic>> onOpenSearchResult;
   final ValueChanged<String> onOpenCategory;
@@ -165,9 +167,7 @@ class _LearnResultsGrid extends StatelessWidget {
             title: localizedTitleBuilder(result['title'] as String),
             imagePath: result['image'] as String,
             color: result['color'] as Color,
-            availableCount: activities
-                .where((activity) => activity.aspect == result['route'])
-                .length,
+            availableCount: _availableCountForAxis(result['route'] as String),
             onTap: () => onOpenCategory(result['route'] as String),
           );
         }
@@ -178,6 +178,19 @@ class _LearnResultsGrid extends StatelessWidget {
         );
       },
     );
+  }
+
+  int _availableCountForAxis(String axisKey) {
+    final activityCount =
+        activities.where((activity) => activity.aspect == axisKey).length;
+    final cmsCount = publicCategories
+        .where((category) => category.axisKey == axisKey)
+        .fold<int>(
+          0,
+          (total, category) =>
+              total + category.contentCount + category.quizCount,
+        );
+    return activityCount + cmsCount;
   }
 }
 

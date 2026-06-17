@@ -4076,7 +4076,46 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminUsersViewAction => 'View';
 
   @override
+  String get adminUsersResetPasswordTitle => 'Reset password';
+
+  @override
+  String get adminUsersResetPasswordAction => 'Reset password';
+
+  @override
+  String get adminUsersResetPasswordHint =>
+      'Leave the field empty to generate the default temporary password automatically.';
+
+  @override
+  String adminUsersResetPasswordSuccess(String password) =>
+      'Temporary password: $password';
+
+  @override
   String get adminUsersEditTitle => 'Edit user';
+
+  @override
+  String get adminUsersCreateTitle => 'Create user';
+
+  @override
+  String get adminUsersCreateAction => 'Add user';
+
+  @override
+  String get adminUsersPasswordField => 'Password';
+
+  @override
+  String get adminUsersDeleteTitle => 'Delete user';
+
+  @override
+  String get adminUsersDeleteAction => 'Delete';
+
+  @override
+  String get adminUsersDeleteConfirm =>
+      'This will permanently delete the user and remove linked records that use cascade deletion.';
+
+  @override
+  String get adminUsersDeletedMessage => 'User deleted successfully';
+
+  @override
+  String get adminUsersCreatedMessage => 'User created successfully';
 
   @override
   String get adminUsersNameField => 'Name';
@@ -4210,6 +4249,19 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get adminChildrenDeactivatedMessage =>
       'Child deactivated successfully';
+
+  @override
+  String get adminChildrenDeleteTitle => 'Delete child';
+
+  @override
+  String get adminChildrenDeleteConfirm =>
+      'This will permanently delete the child profile and its linked child data.';
+
+  @override
+  String get adminChildrenDeleteAction => 'Delete';
+
+  @override
+  String get adminChildrenDeletedMessage => 'Child deleted successfully';
 
   @override
   String adminChildrenDetailTitle(String name) => 'Child details: $name';
@@ -4507,10 +4559,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminCmsStatusDraft => 'Draft';
 
   @override
+  String get adminCmsStatusReady => 'Ready';
+
+  @override
   String get adminCmsStatusReview => 'Review';
 
   @override
   String get adminCmsStatusPublished => 'Published';
+
+  @override
+  String get adminCmsStatusArchived => 'Archived';
 
   @override
   String get adminCmsTitleEnLabel => 'English title';
@@ -4532,6 +4590,41 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminCmsThumbnailLabel => 'Thumbnail URL';
+
+  @override
+  String get adminCmsVideoSectionTitle => 'Video details';
+
+  @override
+  String get adminCmsUploadVideoAction => 'Upload video';
+
+  @override
+  String get adminCmsReplaceVideoAction => 'Replace video';
+
+  @override
+  String get adminCmsVideoUploadingLabel => 'Uploading video...';
+
+  @override
+  String get adminCmsVideoUploadFailed =>
+      'Unable to upload the selected video.';
+
+  @override
+  String get adminCmsVideoUploadSuccess => 'Video uploaded successfully.';
+
+  @override
+  String get adminCmsValidationVideoRequired =>
+      'Published video content must include a video.';
+
+  @override
+  String get adminCmsVideoUrlLabel => 'Video URL';
+
+  @override
+  String get adminCmsVideoPreviewUrlLabel => 'Preview/playback URL';
+
+  @override
+  String get adminCmsVideoProviderLabel => 'Video provider';
+
+  @override
+  String get adminCmsVideoHostTierLabel => 'Hosting tier';
 
   @override
   String get adminCmsAgeGroupLabel => 'Age group';
@@ -4611,6 +4704,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminCmsMetadataTagsLabel => 'Tags';
+
+  @override
+  String get adminCmsBehavioralPlacementTitle => 'Behavioral placement';
+
+  @override
+  String get adminCmsBehavioralValueLabel => 'Behavioral value';
+
+  @override
+  String get adminCmsBehavioralMethodLabel => 'Behavioral method';
 
   @override
   String get adminCmsPreviewEnglishSection => 'English preview';
@@ -4720,6 +4822,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Enter valid JSON before saving';
 
   @override
+  String get adminCmsValidationBehavioralPlacementRequired =>
+      'Choose a behavioral value and method before saving behavioral content';
+
+  @override
   String get adminCmsValidationQuestionRequired =>
       'Add at least one question before publishing';
 
@@ -4738,6 +4844,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get adminCmsValidationQuestionOptionTextRequired =>
       'Each answer option needs text';
+
+  @override
+  String get playVideoSectionTitle => 'Video';
+
+  @override
+  String get playWatchVideoAction => 'Watch video';
+
+  @override
+  String get playVideoLaunchFailed => 'Unable to open the video link.';
 
   @override
   String get adminCmsCategoryLabel => 'Category';

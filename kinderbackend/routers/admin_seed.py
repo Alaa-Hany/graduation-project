@@ -35,38 +35,13 @@ DEFAULT_ADMIN_PASSWORD = os.getenv("ADMIN_SEED_PASSWORD", "").strip()
 DEFAULT_ADMIN_NAME = os.getenv("ADMIN_SEED_NAME", "Super Admin").strip() or "Super Admin"
 
 
-@router.post("/seed", summary="Seed admin roles, permissions, and default super admin")
-def seed_admin_system(secret: str, db: Session = Depends(get_db)):
-    if not SEED_ENABLED:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Admin seed endpoint is disabled",
-        )
-    if not SEED_SECRET:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Admin seed secret is not configured",
-        )
-    if not DEFAULT_ADMIN_PASSWORD:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Admin seed password is not configured",
-        )
-    if secret != SEED_SECRET:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Invalid seed secret",
-        )
-
-    from admin_models import AdminUser, AdminUserRole, Permission, Role, RolePermission
+def ensure_builtin_admin_rbac(db: Session) -> dict[str, object]:
+    from admin_models import Permission, Role, RolePermission
 
     created_permissions = 0
     created_roles = 0
     created_role_permissions = 0
     removed_role_permissions = 0
-    created_admins = 0
-    created_admin_role_links = 0
-    updated_admins = 0
 
     permission_by_name: dict[str, Permission] = {}
     for permission_name, description in PERMISSION_DEFS:
@@ -125,6 +100,50 @@ def seed_admin_system(secret: str, db: Session = Depends(get_db)):
                 )
                 created_role_permissions += 1
 
+    return {
+        "role_by_name": role_by_name,
+        "summary": {
+            "permissions_created": created_permissions,
+            "roles_created": created_roles,
+            "role_permission_mappings_created": created_role_permissions,
+            "role_permission_mappings_removed": removed_role_permissions,
+        },
+    }
+
+
+@router.post("/seed", summary="Seed admin roles, permissions, and default super admin")
+def seed_admin_system(secret: str, db: Session = Depends(get_db)):
+    if not SEED_ENABLED:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Admin seed endpoint is disabled",
+        )
+    if not SEED_SECRET:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Admin seed secret is not configured",
+        )
+    if not DEFAULT_ADMIN_PASSWORD:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Admin seed password is not configured",
+        )
+    if secret != SEED_SECRET:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid seed secret",
+        )
+
+    from admin_models import AdminUser, AdminUserRole
+
+    created_admins = 0
+    created_admin_role_links = 0
+    updated_admins = 0
+
+    seeded = ensure_builtin_admin_rbac(db)
+    role_by_name = seeded["role_by_name"]
+    summary = seeded["summary"]
+
     admin = db.query(AdminUser).filter(AdminUser.email == DEFAULT_ADMIN_EMAIL).first()
 
     if admin is None:
@@ -173,10 +192,7 @@ def seed_admin_system(secret: str, db: Session = Depends(get_db)):
         "success": True,
         "message": "Admin seed completed",
         "summary": {
-            "permissions_created": created_permissions,
-            "roles_created": created_roles,
-            "role_permission_mappings_created": created_role_permissions,
-            "role_permission_mappings_removed": removed_role_permissions,
+            **summary,
             "admins_created": created_admins,
             "admin_role_links_created": created_admin_role_links,
             "admins_updated": updated_admins,

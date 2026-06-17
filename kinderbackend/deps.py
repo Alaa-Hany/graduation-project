@@ -19,6 +19,12 @@ logger = logging.getLogger(__name__)
 security = HTTPBearer(auto_error=False, bearerFormat="JWT")
 
 
+def _is_parent_user_verified(user: User) -> bool:
+    if bool(getattr(user, "email_verified", False)):
+        return True
+    return bool(getattr(user, "is_active", False)) and not getattr(user, "email_otp_hash", None)
+
+
 @dataclass(frozen=True)
 class AiBuddyPrincipal:
     parent: User
@@ -96,6 +102,8 @@ def get_current_user(
         raise not_found(AuthMessages.USER_NOT_FOUND)
     if token_version != int(user.token_version or 0):
         raise unauthorized(AuthMessages.TOKEN_REVOKED)
+    if not bool(getattr(user, "is_active", False)) or not _is_parent_user_verified(user):
+        raise unauthorized(AuthMessages.EMAIL_VERIFICATION_REQUIRED)
     return user
 
 

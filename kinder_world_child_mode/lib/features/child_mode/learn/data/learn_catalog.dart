@@ -206,33 +206,7 @@ const educationalSubjects = <Map<String, dynamic>>[
 List<Map<String, String>> buildLegacyEducationalLessons(
   AppLocalizations l10n,
 ) {
-  return [
-    {
-      'title': l10n.lessonIntroductionToBasics,
-      'level': 'beginner',
-      'image': '',
-    },
-    {
-      'title': l10n.lessonAdvancedConcepts,
-      'level': 'advanced',
-      'image': '',
-    },
-    {
-      'title': l10n.lessonIntermediatePractice,
-      'level': 'intermediate',
-      'image': '',
-    },
-    {
-      'title': l10n.lessonFunWithMath,
-      'level': 'beginner',
-      'image': '',
-    },
-    {
-      'title': l10n.lessonDeepDive,
-      'level': 'advanced',
-      'image': '',
-    },
-  ];
+  return const [];
 }
 
 const lessonQuizQuestions = <Map<String, dynamic>>[

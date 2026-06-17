@@ -241,6 +241,7 @@ mixin _AuthRepositoryStateMixin on _AuthRepositorySupportMixin {
   /// Validate authentication token
   Future<bool> validateToken() async {
     try {
+      final role = await _secureStorage.getUserRole();
       final token = await _secureStorage.getAuthToken();
 
       if (token == null || token.isEmpty) return false;
@@ -250,6 +251,23 @@ mixin _AuthRepositoryStateMixin on _AuthRepositorySupportMixin {
       if (isChildSessionToken(token)) {
         final data = await _authApi.validateChildSession(sessionToken: token);
         return data['success'] == true;
+      }
+
+      if (role == UserRoles.parent) {
+        try {
+          final data = await _authApi.me();
+          return _userFromJson(data['user']) != null;
+        } on DioException catch (e) {
+          if (e.response?.statusCode == 401) {
+            final refreshedToken = await refreshToken();
+            if (refreshedToken == null || refreshedToken.isEmpty) {
+              return false;
+            }
+            final retryData = await _authApi.me();
+            return _userFromJson(retryData['user']) != null;
+          }
+          rethrow;
+        }
       }
 
       return !_tokenLooksExpired(token);

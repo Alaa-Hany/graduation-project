@@ -1,5 +1,6 @@
 import logging
 import os
+import random
 import time
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
@@ -25,8 +26,9 @@ from core.validators import validate_password_policy as core_validate_password_p
 from core.validators import validate_pin_format
 from models import SupportTicket, User
 from plan_service import PLAN_FREE
-from schemas.auth import LoginIn, RefreshIn, RegisterIn
+from schemas.auth import LoginIn, RefreshIn, RegisterIn, ResendEmailOtpIn, VerifyEmailOtpIn
 from serializers import user_to_json
+from services.email_delivery_service import email_delivery_service
 from services.two_factor_service import two_factor_service
 
 logger = logging.getLogger(__name__)
@@ -39,6 +41,87 @@ _PARENT_LOGIN_LOCKOUT_UNTIL: dict[str, float] = {}
 
 
 class AuthService:
+    @staticmethod
+    def _user_has_verified_email(user: User) -> bool:
+        if bool(getattr(user, "email_verified", False)):
+            return True
+        return bool(getattr(user, "is_active", False)) and not getattr(user, "email_otp_hash", None)
+
+    @staticmethod
+    def _email_otp_expiry_minutes() -> int:
+        return max(int(os.getenv("EMAIL_OTP_EXPIRES_MINUTES", "5")), 1)
+
+    @staticmethod
+    def _email_otp_resend_cooldown_seconds() -> int:
+        return max(int(os.getenv("EMAIL_OTP_RESEND_COOLDOWN_SECONDS", "60")), 1)
+
+    @staticmethod
+    def _generate_email_otp() -> str:
+        return f"{random.SystemRandom().randint(0, 999999):06d}"
+
+    @staticmethod
+    def _otp_expired(user: User) -> bool:
+        expires_at = getattr(user, "email_otp_expires_at", None)
+        return expires_at is None or ensure_utc(expires_at) <= utc_now()
+
+    @staticmethod
+    def _otp_resend_available_at(user: User) -> str | None:
+        last_sent_at = getattr(user, "email_otp_last_sent_at", None)
+        if last_sent_at is None:
+            return None
+        available_at = ensure_utc(last_sent_at) + timedelta(
+            seconds=AuthService._email_otp_resend_cooldown_seconds()
+        )
+        return available_at.isoformat()
+
+    @staticmethod
+    def _otp_can_be_resent(user: User) -> bool:
+        last_sent_at = getattr(user, "email_otp_last_sent_at", None)
+        if last_sent_at is None:
+            return True
+        return ensure_utc(last_sent_at) + timedelta(
+            seconds=AuthService._email_otp_resend_cooldown_seconds()
+        ) <= utc_now()
+
+    @staticmethod
+    def _pending_verification_payload(user: User, *, message: str) -> dict[str, Any]:
+        return {
+            "success": True,
+            "message": message,
+            "email": user.email,
+            "verification_required": True,
+            "otp_expires_at": (
+                ensure_utc(user.email_otp_expires_at).isoformat()
+                if getattr(user, "email_otp_expires_at", None) is not None
+                else None
+            ),
+            "resend_available_at": AuthService._otp_resend_available_at(user),
+        }
+
+    def _store_email_otp(self, *, user: User, otp_code: str) -> None:
+        now = db_utc_now()
+        user.email_otp_hash = hash_password(otp_code)
+        user.email_otp_last_sent_at = now
+        user.email_otp_expires_at = now + timedelta(minutes=self._email_otp_expiry_minutes())
+        user.updated_at = now
+
+    @staticmethod
+    def _clear_email_otp(user: User) -> None:
+        user.email_otp_hash = None
+        user.email_otp_expires_at = None
+        user.email_otp_last_sent_at = None
+
+    @staticmethod
+    def _send_email_otp(*, email: str, name: str | None, otp_code: str) -> None:
+        subject = "Your Kinder World verification code"
+        greeting_name = (name or "there").strip() or "there"
+        body = (
+            f"Hello {greeting_name},\n\n"
+            f"Your Kinder World verification code is: {otp_code}\n\n"
+            "This code expires in 5 minutes. If you did not create this account, you can ignore this email."
+        )
+        email_delivery_service.send_email(to_email=email, subject=subject, body=body)
+
     def _parent_login_attempt_key(self, *, email: str) -> str:
         return email.strip().lower()
 
@@ -110,30 +193,49 @@ class AuthService:
         if payload.password != payload.confirm_password:
             raise HTTPException(status_code=400, detail=AuthMessages.PASSWORDS_DO_NOT_MATCH)
 
-        if db.query(User).filter(func.lower(User.email) == normalized_email).first():
+        existing_user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
+        if existing_user and self._user_has_verified_email(existing_user):
             raise HTTPException(status_code=400, detail=AuthMessages.EMAIL_ALREADY_REGISTERED)
 
+        otp_code = self._generate_email_otp()
         now = db_utc_now()
-        user = User(
-            email=normalized_email,
-            password_hash=hash_password(payload.password),
-            role="parent",
-            name=payload.name,
-            is_active=True,
-            plan=PLAN_FREE,
-            created_at=now,
-            updated_at=now,
-        )
-        db.add(user)
+
+        if existing_user:
+            user = existing_user
+            user.name = payload.name
+            user.password_hash = hash_password(payload.password)
+            user.is_active = False
+            user.email_verified = False
+            user.email_verified_at = None
+            self._store_email_otp(user=user, otp_code=otp_code)
+        else:
+            user = User(
+                email=normalized_email,
+                password_hash=hash_password(payload.password),
+                role="parent",
+                name=payload.name,
+                is_active=False,
+                email_verified=False,
+                plan=PLAN_FREE,
+                created_at=now,
+                updated_at=now,
+            )
+            self._store_email_otp(user=user, otp_code=otp_code)
+            db.add(user)
+
         db.commit()
         db.refresh(user)
 
-        return {
-            "access_token": create_access_token(str(user.id), user.token_version),
-            "refresh_token": create_refresh_token(str(user.id), user.token_version),
-            "token_type": "bearer",
-            "user": user_to_json(user),
-        }
+        try:
+            self._send_email_otp(email=user.email, name=user.name, otp_code=otp_code)
+        except Exception as exc:
+            logger.error("Failed to send registration OTP to %s: %s", user.email, exc, exc_info=True)
+            raise HTTPException(status_code=503, detail=AuthMessages.OTP_SEND_FAILED)
+
+        return self._pending_verification_payload(
+            user,
+            message="Registration successful. Verify your email with the OTP we sent.",
+        )
 
     def login_parent(self, payload: LoginIn, db: Session) -> dict:
         normalized_email = normalize_email(payload.email)
@@ -163,6 +265,17 @@ class AuthService:
                 )
             raise HTTPException(status_code=401, detail=AuthMessages.INVALID_CREDENTIALS)
 
+        if not self._user_has_verified_email(user) or not bool(getattr(user, "is_active", False)):
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "code": "EMAIL_VERIFICATION_REQUIRED",
+                    "message": AuthMessages.EMAIL_VERIFICATION_REQUIRED,
+                    "email": user.email,
+                    "resend_available_at": self._otp_resend_available_at(user),
+                },
+            )
+
         self._clear_parent_login_failures(email=normalized_email)
         two_factor_service.require_parent_login_code(account=user, code=payload.two_factor_code)
         user.updated_at = db_utc_now()
@@ -175,6 +288,75 @@ class AuthService:
             "refresh_token": create_refresh_token(str(user.id), user.token_version),
             "token_type": "bearer",
             "user": user_to_json(user),
+        }
+
+    def verify_parent_email_otp(self, payload: VerifyEmailOtpIn, db: Session) -> dict:
+        normalized_email = normalize_email(payload.email)
+        user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
+        if user is None:
+            raise HTTPException(status_code=404, detail=AuthMessages.USER_NOT_FOUND)
+        if self._user_has_verified_email(user):
+            return {
+                "access_token": create_access_token(str(user.id), user.token_version),
+                "refresh_token": create_refresh_token(str(user.id), user.token_version),
+                "token_type": "bearer",
+                "user": user_to_json(user),
+            }
+        if self._otp_expired(user) or not getattr(user, "email_otp_hash", None):
+            raise HTTPException(status_code=400, detail=AuthMessages.INVALID_OR_EXPIRED_OTP)
+        if not verify_password(payload.otp, user.email_otp_hash):
+            raise HTTPException(status_code=400, detail=AuthMessages.INVALID_OR_EXPIRED_OTP)
+
+        user.email_verified = True
+        user.email_verified_at = db_utc_now()
+        user.is_active = True
+        self._clear_email_otp(user)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+        return {
+            "access_token": create_access_token(str(user.id), user.token_version),
+            "refresh_token": create_refresh_token(str(user.id), user.token_version),
+            "token_type": "bearer",
+            "user": user_to_json(user),
+        }
+
+    def resend_parent_email_otp(self, payload: ResendEmailOtpIn, db: Session) -> dict:
+        normalized_email = normalize_email(payload.email)
+        user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
+        if user is None:
+            raise HTTPException(status_code=404, detail=AuthMessages.USER_NOT_FOUND)
+        if self._user_has_verified_email(user):
+            raise HTTPException(status_code=400, detail=AuthMessages.EMAIL_VERIFIED_SUCCESSFULLY)
+        if not self._otp_can_be_resent(user):
+            raise HTTPException(
+                status_code=429,
+                detail={
+                    "code": "OTP_RESEND_COOLDOWN",
+                    "message": AuthMessages.OTP_RESEND_COOLDOWN,
+                    "resend_available_at": self._otp_resend_available_at(user),
+                },
+            )
+
+        otp_code = self._generate_email_otp()
+        self._store_email_otp(user=user, otp_code=otp_code)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+        try:
+            self._send_email_otp(email=user.email, name=user.name, otp_code=otp_code)
+        except Exception as exc:
+            logger.error("Failed to resend registration OTP to %s: %s", user.email, exc, exc_info=True)
+            raise HTTPException(status_code=503, detail=AuthMessages.OTP_SEND_FAILED)
+
+        return {
+            "success": True,
+            "message": AuthMessages.OTP_RESENT_SUCCESSFULLY,
+            "email": user.email,
+            "otp_expires_at": ensure_utc(user.email_otp_expires_at).isoformat(),
+            "resend_available_at": self._otp_resend_available_at(user),
         }
 
     def two_factor_status(self, *, user: User) -> dict[str, Any]:
@@ -518,6 +700,14 @@ def register_parent(payload: RegisterIn, db: Session) -> dict:
 
 def login_parent(payload: LoginIn, db: Session) -> dict:
     return auth_service.login_parent(payload, db)
+
+
+def verify_parent_email_otp(payload: VerifyEmailOtpIn, db: Session) -> dict:
+    return auth_service.verify_parent_email_otp(payload, db)
+
+
+def resend_parent_email_otp(payload: ResendEmailOtpIn, db: Session) -> dict:
+    return auth_service.resend_parent_email_otp(payload, db)
 
 
 def refresh_parent_access_token(payload: RefreshIn, db: Session) -> dict:

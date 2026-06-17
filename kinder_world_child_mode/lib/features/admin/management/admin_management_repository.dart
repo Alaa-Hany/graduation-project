@@ -24,6 +24,16 @@ class AdminPagedResponse<T> {
   final Map<String, dynamic> pagination;
 }
 
+class AdminCmsCatalogResponse {
+  const AdminCmsCatalogResponse({
+    required this.categories,
+    required this.axes,
+  });
+
+  final List<AdminCmsCategory> categories;
+  final List<AdminCmsAxisSummary> axes;
+}
+
 class AdminManagementRepository {
   AdminManagementRepository({
     required NetworkService network,
@@ -34,11 +44,60 @@ class AdminManagementRepository {
   final NetworkService _network;
   final SecureStorage _storage;
 
+  Future<Options> _confirmedAdminOptions(String action) async {
+    final options = await _adminOptions();
+    final headers = <String, dynamic>{
+      ...?options.headers,
+      'X-Admin-Confirm': 'CONFIRM',
+      'X-Admin-Confirm-Action': action,
+    };
+    return options.copyWith(headers: headers);
+  }
+
   Future<Options> _adminOptions() async {
     final token = await _storage.getAdminToken();
     return Options(headers: {
       'Authorization': token == null ? null : 'Bearer $token',
     });
+  }
+
+  Future<String?> _refreshAdminToken() async {
+    final refreshToken = await _storage.getAdminRefreshToken();
+    if (refreshToken == null || refreshToken.isEmpty) {
+      return null;
+    }
+
+    final response = await _network.post<Map<String, dynamic>>(
+      '/admin/auth/refresh',
+      data: {'refresh_token': refreshToken},
+      options: Options(headers: {'Authorization': null}),
+    );
+    final body = Map<String, dynamic>.from(response.data ?? const {});
+    final accessToken = body['access_token']?.toString();
+    if (accessToken == null || accessToken.isEmpty) {
+      return null;
+    }
+
+    await _storage.saveAdminToken(accessToken);
+    return accessToken;
+  }
+
+  Future<Response<dynamic>> _sendWithFreshAdminToken(
+    Future<Response<dynamic>> Function(Options options) send,
+  ) async {
+    try {
+      return await send(await _adminOptions());
+    } on DioException catch (error) {
+      if (error.response?.statusCode != 401) {
+        rethrow;
+      }
+      final refreshedToken = await _refreshAdminToken();
+      if (refreshedToken == null || refreshedToken.isEmpty) {
+        await _storage.clearAdminSession();
+        rethrow;
+      }
+      return send(await _adminOptions());
+    }
   }
 
   Map<String, dynamic> _body(Response<dynamic> response) {
@@ -104,6 +163,25 @@ class AdminManagementRepository {
         'email': email,
         'plan': plan,
       },
+      options: await _confirmedAdminOptions('user.override_plan'),
+    );
+    return AdminParentUser.fromJson(_item(response));
+  }
+
+  Future<AdminParentUser> createUser({
+    required String name,
+    required String email,
+    required String password,
+    required String plan,
+  }) async {
+    final response = await _network.post(
+      '/admin/users',
+      data: {
+        'name': name,
+        'email': email,
+        'password': password,
+        'plan': plan,
+      },
       options: await _adminOptions(),
     );
     return AdminParentUser.fromJson(_item(response));
@@ -112,9 +190,33 @@ class AdminManagementRepository {
   Future<AdminParentUser> setUserEnabled(int userId, bool enabled) async {
     final response = await _network.post(
       '/admin/users/$userId/${enabled ? 'enable' : 'disable'}',
-      options: await _adminOptions(),
+      options: await _confirmedAdminOptions(
+        enabled ? 'user.enable' : 'user.disable',
+      ),
     );
     return AdminParentUser.fromJson(_item(response));
+  }
+
+  Future<String> resetUserPassword(
+    int userId, {
+    String? newPassword,
+  }) async {
+    final response = await _network.post(
+      '/admin/users/$userId/reset-password',
+      data: {
+        if (newPassword != null && newPassword.isNotEmpty)
+          'new_password': newPassword,
+      },
+      options: await _confirmedAdminOptions('user.reset_password'),
+    );
+    return _body(response)['temporary_password']?.toString() ?? '';
+  }
+
+  Future<void> deleteUser(int userId) async {
+    await _network.delete(
+      '/admin/users/$userId',
+      options: await _confirmedAdminOptions('user.delete'),
+    );
   }
 
   Future<AdminPagedResponse<AdminChildRecord>> fetchChildren({
@@ -194,9 +296,16 @@ class AdminManagementRepository {
   Future<AdminChildRecord> deactivateChild(int childId) async {
     final response = await _network.post(
       '/admin/children/$childId/deactivate',
-      options: await _adminOptions(),
+      options: await _confirmedAdminOptions('child.deactivate'),
     );
     return AdminChildRecord.fromJson(_item(response));
+  }
+
+  Future<void> deleteChild(int childId) async {
+    await _network.delete(
+      '/admin/children/$childId',
+      options: await _confirmedAdminOptions('child.delete'),
+    );
   }
 
   Future<AdminPagedResponse<AdminAuditLog>> fetchAuditLogs({
@@ -328,19 +437,33 @@ class AdminManagementRepository {
         Map<String, dynamic>.from(response.data as Map));
   }
 
-  Future<List<AdminCmsCategory>> fetchCategories() async {
+  Future<AdminCmsCatalogResponse> fetchCmsCatalog({String axisKey = ''}) async {
     final response = await _network.get(
       '/admin/categories',
+      queryParameters: {
+        if (axisKey.isNotEmpty) 'axis_key': axisKey,
+      },
       options: await _adminOptions(),
     );
     final body = Map<String, dynamic>.from(response.data as Map);
-    return (body['items'] as List<dynamic>? ?? const [])
+    final categories = (body['items'] as List<dynamic>? ?? const [])
         .map((item) =>
             AdminCmsCategory.fromJson(Map<String, dynamic>.from(item as Map)))
         .toList();
+    final axes = (body['axes'] as List<dynamic>? ?? const [])
+        .map((item) => AdminCmsAxisSummary.fromJson(
+            Map<String, dynamic>.from(item as Map)))
+        .toList();
+    return AdminCmsCatalogResponse(categories: categories, axes: axes);
+  }
+
+  Future<List<AdminCmsCategory>> fetchCategories({String axisKey = ''}) async {
+    final response = await fetchCmsCatalog(axisKey: axisKey);
+    return response.categories;
   }
 
   Future<AdminCmsCategory> createCategory({
+    required String axisKey,
     required String slug,
     required String titleEn,
     required String titleAr,
@@ -350,6 +473,7 @@ class AdminManagementRepository {
     final response = await _network.post(
       '/admin/categories',
       data: {
+        'axis_key': axisKey,
         'slug': slug,
         'title_en': titleEn,
         'title_ar': titleAr,
@@ -365,6 +489,7 @@ class AdminManagementRepository {
 
   Future<AdminCmsCategory> updateCategory(
     int categoryId, {
+    required String axisKey,
     required String slug,
     required String titleEn,
     required String titleAr,
@@ -374,6 +499,7 @@ class AdminManagementRepository {
     final response = await _network.patch(
       '/admin/categories/$categoryId',
       data: {
+        'axis_key': axisKey,
         'slug': slug,
         'title_en': titleEn,
         'title_ar': titleAr,
@@ -398,6 +524,7 @@ class AdminManagementRepository {
     String search = '',
     String status = '',
     int? categoryId,
+    String axisKey = '',
     String contentType = '',
     int page = 1,
   }) async {
@@ -405,6 +532,7 @@ class AdminManagementRepository {
     if (search.isNotEmpty) query['search'] = search;
     if (status.isNotEmpty) query['status'] = status;
     if (categoryId != null) query['category_id'] = categoryId;
+    if (axisKey.isNotEmpty) query['axis_key'] = axisKey;
     if (contentType.isNotEmpty) query['content_type'] = contentType;
 
     final response = await _network.get(
@@ -434,11 +562,66 @@ class AdminManagementRepository {
         Map<String, dynamic>.from(body['item'] as Map));
   }
 
+  Future<AdminUploadedVideoAsset> uploadContentVideo({
+    required List<int> bytes,
+    required String filename,
+    String? axisKey,
+    String? categorySlug,
+    String? contentSlug,
+    ProgressCallback? onSendProgress,
+  }) async {
+    Future<Response<dynamic>> sendUpload(
+        {bool useRefreshedToken = false}) async {
+      final options = useRefreshedToken
+          ? Options(headers: {
+              'Authorization':
+                  'Bearer ${(await _storage.getAdminToken()) ?? ''}',
+            })
+          : await _adminOptions();
+      return _network.post(
+        '/admin/media/videos/upload',
+        data: FormData.fromMap({
+          'file': MultipartFile.fromBytes(bytes, filename: filename),
+          if (axisKey != null && axisKey.isNotEmpty) 'axis_key': axisKey,
+          if (categorySlug != null && categorySlug.isNotEmpty)
+            'category_slug': categorySlug,
+          if (contentSlug != null && contentSlug.isNotEmpty)
+            'content_slug': contentSlug,
+        }),
+        options: options.copyWith(
+          contentType: 'multipart/form-data',
+          sendTimeout: const Duration(minutes: 15),
+          receiveTimeout: const Duration(minutes: 15),
+        ),
+        onSendProgress: onSendProgress,
+      );
+    }
+
+    Response<dynamic> response;
+    try {
+      response = await sendUpload();
+    } on DioException catch (error) {
+      if (error.response?.statusCode != 401) rethrow;
+      final refreshedToken = await _refreshAdminToken();
+      if (refreshedToken == null || refreshedToken.isEmpty) {
+        rethrow;
+      }
+      response = await sendUpload(useRefreshedToken: true);
+    }
+
+    final body = Map<String, dynamic>.from(response.data as Map);
+    return AdminUploadedVideoAsset.fromJson(
+      Map<String, dynamic>.from(body['item'] as Map),
+    );
+  }
+
   Future<AdminCmsContent> createContent(Map<String, dynamic> payload) async {
-    final response = await _network.post(
-      '/admin/contents',
-      data: payload,
-      options: await _adminOptions(),
+    final response = await _sendWithFreshAdminToken(
+      (options) => _network.post(
+        '/admin/contents',
+        data: payload,
+        options: options,
+      ),
     );
     final body = Map<String, dynamic>.from(response.data as Map);
     return AdminCmsContent.fromJson(
@@ -447,10 +630,12 @@ class AdminManagementRepository {
 
   Future<AdminCmsContent> updateContent(
       int contentId, Map<String, dynamic> payload) async {
-    final response = await _network.patch(
-      '/admin/contents/$contentId',
-      data: payload,
-      options: await _adminOptions(),
+    final response = await _sendWithFreshAdminToken(
+      (options) => _network.patch(
+        '/admin/contents/$contentId',
+        data: payload,
+        options: options,
+      ),
     );
     final body = Map<String, dynamic>.from(response.data as Map);
     return AdminCmsContent.fromJson(
@@ -458,9 +643,11 @@ class AdminManagementRepository {
   }
 
   Future<AdminCmsContent> publishContent(int contentId) async {
-    final response = await _network.post(
-      '/admin/contents/$contentId/publish',
-      options: await _adminOptions(),
+    final response = await _sendWithFreshAdminToken(
+      (options) => _network.post(
+        '/admin/contents/$contentId/publish',
+        options: options,
+      ),
     );
     final body = Map<String, dynamic>.from(response.data as Map);
     return AdminCmsContent.fromJson(
@@ -468,9 +655,11 @@ class AdminManagementRepository {
   }
 
   Future<AdminCmsContent> unpublishContent(int contentId) async {
-    final response = await _network.post(
-      '/admin/contents/$contentId/unpublish',
-      options: await _adminOptions(),
+    final response = await _sendWithFreshAdminToken(
+      (options) => _network.post(
+        '/admin/contents/$contentId/unpublish',
+        options: options,
+      ),
     );
     final body = Map<String, dynamic>.from(response.data as Map);
     return AdminCmsContent.fromJson(
@@ -478,21 +667,25 @@ class AdminManagementRepository {
   }
 
   Future<void> deleteContent(int contentId) async {
-    await _network.delete(
-      '/admin/contents/$contentId',
-      options: await _adminOptions(),
+    await _sendWithFreshAdminToken(
+      (options) => _network.delete(
+        '/admin/contents/$contentId',
+        options: options,
+      ),
     );
   }
 
   Future<AdminPagedResponse<AdminCmsQuiz>> fetchQuizzes({
     String status = '',
     int? categoryId,
+    String axisKey = '',
     int? contentId,
     int page = 1,
   }) async {
     final query = <String, dynamic>{'page': page};
     if (status.isNotEmpty) query['status'] = status;
     if (categoryId != null) query['category_id'] = categoryId;
+    if (axisKey.isNotEmpty) query['axis_key'] = axisKey;
     if (contentId != null) query['content_id'] = contentId;
 
     final response = await _network.get(
@@ -585,7 +778,7 @@ class AdminManagementRepository {
     final response = await _network.post(
       '/admin/subscriptions/$id/override-plan',
       data: {'plan': plan},
-      options: await _adminOptions(),
+      options: await _confirmedAdminOptions('subscription.override_plan'),
     );
     final body = Map<String, dynamic>.from(response.data as Map);
     return AdminSubscriptionRecord.fromJson(
@@ -595,7 +788,7 @@ class AdminManagementRepository {
   Future<AdminSubscriptionRecord> cancelSubscription(int id) async {
     final response = await _network.post(
       '/admin/subscriptions/$id/cancel',
-      options: await _adminOptions(),
+      options: await _confirmedAdminOptions('subscription.cancel'),
     );
     final body = Map<String, dynamic>.from(response.data as Map);
     return AdminSubscriptionRecord.fromJson(
@@ -606,7 +799,7 @@ class AdminManagementRepository {
     try {
       await _network.post(
         '/admin/subscriptions/$id/refund',
-        options: await _adminOptions(),
+        options: await _confirmedAdminOptions('subscription.refund'),
       );
       return 'ok';
     } on DioException catch (e) {
@@ -633,7 +826,7 @@ class AdminManagementRepository {
     final response = await _network.patch(
       '/admin/settings',
       data: payload,
-      options: await _adminOptions(),
+      options: await _confirmedAdminOptions('settings.update'),
     );
     return AdminSystemSettingsPayload.fromJson(
       Map<String, dynamic>.from(response.data as Map),

@@ -1,293 +1,524 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import Request
 from sqlalchemy.orm import Session
 
 from admin_models import AdminUser, AdminUserRole, AuditLog, Permission, Role, RolePermission
-from core.time_utils import utc_now
-from models import (
-    ChildProfile,
-    ContentCategory,
-    ContentItem,
-    Quiz,
-    SubscriptionProfile,
-    SupportTicket,
-    SupportTicketMessage,
-    SystemSetting,
-    User,
-)
-from plan_service import get_plan_features, get_plan_limits, get_user_plan
+from core.time_utils import ensure_utc
+from models import ChildProfile, ContentCategory, ContentItem, Quiz, SupportTicket, SystemSetting, User
 from serializers import child_to_json, user_to_json
-from services.child_service import child_service
-from services.premium_behavior_service import premium_behavior_service
 
 
-def build_admin_payload(admin, db: Session) -> dict[str, Any]:
-    role_rows = (
-        db.query(Role.name)
-        .join(AdminUserRole, AdminUserRole.role_id == Role.id)
-        .filter(AdminUserRole.admin_user_id == admin.id)
-        .all()
-    )
-    perm_rows = (
-        db.query(Permission.name)
-        .join(RolePermission, RolePermission.permission_id == Permission.id)
-        .join(Role, Role.id == RolePermission.role_id)
-        .join(AdminUserRole, AdminUserRole.role_id == Role.id)
-        .filter(AdminUserRole.admin_user_id == admin.id)
-        .all()
-    )
+CONTENT_AXIS_METADATA = {
+    "behavioral": {"key": "behavioral", "title_en": "Behavioral", "title_ar": "سلوكي"},
+    "educational": {"key": "educational", "title_en": "Educational", "title_ar": "تعليمي"},
+    "skillful": {"key": "skillful", "title_en": "Skillful", "title_ar": "مهاري"},
+    "entertaining": {"key": "entertaining", "title_en": "Entertaining", "title_ar": "ترفيهي"},
+}
 
+
+def to_iso(value: date | datetime | None) -> str | None:
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return ensure_utc(value).isoformat()
+    return value.isoformat()
+
+
+def parse_optional_date(value: str | None) -> date | None:
+    if value is None:
+        return None
+    normalized = value.strip()
+    if not normalized:
+        return None
+    return date.fromisoformat(normalized)
+
+
+def base_admin(admin: AdminUser | None) -> dict[str, Any] | None:
+    if admin is None:
+        return None
     return {
         "id": admin.id,
         "email": admin.email,
         "name": admin.name,
-        "is_active": admin.is_active,
-        "roles": sorted({r.name for r in role_rows}),
-        "permissions": sorted({p.name for p in perm_rows}),
-        "last_login_at": admin.last_login_at.isoformat() if admin.last_login_at else None,
-        "last_login_ip": admin.last_login_ip,
-        "last_login_user_agent": admin.last_login_user_agent,
-        "last_failed_login_at": (
-            admin.last_failed_login_at.isoformat() if admin.last_failed_login_at else None
-        ),
-        "last_failed_login_ip": admin.last_failed_login_ip,
-        "last_failed_login_user_agent": admin.last_failed_login_user_agent,
-        "failed_login_attempts": int(admin.failed_login_attempts or 0),
-        "suspicious_access_count": int(admin.suspicious_access_count or 0),
-        "is_flagged_suspicious": bool(admin.is_flagged_suspicious),
-        "locked_until": admin.locked_until.isoformat() if admin.locked_until else None,
-        "two_factor_enabled": bool(getattr(admin, "two_factor_enabled", False)),
-        "two_factor_method": getattr(admin, "two_factor_method", None),
-        "two_factor_confirmed_at": (
-            admin.two_factor_confirmed_at.isoformat()
-            if getattr(admin, "two_factor_confirmed_at", None)
-            else None
-        ),
-        "created_at": admin.created_at.isoformat() if admin.created_at else None,
-        "updated_at": admin.updated_at.isoformat() if admin.updated_at else None,
+        "is_active": bool(admin.is_active),
     }
 
 
-def permission_group_name(permission_name: str) -> str:
-    parts = permission_name.split(".")
-    if len(parts) >= 2:
-        return parts[1]
-    return "general"
+def build_pagination_payload(*, page: int, page_size: int, total: int) -> dict[str, Any]:
+    total_pages = max(1, (total + page_size - 1) // page_size) if page_size else 1
+    return {
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+        "total_pages": total_pages,
+        "has_previous": page > 1,
+        "has_next": page < total_pages,
+    }
+
+
+def build_pagination(page: int, size: int, total: int) -> dict[str, Any]:
+    return build_pagination_payload(page=page, page_size=size, total=total)
+
+
+def normalize_content_axis_key(value: str | None) -> str:
+    key = (value or "").strip().lower()
+    if key not in CONTENT_AXIS_METADATA:
+        raise ValueError("Invalid axis")
+    return key
+
+
+def normalize_axis(value: str | None) -> str:
+    return normalize_content_axis_key(value)
+
+
+def serialize_content_axis_summary(
+    axis_key: str,
+    *,
+    categories: list[ContentCategory] | None = None,
+) -> dict[str, Any]:
+    normalized = normalize_content_axis_key(axis_key)
+    payload = dict(CONTENT_AXIS_METADATA[normalized])
+    category_items = categories or []
+    payload["category_count"] = len(category_items)
+    payload["content_count"] = sum(
+        1 for category in category_items for item in (category.contents or []) if item.deleted_at is None
+    )
+    payload["quiz_count"] = sum(
+        1 for category in category_items for item in (category.quizzes or []) if item.deleted_at is None
+    )
+    return payload
+
+
+def serialize_axis_dashboard(axis_key: str, db: Session) -> dict[str, Any]:
+    categories = (
+        db.query(ContentCategory)
+        .filter(
+            ContentCategory.axis_key == normalize_content_axis_key(axis_key),
+            ContentCategory.deleted_at.is_(None),
+        )
+        .all()
+    )
+    return {
+        "axis": normalize_content_axis_key(axis_key),
+        "title": CONTENT_AXIS_METADATA[normalize_content_axis_key(axis_key)],
+        "stats": {
+            "categories": len(categories),
+            "contents": sum(
+                1 for category in categories for item in (category.contents or []) if item.deleted_at is None
+            ),
+            "quizzes": sum(
+                1 for category in categories for item in (category.quizzes or []) if item.deleted_at is None
+            ),
+        },
+    }
+
+
+def _collect_role_names(admin: AdminUser, db: Session | None = None) -> list[str]:
+    if db is not None:
+        rows = (
+            db.query(Role.name)
+            .join(AdminUserRole, AdminUserRole.role_id == Role.id)
+            .filter(AdminUserRole.admin_user_id == admin.id)
+            .all()
+        )
+        return sorted({row[0] for row in rows})
+    return sorted(
+        {
+            link.role.name
+            for link in (admin.admin_user_roles or [])
+            if getattr(link, "role", None) is not None and getattr(link.role, "name", None)
+        }
+    )
+
+
+def _collect_permission_names(admin: AdminUser, db: Session | None = None) -> list[str]:
+    if db is not None:
+        rows = (
+            db.query(Permission.name)
+            .join(RolePermission, RolePermission.permission_id == Permission.id)
+            .join(AdminUserRole, AdminUserRole.role_id == RolePermission.role_id)
+            .filter(AdminUserRole.admin_user_id == admin.id)
+            .all()
+        )
+        return sorted({row[0] for row in rows})
+    permissions: set[str] = set()
+    for link in admin.admin_user_roles or []:
+        role = getattr(link, "role", None)
+        if role is None:
+            continue
+        for role_permission in role.role_permissions or []:
+            permission = getattr(role_permission, "permission", None)
+            if permission is not None and permission.name:
+                permissions.add(permission.name)
+    return sorted(permissions)
+
+
+def build_admin_payload(admin: AdminUser, db: Session) -> dict[str, Any]:
+    return serialize_admin_user(admin, db)
+
+
+def serialize_admin_user(admin: AdminUser, db: Session | None = None) -> dict[str, Any]:
+    return {
+        "id": admin.id,
+        "email": admin.email,
+        "name": admin.name,
+        "is_active": bool(admin.is_active),
+        "is_deleted": bool(getattr(admin, "is_deleted", False)),
+        "token_version": int(admin.token_version or 0),
+        "roles": _collect_role_names(admin, db),
+        "permissions": _collect_permission_names(admin, db),
+        "two_factor_enabled": bool(getattr(admin, "two_factor_enabled", False)),
+        "two_factor_method": getattr(admin, "two_factor_method", None),
+        "last_login_at": to_iso(getattr(admin, "last_login_at", None)),
+        "locked_until": to_iso(getattr(admin, "locked_until", None)),
+        "failed_login_attempts": int(getattr(admin, "failed_login_attempts", 0) or 0),
+        "suspicious_access_count": int(getattr(admin, "suspicious_access_count", 0) or 0),
+        "created_at": to_iso(getattr(admin, "created_at", None)),
+        "updated_at": to_iso(getattr(admin, "updated_at", None)),
+    }
 
 
 def serialize_permission(permission: Permission) -> dict[str, Any]:
+    group = permission.name.split(".", 1)[0] if "." in permission.name else permission.name
     return {
         "id": permission.id,
         "name": permission.name,
         "description": permission.description,
-        "group": permission_group_name(permission.name),
-        "created_at": permission.created_at.isoformat() if permission.created_at else None,
+        "group": group,
+        "created_at": to_iso(getattr(permission, "created_at", None)),
     }
 
 
 def serialize_role(role: Role, *, include_permissions: bool = False) -> dict[str, Any]:
-    permissions = [
-        role_permission.permission
-        for role_permission in (role.role_permissions or [])
-        if role_permission.permission is not None
-    ]
+    permissions = sorted(
+        {
+            role_permission.permission.name
+            for role_permission in (role.role_permissions or [])
+            if getattr(role_permission, "permission", None) is not None
+            and getattr(role_permission.permission, "name", None)
+        }
+    )
     payload = {
         "id": role.id,
         "name": role.name,
         "description": role.description,
-        "permission_count": len(permissions),
         "admin_count": len(role.admin_user_roles or []),
-        "created_at": role.created_at.isoformat() if role.created_at else None,
+        "permission_count": len(permissions),
+        "created_at": to_iso(getattr(role, "created_at", None)),
     }
     if include_permissions:
-        payload["permissions"] = [serialize_permission(permission) for permission in permissions]
-    else:
-        payload["permission_names"] = sorted({permission.name for permission in permissions})
-    return payload
-
-
-def serialize_admin_user(admin: AdminUser, db: Session) -> dict[str, Any]:
-    return build_admin_payload(admin, db)
-
-
-def serialize_user_detail(user: User) -> dict[str, Any]:
-    payload = user_to_json(user)
-    payload["children"] = [
-        child_to_json(child)
-        for child in (user.children or [])
-        if getattr(child, "deleted_at", None) is None
-    ]
-    payload["child_count"] = len(payload["children"])
-    return payload
-
-
-def serialize_child_detail(child: ChildProfile) -> dict[str, Any]:
-    payload = child_to_json(child)
-    payload["picture_password_length"] = child_service.picture_password_length(
-        child.picture_password
-    )
-    if child.parent is not None:
-        payload["parent"] = {
-            "id": child.parent.id,
-            "email": child.parent.email,
-            "name": child.parent.name,
-            "is_active": bool(child.parent.is_active),
-            "plan": getattr(child.parent, "plan", None),
-        }
-    else:
-        payload["parent"] = None
+        payload["permissions"] = permissions
     return payload
 
 
 def write_audit_log(
     *,
     db: Session,
-    request: Optional[Request],
-    admin,
+    request: Request | None,
+    admin: AdminUser | None,
     action: str,
     entity_type: str,
     entity_id: Any,
-    before_json: Optional[dict[str, Any]] = None,
-    after_json: Optional[dict[str, Any]] = None,
+    before_json: Any = None,
+    after_json: Any = None,
 ) -> AuditLog:
-    client_host = request.client.host if request and request.client else None
-    user_agent = request.headers.get("user-agent") if request else None
-    audit_log = AuditLog(
+    ip_address = None
+    user_agent = None
+    if request is not None:
+        ip_address = getattr(request.client, "host", None)
+        user_agent = request.headers.get("user-agent")
+
+    log = AuditLog(
         admin_user_id=getattr(admin, "id", None),
         action=action,
         entity_type=entity_type,
         entity_id=str(entity_id),
         before_json=before_json,
         after_json=after_json,
-        ip_address=client_host,
+        ip_address=ip_address,
         user_agent=user_agent,
     )
-    db.add(audit_log)
+    db.add(log)
     db.flush()
-    return audit_log
+    return log
 
 
-def parse_optional_date(value: Optional[str]) -> Optional[date]:
-    if not value:
-        return None
-    return date.fromisoformat(value)
+def serialize_audit_log(item: AuditLog) -> dict[str, Any]:
+    return {
+        "id": item.id,
+        "action": item.action,
+        "entity_type": item.entity_type,
+        "entity_id": item.entity_id,
+        "before_json": item.before_json,
+        "after_json": item.after_json,
+        "ip_address": getattr(item, "ip_address", None),
+        "user_agent": getattr(item, "user_agent", None),
+        "created_at": to_iso(item.created_at),
+        "admin": base_admin(getattr(item, "admin_user", None)),
+        "admin_user_id": getattr(item, "admin_user_id", None),
+    }
 
 
-def serialize_audit_log(log: AuditLog) -> dict[str, Any]:
-    admin_payload = None
-    if log.admin_user is not None:
-        admin_payload = {
-            "id": log.admin_user.id,
-            "email": log.admin_user.email,
-            "name": log.admin_user.name,
+def serialize_content_category(category: ContentCategory) -> dict[str, Any]:
+    axis_key = normalize_content_axis_key(category.axis_key)
+    contents = [item for item in (category.contents or []) if item.deleted_at is None]
+    quizzes = [item for item in (category.quizzes or []) if item.deleted_at is None]
+    return {
+        "id": category.id,
+        "axis_key": axis_key,
+        "axis": serialize_content_axis_summary(axis_key),
+        "slug": category.slug,
+        "title_en": category.title_en,
+        "title_ar": category.title_ar,
+        "description_en": category.description_en,
+        "description_ar": category.description_ar,
+        "content_count": len(contents),
+        "quiz_count": len(quizzes),
+        "created_by": getattr(category, "created_by", None),
+        "updated_by": getattr(category, "updated_by", None),
+        "creator": base_admin(getattr(category, "creator", None)),
+        "updater": base_admin(getattr(category, "updater", None)),
+        "created_at": to_iso(category.created_at),
+        "updated_at": to_iso(getattr(category, "updated_at", None)),
+        "deleted_at": to_iso(getattr(category, "deleted_at", None)),
+    }
+
+
+def serialize_category(category: ContentCategory) -> dict[str, Any]:
+    return serialize_content_category(category)
+
+
+def serialize_quiz(quiz: Quiz) -> dict[str, Any]:
+    axis_key = normalize_content_axis_key(quiz.category.axis_key) if getattr(quiz, "category", None) else None
+    return {
+        "id": quiz.id,
+        "content_id": quiz.content_id,
+        "category_id": quiz.category_id,
+        "axis_key": axis_key,
+        "title_en": quiz.title_en,
+        "title_ar": quiz.title_ar,
+        "description_en": getattr(quiz, "description_en", None),
+        "description_ar": getattr(quiz, "description_ar", None),
+        "status": quiz.status,
+        "question_count": len(quiz.questions_json or []),
+        "questions_json": quiz.questions_json or [],
+        "created_by": getattr(quiz, "created_by", None),
+        "updated_by": getattr(quiz, "updated_by", None),
+        "creator": base_admin(getattr(quiz, "creator", None)),
+        "updater": base_admin(getattr(quiz, "updater", None)),
+        "published_at": to_iso(getattr(quiz, "published_at", None)),
+        "created_at": to_iso(quiz.created_at),
+        "updated_at": to_iso(getattr(quiz, "updated_at", None)),
+        "deleted_at": to_iso(getattr(quiz, "deleted_at", None)),
+    }
+
+
+def serialize_content_item(
+    content: ContentItem,
+    *,
+    include_quizzes: bool = False,
+) -> dict[str, Any]:
+    axis_key = None
+    if getattr(content, "category", None) is not None:
+        axis_key = normalize_content_axis_key(content.category.axis_key)
+    payload = {
+        "id": content.id,
+        "category_id": content.category_id,
+        "axis_key": axis_key,
+        "slug": content.slug,
+        "content_type": content.content_type,
+        "status": content.status,
+        "title_en": content.title_en,
+        "title_ar": content.title_ar,
+        "description_en": getattr(content, "description_en", None),
+        "description_ar": getattr(content, "description_ar", None),
+        "body_en": getattr(content, "body_en", None),
+        "body_ar": getattr(content, "body_ar", None),
+        "thumbnail_url": getattr(content, "thumbnail_url", None),
+        "video_url": getattr(content, "video_url", None),
+        "video_provider": getattr(content, "video_provider", None),
+        "video_public_id": getattr(content, "video_public_id", None),
+        "video_duration_seconds": getattr(content, "video_duration_seconds", None),
+        "age_group": getattr(content, "age_group", None),
+        "metadata_json": getattr(content, "metadata_json", None) or {},
+        "category": (
+            serialize_content_category(content.category)
+            if getattr(content, "category", None) is not None
+            else None
+        ),
+        "created_by": getattr(content, "created_by", None),
+        "updated_by": getattr(content, "updated_by", None),
+        "creator": base_admin(getattr(content, "creator", None)),
+        "updater": base_admin(getattr(content, "updater", None)),
+        "published_at": to_iso(getattr(content, "published_at", None)),
+        "created_at": to_iso(content.created_at),
+        "updated_at": to_iso(getattr(content, "updated_at", None)),
+        "deleted_at": to_iso(getattr(content, "deleted_at", None)),
+    }
+    if include_quizzes:
+        payload["quizzes"] = [
+            serialize_quiz(quiz) for quiz in (getattr(content, "quizzes", None) or []) if quiz.deleted_at is None
+        ]
+    return payload
+
+
+def serialize_content(content: ContentItem) -> dict[str, Any]:
+    return serialize_content_item(content)
+
+
+def serialize_system_setting(item: SystemSetting) -> dict[str, Any]:
+    return {
+        "id": item.id,
+        "key": item.key,
+        "value_json": item.value_json,
+        "updated_by": item.updated_by,
+        "updated_at": to_iso(item.updated_at),
+        "updater": base_admin(getattr(item, "updater", None)),
+    }
+
+
+def _build_user_axis_engagement(user: User, db: Session) -> dict[str, Any]:
+    """Build axis engagement data for a user based on their children's activities."""
+    child_ids = [child.id for child in getattr(user, "children", None) or []]
+    if not child_ids:
+        return {axis_key: {"activities": 0, "completed_lessons": 0} for axis_key in CONTENT_AXIS_METADATA.keys()}
+
+    engagement = {}
+
+    for axis_key in CONTENT_AXIS_METADATA.keys():
+        # Get categories for this axis
+        categories = (
+            db.query(ContentCategory)
+            .filter(
+                ContentCategory.axis_key == axis_key,
+                ContentCategory.deleted_at.is_(None),
+            )
+            .all()
+        )
+        category_ids = [cat.id for cat in categories]
+
+        # Get content items for these categories
+        content_items = (
+            db.query(ContentItem)
+            .filter(
+                ContentItem.category_id.in_(category_ids),
+                ContentItem.deleted_at.is_(None),
+                ContentItem.status == "published",
+            )
+            .all()
+        )
+        lesson_ids = [item.slug for item in content_items]
+
+        # Count activities by children in this axis
+        activities_count = (
+            db.query(ChildActivityEvent)
+            .filter(
+                ChildActivityEvent.child_id.in_(child_ids),
+                ChildActivityEvent.lesson_id.in_(lesson_ids),
+            )
+            .count()
+        )
+
+        # Count completed lessons by children in this axis
+        completed_lessons_count = (
+            db.query(LessonProgress)
+            .filter(
+                LessonProgress.child_id.in_(child_ids),
+                LessonProgress.lesson_id.in_(lesson_ids),
+                LessonProgress.status == "completed",
+            )
+            .count()
+        )
+
+        engagement[axis_key] = {
+            "activities": activities_count,
+            "completed_lessons": completed_lessons_count,
         }
-    return {
-        "id": log.id,
-        "admin_user_id": log.admin_user_id,
-        "admin": admin_payload,
-        "action": log.action,
-        "entity_type": log.entity_type,
-        "entity_id": log.entity_id,
-        "before_json": log.before_json,
-        "after_json": log.after_json,
-        "ip_address": log.ip_address,
-        "user_agent": log.user_agent,
-        "timestamp": log.created_at.isoformat() if log.created_at else None,
-    }
+
+    return engagement
 
 
-def build_pagination_payload(*, page: int, page_size: int, total: int) -> dict[str, Any]:
-    total_pages = max((total + page_size - 1) // page_size, 1)
-    return {
-        "page": page,
-        "page_size": page_size,
-        "total": total,
-        "total_pages": total_pages,
-        "has_next": page < total_pages,
-        "has_previous": page > 1,
-    }
-
-
-def serialize_support_ticket_message(message: SupportTicketMessage) -> dict[str, Any]:
-    author_type = "system"
-    author_payload = None
-    if message.admin_user is not None:
-        author_type = "admin"
-        author_payload = {
-            "id": message.admin_user.id,
-            "email": message.admin_user.email,
-            "name": message.admin_user.name,
+def serialize_user_detail(user: User, db: Session | None = None) -> dict[str, Any]:
+    payload = user_to_json(user)
+    payload.update(
+        {
+            "children_count": len(getattr(user, "children", None) or []),
+            "support_ticket_count": len(getattr(user, "support_tickets", None) or []),
+            "notification_count": len(getattr(user, "notifications", None) or []),
+            "children": [child_to_json(child) for child in (getattr(user, "children", None) or [])],
         }
-    elif message.user is not None:
-        author_type = "user"
-        author_payload = {
-            "id": message.user.id,
-            "email": message.user.email,
-            "name": message.user.name,
+    )
+
+    # Add axis engagement data if db is provided
+    if db is not None:
+        axis_engagement = _build_user_axis_engagement(user, db)
+        payload["axis_engagement"] = axis_engagement
+
+    return payload
+
+
+def build_user_activity(user: User, audit_logs: list[AuditLog], db: Session | None = None) -> dict[str, Any]:
+    return {
+        "user": serialize_user_detail(user, db),
+        "summary": {
+            "audit_count": len(audit_logs),
+            "children_count": len(getattr(user, "children", None) or []),
+            "support_ticket_count": len(getattr(user, "support_tickets", None) or []),
+        },
+        "activity": [serialize_audit_log(item) for item in audit_logs],
+    }
+
+
+def serialize_child_detail(child: ChildProfile) -> dict[str, Any]:
+    payload = child_to_json(child)
+    payload.update(
+        {
+            "deleted_at": to_iso(getattr(child, "deleted_at", None)),
+            "parent": user_to_json(child.parent) if getattr(child, "parent", None) is not None else None,
         }
+    )
+    return payload
 
+
+def build_child_progress(child: ChildProfile, audit_logs: list[AuditLog]) -> dict[str, Any]:
+    actions = [item.action for item in audit_logs]
     return {
-        "id": message.id,
-        "ticket_id": message.ticket_id,
-        "message": message.message,
-        "author_type": author_type,
-        "author": author_payload,
-        "created_at": message.created_at.isoformat() if message.created_at else None,
+        "child": serialize_child_detail(child),
+        "summary": {
+            "audit_count": len(audit_logs),
+            "edit_count": sum(1 for action in actions if "edit" in action),
+            "disable_count": sum(1 for action in actions if "deactivate" in action or "disable" in action),
+        },
+        "recent_activity": [serialize_audit_log(item) for item in audit_logs[:20]],
     }
 
 
-def _ticket_requester_payload(ticket: SupportTicket) -> dict[str, Any] | None:
-    if ticket.user is None:
-        if not ticket.email:
-            return None
-        return {
-            "id": None,
-            "email": ticket.email,
-            "name": None,
-        }
+def build_child_activity_log(child: ChildProfile, audit_logs: list[AuditLog]) -> dict[str, Any]:
     return {
-        "id": ticket.user.id,
-        "email": ticket.user.email,
-        "name": ticket.user.name,
+        "child": serialize_child_detail(child),
+        "items": [serialize_audit_log(item) for item in audit_logs],
     }
 
 
-def _ticket_assignee_payload(ticket: SupportTicket) -> dict[str, Any] | None:
-    if ticket.assigned_admin is None:
-        return None
-    return {
-        "id": ticket.assigned_admin.id,
-        "email": ticket.assigned_admin.email,
-        "name": ticket.assigned_admin.name,
-    }
+def _support_author_payload(user: User | None = None, admin: AdminUser | None = None) -> dict[str, Any] | None:
+    if admin is not None:
+        return {"id": admin.id, "email": admin.email, "name": admin.name}
+    if user is not None:
+        return {"id": user.id, "email": user.email, "name": user.name}
+    return None
 
 
 def serialize_support_ticket(
-    ticket: SupportTicket, *, include_thread: bool = False
+    ticket: SupportTicket,
+    *,
+    include_thread: bool = False,
 ) -> dict[str, Any]:
-    thread = [
-        {
-            "id": f"root-{ticket.id}",
-            "ticket_id": ticket.id,
-            "message": ticket.message,
-            "author_type": "user",
-            "author": _ticket_requester_payload(ticket),
-            "created_at": ticket.created_at.isoformat() if ticket.created_at else None,
-        }
-    ]
-    thread.extend(
-        serialize_support_ticket_message(message) for message in (ticket.thread_messages or [])
-    )
-
-    last_message_at = ticket.updated_at or ticket.created_at
-    if ticket.thread_messages:
-        last_message_at = ticket.thread_messages[-1].created_at or last_message_at
-
-    priority = premium_behavior_service.support_priority_snapshot(ticket)
+    thread_messages = getattr(ticket, "thread_messages", None) or []
+    preview = (ticket.message or "").strip()
     payload = {
         "id": ticket.id,
         "user_id": ticket.user_id,
@@ -296,292 +527,60 @@ def serialize_support_ticket(
         "email": ticket.email,
         "category": ticket.category,
         "status": ticket.status,
-        "deleted_at": ticket.deleted_at.isoformat() if ticket.deleted_at else None,
-        "assigned_admin_id": ticket.assigned_admin_id,
-        "assigned_admin": _ticket_assignee_payload(ticket),
-        "requester": _ticket_requester_payload(ticket),
-        "created_at": ticket.created_at.isoformat() if ticket.created_at else None,
-        "updated_at": ticket.updated_at.isoformat() if ticket.updated_at else None,
-        "closed_at": ticket.closed_at.isoformat() if ticket.closed_at else None,
-        "reply_count": len(ticket.thread_messages or []),
-        "last_message_at": last_message_at.isoformat() if last_message_at else None,
-        "preview": ticket.message,
-        "priority_level": priority["priority_level"],
-        "priority_score": priority["priority_score"],
-        "priority_reason": priority["priority_reason"],
+        "deleted_at": to_iso(getattr(ticket, "deleted_at", None)),
+        "assigned_admin_id": getattr(ticket, "assigned_admin_id", None),
+        "assigned_admin": _support_author_payload(admin=getattr(ticket, "assigned_admin", None)),
+        "requester": _support_author_payload(user=getattr(ticket, "user", None)),
+        "created_at": to_iso(ticket.created_at),
+        "updated_at": to_iso(getattr(ticket, "updated_at", None)),
+        "closed_at": to_iso(getattr(ticket, "closed_at", None)),
+        "reply_count": len(thread_messages),
+        "last_message_at": to_iso(thread_messages[-1].created_at if thread_messages else ticket.updated_at),
+        "preview": preview[:160],
+        "priority_level": "normal",
+        "priority_score": 0,
+        "priority_reason": "Default priority",
     }
     if include_thread:
-        payload["thread"] = thread
-    return payload
-
-
-def serialize_content_category(category: ContentCategory) -> dict[str, Any]:
-    active_contents = [item for item in (category.contents or []) if item.deleted_at is None]
-    active_quizzes = [item for item in (category.quizzes or []) if item.deleted_at is None]
-    return {
-        "id": category.id,
-        "slug": category.slug,
-        "title_en": category.title_en,
-        "title_ar": category.title_ar,
-        "description_en": category.description_en,
-        "description_ar": category.description_ar,
-        "content_count": len(active_contents),
-        "quiz_count": len(active_quizzes),
-        "created_by": category.created_by,
-        "updated_by": category.updated_by,
-        "created_at": category.created_at.isoformat() if category.created_at else None,
-        "updated_at": category.updated_at.isoformat() if category.updated_at else None,
-    }
-
-
-def _content_admin_payload(admin) -> dict[str, Any] | None:
-    if admin is None:
-        return None
-    return {
-        "id": admin.id,
-        "email": admin.email,
-        "name": admin.name,
-    }
-
-
-def serialize_quiz(quiz: Quiz) -> dict[str, Any]:
-    return {
-        "id": quiz.id,
-        "content_id": quiz.content_id,
-        "category_id": quiz.category_id,
-        "status": quiz.status,
-        "title_en": quiz.title_en,
-        "title_ar": quiz.title_ar,
-        "description_en": quiz.description_en,
-        "description_ar": quiz.description_ar,
-        "questions_json": quiz.questions_json or [],
-        "question_count": len(quiz.questions_json or []),
-        "content_title_en": quiz.content.title_en if quiz.content is not None else None,
-        "content_title_ar": quiz.content.title_ar if quiz.content is not None else None,
-        "category": (
-            serialize_content_category(quiz.category) if quiz.category is not None else None
-        ),
-        "created_by_admin": _content_admin_payload(quiz.creator),
-        "updated_by_admin": _content_admin_payload(quiz.updater),
-        "published_at": quiz.published_at.isoformat() if quiz.published_at else None,
-        "created_at": quiz.created_at.isoformat() if quiz.created_at else None,
-        "updated_at": quiz.updated_at.isoformat() if quiz.updated_at else None,
-    }
-
-
-def serialize_content_item(
-    content: ContentItem, *, include_quizzes: bool = False
-) -> dict[str, Any]:
-    payload = {
-        "id": content.id,
-        "category_id": content.category_id,
-        "slug": content.slug,
-        "content_type": content.content_type,
-        "status": content.status,
-        "title_en": content.title_en,
-        "title_ar": content.title_ar,
-        "description_en": content.description_en,
-        "description_ar": content.description_ar,
-        "body_en": content.body_en,
-        "body_ar": content.body_ar,
-        "thumbnail_url": content.thumbnail_url,
-        "age_group": content.age_group,
-        "metadata_json": content.metadata_json or {},
-        "category": (
-            serialize_content_category(content.category) if content.category is not None else None
-        ),
-        "quiz_count": len([quiz for quiz in (content.quizzes or []) if quiz.deleted_at is None]),
-        "created_by_admin": _content_admin_payload(content.creator),
-        "updated_by_admin": _content_admin_payload(content.updater),
-        "published_at": content.published_at.isoformat() if content.published_at else None,
-        "created_at": content.created_at.isoformat() if content.created_at else None,
-        "updated_at": content.updated_at.isoformat() if content.updated_at else None,
-    }
-    if include_quizzes:
-        payload["quizzes"] = [
-            serialize_quiz(quiz) for quiz in (content.quizzes or []) if quiz.deleted_at is None
+        payload["thread"] = [
+            {
+                "id": item.id,
+                "ticket_id": item.ticket_id,
+                "message": item.message,
+                "author_type": "admin" if item.admin_user_id else "user",
+                "author": _support_author_payload(user=getattr(item, "user", None), admin=getattr(item, "admin_user", None)),
+                "created_at": to_iso(item.created_at),
+            }
+            for item in thread_messages
         ]
     return payload
 
 
-def serialize_subscription_record(user: User) -> dict[str, Any]:
-    plan = get_user_plan(user)
-    payment_methods = getattr(user, "payment_methods", []) or []
-    children = getattr(user, "children", []) or []
-    profile: SubscriptionProfile | None = getattr(user, "subscription_profile", None)
-    subscription_events = getattr(user, "subscription_events", []) or []
-    billing_transactions = getattr(user, "billing_transactions", []) or []
-    payment_attempts = getattr(user, "payment_attempts", []) or []
-    lifecycle = {
-        "current_plan_id": plan,
-        "selected_plan_id": None,
-        "status": (
-            "active"
-            if user.is_active and plan != "FREE"
-            else ("free" if user.is_active else "disabled")
+def serialize_subscription_record(user: User, db: Session | None = None) -> dict[str, Any]:
+    profile = getattr(user, "subscription_profile", None)
+    return {
+        "user": serialize_user_detail(user, db),
+        "subscription_profile": (
+            {
+                "id": profile.id,
+                "current_plan_id": profile.current_plan_id,
+                "selected_plan_id": profile.selected_plan_id,
+                "status": profile.status,
+                "provider": profile.provider,
+                "provider_customer_id": profile.provider_customer_id,
+                "provider_subscription_id": profile.provider_subscription_id,
+                "started_at": to_iso(profile.started_at),
+                "expires_at": to_iso(profile.expires_at),
+                "cancel_at": to_iso(profile.cancel_at),
+                "will_renew": bool(profile.will_renew),
+                "last_payment_status": profile.last_payment_status,
+                "created_at": to_iso(profile.created_at),
+                "updated_at": to_iso(profile.updated_at),
+            }
+            if profile is not None
+            else None
         ),
-        "started_at": None,
-        "expires_at": None,
-        "cancel_at": None,
-        "will_renew": False,
-        "last_payment_status": "not_applicable",
-        "provider": "internal",
-        "is_active": bool(user.is_active) and plan != "FREE",
-    }
-    if profile is not None:
-        lifecycle = {
-            "current_plan_id": profile.current_plan_id,
-            "selected_plan_id": profile.selected_plan_id,
-            "status": profile.status,
-            "started_at": profile.started_at.isoformat() if profile.started_at else None,
-            "expires_at": profile.expires_at.isoformat() if profile.expires_at else None,
-            "cancel_at": profile.cancel_at.isoformat() if profile.cancel_at else None,
-            "will_renew": bool(profile.will_renew),
-            "last_payment_status": profile.last_payment_status,
-            "provider": profile.provider,
-            "provider_customer_id": profile.provider_customer_id,
-            "provider_subscription_id": profile.provider_subscription_id,
-            "is_active": bool(user.is_active) and profile.current_plan_id != "FREE",
-        }
-    return {
-        "id": user.id,
-        "user_id": user.id,
-        "email": user.email,
-        "name": user.name,
-        "plan": plan,
-        "status": (
-            "active"
-            if user.is_active and plan != "FREE"
-            else ("free" if user.is_active else "disabled")
-        ),
-        "is_active": bool(user.is_active),
-        "child_count": len(children),
-        "payment_method_count": len(payment_methods),
-        "limits": get_plan_limits(plan),
-        "features": get_plan_features(plan),
-        "lifecycle": lifecycle,
-        "history_summary": {
-            "event_count": len(subscription_events),
-            "billing_transaction_count": len(billing_transactions),
-            "payment_attempt_count": len(payment_attempts),
-        },
-        "created_at": user.created_at.isoformat() if user.created_at else None,
-        "updated_at": user.updated_at.isoformat() if user.updated_at else None,
-    }
-
-
-def serialize_system_setting(setting: SystemSetting) -> dict[str, Any]:
-    return {
-        "id": setting.id,
-        "key": setting.key,
-        "value_json": setting.value_json,
-        "updated_by": setting.updated_by,
-        "updated_at": setting.updated_at.isoformat() if setting.updated_at else None,
-        "updated_by_admin": _content_admin_payload(setting.updater),
-    }
-
-
-def build_user_activity(user: User, audit_logs: list[AuditLog]) -> dict[str, Any]:
-    tickets = sorted(
-        user.support_tickets or [],
-        key=lambda item: item.created_at or datetime.min,
-        reverse=True,
-    )
-    notifications = sorted(
-        user.notifications or [],
-        key=lambda item: item.created_at or datetime.min,
-        reverse=True,
-    )
-    return {
-        "user_id": user.id,
-        "summary": {
-            "child_count": len(user.children or []),
-            "notification_count": len(user.notifications or []),
-            "support_ticket_count": len(user.support_tickets or []),
-            "last_updated_at": user.updated_at.isoformat() if user.updated_at else None,
-        },
-        "notifications": [
-            {
-                "id": notification.id,
-                "title": notification.title,
-                "type": notification.type,
-                "is_read": bool(notification.is_read),
-                "created_at": (
-                    notification.created_at.isoformat() if notification.created_at else None
-                ),
-            }
-            for notification in notifications[:10]
-        ],
-        "support_tickets": [
-            {
-                "id": ticket.id,
-                "subject": ticket.subject,
-                "email": ticket.email,
-                "created_at": ticket.created_at.isoformat() if ticket.created_at else None,
-            }
-            for ticket in tickets[:10]
-        ],
-        "admin_audit": [serialize_audit_log(log) for log in audit_logs[:20]],
-    }
-
-
-def build_child_progress(child: ChildProfile, audit_logs: list[AuditLog]) -> dict[str, Any]:
-    days_since_created = 0
-    if child.created_at:
-        days_since_created = max((utc_now().date() - child.created_at.date()).days, 0)
-
-    return {
-        "child_id": child.id,
-        "summary": {
-            "days_since_profile_created": days_since_created,
-            "profile_active": bool(getattr(child, "is_active", True)),
-            "last_updated_at": child.updated_at.isoformat() if child.updated_at else None,
-            "audit_events": len(audit_logs),
-        },
-        "milestones": [
-            {
-                "title": "Profile created",
-                "timestamp": child.created_at.isoformat() if child.created_at else None,
-            },
-            {
-                "title": "Profile last updated",
-                "timestamp": child.updated_at.isoformat() if child.updated_at else None,
-            },
-        ],
-        "audit_events": [serialize_audit_log(log) for log in audit_logs[:20]],
-    }
-
-
-def build_child_activity_log(child: ChildProfile, audit_logs: list[AuditLog]) -> dict[str, Any]:
-    parent_notifications = []
-    if child.parent is not None:
-        parent_notifications = [
-            notification
-            for notification in (child.parent.notifications or [])
-            if notification.child_id == child.id
-        ]
-    parent_notifications.sort(
-        key=lambda item: item.created_at or datetime.min,
-        reverse=True,
-    )
-    return {
-        "child_id": child.id,
-        "entries": [
-            {
-                "type": "notification",
-                "title": notification.title,
-                "body": notification.body,
-                "created_at": (
-                    notification.created_at.isoformat() if notification.created_at else None
-                ),
-            }
-            for notification in parent_notifications[:20]
-        ]
-        + [
-            {
-                "type": "audit",
-                **serialize_audit_log(log),
-            }
-            for log in audit_logs[:20]
-        ],
+        "billing_transaction_count": len(getattr(user, "billing_transactions", None) or []),
+        "payment_attempt_count": len(getattr(user, "payment_attempts", None) or []),
+        "subscription_event_count": len(getattr(user, "subscription_events", None) or []),
     }

@@ -223,20 +223,7 @@ const _genericLessons = <LearnLessonBlueprint>[
 ];
 
 List<LearnLessonBlueprint> lessonsForSubject(String subject) {
-  switch (subject) {
-    case 'math':
-      return _mathLessons;
-    case 'science':
-      return _scienceLessons;
-    case 'reading':
-      return _readingLessons;
-    case 'history':
-      return _historyLessons;
-    case 'geography':
-      return _geographyLessons;
-    default:
-      return _genericLessons;
-  }
+  return const [];
 }
 
 LearnLessonBlueprint? lessonBlueprintById(String lessonId) {

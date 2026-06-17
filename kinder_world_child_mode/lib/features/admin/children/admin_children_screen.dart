@@ -7,6 +7,7 @@ import 'package:kinder_world/features/admin/management/admin_management_reposito
 import 'package:kinder_world/features/admin/shared/admin_confirm_dialog.dart';
 import 'package:kinder_world/features/admin/shared/admin_filter_bar.dart';
 import 'package:kinder_world/features/admin/shared/admin_form_dialog.dart';
+import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
 import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
 import 'package:kinder_world/features/admin/shared/admin_table_widgets.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
@@ -186,13 +187,46 @@ class _AdminChildrenScreenState extends ConsumerState<AdminChildrenScreen> {
     }
   }
 
+  Future<void> _delete(AdminChildRecord child) async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showAdminConfirmDialog(
+      context: context,
+      title: l10n.adminChildrenDeleteTitle,
+      message: l10n.adminChildrenDeleteConfirm,
+      confirmLabel: l10n.adminChildrenDeleteAction,
+      destructive: true,
+    );
+    if (!confirmed || !mounted) return;
+
+    try {
+      await ref.read(adminManagementRepositoryProvider).deleteChild(child.id);
+      if (!mounted) return;
+      setState(() {
+        _children = _children.where((item) => item.id != child.id).toList();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.adminChildrenDeletedMessage)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final canWrite =
-        ref.watch(adminAuthProvider.notifier).hasPermission('children:write');
+    final admin = ref.watch(currentAdminProvider);
+    final canWrite = admin?.hasPermission('admin.children.edit') ?? false;
+    final canDelete = admin?.hasPermission('admin.children.delete') ?? false;
+
+    if (!(admin?.hasPermission('admin.children.view') ?? false)) {
+      return const AdminPermissionPlaceholder();
+    }
 
     final outlineBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
@@ -422,32 +456,50 @@ class _AdminChildrenScreenState extends ConsumerState<AdminChildrenScreen> {
                                       ),
                                     ],
                                   ),
-                                  if (canWrite) ...[
+                                  if (canWrite || canDelete) ...[
                                     const Divider(height: 20),
                                     Wrap(
                                       spacing: 6,
                                       runSpacing: 6,
                                       children: [
-                                        TextButton.icon(
-                                          onPressed: () => _edit(child),
-                                          icon: const Icon(Icons.edit_outlined,
-                                              size: 16),
-                                          label: Text(l10n.edit),
-                                        ),
-                                        TextButton.icon(
-                                          onPressed: child.isActive
-                                              ? () => _deactivate(child)
-                                              : null,
-                                          icon: const Icon(Icons.block_outlined,
-                                              size: 16),
-                                          label: Text(l10n
-                                              .adminChildrenDeactivateAction),
-                                          style: TextButton.styleFrom(
-                                            foregroundColor: child.isActive
-                                                ? colorScheme.error
-                                                : colorScheme.onSurfaceVariant,
+                                        if (canWrite)
+                                          TextButton.icon(
+                                            onPressed: () => _edit(child),
+                                            icon: const Icon(
+                                                Icons.edit_outlined,
+                                                size: 16),
+                                            label: Text(l10n.edit),
                                           ),
-                                        ),
+                                        if (canDelete)
+                                          TextButton.icon(
+                                            onPressed: child.isActive
+                                                ? () => _deactivate(child)
+                                                : null,
+                                            icon: const Icon(
+                                                Icons.block_outlined,
+                                                size: 16),
+                                            label: Text(l10n
+                                                .adminChildrenDeactivateAction),
+                                            style: TextButton.styleFrom(
+                                              foregroundColor: child.isActive
+                                                  ? colorScheme.error
+                                                  : colorScheme
+                                                      .onSurfaceVariant,
+                                            ),
+                                          ),
+                                        if (canDelete)
+                                          TextButton.icon(
+                                            onPressed: () => _delete(child),
+                                            icon: Icon(Icons.delete_outline,
+                                                size: 16,
+                                                color: colorScheme.error),
+                                            label: Text(
+                                              l10n.adminChildrenDeleteAction,
+                                              style: TextStyle(
+                                                color: colorScheme.error,
+                                              ),
+                                            ),
+                                          ),
                                       ],
                                     ),
                                   ],
@@ -563,19 +615,29 @@ class _AdminChildrenScreenState extends ConsumerState<AdminChildrenScreen> {
                                         canWrite ? () => _edit(child) : null,
                                     visualDensity: VisualDensity.compact,
                                   ),
-                                  IconButton(
-                                    icon: const Icon(Icons.block_outlined,
-                                        size: 18),
-                                    tooltip: l10n.adminChildrenDeactivateAction,
-                                    color: child.isActive
-                                        ? colorScheme.error
-                                        : colorScheme.onSurface
-                                            .withValuesCompat(alpha: 0.3),
-                                    onPressed: canWrite && child.isActive
-                                        ? () => _deactivate(child)
-                                        : null,
-                                    visualDensity: VisualDensity.compact,
-                                  ),
+                                  if (canDelete)
+                                    IconButton(
+                                      icon: const Icon(Icons.block_outlined,
+                                          size: 18),
+                                      tooltip:
+                                          l10n.adminChildrenDeactivateAction,
+                                      color: child.isActive
+                                          ? colorScheme.error
+                                          : colorScheme.onSurface
+                                              .withValuesCompat(alpha: 0.3),
+                                      onPressed: child.isActive
+                                          ? () => _deactivate(child)
+                                          : null,
+                                      visualDensity: VisualDensity.compact,
+                                    ),
+                                  if (canDelete)
+                                    IconButton(
+                                      icon: Icon(Icons.delete_outline,
+                                          size: 18, color: colorScheme.error),
+                                      tooltip: l10n.adminChildrenDeleteAction,
+                                      onPressed: () => _delete(child),
+                                      visualDensity: VisualDensity.compact,
+                                    ),
                                 ],
                               ),
                             ),

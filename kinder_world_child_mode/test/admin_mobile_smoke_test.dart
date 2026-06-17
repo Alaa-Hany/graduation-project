@@ -123,6 +123,7 @@ class _FakeAdminManagementRepository extends AdminManagementRepository {
     String search = '',
     String status = '',
     int? categoryId,
+    String axisKey = '',
     String contentType = '',
     int page = 1,
   }) async {
@@ -130,12 +131,43 @@ class _FakeAdminManagementRepository extends AdminManagementRepository {
   }
 
   @override
-  Future<List<AdminCmsCategory>> fetchCategories() async => const [];
+  Future<AdminCmsCatalogResponse> fetchCmsCatalog({String axisKey = ''}) async {
+    return const AdminCmsCatalogResponse(
+      categories: [],
+      axes: [
+        AdminCmsAxisSummary(
+          key: 'behavioral',
+          titleEn: 'Behavioral',
+          titleAr: 'سلوكي',
+        ),
+        AdminCmsAxisSummary(
+          key: 'educational',
+          titleEn: 'Educational',
+          titleAr: 'تعليمي',
+        ),
+        AdminCmsAxisSummary(
+          key: 'skillful',
+          titleEn: 'Skillful',
+          titleAr: 'مهاري',
+        ),
+        AdminCmsAxisSummary(
+          key: 'entertaining',
+          titleEn: 'Entertaining',
+          titleAr: 'ترفيهي',
+        ),
+      ],
+    );
+  }
+
+  @override
+  Future<List<AdminCmsCategory>> fetchCategories({String axisKey = ''}) async =>
+      const [];
 
   @override
   Future<AdminPagedResponse<AdminCmsQuiz>> fetchQuizzes({
     String status = '',
     int? categoryId,
+    String axisKey = '',
     int? contentId,
     int page = 1,
   }) async {

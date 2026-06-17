@@ -92,8 +92,9 @@ const _superAdmin = AdminUser(
   permissions: [
     'admin.users.view',
     'admin.children.view',
+    'admin.content.view',
     'admin.content.create',
-    'admin.reports.view',
+    'admin.analytics.view',
     'admin.support.view',
     'admin.subscription.view',
     'admin.admins.manage',
@@ -256,6 +257,10 @@ void main() {
     expect(
       find.descendant(of: drawerFinder, matching: find.text('Support')),
       findsOneWidget,
+    );
+    expect(
+      find.descendant(of: drawerFinder, matching: find.text('Content')),
+      findsNothing,
     );
     expect(
       find.descendant(of: drawerFinder, matching: find.text('Users')),

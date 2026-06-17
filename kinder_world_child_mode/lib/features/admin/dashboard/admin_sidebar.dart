@@ -21,6 +21,12 @@ class _SidebarItem {
   final String? requiredPermission;
 }
 
+class _SidebarSection {
+  const _SidebarSection(this.items);
+
+  final List<_SidebarItem> items;
+}
+
 class AdminSidebar extends ConsumerWidget {
   const AdminSidebar({
     super.key,
@@ -33,36 +39,72 @@ class AdminSidebar extends ConsumerWidget {
   final VoidCallback? onClose;
   final bool embedded;
 
-  static final List<_SidebarItem> _items = [
-    _SidebarItem(
-      icon: Icons.dashboard_outlined,
-      label: (l10n) => l10n.adminSidebarOverview,
-      route: Routes.adminDashboard,
-    ),
-    _SidebarItem(
-      icon: Icons.people_outline,
-      label: (l10n) => l10n.adminSidebarUsers,
-      route: Routes.adminUsers,
-      requiredPermission: 'admin.users.view',
-    ),
-    _SidebarItem(
-      icon: Icons.child_care_outlined,
-      label: (l10n) => l10n.adminSidebarChildren,
-      route: Routes.adminChildren,
-      requiredPermission: 'admin.children.view',
-    ),
-    _SidebarItem(
-      icon: Icons.support_agent_outlined,
-      label: (l10n) => l10n.adminSidebarSupport,
-      route: Routes.adminSupport,
-      requiredPermission: 'admin.support.view',
-    ),
-    _SidebarItem(
-      icon: Icons.history_outlined,
-      label: (l10n) => l10n.adminSidebarAudit,
-      route: Routes.adminAudit,
-      requiredPermission: 'admin.audit.view',
-    ),
+  static final List<_SidebarSection> _sections = [
+    _SidebarSection([
+      _SidebarItem(
+        icon: Icons.dashboard_outlined,
+        label: (l10n) => l10n.adminSidebarOverview,
+        route: Routes.adminDashboard,
+      ),
+      _SidebarItem(
+        icon: Icons.auto_stories_outlined,
+        label: (l10n) => l10n.adminSidebarContent,
+        route: Routes.adminContent,
+        requiredPermission: 'admin.content.view',
+      ),
+      _SidebarItem(
+        icon: Icons.insights_outlined,
+        label: (l10n) => l10n.adminSidebarReports,
+        route: Routes.adminReports,
+        requiredPermission: 'admin.analytics.view',
+      ),
+    ]),
+    _SidebarSection([
+      _SidebarItem(
+        icon: Icons.people_outline,
+        label: (l10n) => l10n.adminSidebarUsers,
+        route: Routes.adminUsers,
+        requiredPermission: 'admin.users.view',
+      ),
+      _SidebarItem(
+        icon: Icons.child_care_outlined,
+        label: (l10n) => l10n.adminSidebarChildren,
+        route: Routes.adminChildren,
+        requiredPermission: 'admin.children.view',
+      ),
+      _SidebarItem(
+        icon: Icons.support_agent_outlined,
+        label: (l10n) => l10n.adminSidebarSupport,
+        route: Routes.adminSupport,
+        requiredPermission: 'admin.support.view',
+      ),
+      _SidebarItem(
+        icon: Icons.workspace_premium_outlined,
+        label: (l10n) => l10n.adminSidebarSubscriptions,
+        route: Routes.adminSubscriptions,
+        requiredPermission: 'admin.subscription.view',
+      ),
+    ]),
+    _SidebarSection([
+      _SidebarItem(
+        icon: Icons.history_outlined,
+        label: (l10n) => l10n.adminSidebarAudit,
+        route: Routes.adminAudit,
+        requiredPermission: 'admin.audit.view',
+      ),
+      _SidebarItem(
+        icon: Icons.manage_accounts_outlined,
+        label: (l10n) => l10n.adminSidebarAdmins,
+        route: Routes.adminAdmins,
+        requiredPermission: 'admin.admins.manage',
+      ),
+      _SidebarItem(
+        icon: Icons.tune_outlined,
+        label: (l10n) => l10n.adminSidebarSettings,
+        route: Routes.adminSettings,
+        requiredPermission: 'admin.settings.edit',
+      ),
+    ]),
   ];
 
   @override
@@ -72,16 +114,34 @@ class AdminSidebar extends ConsumerWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final items = _items.where((item) {
-      if (!adminPresentationMenuRoutes.contains(item.route)) {
-        return false;
-      }
-      final permission = item.requiredPermission;
-      if (permission == null) {
-        return true;
-      }
-      return admin?.hasPermission(permission) ?? false;
-    }).toList();
+    List<_SidebarItem> visibleItems(List<_SidebarItem> items) {
+      return items.where((item) {
+        if (!adminPresentationMenuRoutes.contains(item.route)) {
+          return false;
+        }
+        final permission = item.requiredPermission;
+        if (permission == null) {
+          return true;
+        }
+        return admin?.hasPermission(permission) ?? false;
+      }).toList();
+    }
+
+    final sections = _sections
+        .map((section) => visibleItems(section.items))
+        .where((items) => items.isNotEmpty)
+        .toList();
+    final quickRoutes = {
+      Routes.adminContent,
+      Routes.adminUsers,
+      Routes.adminSupport,
+      Routes.adminSettings,
+    };
+    final quickAccess = sections
+        .expand((items) => items)
+        .where((item) => quickRoutes.contains(item.route))
+        .take(4)
+        .toList();
 
     final content = SafeArea(
       child: Column(
@@ -169,65 +229,119 @@ class AdminSidebar extends ConsumerWidget {
                     }).toList(),
                   ),
                 ],
+                if (quickAccess.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: quickAccess.map((item) {
+                      final isSelected = selectedRoute == item.route ||
+                          selectedRoute.startsWith('${item.route}/');
+                      return FilledButton.tonal(
+                        onPressed: () {
+                          onClose?.call();
+                          if (!isSelected) {
+                            context.go(item.route);
+                          }
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: isSelected
+                              ? colorScheme.primary
+                              : colorScheme.primary
+                                  .withValuesCompat(alpha: 0.14),
+                          foregroundColor: isSelected
+                              ? colorScheme.onPrimary
+                              : colorScheme.primary,
+                          minimumSize: const Size(0, 34),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                        ),
+                        child: Text(item.label(l10n)),
+                      );
+                    }).toList(),
+                  ),
+                ],
               ],
             ),
           ),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              children: items.map((item) {
-                final isSelected = selectedRoute == item.route ||
-                    selectedRoute.startsWith('${item.route}/');
+              children: [
+                for (int sectionIndex = 0;
+                    sectionIndex < sections.length;
+                    sectionIndex++) ...[
+                  ...sections[sectionIndex].map((item) {
+                    final isSelected = selectedRoute == item.route ||
+                        selectedRoute.startsWith('${item.route}/');
 
-                return ListTile(
-                  leading: isSelected
-                      ? Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: colorScheme.primary.withValuesCompat(
-                              alpha: 0.12,
+                    return ListTile(
+                      leading: isSelected
+                          ? Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: colorScheme.primary.withValuesCompat(
+                                  alpha: 0.12,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                item.icon,
+                                size: 20,
+                                color: colorScheme.primary,
+                              ),
+                            )
+                          : Icon(
+                              item.icon,
+                              size: 20,
+                              color: colorScheme.onSurface.withValuesCompat(
+                                alpha: 0.6,
+                              ),
                             ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            item.icon,
-                            size: 20,
-                            color: colorScheme.primary,
-                          ),
-                        )
-                      : Icon(
-                          item.icon,
-                          size: 20,
-                          color: colorScheme.onSurface.withValuesCompat(
-                            alpha: 0.6,
-                          ),
+                      title: Text(
+                        item.label(l10n),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: isSelected
+                              ? colorScheme.primary
+                              : colorScheme.onSurface,
+                          fontWeight:
+                              isSelected ? FontWeight.w600 : FontWeight.normal,
                         ),
-                  title: Text(
-                    item.label(l10n),
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: isSelected
-                          ? colorScheme.primary
-                          : colorScheme.onSurface,
-                      fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                      selected: isSelected,
+                      selectedTileColor: colorScheme.primaryContainer
+                          .withValuesCompat(alpha: 0.6),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 2,
+                      ),
+                      onTap: () {
+                        onClose?.call();
+                        if (!isSelected) {
+                          context.go(item.route);
+                        }
+                      },
+                    );
+                  }),
+                  if (sectionIndex != sections.length - 1)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      child: Divider(
+                        height: 1,
+                        color: colorScheme.outlineVariant
+                            .withValuesCompat(alpha: 0.6),
+                      ),
                     ),
-                  ),
-                  selected: isSelected,
-                  selectedTileColor: colorScheme.primaryContainer
-                      .withValuesCompat(alpha: 0.6),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                  onTap: () {
-                    onClose?.call();
-                    if (!isSelected) {
-                      context.go(item.route);
-                    }
-                  },
-                );
-              }).toList(),
+                ],
+              ],
             ),
           ),
           const Divider(height: 1),

@@ -194,7 +194,7 @@ def test_admin_endpoints_reject_parent_tokens_and_enforce_permissions(client: Te
         headers={"Authorization": f"Bearer {parent_token}"},
     )
     assert wrong_token.status_code == 401
-    assert wrong_token.json()["detail"] == "Invalid admin token type"
+    assert wrong_token.json()["detail"] == "Invalid token type (access required)"
 
     manager_role = _create_custom_role(db, name="ticket_viewer", permissions=["admin.support.view"])
     limited_admin = _create_admin(
@@ -270,6 +270,20 @@ def test_admin_user_management_subscription_and_refund_flow(client: TestClient, 
     assert users_list.status_code == 200
     assert any(item["email"] == parent.email for item in users_list.json()["items"])
 
+    create_user = client.post(
+        "/admin/users",
+        json={
+            "name": "Created By Admin",
+            "email": "created.by.admin@example.com",
+            "password": "CreatedPass123!",
+            "plan": "premium",
+        },
+        headers=_admin_headers(admin),
+    )
+    assert create_user.status_code == 200
+    assert create_user.json()["item"]["email"] == "created.by.admin@example.com"
+    assert create_user.json()["item"]["plan"] == PLAN_PREMIUM
+
     update_user = client.patch(
         f"/admin/users/{parent.id}",
         json={"name": "Managed Parent Updated", "plan": "family_plus"},
@@ -302,7 +316,7 @@ def test_admin_user_management_subscription_and_refund_flow(client: TestClient, 
         headers=_admin_headers(admin),
     )
     assert subscription_detail.status_code == 200
-    assert subscription_detail.json()["item"]["plan"] == "FAMILY_PLUS"
+    assert subscription_detail.json()["item"]["user"]["plan"] == "FAMILY_PLUS"
 
     override_plan = client.post(
         f"/admin/subscriptions/{parent.id}/override-plan",
@@ -310,14 +324,14 @@ def test_admin_user_management_subscription_and_refund_flow(client: TestClient, 
         headers=_admin_headers(admin),
     )
     assert override_plan.status_code == 200
-    assert override_plan.json()["item"]["plan"] == PLAN_PREMIUM
+    assert override_plan.json()["item"]["user"]["plan"] == PLAN_PREMIUM
 
     cancel_plan = client.post(
         f"/admin/subscriptions/{parent.id}/cancel",
         headers=_admin_headers(admin),
     )
     assert cancel_plan.status_code == 200
-    assert cancel_plan.json()["item"]["plan"] == PLAN_FREE
+    assert cancel_plan.json()["item"]["user"]["plan"] == PLAN_FREE
 
     refund = client.post(
         f"/admin/subscriptions/{parent.id}/refund",
@@ -326,6 +340,14 @@ def test_admin_user_management_subscription_and_refund_flow(client: TestClient, 
     assert refund.status_code == 200
     assert refund.json()["success"] is True
     assert refund.json()["status"] == "succeeded"
+
+    delete_user = client.delete(
+        f"/admin/users/{parent.id}",
+        headers=_admin_headers(admin),
+    )
+    assert delete_user.status_code == 200
+    assert delete_user.json()["deleted_user_id"] == parent.id
+    assert db.query(User).filter(User.id == parent.id).first() is None
 
 
 def test_admin_settings_and_child_management_endpoints(client: TestClient, db):
@@ -363,13 +385,13 @@ def test_admin_settings_and_child_management_endpoints(client: TestClient, db):
 
     progress = client.get(f"/admin/children/{child.id}/progress", headers=_admin_headers(admin))
     assert progress.status_code == 200
-    assert progress.json()["summary"]["profile_active"] is True
+    assert progress.json()["child"]["is_active"] is True
 
     activity_log = client.get(
         f"/admin/children/{child.id}/activity-log", headers=_admin_headers(admin)
     )
     assert activity_log.status_code == 200
-    assert isinstance(activity_log.json()["entries"], list)
+    assert isinstance(activity_log.json()["items"], list)
 
     deactivate = client.post(
         f"/admin/children/{child.id}/deactivate",
@@ -377,6 +399,14 @@ def test_admin_settings_and_child_management_endpoints(client: TestClient, db):
     )
     assert deactivate.status_code == 200
     assert deactivate.json()["item"]["is_active"] is False
+
+    delete_child = client.delete(
+        f"/admin/children/{child.id}",
+        headers=_admin_headers(admin),
+    )
+    assert delete_child.status_code == 200
+    assert delete_child.json()["deleted_child_id"] == child.id
+    assert db.query(ChildProfile).filter(ChildProfile.id == child.id).first() is None
 
 
 def test_last_super_admin_protections_and_self_disable_guard(client: TestClient, db):

@@ -1,16 +1,5 @@
 """
-Admin RBAC dependencies — fully separate from parent/child deps.py.
-
-Usage in routers:
-    # Require any active admin
-    @router.get("/admin/something")
-    def endpoint(admin = Depends(get_current_admin)):
-        ...
-
-    # Require a specific permission
-    @router.get("/admin/users")
-    def endpoint(admin = Depends(require_permission("admin.users.view"))):
-        ...
+Admin RBAC dependencies — secure and isolated from normal user auth.
 """
 
 import logging
@@ -18,37 +7,28 @@ from typing import Set
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError
 from sqlalchemy.orm import Session
 
-from admin_auth import ADMIN_TOKEN_TYPE
-from auth import decode_token
+from admin_auth import (
+    decode_admin_token,
+    ACCESS_TOKEN_TYPE,
+)
 from core.message_catalog import AdminAuthMessages
 from deps import get_db
 
 logger = logging.getLogger(__name__)
 
-# Separate HTTPBearer instance for admin — keeps Swagger UI clean
 _admin_security = HTTPBearer(auto_error=False, bearerFormat="JWT")
 
+
+# =========================================
+# Get Current Admin
+# =========================================
 
 def get_current_admin(
     creds: HTTPAuthorizationCredentials = Depends(_admin_security),
     db: Session = Depends(get_db),
 ):
-    """
-    Validate an admin JWT and return the AdminUser row.
-
-    Raises 401 if:
-      - No token provided
-      - Token is invalid / expired
-      - token_type claim is not 'admin'
-      - Admin row not found
-
-    Raises 403 if:
-      - Admin account is disabled (is_active=False)
-    """
-    # Import here to avoid circular imports at module load time
     from admin_models import AdminUser
 
     if creds is None or not creds.credentials:
@@ -58,163 +38,139 @@ def get_current_admin(
         )
 
     token = creds.credentials
+
+    # 🔥 Use admin-specific decode
     try:
-        payload = decode_token(token)
-    except JWTError as exc:
-        logger.warning("Admin JWT decode failed: %s", exc)
+        payload = decode_admin_token(token)
+    except Exception as exc:
+        logger.warning("Admin token decode failed: %s", exc)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=AdminAuthMessages.INVALID_OR_EXPIRED_ADMIN_TOKEN,
         )
 
-    # Enforce token_type separation — admin tokens must carry token_type='admin'
-    if payload.get("token_type") != ADMIN_TOKEN_TYPE:
+    # ✅ Ensure it's ACCESS token
+    if payload.get("type") != ACCESS_TOKEN_TYPE:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=AdminAuthMessages.INVALID_ADMIN_TOKEN_TYPE,
+            detail="Invalid token type (access required)",
         )
 
-    admin_id_str = payload.get("sub")
-    if not admin_id_str:
+    # ✅ Ensure role
+    if payload.get("role") != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not an admin token",
+        )
+
+    admin_id = payload.get("sub")
+    if not admin_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=AdminAuthMessages.INVALID_ADMIN_TOKEN_PAYLOAD,
         )
 
     try:
-        admin_id = int(admin_id_str)
-    except (ValueError, TypeError):
+        admin_id = int(admin_id)
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=AdminAuthMessages.INVALID_ADMIN_TOKEN_PAYLOAD,
         )
 
     admin = db.query(AdminUser).filter(AdminUser.id == admin_id).first()
+
     if not admin:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=AdminAuthMessages.ADMIN_ACCOUNT_NOT_FOUND,
         )
 
-    token_version = payload.get("token_version")
-    try:
-        token_version_value = int(token_version)
-    except (TypeError, ValueError):
-        token_version_value = None
-    if token_version_value is None or token_version_value != int(admin.token_version or 0):
+    # ✅ Token version check (logout support)
+    if int(payload.get("token_version", -1)) != int(admin.token_version or 0):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=AdminAuthMessages.ADMIN_TOKEN_REVOKED,
         )
 
-    # Disabled admins are blocked even with a valid token
+    # ✅ Active check
     if not admin.is_active:
-        logger.warning("Disabled admin %s attempted access", admin.email)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "code": "ADMIN_DISABLED",
-                "message": AdminAuthMessages.ADMIN_DISABLED,
-            },
+            detail=AdminAuthMessages.ADMIN_DISABLED,
         )
 
     return admin
 
 
+# =========================================
+# Simple Admin Guard
+# =========================================
+
 def require_admin():
-    """
-    Dependency that simply ensures the caller is an active admin.
-    Equivalent to Depends(get_current_admin) but expressed as a factory
-    for consistency with require_permission().
-
-    Usage:
-        @router.get("/admin/dashboard")
-        def dashboard(admin = Depends(require_admin())):
-            ...
-    """
-
     def _check(admin=Depends(get_current_admin)):
         return admin
 
     return _check
 
 
+# =========================================
+# Permissions
+# =========================================
+
 def _get_admin_permissions(admin_id: int, db: Session) -> Set[str]:
-    """
-    Return the full set of permission names granted to an admin via their roles.
-    Results are NOT cached — suitable for per-request RBAC checks.
-    """
-    from admin_models import AdminUserRole, Permission, Role, RolePermission
+    from admin_models import AdminUserRole, Permission, RolePermission
 
     rows = (
         db.query(Permission.name)
         .join(RolePermission, RolePermission.permission_id == Permission.id)
-        .join(Role, Role.id == RolePermission.role_id)
-        .join(AdminUserRole, AdminUserRole.role_id == Role.id)
+        .join(AdminUserRole, AdminUserRole.role_id == RolePermission.role_id)
         .filter(AdminUserRole.admin_user_id == admin_id)
         .all()
     )
-    return {row.name for row in rows}
+
+    return {r[0] for r in rows}
 
 
 def require_permission(permission_name: str):
-    """
-    Dependency factory that checks whether the authenticated admin holds a
-    specific permission (via any of their assigned roles).
-
-    Usage:
-        @router.get("/admin/users")
-        def list_users(admin = Depends(require_permission("admin.users.view"))):
-            ...
-
-    Raises:
-        401 — if not authenticated as admin
-        403 — if authenticated but missing the required permission
-    """
-
     def _check(
         admin=Depends(get_current_admin),
         db: Session = Depends(get_db),
     ):
         permissions = _get_admin_permissions(admin.id, db)
+
         if permission_name not in permissions:
             logger.warning(
-                "Admin %s (id=%s) denied — missing permission '%s'",
+                "Admin %s denied (missing %s)",
                 admin.email,
-                admin.id,
                 permission_name,
             )
+
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail={
                     "code": "PERMISSION_DENIED",
-                    "message": f"Permission '{permission_name}' is required",
-                    "required_permission": permission_name,
+                    "required": permission_name,
                 },
             )
+
         return admin
 
     return _check
 
 
+# =========================================
+# Runtime Check
+# =========================================
+
 def ensure_permission(*, admin, db: Session, permission_name: str) -> None:
-    """
-    Runtime permission check for conditional admin actions.
-    Mirrors require_permission() behavior without FastAPI dependency wiring.
-    """
     permissions = _get_admin_permissions(admin.id, db)
+
     if permission_name not in permissions:
-        logger.warning(
-            "Admin %s (id=%s) denied - missing permission '%s'",
-            admin.email,
-            admin.id,
-            permission_name,
-        )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
                 "code": "PERMISSION_DENIED",
-                "message": f"Permission '{permission_name}' is required",
-                "required_permission": permission_name,
+                "required": permission_name,
             },
         )
