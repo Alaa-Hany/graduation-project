@@ -874,7 +874,7 @@ class _AdminContentManagementScreenState
                           color: Theme.of(context)
                               .colorScheme
                               .surfaceContainerHighest
-                              .withValues(alpha: 0.45),
+                              .withOpacity(0.45),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
