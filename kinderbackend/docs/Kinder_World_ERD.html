@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Kinder World — Database Schema (ERD)</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #F3F0E8; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+    #__bundler_loading { position: fixed; bottom: 20px; right: 20px; font: 13px/1.4 -apple-system, BlinkMacSystemFont, sans-serif; color: #666; background: #fff; padding: 8px 14px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.12); z-index: 10000; }
+    #__bundler_thumbnail { position: fixed; inset: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #F3F0E8; z-index: 9999; }
+    #__bundler_thumbnail svg { width: 100%; height: 100%; object-fit: contain; }
+    #__bundler_placeholder { color: #999; font-size: 14px; }
+  </style>
+  <noscript>
+    <style>#__bundler_loading { display: none; }</style>
+    <div style="position:fixed;bottom:12px;left:12px;font:13px/1.4 -apple-system,BlinkMacSystemFont,sans-serif;color:#999;background:rgba(255,255,255,0.9);padding:6px 12px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,0.08);z-index:10000;">
+      This page requires JavaScript to display.
+    </div>
+  </noscript>
+</head>
+<body>
+  <div id="__bundler_thumbnail">
+  <svg viewBox="0 0 800 520" xmlns="http://www.w3.org/2000/svg">
+    <!-- background -->
+    <rect width="800" height="520" fill="#F3F0E8"></rect>
+    <!-- grid dots -->
+    <pattern id="dots" x="0" y="0" width="26" height="26" patternUnits="userSpaceOnUse">
+      <circle cx="13" cy="13" r="1" fill="#D7D0C2"></circle>
+    </pattern>
+    <rect width="800" height="520" fill="url(#dots)"></rect>
+    <!-- connector lines -->
+    <path d="M 132 110 C 180 110, 220 160, 270 160" stroke="#C8BFB0" stroke-width="1.4" fill="none"></path>
+    <path d="M 132 110 C 200 110, 340 260, 380 260" stroke="#C8BFB0" stroke-width="1.4" fill="none"></path>
+    <path d="M 380 260 C 440 260, 490 200, 520 200" stroke="#C8BFB0" stroke-width="1.4" fill="none"></path>
+    <path d="M 520 200 C 600 200, 620 160, 670 160" stroke="#C8BFB0" stroke-width="1.4" fill="none"></path>
+    <path d="M 520 200 C 580 200, 600 300, 640 300" stroke="#C8BFB0" stroke-width="1.4" fill="none"></path>
+    <path d="M 380 260 C 400 260, 410 360, 420 360" stroke="#C8BFB0" stroke-width="1.4" fill="none"></path>
+    <!-- tables: admin -->
+    <rect x="40" y="70" width="88" height="80" rx="6" fill="#FCFBF7" stroke="#D7D0C2" stroke-width="1"></rect>
+    <rect x="40" y="70" width="4" height="80" rx="2" fill="#7C6F9F"></rect>
+    <rect x="44" y="70" width="84" height="20" rx="0" fill="#F4F2FA"></rect>
+    <text x="86" y="84" font-family="Georgia,serif" font-size="7.5" fill="#2A2622" text-anchor="middle" font-weight="700">admin_users</text>
+    <!-- tables: users (hub) -->
+    <rect x="338" y="220" width="88" height="80" rx="6" fill="#FCFBF7" stroke="#CC785C" stroke-width="1.5"></rect>
+    <rect x="338" y="220" width="4" height="80" rx="2" fill="#CC785C"></rect>
+    <rect x="342" y="220" width="84" height="20" rx="0" fill="#FDF4EF"></rect>
+    <text x="382" y="234" font-family="Georgia,serif" font-size="7.5" fill="#2A2622" text-anchor="middle" font-weight="700">users</text>
+    <!-- tables: child_profiles (hub) -->
+    <rect x="478" y="160" width="88" height="80" rx="6" fill="#FCFBF7" stroke="#CC785C" stroke-width="1.5"></rect>
+    <rect x="478" y="160" width="4" height="80" rx="2" fill="#CC785C"></rect>
+    <rect x="482" y="160" width="84" height="20" rx="0" fill="#FDF4EF"></rect>
+    <text x="522" y="174" font-family="Georgia,serif" font-size="6.5" fill="#2A2622" text-anchor="middle" font-weight="700">child_profiles</text>
+    <!-- activity tables -->
+    <rect x="628" y="120" width="76" height="56" rx="6" fill="#FCFBF7" stroke="#D7D0C2"></rect>
+    <rect x="628" y="120" width="4" height="56" rx="2" fill="#C2912F"></rect>
+    <text x="668" y="150" font-family="sans-serif" font-size="6" fill="#6B6358" text-anchor="middle">child_session_logs</text>
+    <rect x="628" y="186" width="76" height="56" rx="6" fill="#FCFBF7" stroke="#D7D0C2"></rect>
+    <rect x="628" y="186" width="4" height="56" rx="2" fill="#C2912F"></rect>
+    <text x="668" y="216" font-family="sans-serif" font-size="6" fill="#6B6358" text-anchor="middle">activity_events</text>
+    <!-- support -->
+    <rect x="238" y="120" width="76" height="50" rx="6" fill="#FCFBF7" stroke="#D7D0C2"></rect>
+    <rect x="238" y="120" width="4" height="50" rx="2" fill="#C2607A"></rect>
+    <text x="278" y="148" font-family="sans-serif" font-size="6" fill="#6B6358" text-anchor="middle">support_tickets</text>
+    <!-- billing -->
+    <rect x="378" y="340" width="80" height="50" rx="6" fill="#FCFBF7" stroke="#D7D0C2"></rect>
+    <rect x="378" y="340" width="4" height="50" rx="2" fill="#4F8A66"></rect>
+    <text x="420" y="368" font-family="sans-serif" font-size="6" fill="#6B6358" text-anchor="middle">subscription_profiles</text>
+    <!-- parental -->
+    <rect x="488" y="320" width="78" height="50" rx="6" fill="#FCFBF7" stroke="#D7D0C2"></rect>
+    <rect x="488" y="320" width="4" height="50" rx="2" fill="#3F8C8C"></rect>
+    <text x="529" y="348" font-family="sans-serif" font-size="6" fill="#6B6358" text-anchor="middle">parental_controls</text>
+    <!-- content -->
+    <rect x="40" y="200" width="76" height="50" rx="6" fill="#FCFBF7" stroke="#D7D0C2"></rect>
+    <rect x="40" y="200" width="4" height="50" rx="2" fill="#4A7BA6"></rect>
+    <text x="80" y="228" font-family="sans-serif" font-size="6" fill="#6B6358" text-anchor="middle">categories</text>
+    <!-- ai buddy -->
+    <rect x="628" y="256" width="76" height="50" rx="6" fill="#FCFBF7" stroke="#D7D0C2"></rect>
+    <rect x="628" y="256" width="4" height="50" rx="2" fill="#A2628F"></rect>
+    <text x="668" y="284" font-family="sans-serif" font-size="6" fill="#6B6358" text-anchor="middle">ai_buddy_sessions</text>
+    <!-- title -->
+    <text x="400" y="470" font-family="Georgia,serif" font-size="15" fill="#2A2622" text-anchor="middle" font-weight="600">Kinder World — Database Schema</text>
+    <text x="400" y="489" font-family="sans-serif" font-size="9.5" fill="#9A9182" text-anchor="middle">38 tables · 8 domains · 52 relationships</text>
+  </svg>
+</div>
+  <div id="__bundler_loading">Unpacking...</div>
+
+  <script>
+    
+document.addEventListener('DOMContentLoaded', async function() {
+  const loading = document.getElementById('__bundler_loading');
+  function setStatus(msg) { if (loading) loading.textContent = msg; }
+
+  // Error sink persists across replaceWith since it's on window, not the DOM.
+  window.addEventListener('error', function(e) {
+    var p = document.body || document.documentElement;
+    var d = document.getElementById('__bundler_err') || p.appendChild(document.createElement('div'));
+    d.id = '__bundler_err';
+    d.style.cssText = 'position:fixed;bottom:12px;left:12px;right:12px;font:12px/1.4 ui-monospace,monospace;background:#2a1215;color:#ff8a80;padding:10px 14px;border-radius:8px;border:1px solid #5c2b2e;z-index:99999;white-space:pre-wrap;max-height:40vh;overflow:auto';
+    d.textContent = (d.textContent ? d.textContent + String.fromCharCode(10) : '') +
+      '[bundle] ' + (e.message || e.type) +
+      (e.filename ? ' (' + e.filename.slice(0, 60) + ':' + e.lineno + ')' : '');
+  }, true);
+
+  try {
+    const manifestEl = document.querySelector('script[type="__bundler/manifest"]');
+    const templateEl = document.querySelector('script[type="__bundler/template"]');
+    if (!manifestEl || !templateEl) {
+      setStatus('Error: missing bundle data');
+      console.error('[bundler] Missing script tags — manifestEl:', !!manifestEl, 'templateEl:', !!templateEl);
+      return;
+    }
+
+    const manifest = JSON.parse(manifestEl.textContent);
+    let template = JSON.parse(templateEl.textContent);
+
+    const uuids = Object.keys(manifest);
+    setStatus('Unpacking ' + uuids.length + ' assets...');
+
+    const blobUrls = {};
+    await Promise.all(uuids.map(async (uuid) => {
+      const entry = manifest[uuid];
+      try {
+        const binaryStr = atob(entry.data);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+
+        let finalBytes = bytes;
+        if (entry.compressed) {
+          if (typeof DecompressionStream !== 'undefined') {
+            const ds = new DecompressionStream('gzip');
+            const writer = ds.writable.getWriter();
+            const reader = ds.readable.getReader();
+            writer.write(bytes);
+            writer.close();
+            const chunks = [];
+            let totalLen = 0;
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              chunks.push(value);
+              totalLen += value.length;
+            }
+            finalBytes = new Uint8Array(totalLen);
+            let offset = 0;
+            for (const chunk of chunks) { finalBytes.set(chunk, offset); offset += chunk.length; }
+          } else {
+            console.warn('DecompressionStream not available, asset ' + uuid + ' may not render');
+          }
+        }
+
+        blobUrls[uuid] = URL.createObjectURL(new Blob([finalBytes], { type: entry.mime }));
+      } catch (err) {
+        console.error('Failed to decode asset ' + uuid + ':', err);
+        blobUrls[uuid] = URL.createObjectURL(new Blob([], { type: entry.mime }));
+      }
+    }));
+
+    const extResEl = document.querySelector('script[type="__bundler/ext_resources"]');
+    const extResources = extResEl ? JSON.parse(extResEl.textContent) : [];
+    const resourceMap = {};
+    for (const entry of extResources) {
+      if (blobUrls[entry.uuid]) resourceMap[entry.id] = blobUrls[entry.uuid];
+    }
+
+    setStatus('Rendering...');
+    for (const uuid of uuids) template = template.split(uuid).join(blobUrls[uuid]);
+
+    // Strip integrity + crossorigin — blob URLs from a file:// document inherit
+    // a null origin, so crossorigin forces a CORS fetch that SRI then rejects.
+    // The manifest bytes are ours; SRI protects against CDN compromise, not this.
+    template = template.replace(/\s+integrity="[^"]*"/gi, '').replace(/\s+crossorigin="[^"]*"/gi, '');
+
+    const resourceScript = '<script>window.__resources = ' +
+      JSON.stringify(resourceMap).split('</' + 'script>').join('<\\/' + 'script>') +
+      ';</' + 'script>';
+    // Inject after <head> so the DOCTYPE stays first; prepending the script
+    // would push the parser into quirks mode. DOMParser always emits a <head>
+    // (synthesizing one if the source HTML omitted it) but may carry
+    // attributes through, so match the full opening tag. slice() rather than
+    // replace() keeps us clear of $-pattern substitution in resourceScript.
+    const headOpen = template.match(/<head[^>]*>/i);
+    if (headOpen) {
+      const i = headOpen.index + headOpen[0].length;
+      template = template.slice(0, i) + resourceScript + template.slice(i);
+    }
+
+    // Parse the template and swap the root element. Scripts inserted via
+    // DOMParser/replaceWith are inert per spec — re-create each with
+    // createElement so they execute, awaiting onload for src scripts to
+    // preserve ordering (React before ReactDOM before Babel before text/babel).
+    const doc = new DOMParser().parseFromString(template, 'text/html');
+    document.documentElement.replaceWith(doc.documentElement);
+    const dead = Array.from(document.scripts);
+    for (const old of dead) {
+      const s = document.createElement('script');
+      for (const a of old.attributes) s.setAttribute(a.name, a.value);
+      s.textContent = old.textContent;
+      // text/babel scripts with a src: fetch and inline. transformScriptTags
+      // does XHR against the src, but blob:null/ from a file:// origin is
+      // silently dropped. Inlining makes it a plain inline babel script,
+      // which transformScriptTags handles unconditionally.
+      if ((s.type === 'text/babel' || s.type === 'text/jsx') && s.src) {
+        const r = await fetch(s.src);
+        s.textContent = await r.text();
+        s.removeAttribute('src');
+      }
+      const p = s.src ? new Promise(function(r) { s.onload = s.onerror = r; }) : null;
+      old.replaceWith(s);
+      if (p) await p;
+    }
+    // Babel standalone auto-transforms type=text/babel on DOMContentLoaded,
+    // which fired before we swapped the document. Trigger manually if present.
+    if (window.Babel && typeof window.Babel.transformScriptTags === 'function') {
+      window.Babel.transformScriptTags();
+    }
+  } catch (err) {
+    setStatus('Error unpacking: ' + err.message);
+    console.error('Bundle unpack error:', err);
+  }
+});
+
+  </script>
+
+  <script type="__bundler/manifest">
+{"f1858d3e-8bde-4d8d-886d-047f3e53ce3d":{"mime":"application/javascript","compressed":true,"data":"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"}}
+  </script>
+
+  <script type="__bundler/ext_resources">
+[]
+  </script>
+
+  <script type="__bundler/template">
+"<!DOCTYPE html>\n<html lang=\"en\"><head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>Kinder World — Database Schema (ERD)<\u002Ftitle>\n<style>\n  :root {\n    --paper: #F3F0E8;\n    --paper-2: #ECE8DD;\n    --ink: #2A2622;\n    --ink-soft: #6B6358;\n    --line: #D7D0C2;\n    --line-soft: #E7E1D4;\n    --card: #FCFBF7;\n    --rust: #CC785C;\n    --connector: #BDB3A1;\n  }\n  * { box-sizing: border-box; }\n  html, body { margin: 0; height: 100%; overflow: hidden; }\n  body {\n    font-family: ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif;\n    color: var(--ink);\n    background: var(--paper);\n    -webkit-font-smoothing: antialiased;\n  }\n  .serif { font-family: Georgia, \"Times New Roman\", \"Tiempos\", serif; }\n\n  /* ---------- Top bar ---------- */\n  #topbar {\n    position: fixed; inset: 0 0 auto 0; height: 64px; z-index: 40;\n    display: flex; align-items: center; gap: 18px; padding: 0 20px;\n    background: rgba(243,240,232,.86);\n    backdrop-filter: blur(10px);\n    border-bottom: 1px solid var(--line);\n  }\n  #brand { display: flex; flex-direction: column; line-height: 1.15; }\n  #brand .t { font-size: 17px; font-weight: 600; letter-spacing: -.01em; }\n  #brand .s { font-size: 11.5px; color: var(--ink-soft); letter-spacing: .02em; }\n  .spacer { flex: 1; }\n\n  .seg { display: inline-flex; background: var(--paper-2); border: 1px solid var(--line);\n         border-radius: 9px; padding: 2px; }\n  .seg button { border: 0; background: transparent; font: inherit; font-size: 12.5px;\n         padding: 5px 12px; border-radius: 7px; cursor: pointer; color: var(--ink-soft); }\n  .seg button.on { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.06); font-weight: 550; }\n\n  .iconbtn { border: 1px solid var(--line); background: var(--card); color: var(--ink);\n         width: 34px; height: 34px; border-radius: 8px; cursor: pointer; font-size: 16px;\n         display: inline-flex; align-items: center; justify-content: center; }\n  .iconbtn:hover { background: var(--paper-2); }\n  #search {\n    border: 1px solid var(--line); background: var(--card); border-radius: 8px;\n    padding: 7px 12px; font: inherit; font-size: 13px; width: 190px; color: var(--ink);\n  }\n  #search::placeholder { color: #A9A091; }\n\n  /* ---------- Canvas ---------- */\n  #stage { position: fixed; inset: 64px 0 0 0; overflow: hidden; cursor: grab;\n    background-image: radial-gradient(var(--line-soft) 1.1px, transparent 1.1px);\n    background-size: 26px 26px; }\n  #stage.grabbing { cursor: grabbing; }\n  #viewport { position: absolute; top: 0; left: 0; transform-origin: 0 0; }\n  #wires { position: absolute; top: 0; left: 0; overflow: visible; pointer-events: none; }\n\n  /* ---------- Table card ---------- */\n  .tbl {\n    position: absolute; width: 232px; background: var(--card);\n    border: 1px solid var(--line); border-radius: 11px;\n    box-shadow: 0 1px 2px rgba(60,50,35,.05), 0 8px 22px -14px rgba(60,50,35,.30);\n    overflow: hidden; font-size: 12px;\n  }\n  .tbl .hd {\n    display: flex; align-items: center; gap: 8px; padding: 8px 11px;\n    border-bottom: 1px solid var(--line-soft);\n    border-left: 3px solid var(--dc);\n    background: var(--hd);\n  }\n  .tbl .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dc); flex: none; }\n  .tbl .nm { font-weight: 650; font-size: 12.5px; letter-spacing: -.005em; color: var(--ink);\n    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }\n  .tbl .cnt { margin-left: auto; font-size: 10px; color: var(--ink-soft);\n    background: var(--paper-2); border-radius: 20px; padding: 1px 7px; flex: none; }\n\n  .row { display: flex; align-items: center; gap: 6px; padding: 3px 11px 3px 10px;\n    border-top: 1px solid #F2EEE4; }\n  .row:first-child { border-top: 0; }\n  .row .key { width: 14px; flex: none; text-align: center; font-size: 9.5px; font-weight: 700; }\n  .row .cn { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;\n    font-variant-ligatures: none; }\n  .row .ty { color: #9A9182; font-size: 10.5px; font-family: ui-monospace, \"SF Mono\", Menlo, monospace; flex: none; }\n  .row.pk { background: #FBF4E8; }\n  .row.pk .cn { font-weight: 650; }\n  .row.pk .key { color: #C2912F; }\n  .row.fk .key { color: var(--rust); }\n  .row.fk .cn { color: #B5613F; }\n  .badge { font-size: 8.5px; font-weight: 700; letter-spacing: .04em; padding: 0 4px;\n    border-radius: 4px; flex: none; }\n  .badge.u { background: #E7EEF6; color: #4A7BA6; }\n  .badge.enc { background: #EFEAF4; color: #7C6F9F; }\n\n  /* compact mode hides non-key rows */\n  #viewport.compact .row:not(.keep) { display: none; }\n  #viewport.compact .tbl .more { display: flex; }\n  .tbl .more { display: none; padding: 3px 11px; font-size: 10px; color: var(--ink-soft);\n    border-top: 1px solid #F2EEE4; background: #FBFAF6; }\n\n  /* ---------- Wires ---------- */\n  .wire { fill: none; stroke: var(--connector); stroke-width: 1.4; }\n  .wire.one-one { stroke-dasharray: none; }\n  .marker { fill: none; stroke: var(--connector); stroke-width: 1.4; }\n\n  /* ---------- Focus / dim ---------- */\n  #viewport.focusing .tbl { opacity: .26; transition: opacity .14s; }\n  #viewport.focusing .tbl.lit { opacity: 1; }\n  #viewport.focusing .tbl.root { opacity: 1; }\n  .tbl.root { box-shadow: 0 0 0 2px var(--dc), 0 10px 26px -12px rgba(60,50,35,.4); }\n  #wires.focusing .wire, #wires.focusing .marker { stroke: #DAD2C4; opacity: .35; }\n  #wires.focusing .wire.lit, #wires.focusing .marker.lit { opacity: 1; stroke-width: 2; }\n  .dimmed { opacity: .12 !important; }\n\n  /* ---------- Legend ---------- */\n  #legend {\n    position: fixed; left: 16px; bottom: 16px; z-index: 30;\n    background: rgba(252,251,247,.94); backdrop-filter: blur(8px);\n    border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px;\n    box-shadow: 0 10px 30px -16px rgba(60,50,35,.4); max-width: 230px;\n  }\n  #legend .lt { font-size: 10.5px; text-transform: uppercase; letter-spacing: .09em;\n    color: var(--ink-soft); margin-bottom: 8px; font-weight: 650; }\n  .leg { display: flex; align-items: center; gap: 8px; padding: 3px 0; cursor: pointer;\n    font-size: 12px; user-select: none; }\n  .leg .sw { width: 11px; height: 11px; border-radius: 3px; flex: none; }\n  .leg.off { opacity: .38; }\n  .leg .lc { margin-left: auto; font-size: 10px; color: var(--ink-soft); }\n\n  /* ---------- Zoom controls ---------- */\n  #zoom { position: fixed; right: 16px; bottom: 16px; z-index: 30; display: flex; gap: 6px;\n    background: rgba(252,251,247,.94); backdrop-filter: blur(8px);\n    border: 1px solid var(--line); border-radius: 10px; padding: 5px; align-items: center;\n    box-shadow: 0 10px 30px -16px rgba(60,50,35,.4); }\n  #zoom .zl { font-size: 11.5px; color: var(--ink-soft); width: 42px; text-align: center; }\n\n  /* ---------- Hint / key chip ---------- */\n  #hint { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 25;\n    font-size: 11.5px; color: var(--ink-soft); background: rgba(252,251,247,.9);\n    border: 1px solid var(--line); border-radius: 20px; padding: 6px 14px; pointer-events: none; }\n  .kchip { display: inline-block; background: var(--paper-2); border: 1px solid var(--line);\n    border-radius: 5px; padding: 0 5px; font-size: 10.5px; margin: 0 1px; }\n<\u002Fstyle>\n\n<\u002Fhead>\n<body>\n  <div id=\"topbar\">\n    <div id=\"brand\">\n      <span class=\"t serif\">Kinder&nbsp;World<\u002Fspan>\n      <span class=\"s\">Database Schema · ER Diagram<\u002Fspan>\n    <\u002Fdiv>\n    <div class=\"seg\" id=\"density\">\n      <button data-d=\"compact\" class=\"on\">Keys<\u002Fbutton>\n      <button data-d=\"full\">All columns<\u002Fbutton>\n    <\u002Fdiv>\n    <input id=\"search\" placeholder=\"Search tables / columns…\" autocomplete=\"off\">\n    <div class=\"spacer\"><\u002Fdiv>\n    <button class=\"iconbtn\" id=\"fitBtn\" title=\"Fit to screen\">⤢<\u002Fbutton>\n    <button class=\"iconbtn\" id=\"resetBtn\" title=\"Reset view\">↺<\u002Fbutton>\n  <\u002Fdiv>\n\n  <div id=\"stage\">\n    <div id=\"viewport\" class=\"compact\">\n      <svg id=\"wires\"><\u002Fsvg>\n    <\u002Fdiv>\n  <\u002Fdiv>\n\n  <div id=\"legend\">\n    <div class=\"lt\">Domains <span id=\"domclear\" style=\"float:right;cursor:pointer;text-transform:none;letter-spacing:0;color:#CC785C\">reset<\u002Fspan><\u002Fdiv>\n    <div id=\"legrows\"><\u002Fdiv>\n  <\u002Fdiv>\n\n  <div id=\"zoom\">\n    <button class=\"iconbtn\" id=\"zout\">–<\u002Fbutton>\n    <span class=\"zl\" id=\"zlabel\">100%<\u002Fspan>\n    <button class=\"iconbtn\" id=\"zin\">+<\u002Fbutton>\n  <\u002Fdiv>\n\n  <div id=\"hint\">Drag to pan · Scroll to zoom · Hover a table to trace its relationships<\u002Fdiv>\n\n  <script src=\"f1858d3e-8bde-4d8d-886d-047f3e53ce3d\"><\u002Fscript>\n  <script>\n  (function(){\n    const DOMAINS = window.ERD_DOMAINS, TABLES = window.ERD_TABLES;\n    const vp = document.getElementById('viewport');\n    const svg = document.getElementById('wires');\n    const stage = document.getElementById('stage');\n    const NS = 'http://www.w3.org/2000/svg';\n    const HEADER_H = 37, ROW_H = 22.4;\n\n    const byName = {};\n    TABLES.forEach(t => byName[t.name] = t);\n\n    // ----- build relationships from FK columns -----\n    const rels = [];\n    TABLES.forEach(t => {\n      t.cols.forEach((c, i) => {\n        const fk = (c[2]||'').split(/\\s+/).find(f => f.startsWith('F:'));\n        if (fk) {\n          const target = fk.slice(2).split('.')[0];\n          if (byName[target]) {\n            const oneToOne = /\\bU\\b/.test(c[2]||'');\n            rels.push({ from: target, to: t.name, col: c[0], colIdx: i, oneToOne });\n          }\n        }\n      });\n    });\n\n    // adjacency for focus highlighting\n    const adj = {};\n    TABLES.forEach(t => adj[t.name] = new Set());\n    rels.forEach(r => { adj[r.from].add(r.to); adj[r.to].add(r.from); });\n\n    // ----- render legend -----\n    const activeDomains = new Set(Object.keys(DOMAINS));\n    const domCount = {};\n    TABLES.forEach(t => domCount[t.domain] = (domCount[t.domain]||0)+1);\n    const legrows = document.getElementById('legrows');\n    Object.entries(DOMAINS).forEach(([k, d]) => {\n      const el = document.createElement('div');\n      el.className = 'leg'; el.dataset.k = k;\n      el.innerHTML = `<span class=\"sw\" style=\"background:${d.color}\"><\u002Fspan><span>${d.label}<\u002Fspan><span class=\"lc\">${domCount[k]||0}<\u002Fspan>`;\n      el.onclick = () => { el.classList.toggle('off');\n        if (el.classList.contains('off')) activeDomains.delete(k); else activeDomains.add(k);\n        applyDomainFilter(); };\n      legrows.appendChild(el);\n    });\n    document.getElementById('domclear').onclick = () => {\n      activeDomains.clear(); Object.keys(DOMAINS).forEach(k=>activeDomains.add(k));\n      document.querySelectorAll('.leg').forEach(e=>e.classList.remove('off'));\n      applyDomainFilter();\n    };\n\n    // ----- render tables -----\n    const elFor = {};\n    TABLES.forEach(t => {\n      const d = DOMAINS[t.domain];\n      const el = document.createElement('div');\n      el.className = 'tbl'; el.dataset.name = t.name;\n      el.style.left = t.x + 'px'; el.style.top = t.y + 'px';\n      el.style.setProperty('--dc', d.color);\n      el.style.setProperty('--hd', tint(d.color));\n      let hidden = 0;\n      const rowsHtml = t.cols.map(c => {\n        const flags = c[2] || '';\n        const isPk = /\\bP\\b/.test(flags);\n        const fk = flags.split(/\\s+/).find(f=>f.startsWith('F:'));\n        const isFk = !!fk;\n        const isU = /\\bU\\b/.test(flags);\n        const keep = isPk || isFk || isU || /\\bK\\b/.test(flags);\n        if (!keep) hidden++;\n        const cls = ['row', isPk?'pk':'', isFk?'fk':'', isU?'uq':'', keep?'keep':''].join(' ').trim();\n        const keyMark = isPk ? 'PK' : (isFk ? 'FK' : '');\n        const badges = (isU?'<span class=\"badge u\">UQ<\u002Fspan>':'') + (c[1]==='enc'?'<span class=\"badge enc\">ENC<\u002Fspan>':'');\n        return `<div class=\"${cls}\"><span class=\"key\">${keyMark}<\u002Fspan><span class=\"cn\">${c[0]}<\u002Fspan>${badges}<span class=\"ty\">${c[1]}<\u002Fspan><\u002Fdiv>`;\n      }).join('');\n      el.innerHTML = `<div class=\"hd\"><span class=\"dot\"><\u002Fspan><span class=\"nm\">${t.name}<\u002Fspan><span class=\"cnt\">${t.cols.length}<\u002Fspan><\u002Fdiv>${rowsHtml}<div class=\"more\">+${hidden} more columns<\u002Fdiv>`;\n      el._hidden = hidden;\n      vp.appendChild(el);\n      elFor[t.name] = el;\n      el.addEventListener('mouseenter', () => focusTable(t.name));\n      el.addEventListener('mouseleave', clearFocus);\n    });\n\n    function tint(hex){\n      const n = parseInt(hex.slice(1),16), r=n>>16,g=(n>>8)&255,b=n&255, a=0.07;\n      return `rgba(${r},${g},${b},${a})`;\n    }\n\n    // ----- compute row Y within a table (canvas coords) -----\n    function rowCenterY(tname, colIdx){\n      const t = byName[tname];\n      const ty = (t._y!=null) ? t._y : t.y;\n      const compact = vp.classList.contains('compact');\n      let visIdx = 0, target = -1;\n      for (let i=0;i<t.cols.length;i++){\n        const flags = t.cols[i][2]||'';\n        const keep = /\\bP\\b/.test(flags) || flags.includes('F:') || /\\bU\\b/.test(flags) || /\\bK\\b/.test(flags);\n        const shown = !compact || keep;\n        if (i===colIdx){ target = shown ? visIdx : -1; break; }\n        if (shown) visIdx++;\n      }\n      if (target === -1){ // hidden row -> point at header area\n        return ty + HEADER_H/2;\n      }\n      return ty + HEADER_H + target*ROW_H + ROW_H/2;\n    }\n    // ----- auto-relax: remove vertical overlaps per column for the active mode -----\n    function relax(){\n      const GAP = 46;\n      const cols = {};\n      TABLES.forEach(t => { const k = Math.round(t.x/70); (cols[k]=cols[k]||[]).push(t); });\n      Object.values(cols).forEach(group => {\n        group.sort((a,b)=>a.y-b.y);\n        let floor = -1e9;\n        group.forEach(t => {\n          const y = Math.max(t.y, floor);\n          t._x = t.x; t._y = y;\n          floor = y + tableHeight(t.name) + GAP;\n        });\n      });\n      TABLES.forEach(t => { const e=elFor[t.name]; e.style.left=t._x+'px'; e.style.top=t._y+'px'; });\n    }\n    function tableHeight(tname){\n      const t = byName[tname];\n      const compact = vp.classList.contains('compact');\n      let n = 0;\n      t.cols.forEach(c=>{ const f=c[2]||''; const keep=/\\bP\\b/.test(f)||f.includes('F:')||/\\bU\\b/.test(f)||/\\bK\\b/.test(f);\n        if(!compact||keep) n++; });\n      let h = HEADER_H + n*ROW_H;\n      if (compact && elFor[tname]._hidden>0) h += 22;\n      return h;\n    }\n    const TW = 232;\n\n    // ----- draw wires -----\n    function draw(){\n      relax();\n      while (svg.firstChild) svg.removeChild(svg.firstChild);\n      let maxX=0, maxY=0;\n      TABLES.forEach(t=>{ maxX=Math.max(maxX,t._x+TW); maxY=Math.max(maxY,t._y+tableHeight(t.name)); });\n      const W = maxX+120, H = maxY+120;\n      svg.setAttribute('width', W); svg.setAttribute('height', H);\n      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);\n      vp.style.width = W+'px'; vp.style.height = H+'px';\n\n      rels.forEach((r, idx) => {\n        const A = byName[r.from], B = byName[r.to];\n        const pY = rowCenterY(r.from, 0);            // parent PK row (id)\n        const cY = rowCenterY(r.to, r.colIdx);       // child FK row\n        const aCx = A._x + TW/2, bCx = B._x + TW/2;\n        let aSide, bSide, ax, bx;\n        if (bCx >= aCx){ aSide=1; bSide=-1; ax=A._x+TW; bx=B._x; }\n        else { aSide=-1; bSide=1; ax=A._x; bx=B._x+TW; }\n        const dx = Math.max(40, Math.abs(bx-ax)*0.4);\n        const c1x = ax + aSide*dx, c2x = bx + bSide*dx;\n        const path = document.createElementNS(NS,'path');\n        path.setAttribute('d', `M ${ax} ${pY} C ${c1x} ${pY}, ${c2x} ${cY}, ${bx} ${cY}`);\n        path.setAttribute('class','wire'+(r.oneToOne?' one-one':''));\n        path.dataset.from=r.from; path.dataset.to=r.to;\n        svg.appendChild(path);\n\n        // markers\n        const one = mkMarker(ax, pY, aSide, 'one');\n        one.dataset.from=r.from; one.dataset.to=r.to; svg.appendChild(one);\n        const many = mkMarker(bx, cY, bSide, r.oneToOne?'one':'many');\n        many.dataset.from=r.from; many.dataset.to=r.to; svg.appendChild(many);\n      });\n      applyDomainFilter();\n    }\n\n    // crow's-foot / bar markers. dir: +1 means line goes to the right of point\n    function mkMarker(x, y, side, kind){\n      const g = document.createElementNS(NS,'path');\n      g.setAttribute('class','marker');\n      const s = side; // -1 line leaves to left, +1 to right\n      const off = 12*s, bar = 9*s;\n      let d='';\n      if (kind==='one'){\n        // single perpendicular bar near the box\n        d = `M ${x+bar} ${y-5} L ${x+bar} ${y+5}`;\n      } else {\n        // crow's foot: three prongs spreading toward the box\n        d = `M ${x+off} ${y-6} L ${x} ${y} L ${x+off} ${y+6} M ${x+off} ${y} L ${x} ${y}`;\n      }\n      g.setAttribute('d', d);\n      return g;\n    }\n\n    // ----- focus -----\n    let pinned = null;\n    function focusTable(name){\n      vp.classList.add('focusing'); svg.classList.add('focusing');\n      const lit = adj[name];\n      TABLES.forEach(t=>{\n        const e = elFor[t.name];\n        e.classList.toggle('lit', lit.has(t.name));\n        e.classList.toggle('root', t.name===name);\n      });\n      svg.querySelectorAll('.wire,.marker').forEach(w=>{\n        const on = w.dataset.from===name || w.dataset.to===name;\n        w.classList.toggle('lit', on);\n      });\n    }\n    function clearFocus(){\n      if (pinned) return;\n      vp.classList.remove('focusing'); svg.classList.remove('focusing');\n      TABLES.forEach(t=>{ elFor[t.name].classList.remove('lit','root'); });\n      svg.querySelectorAll('.wire,.marker').forEach(w=>w.classList.remove('lit'));\n    }\n    // click to pin\n    Object.values(elFor).forEach(el=>{\n      el.addEventListener('click', (e)=>{ e.stopPropagation();\n        const n = el.dataset.name;\n        if (pinned===n){ pinned=null; clearFocus(); }\n        else { pinned=n; focusTable(n); }\n      });\n    });\n    stage.addEventListener('click', ()=>{ if(pinned){ pinned=null; clearFocus(); } });\n\n    // ----- domain filter -----\n    function applyDomainFilter(){\n      TABLES.forEach(t=>{\n        const on = activeDomains.has(t.domain);\n        elFor[t.name].classList.toggle('dimmed', !on);\n      });\n      svg.querySelectorAll('.wire,.marker').forEach(w=>{\n        const on = activeDomains.has(byName[w.dataset.from].domain) && activeDomains.has(byName[w.dataset.to].domain);\n        w.classList.toggle('dimmed', !on);\n      });\n    }\n\n    // ----- search -----\n    const search = document.getElementById('search');\n    search.addEventListener('input', ()=>{\n      const q = search.value.trim().toLowerCase();\n      if (!q){ TABLES.forEach(t=>elFor[t.name].classList.remove('dimmed')); applyDomainFilter(); return; }\n      TABLES.forEach(t=>{\n        const hit = t.name.toLowerCase().includes(q) || t.cols.some(c=>c[0].toLowerCase().includes(q));\n        elFor[t.name].classList.toggle('dimmed', !hit);\n      });\n    });\n\n    // ----- density -----\n    document.getElementById('density').addEventListener('click', e=>{\n      const b = e.target.closest('button'); if(!b) return;\n      document.querySelectorAll('#density button').forEach(x=>x.classList.remove('on'));\n      b.classList.add('on');\n      vp.classList.toggle('compact', b.dataset.d==='compact');\n      draw();\n    });\n\n    // ----- pan & zoom -----\n    let scale=1, tx=40, ty=24;\n    function apply(){ vp.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;\n      document.getElementById('zlabel').textContent = Math.round(scale*100)+'%'; }\n    let panning=false, sx, sy, stx, sty;\n    stage.addEventListener('mousedown', e=>{ if(e.button!==0) return;\n      panning=true; stage.classList.add('grabbing'); sx=e.clientX; sy=e.clientY; stx=tx; sty=ty; });\n    window.addEventListener('mousemove', e=>{ if(!panning) return;\n      tx=stx+(e.clientX-sx); ty=sty+(e.clientY-sy); apply(); });\n    window.addEventListener('mouseup', ()=>{ panning=false; stage.classList.remove('grabbing'); });\n    stage.addEventListener('wheel', e=>{ e.preventDefault();\n      const r = stage.getBoundingClientRect();\n      const mx=e.clientX-r.left, my=e.clientY-r.top;\n      const k = Math.exp(-e.deltaY*0.0014);\n      const ns = Math.min(2.2, Math.max(0.12, scale*k));\n      tx = mx-(mx-tx)*(ns/scale); ty = my-(my-ty)*(ns/scale);\n      scale=ns; apply();\n    }, {passive:false});\n    document.getElementById('zin').onclick=()=>zoomBtn(1.2);\n    document.getElementById('zout').onclick=()=>zoomBtn(1/1.2);\n    function zoomBtn(k){ const r=stage.getBoundingClientRect(); const mx=r.width/2,my=r.height/2;\n      const ns=Math.min(2.2,Math.max(0.12,scale*k)); tx=mx-(mx-tx)*(ns/scale); ty=my-(my-ty)*(ns/scale); scale=ns; apply(); }\n\n    function fit(){\n      const W=parseFloat(vp.style.width), H=parseFloat(vp.style.height);\n      const r=stage.getBoundingClientRect();\n      const m=60;\n      scale=Math.min((r.width-m*2)/W,(r.height-m*2)/H, 1);\n      tx=(r.width-W*scale)/2; ty=(r.height-H*scale)/2; apply();\n    }\n    document.getElementById('fitBtn').onclick=fit;\n    document.getElementById('resetBtn').onclick=()=>{ scale=1; tx=40; ty=24; apply(); };\n\n    draw(); apply();\n    requestAnimationFrame(fit);\n    window.addEventListener('resize', ()=>{});\n  })();\n  <\u002Fscript>\n\n\n<\u002Fbody><\u002Fhtml>"
+  </script>
+</body>
+</html>
