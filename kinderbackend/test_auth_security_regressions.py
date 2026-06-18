@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from services.auth_service import auth_service
 
 

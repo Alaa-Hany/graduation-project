@@ -4,6 +4,7 @@ Integration test: complete parent-registration -> OTP verification
 """
 
 import pytest
+
 from services.auth_service import auth_service
 
 PARENT_EMAIL = "integtest.parent@example.com"

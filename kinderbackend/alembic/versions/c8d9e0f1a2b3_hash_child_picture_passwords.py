@@ -19,8 +19,8 @@ from typing import Sequence, Union
 
 import bcrypt
 import sqlalchemy as sa
-from alembic import op
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "c8d9e0f1a2b3"

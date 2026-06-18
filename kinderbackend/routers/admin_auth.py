@@ -15,8 +15,8 @@ from pydantic import AliasChoices, BaseModel, EmailStr, Field, field_validator
 from sqlalchemy.orm import Session
 
 from admin_auth import create_admin_access_token, create_admin_refresh_token
-from admin_models import AdminUser, AdminUserRole
 from admin_deps import get_current_admin
+from admin_models import AdminUser, AdminUserRole
 from admin_utils import build_admin_payload
 from auth import hash_password
 from core.time_utils import db_utc_now

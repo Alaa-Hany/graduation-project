@@ -11,9 +11,9 @@ from __future__ import annotations
 import re
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "1d9c4b7a2f31"

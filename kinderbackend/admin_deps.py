@@ -13,8 +13,8 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from admin_auth import (
-    decode_admin_token,
     ACCESS_TOKEN_TYPE,
+    decode_admin_token,
 )
 from core.message_catalog import AdminAuthMessages
 from deps import get_db

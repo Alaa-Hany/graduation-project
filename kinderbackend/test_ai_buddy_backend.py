@@ -1,10 +1,10 @@
 from models import SystemSetting
-from services.ai_buddy_service import AiBuddyService
 from services.ai_buddy_response_generator import (
     AiBuddyGeneratedResponse,
     AiBuddyProviderState,
     AiBuddyResponseGenerator,
 )
+from services.ai_buddy_service import AiBuddyService
 
 
 def test_ai_buddy_session_start_and_message_flow(

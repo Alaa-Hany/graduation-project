@@ -3,7 +3,9 @@ Tests for analytics event ingestion and aggregation.
 """
 
 from __future__ import annotations
+
 import pytest
+
 from models import ChildActivityEvent, ChildDailyActivitySummary, ChildSessionLog
 
 EVENTS_URL = "/api/v1/analytics/events"

@@ -19,6 +19,7 @@ from auth import (
     verify_password,
 )
 from core.message_catalog import AuthMessages
+from core.redis_client import get_redis_client
 from core.system_settings import require_registration_enabled
 from core.time_utils import db_utc_now, ensure_utc, utc_now
 from core.validators import normalize_email, validate_email_domain
@@ -28,7 +29,6 @@ from models import SupportTicket, User
 from plan_service import PLAN_FREE
 from schemas.auth import LoginIn, RefreshIn, RegisterIn, ResendEmailOtpIn, VerifyEmailOtpIn
 from serializers import user_to_json
-from core.redis_client import get_redis_client
 from services.email_delivery_service import email_delivery_service
 from services.two_factor_service import two_factor_service
 

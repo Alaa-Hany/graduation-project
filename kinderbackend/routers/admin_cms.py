@@ -20,9 +20,9 @@ from admin_utils import (
     serialize_quiz,
     write_audit_log,
 )
-from core.settings import settings
 from core.admin_security import require_sensitive_action_confirmation
 from core.observability import emit_event
+from core.settings import settings
 from core.time_utils import db_utc_now
 from deps import get_db
 from models import ContentCategory, ContentItem, Quiz
