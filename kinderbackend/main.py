@@ -327,6 +327,7 @@ if ADMIN_SEED_ENABLED:
 
 # --- Unversioned infrastructure routes ------------------------------------
 # health_router stays at /health — probed by load balancers without a version.
-# payment_webhooks_router stays at /webhooks — Stripe sends to a fixed URL.
+# payment_webhooks_router stays at /webhooks — URL is registered externally
+# in the payment provider dashboard and cannot be versioned here alone.
 app.include_router(health_router)
 app.include_router(payment_webhooks_router)

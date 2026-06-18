@@ -44,7 +44,10 @@ def upgrade() -> None:
         """
     )
 
-    op.alter_column("categories", "axis_key", server_default=None)
+    # SQLite does not support DROP DEFAULT via ALTER COLUMN; skip on SQLite.
+    bind = op.get_bind()
+    if bind.dialect.name != "sqlite":
+        op.alter_column("categories", "axis_key", server_default=None)
 
 
 def downgrade() -> None:
