@@ -30,19 +30,19 @@ FALLBACK_FK_NAMES = {
         "subscription_events",
         ("subscription_profile_id",),
         "subscription_profiles",
-    ): "fk_subscription_events_subscription_profile_id_subscription_profiles",
+    ): "fk_subscription_events_subscription_profile_id",
     ("billing_transactions", ("user_id",), "users"): "fk_billing_transactions_user_id_users",
     (
         "billing_transactions",
         ("subscription_profile_id",),
         "subscription_profiles",
-    ): "fk_billing_transactions_subscription_profile_id_subscription_profiles",
+    ): "fk_billing_transactions_subscription_profile_id",
     ("payment_attempts", ("user_id",), "users"): "fk_payment_attempts_user_id_users",
     (
         "payment_attempts",
         ("subscription_profile_id",),
         "subscription_profiles",
-    ): "fk_payment_attempts_subscription_profile_id_subscription_profiles",
+    ): "fk_payment_attempts_subscription_profile_id",
 }
 
 
@@ -107,7 +107,7 @@ def upgrade() -> None:
             ondelete="SET NULL",
         )
         batch_op.create_foreign_key(
-            "fk_subscription_events_subscription_profile_id_subscription_profiles",
+            "fk_subscription_events_subscription_profile_id",
             "subscription_profiles",
             ["subscription_profile_id"],
             ["id"],
@@ -142,7 +142,7 @@ def upgrade() -> None:
             ondelete="SET NULL",
         )
         batch_op.create_foreign_key(
-            "fk_billing_transactions_subscription_profile_id_subscription_profiles",
+            "fk_billing_transactions_subscription_profile_id",
             "subscription_profiles",
             ["subscription_profile_id"],
             ["id"],
@@ -177,7 +177,7 @@ def upgrade() -> None:
             ondelete="SET NULL",
         )
         batch_op.create_foreign_key(
-            "fk_payment_attempts_subscription_profile_id_subscription_profiles",
+            "fk_payment_attempts_subscription_profile_id",
             "subscription_profiles",
             ["subscription_profile_id"],
             ["id"],
@@ -226,7 +226,7 @@ def downgrade() -> None:
             ondelete="CASCADE",
         )
         batch_op.create_foreign_key(
-            "fk_payment_attempts_subscription_profile_id_subscription_profiles",
+            "fk_payment_attempts_subscription_profile_id",
             "subscription_profiles",
             ["subscription_profile_id"],
             ["id"],
@@ -261,7 +261,7 @@ def downgrade() -> None:
             ondelete="CASCADE",
         )
         batch_op.create_foreign_key(
-            "fk_billing_transactions_subscription_profile_id_subscription_profiles",
+            "fk_billing_transactions_subscription_profile_id",
             "subscription_profiles",
             ["subscription_profile_id"],
             ["id"],
@@ -296,7 +296,7 @@ def downgrade() -> None:
             ondelete="CASCADE",
         )
         batch_op.create_foreign_key(
-            "fk_subscription_events_subscription_profile_id_subscription_profiles",
+            "fk_subscription_events_subscription_profile_id",
             "subscription_profiles",
             ["subscription_profile_id"],
             ["id"],
