@@ -8,7 +8,7 @@ This README reflects the current codebase, not legacy docs.
 
 > [📊 Open Interactive ERD](https://alaa-hany.github.io/graduation-project/kinderbackend/docs/Kinder_World_ERD.html)
 
-![ER Diagram](kinderbackend/docs/Kinder_World_ERD.html)
+![ER Diagram](kinderbackend\docs\Screenshot_1.png)
 
 ## Overview
 
