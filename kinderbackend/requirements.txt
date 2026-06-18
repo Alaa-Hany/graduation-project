@@ -16,3 +16,4 @@ python-dotenv==1.0.0
 stripe==14.0.1
 redis==5.2.1
 openai
+sentry-sdk[fastapi]==2.19.2

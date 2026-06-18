@@ -110,7 +110,7 @@ void main() {
       age: 7,
     );
 
-    expect(adapter.lastOptions?.path, '/children');
+    expect(adapter.lastOptions?.path, '/api/v1/children');
     expect(
       adapter.lastOptions?.headers['Authorization'],
       'Bearer parent.jwt',

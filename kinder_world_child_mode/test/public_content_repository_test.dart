@@ -94,7 +94,7 @@ void main() {
 
       final categories = await repository.fetchCategories();
 
-      expect(adapter.lastOptions?.path, '/content/child/categories');
+      expect(adapter.lastOptions?.path, '/api/v1/content/child/categories');
       expect(categories, hasLength(1));
       expect(categories.single.slug, 'educational');
     });
@@ -126,7 +126,7 @@ void main() {
         age: 7,
       );
 
-      expect(adapter.lastOptions?.path, '/content/child/items');
+      expect(adapter.lastOptions?.path, '/api/v1/content/child/items');
       expect(adapter.lastOptions?.queryParameters['category_slug'], 'educational');
       expect(adapter.lastOptions?.queryParameters['content_type'], 'lesson');
       expect(items, hasLength(1));
@@ -161,7 +161,7 @@ void main() {
 
       final item = await repository.fetchItem('bedtime-story');
 
-      expect(adapter.lastOptions?.path, '/content/child/items/bedtime-story');
+      expect(adapter.lastOptions?.path, '/api/v1/content/child/items/bedtime-story');
       expect(item?.slug, 'bedtime-story');
       expect(item?.quizzes, hasLength(1));
     });

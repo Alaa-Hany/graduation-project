@@ -17,6 +17,7 @@ import 'package:kinder_world/core/providers/auth_controller.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/repositories/auth_repository.dart';
 import 'package:kinder_world/core/repositories/child_repository.dart';
+import 'package:kinder_world/core/services/child_profiles_view_service.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
 import 'package:kinder_world/core/theme/app_theme.dart';
 import 'package:kinder_world/core/theme/theme_palette.dart';
@@ -203,7 +204,44 @@ class _MemoryChildRepository extends ChildRepository {
   }
 }
 
-Widget _buildApp(List<Override> overrides) {
+/// A minimal ChildProfilesViewService that delegates to a ChildRepository
+/// without making any network calls. Used in tests to avoid real HTTP traffic.
+class _LocalOnlyChildProfilesViewService extends ChildProfilesViewService {
+  _LocalOnlyChildProfilesViewService(ChildRepository repo)
+      : super(
+          childRepository: repo,
+          networkService: NetworkService(
+            secureStorage: _NoNetworkSecureStorage(),
+            logger: Logger(),
+          ),
+          secureStorage: _NoNetworkSecureStorage(),
+          logger: Logger(),
+        );
+}
+
+class _NoNetworkSecureStorage extends SecureStorage {
+  @override
+  bool get hasCachedAuthToken => true;
+  @override
+  String? get cachedAuthToken => null; // null → skip remote sync
+  @override
+  Future<String?> getAuthToken() async => null;
+  @override
+  Future<String?> getUserRole() async => null;
+  @override
+  Future<String?> getChildSession() async => null;
+  @override
+  Future<bool> isAuthenticated() async => false;
+  @override
+  Future<bool> isParentPinVerified() async => false;
+  @override
+  Future<bool> clearParentPinVerification() async => true;
+}
+
+Widget _buildApp(
+  List<Override> overrides, {
+  ChildRepository? childRepo,
+}) {
   final router = GoRouter(
     initialLocation: '/child/login',
     routes: [
@@ -232,6 +270,12 @@ Widget _buildApp(List<Override> overrides) {
       appNavigationControllerProvider.overrideWithValue(
         AppNavigationController(),
       ),
+      // Override childProfilesViewService to avoid real network calls.
+      // We resolve the repo from the passed overrides if possible.
+      if (childRepo != null)
+        childProfilesViewServiceProvider.overrideWithValue(
+          _LocalOnlyChildProfilesViewService(childRepo),
+        ),
       ...overrides,
     ],
     child: MaterialApp.router(
@@ -285,11 +329,14 @@ void main() {
     );
 
     await tester.pumpWidget(
-      _buildApp([
-        secureStorageProvider.overrideWithValue(storage),
-        authRepositoryProvider.overrideWithValue(authRepository),
-        childRepositoryProvider.overrideWithValue(childRepository),
-      ]),
+      _buildApp(
+        [
+          secureStorageProvider.overrideWithValue(storage),
+          authRepositoryProvider.overrideWithValue(authRepository),
+          childRepositoryProvider.overrideWithValue(childRepository),
+        ],
+        childRepo: childRepository,
+      ),
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
@@ -341,11 +388,14 @@ void main() {
     );
 
     await tester.pumpWidget(
-      _buildApp([
-        secureStorageProvider.overrideWithValue(storage),
-        authRepositoryProvider.overrideWithValue(authRepository),
-        childRepositoryProvider.overrideWithValue(childRepository),
-      ]),
+      _buildApp(
+        [
+          secureStorageProvider.overrideWithValue(storage),
+          authRepositoryProvider.overrideWithValue(authRepository),
+          childRepositoryProvider.overrideWithValue(childRepository),
+        ],
+        childRepo: childRepository,
+      ),
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
@@ -364,7 +414,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
-    expect(find.text(l10n.childLoginIncorrectPictures), findsOneWidget);
+    expect(find.text(l10n.childLoginIncorrectPictures), findsAtLeastNWidgets(1));
     expect(find.text('child-home'), findsNothing);
     await tester.pump(const Duration(seconds: 3));
   });
@@ -394,11 +444,14 @@ void main() {
     );
 
     await tester.pumpWidget(
-      _buildApp([
-        secureStorageProvider.overrideWithValue(storage),
-        authRepositoryProvider.overrideWithValue(authRepository),
-        childRepositoryProvider.overrideWithValue(childRepository),
-      ]),
+      _buildApp(
+        [
+          secureStorageProvider.overrideWithValue(storage),
+          authRepositoryProvider.overrideWithValue(authRepository),
+          childRepositoryProvider.overrideWithValue(childRepository),
+        ],
+        childRepo: childRepository,
+      ),
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));

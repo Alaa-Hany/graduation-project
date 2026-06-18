@@ -192,8 +192,8 @@ def child_setting_to_json(setting: ChildParentalControlSetting) -> dict:
             {
                 "id": rule.id,
                 "day_of_week": rule.day_of_week,
-                "start_time": rule.start_time,
-                "end_time": rule.end_time,
+                "start_time": rule.start_time.strftime("%H:%M") if rule.start_time else None,
+                "end_time": rule.end_time.strftime("%H:%M") if rule.end_time else None,
                 "is_allowed": rule.is_allowed,
             }
             for rule in sorted(

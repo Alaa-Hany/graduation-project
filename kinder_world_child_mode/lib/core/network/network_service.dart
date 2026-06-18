@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'dart:math';
 
+import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
@@ -17,17 +20,27 @@ class NetworkService {
   final Random _random = Random();
   final Set<CancelToken> _managedCancelTokens = <CancelToken>{};
 
+  /// Whether TLS certificate pinning is active for this instance.
+  ///
+  /// Defaults to [AppConstants.enableCertificatePinning] (which is `true`
+  /// only when `APP_ENV=production`).  Pass `enablePinning: false` in tests
+  /// or development to bypass the pin check without touching app-wide config.
+  final bool _enablePinning;
+
   NetworkService({
     Dio? dio,
     Connectivity? connectivity,
     required SecureStorage secureStorage,
     Logger? logger,
     void Function(bool isMaintenanceMode)? onMaintenanceModeChanged,
+    bool? enablePinning,
   })  : _dio = dio ?? Dio(),
         _connectivity = connectivity ?? Connectivity(),
         _secureStorage = secureStorage,
         _logger = logger ?? Logger(),
-        _onMaintenanceModeChanged = onMaintenanceModeChanged {
+        _onMaintenanceModeChanged = onMaintenanceModeChanged,
+        _enablePinning =
+            enablePinning ?? AppConstants.enableCertificatePinning {
     _setupDio();
   }
 
@@ -54,6 +67,19 @@ class NetworkService {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
+          // Prepend the API version prefix to every app-level path.
+          // Paths already carrying the prefix (e.g. on retry) or that are
+          // absolute URLs (fallback retry with full URI) are left untouched.
+          // Infrastructure paths (/health, /webhooks) don't go through this
+          // client, so no exclusion list is needed here.
+          const _apiPrefix = '/api/${AppConstants.apiVersion}';
+          final rawPath = options.path;
+          if (!rawPath.startsWith(_apiPrefix) &&
+              !rawPath.startsWith('http://') &&
+              !rawPath.startsWith('https://')) {
+            options.path = '$_apiPrefix$rawPath';
+          }
+
           final requestId = _resolveRequestId(options);
           options.headers['X-Request-ID'] = requestId;
           options.extra['requestId'] = requestId;
@@ -150,7 +176,90 @@ class NetworkService {
         logger: _logger,
       ),
     );
+
+    // Certificate pinning (native platforms only; skipped on web and in tests
+    // that inject a non-IO adapter).
+    if (_enablePinning && !kIsWeb) {
+      _applyPinning();
+    }
   }
+
+  // ---------------------------------------------------------------------------
+  // Certificate pinning
+  // ---------------------------------------------------------------------------
+
+  /// Configures the underlying [IOHttpClientAdapter] to pin the TLS certificate
+  /// against [AppConstants.pinnedCertificateSha256].
+  ///
+  /// Implementation notes:
+  /// • A [SecurityContext] with `withTrustedRoots: false` disables ALL system
+  ///   CAs, so every TLS handshake goes through [_verifyCertificatePin] — this
+  ///   prevents an attacker who installed their own CA on the device from
+  ///   bypassing the pin with a "valid" certificate.
+  /// • If the adapter is not an [IOHttpClientAdapter] (e.g. a mock injected in
+  ///   tests), pinning is gracefully skipped with a warning log.
+  void _applyPinning() {
+    final adapter = _dio.httpClientAdapter;
+    if (adapter is! IOHttpClientAdapter) {
+      _logWarning(
+        'cert.pinning.skipped',
+        fields: {
+          'reason': 'adapter_not_io_http',
+          'adapter': adapter.runtimeType.toString(),
+        },
+      );
+      return;
+    }
+
+    adapter.createHttpClient = () {
+      // withTrustedRoots: false → system CA store is not used, so badCertificateCallback
+      // is invoked for every connection, enabling true certificate pinning.
+      final ctx = SecurityContext(withTrustedRoots: false);
+      return HttpClient(context: ctx)
+        ..badCertificateCallback = _verifyCertificatePin;
+    };
+
+    _logInfo('cert.pinning.enabled', fields: {
+      'fingerprint_prefix': _fingerprintPrefix(
+        AppConstants.pinnedCertificateSha256,
+      ),
+    });
+  }
+
+  /// Returns `true` only when the SHA-256 fingerprint of [cert] matches
+  /// [AppConstants.pinnedCertificateSha256].
+  ///
+  /// The stored constant may include colons (e.g. `AA:BB:CC:…`) or be a plain
+  /// 64-char lowercase hex string — both are normalised before comparison.
+  bool _verifyCertificatePin(X509Certificate cert, String host, int port) {
+    final actual = sha256.convert(cert.der).toString(); // lowercase hex, no colons
+    final expected = AppConstants.pinnedCertificateSha256
+        .toLowerCase()
+        .replaceAll(':', '');
+
+    final match = actual == expected;
+    if (!match) {
+      _logError('cert.pinning.mismatch', fields: {
+        'host': host,
+        'port': port,
+        // Log only a short prefix so the full fingerprint is not leaked.
+        'expected_prefix': _fingerprintPrefix(expected),
+        'actual_prefix': _fingerprintPrefix(actual),
+      });
+    }
+    return match;
+  }
+
+  /// Returns the first 16 characters of [fingerprint] followed by `…`, or the
+  /// full string if it is shorter — used to avoid logging full cert hashes.
+  String _fingerprintPrefix(String fingerprint) {
+    const prefixLen = 16;
+    return fingerprint.length > prefixLen
+        ? '${fingerprint.substring(0, prefixLen)}…'
+        : fingerprint;
+  }
+
+  // ---------------------------------------------------------------------------
 
   String? _findHeaderKey(Map<String, dynamic> headers, String target) {
     for (final key in headers.keys) {

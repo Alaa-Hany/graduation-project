@@ -168,6 +168,24 @@ class SupportTicketService:
             raise HTTPException(status_code=404, detail="Support ticket not found")
         return ticket
 
+    def _serialize_support_ticket(
+        self,
+        *,
+        ticket: SupportTicket,
+        include_thread: bool = False,
+        queue_position: int | None = None,
+    ) -> dict[str, Any]:
+        snapshot = premium_behavior_service.support_priority_snapshot(ticket)
+        payload = serialize_support_ticket(ticket, include_thread=include_thread)
+        payload.update(
+            priority_level=snapshot["priority_level"],
+            priority_score=snapshot["priority_score"],
+            priority_reason=snapshot["priority_reason"],
+        )
+        if queue_position is not None:
+            payload["queue_position"] = queue_position
+        return payload
+
     def create_contact_ticket(
         self,
         *,
@@ -189,17 +207,23 @@ class SupportTicketService:
         )
         db.add(ticket)
         db.commit()
-        db.refresh(ticket)
+        ticket = self.get_user_ticket_or_404(ticket_id=ticket.id, user_id=user.id, db=db)
         return {
             "success": True,
-            "item": serialize_support_ticket(ticket, include_thread=True),
+            "item": self._serialize_support_ticket(ticket=ticket, include_thread=True),
         }
 
     def list_user_tickets(self, *, user: User, db: Session) -> SupportTicketListPayload:
         items = self.ticket_query(db).filter(SupportTicket.user_id == user.id).all()
         ranked = premium_behavior_service.rank_support_tickets(items)
         return {
-            "items": [serialize_support_ticket(item["ticket"]) for item in ranked],
+            "items": [
+                self._serialize_support_ticket(
+                    ticket=item["ticket"],
+                    queue_position=item.get("queue_position"),
+                )
+                for item in ranked
+            ],
             "summary": {
                 "total": len(ranked),
                 "open": sum(1 for item in ranked if item["ticket"].status == "open"),
@@ -213,7 +237,7 @@ class SupportTicketService:
         self, *, ticket_id: int, user: User, db: Session
     ) -> SupportTicketItemPayload:
         ticket = self.get_user_ticket_or_404(ticket_id=ticket_id, user_id=user.id, db=db)
-        return {"item": serialize_support_ticket(ticket, include_thread=True)}
+        return {"item": self._serialize_support_ticket(ticket=ticket, include_thread=True)}
 
     def soft_delete_as_user(
         self,
@@ -279,7 +303,7 @@ class SupportTicketService:
         )
         return {
             "success": True,
-            "item": serialize_support_ticket(refreshed_ticket, include_thread=True),
+            "item": self._serialize_support_ticket(ticket=refreshed_ticket, include_thread=True),
         }
 
     def list_admin_tickets(
@@ -308,7 +332,13 @@ class SupportTicketService:
         total = len(ranked)
         window = ranked[(page - 1) * page_size : page * page_size]
         return {
-            "items": [serialize_support_ticket(item["ticket"]) for item in window],
+            "items": [
+                self._serialize_support_ticket(
+                    ticket=item["ticket"],
+                    queue_position=item.get("queue_position"),
+                )
+                for item in window
+            ],
             "pagination": build_pagination_payload(page=page, page_size=page_size, total=total),
             "filters": {"status": normalized_status, "category": normalized_category},
         }
@@ -321,7 +351,7 @@ class SupportTicketService:
         include_deleted: bool = False,
     ) -> SupportTicketItemPayload:
         ticket = self.get_ticket_or_404(ticket_id=ticket_id, db=db, include_deleted=include_deleted)
-        return {"item": serialize_support_ticket(ticket, include_thread=True)}
+        return {"item": self._serialize_support_ticket(ticket=ticket, include_thread=True)}
 
     def reply_as_admin(
         self,
@@ -367,12 +397,18 @@ class SupportTicketService:
             entity_type="support_ticket",
             entity_id=ticket.id,
             before_json=before,
-            after_json=serialize_support_ticket(refreshed_ticket, include_thread=True),
+            after_json=self._serialize_support_ticket(
+                ticket=refreshed_ticket,
+                include_thread=True,
+            ),
         )
         db.commit()
         return {
             "success": True,
-            "item": serialize_support_ticket(refreshed_ticket, include_thread=True),
+            "item": self._serialize_support_ticket(
+                ticket=refreshed_ticket,
+                include_thread=True,
+            ),
         }
 
     def resolve_as_admin(
@@ -409,12 +445,18 @@ class SupportTicketService:
             entity_type="support_ticket",
             entity_id=ticket.id,
             before_json=before,
-            after_json=serialize_support_ticket(refreshed_ticket, include_thread=True),
+            after_json=self._serialize_support_ticket(
+                ticket=refreshed_ticket,
+                include_thread=True,
+            ),
         )
         db.commit()
         return {
             "success": True,
-            "item": serialize_support_ticket(refreshed_ticket, include_thread=True),
+            "item": self._serialize_support_ticket(
+                ticket=refreshed_ticket,
+                include_thread=True,
+            ),
         }
 
     def close_as_admin(
@@ -451,12 +493,18 @@ class SupportTicketService:
             entity_type="support_ticket",
             entity_id=ticket.id,
             before_json=before,
-            after_json=serialize_support_ticket(refreshed_ticket, include_thread=True),
+            after_json=self._serialize_support_ticket(
+                ticket=refreshed_ticket,
+                include_thread=True,
+            ),
         )
         db.commit()
         return {
             "success": True,
-            "item": serialize_support_ticket(refreshed_ticket, include_thread=True),
+            "item": self._serialize_support_ticket(
+                ticket=refreshed_ticket,
+                include_thread=True,
+            ),
         }
 
     def assign_as_admin(
@@ -502,12 +550,18 @@ class SupportTicketService:
             entity_type="support_ticket",
             entity_id=ticket.id,
             before_json=before,
-            after_json=serialize_support_ticket(refreshed_ticket, include_thread=True),
+            after_json=self._serialize_support_ticket(
+                ticket=refreshed_ticket,
+                include_thread=True,
+            ),
         )
         db.commit()
         return {
             "success": True,
-            "item": serialize_support_ticket(refreshed_ticket, include_thread=True),
+            "item": self._serialize_support_ticket(
+                ticket=refreshed_ticket,
+                include_thread=True,
+            ),
         }
 
 

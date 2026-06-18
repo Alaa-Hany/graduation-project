@@ -1,4 +1,5 @@
 from __future__ import annotations
+from services.auth_service import auth_service
 
 
 def _assert_validation_payload_is_safe(response_json: dict) -> None:
@@ -34,7 +35,9 @@ def test_access_token_is_revoked_after_logout(client, create_parent, auth_header
     }
 
 
-def test_access_token_is_revoked_after_change_password(client):
+def test_access_token_is_revoked_after_change_password(client, monkeypatch):
+    # Ensure deterministic OTP so registration can be verified in-test
+    monkeypatch.setattr(auth_service, "_generate_email_otp", lambda: "123456")
     register = client.post(
         "/auth/register",
         json={
@@ -45,7 +48,12 @@ def test_access_token_is_revoked_after_change_password(client):
         },
     )
     assert register.status_code == 200
-    access_token = register.json()["access_token"]
+    verify = client.post(
+        "/auth/verify-email-otp",
+        json={"email": "password.rotate@example.com", "otp": "123456"},
+    )
+    assert verify.status_code == 200
+    access_token = verify.json()["access_token"]
     headers = {"Authorization": f"Bearer {access_token}"}
 
     me_before_change = client.get("/auth/me", headers=headers)
@@ -106,7 +114,9 @@ def test_register_validation_returns_422_instead_of_500_for_trimmed_blank_value(
     )
 
 
-def test_child_register_validation_returns_safe_json_errors(client):
+def test_child_register_validation_returns_safe_json_errors(client, monkeypatch):
+    # Deterministic OTP for parent registration
+    monkeypatch.setattr(auth_service, "_generate_email_otp", lambda: "123456")
     register = client.post(
         "/auth/register",
         json={
@@ -117,6 +127,11 @@ def test_child_register_validation_returns_safe_json_errors(client):
         },
     )
     assert register.status_code == 200
+    verify = client.post(
+        "/auth/verify-email-otp",
+        json={"email": "validation.parent@example.com", "otp": "123456"},
+    )
+    assert verify.status_code == 200
 
     response = client.post(
         "/auth/child/register",
@@ -126,7 +141,7 @@ def test_child_register_validation_returns_safe_json_errors(client):
             "age": 8,
             "picture_password": ["cat", " ", "apple"],
         },
-        headers={"Authorization": f"Bearer {register.json()['access_token']}"},
+        headers={"Authorization": f"Bearer {verify.json()['access_token']}"},
     )
 
     assert response.status_code == 422

@@ -32,12 +32,6 @@ class ChildLoginPicturePasswordPicker extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        PicturePasswordRow(
-          picturePassword: selectedPictures,
-          size: 20,
-          showPlaceholders: true,
-        ),
-        const SizedBox(height: 16),
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -75,6 +69,12 @@ class ChildLoginPicturePasswordPicker extends StatelessWidget {
               ),
             );
           },
+        ),
+        const SizedBox(height: 16),
+        PicturePasswordRow(
+          picturePassword: selectedPictures,
+          size: 20,
+          showPlaceholders: true,
         ),
       ],
     );

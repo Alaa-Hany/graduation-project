@@ -20,9 +20,10 @@ security = HTTPBearer(auto_error=False, bearerFormat="JWT")
 
 
 def _is_parent_user_verified(user: User) -> bool:
-    if bool(getattr(user, "email_verified", False)):
-        return True
-    return bool(getattr(user, "is_active", False)) and not getattr(user, "email_otp_hash", None)
+    # email_verified is the sole source of truth. The old fallback
+    # (is_active=True AND email_otp_hash=None) allowed accounts with
+    # email_verified=False to pass — removed.
+    return bool(getattr(user, "email_verified", False))
 
 
 @dataclass(frozen=True)

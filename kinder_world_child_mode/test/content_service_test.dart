@@ -84,7 +84,7 @@ void main() {
 
     final items = await service.getFaq();
 
-    expect(adapter.lastOptions?.path, '/content/help-faq');
+    expect(adapter.lastOptions?.path, '/api/v1/content/help-faq');
     expect(items, hasLength(1));
     expect(items.first.question, 'How do I add a child profile?');
   });
@@ -112,7 +112,7 @@ void main() {
 
     final body = await service.getLegal('privacy');
 
-    expect(adapter.lastOptions?.path, '/legal/privacy');
+    expect(adapter.lastOptions?.path, '/api/v1/legal/privacy');
     expect(body, 'Privacy body from backend');
   });
 
@@ -138,7 +138,7 @@ void main() {
 
     final payload = await service.getLegalPayload('coppa');
 
-    expect(adapter.lastOptions?.path, '/legal/coppa');
+    expect(adapter.lastOptions?.path, '/api/v1/legal/coppa');
     expect(payload.resolvedBody, 'COPPA fallback content');
   });
 
@@ -172,7 +172,7 @@ void main() {
 
     final payload = await service.getLegalPayload('privacy');
 
-    expect(adapter.lastOptions?.path, '/legal/privacy');
+    expect(adapter.lastOptions?.path, '/api/v1/legal/privacy');
     expect(payload.resolvedBody, 'Privacy body from item');
     expect(
       payload.resolvedBodyForLanguageCode('ar'),
@@ -202,7 +202,7 @@ void main() {
 
     final body = await service.getAbout();
 
-    expect(adapter.lastOptions?.path, '/content/about');
+    expect(adapter.lastOptions?.path, '/api/v1/content/about');
     expect(body, 'About Kinder World');
   });
 }

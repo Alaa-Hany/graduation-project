@@ -575,16 +575,42 @@ class SubscriptionLifecycleMixin:
         return payload_out
 
     def manage_subscription(self, *, db: Session, user: User) -> dict[str, object]:
-        raise HTTPException(
-            status_code=410,
-            detail="Billing portal is disabled for one-time purchases",
-        )
+        profile = self._ensure_subscription_profile(db=db, user=user)
+        # One-time purchases (internal provider or completed external one-time) cannot use billing portal
+        if profile.provider == "internal":
+            raise HTTPException(
+                status_code=410,
+                detail="Billing portal is disabled for one-time purchases",
+            )
+        # External provider one-time purchase (active with no provider_subscription_id)
+        if (
+            profile.status == SUBSCRIPTION_STATUS_ACTIVE
+            and profile.provider_subscription_id is None
+        ):
+            raise HTTPException(
+                status_code=410,
+                detail="Billing portal is disabled for one-time purchases",
+            )
+        return self._build_billing_portal_response(db=db, user=user, source="subscription_manage")
 
     def billing_portal(self, *, db: Session, user: User) -> dict[str, object]:
-        raise HTTPException(
-            status_code=410,
-            detail="Billing portal is disabled for one-time purchases",
-        )
+        profile = self._ensure_subscription_profile(db=db, user=user)
+        # One-time purchases (internal provider or completed external one-time) cannot use billing portal
+        if profile.provider == "internal":
+            raise HTTPException(
+                status_code=410,
+                detail="Billing portal is disabled for one-time purchases",
+            )
+        # External provider one-time purchase (active with no provider_subscription_id)
+        if (
+            profile.status == SUBSCRIPTION_STATUS_ACTIVE
+            and profile.provider_subscription_id is None
+        ):
+            raise HTTPException(
+                status_code=410,
+                detail="Billing portal is disabled for one-time purchases",
+            )
+        return self._build_billing_portal_response(db=db, user=user, source="billing_portal")
 
     def _build_billing_portal_response(
         self,

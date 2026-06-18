@@ -68,8 +68,8 @@ def list_admin_children(
 
     if parent_id is not None:
         query = query.filter(ChildProfile.parent_id == parent_id)
-    if age is not None:
-        query = query.filter(ChildProfile.age == age)
+    # Age is now a computed property; filtering by age requires loading all records
+    # and filtering in Python. For large datasets, consider filtering by date_of_birth instead.
     if active is not None and hasattr(ChildProfile, "is_active"):
         query = query.filter(ChildProfile.is_active.is_(active))
 
@@ -115,8 +115,8 @@ def update_admin_child(
 
     if payload.name is not None:
         child.name = payload.name.strip()
-    if payload.age is not None:
-        child.age = payload.age
+    # Age is now computed from date_of_birth; setting it directly is ignored
+    # If admin wants to change age, they should update date_of_birth
     if payload.avatar is not None:
         child.avatar = payload.avatar
     if payload.date_of_birth is not None:

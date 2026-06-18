@@ -102,7 +102,11 @@ def test_parent_protected_endpoints_require_auth(
     assert response.status_code == 401
 
 
-def test_parent_register_login_refresh_and_logout_revokes_refresh_token(client, db):
+def test_parent_register_login_refresh_and_logout_revokes_refresh_token(client, db, monkeypatch):
+    from services.auth_service import auth_service
+    FIXED_OTP = "123456"
+    monkeypatch.setattr(auth_service, "_generate_email_otp", lambda: FIXED_OTP)
+
     register = client.post(
         "/auth/register",
         json={
@@ -115,32 +119,47 @@ def test_parent_register_login_refresh_and_logout_revokes_refresh_token(client, 
 
     assert register.status_code == 200
     register_data = register.json()
-    assert register_data["user"]["email"] == "parent.example@gmail.com"
+    assert register_data["email"] == "parent.example@gmail.com"
+    assert register_data["verification_required"] is True
+
+    # Verify OTP to get tokens
+    verify = client.post(
+        "/auth/verify-email-otp",
+        json={
+            "email": "parent.example@gmail.com",
+            "otp": FIXED_OTP,
+        },
+    )
+    assert verify.status_code == 200
+    verify_data = verify.json()
+    assert verify_data["user"]["email"] == "parent.example@gmail.com"
+    assert "access_token" in verify_data
+    assert "refresh_token" in verify_data
 
     refresh = client.post(
         "/auth/refresh",
-        json={"refresh_token": register_data["refresh_token"]},
+        json={"refresh_token": verify_data["refresh_token"]},
     )
     assert refresh.status_code == 200
     assert "access_token" in refresh.json()
 
     me = client.get(
         "/auth/me",
-        headers={"Authorization": f"Bearer {register_data['access_token']}"},
+        headers={"Authorization": f"Bearer {verify_data['access_token']}"},
     )
     assert me.status_code == 200
     assert me.json()["user"]["email"] == "parent.example@gmail.com"
 
     logout = client.post(
         "/auth/logout",
-        headers={"Authorization": f"Bearer {register_data['access_token']}"},
+        headers={"Authorization": f"Bearer {verify_data['access_token']}"},
     )
     assert logout.status_code == 200
     assert logout.json()["success"] is True
 
     refresh_after_logout = client.post(
         "/auth/refresh",
-        json={"refresh_token": register_data["refresh_token"]},
+        json={"refresh_token": verify_data["refresh_token"]},
     )
     assert refresh_after_logout.status_code == 401
     assert refresh_after_logout.json()["detail"] == "Invalid refresh token"

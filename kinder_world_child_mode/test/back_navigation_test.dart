@@ -12,6 +12,7 @@ import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_repository.dart';
 import 'package:kinder_world/router.dart';
 import 'package:logger/logger.dart';
+import 'helpers/test_admin_auth_helpers.dart';
 
 class _TestSecureStorage extends SecureStorage {}
 
@@ -31,6 +32,9 @@ class _FakeAdminAuthRepository extends AdminAuthRepository {
   final AdminUser? restoredAdmin;
 
   bool logoutCalled = false;
+
+  @override
+  Future<bool> canBootstrap() async => false;
 
   @override
   Future<AdminUser?> restoreSession() async => restoredAdmin;
@@ -123,6 +127,8 @@ Future<({ProviderContainer container, GoRouter router})> _pumpHarness(
       adminAuthRepositoryProvider.overrideWithValue(
         adminRepo ?? _FakeAdminAuthRepository(restoredAdmin: _superAdmin),
       ),
+      // Override adminAuthProvider with a mock that doesn't make HTTP calls
+      ...createMockAdminAuthOverrides(admin: _superAdmin),
     ],
   );
   addTearDown(container.dispose);

@@ -322,6 +322,16 @@ class SubscriptionHistoryMixin:
 
     @staticmethod
     def _serialize_payment_method(method: PaymentMethod) -> dict[str, object]:
+        exp_month = None
+        exp_year = None
+        if getattr(method, "expires_at", None):
+            try:
+                exp_month = method.expires_at.month
+                exp_year = method.expires_at.year
+            except Exception:
+                exp_month = None
+                exp_year = None
+
         return {
             "id": method.id,
             "label": method.label,
@@ -331,8 +341,8 @@ class SubscriptionHistoryMixin:
             "method_type": method.method_type,
             "brand": method.brand,
             "last4": method.last4,
-            "exp_month": method.exp_month,
-            "exp_year": method.exp_year,
+            "exp_month": exp_month,
+            "exp_year": exp_year,
             "is_default": bool(method.is_default),
             "created_at": method.created_at.isoformat() if method.created_at else None,
             "metadata_json": method.metadata_json or {},

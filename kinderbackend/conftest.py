@@ -15,6 +15,8 @@ os.environ.setdefault("ADMIN_SEED_PASSWORD", "CHANGE_ME")
 os.environ.setdefault("ADMIN_SEED_EMAIL", "change-me@example.invalid")
 os.environ.setdefault("ADMIN_SEED_NAME", "DEV ONLY ADMIN")
 os.environ.setdefault("SKIP_SCHEMA_VERIFY", "true")
+os.environ.setdefault("DATA_ENCRYPTION_KEY", "TEST_ONLY_PLACEHOLDER_ENCRYPTION_KEY")
+os.environ.setdefault("AI_PROVIDER_MODE", "fallback")
 
 
 @pytest.fixture(scope="session")
@@ -34,16 +36,17 @@ def test_db():
 
 @pytest.fixture
 def db(test_db):
-    from database import SessionLocal
+    from database import Base, SessionLocal
 
-    connection = test_db.connect()
-    transaction = connection.begin()
-    session = SessionLocal(bind=connection)
+    session = SessionLocal(bind=test_db)
     yield session
     session.close()
-    if transaction.is_active:
-        transaction.rollback()
-    connection.close()
+    # Truncate every table after each test so application-level commits
+    # (which bypass the old rollback-based isolation under SQLAlchemy 2.0)
+    # don't leak data into the next test.
+    with test_db.begin() as conn:
+        for table in reversed(Base.metadata.sorted_tables):
+            conn.execute(table.delete())
 
 
 @pytest.fixture
@@ -66,22 +69,36 @@ def client(db):
 
 @pytest.fixture(autouse=True)
 def reset_global_state():
-    # Keep tests independent if/when route dependencies start using this state.
-    from rate_limit import rate_limiter
-    from services.auth_service import _PARENT_LOGIN_FAILED_ATTEMPTS, _PARENT_LOGIN_LOCKOUT_UNTIL
-    from services.child_service import _DEVICE_BINDINGS, _FAILED_ATTEMPTS
+    # Clear in-process rate-limit fallback between tests (used when REDIS_URL is unset).
+    # Auth/child service login-attempt state is Redis-backed; with no Redis in tests
+    # those counters are no-ops, so there is nothing to clear here.
+    from rate_limit import _fallback
 
-    rate_limiter.requests.clear()
-    _PARENT_LOGIN_FAILED_ATTEMPTS.clear()
-    _PARENT_LOGIN_LOCKOUT_UNTIL.clear()
+    # Clear RBAC permission cache between tests.  SQLite recycles row IDs when a
+    # transaction is rolled back (the table becomes empty so MAX(id)+1 = 1 again).
+    # Without this, a "no-role admin" test caches (id=1, token_version=0) → frozenset(),
+    # and the next test that creates a real admin also gets id=1 — hitting the stale
+    # cache entry and receiving 403 despite having valid roles seeded.
+    from admin_deps import _perm_cache
+    from services.auth_service import _FAILED_LOGIN_ATTEMPTS, _LOGIN_LOCKOUTS
+    from services.child_service import _DEVICE_BINDINGS, _FAILED_ATTEMPTS
+    from test_redis_mock import reset_mock_redis
+
+    _fallback.requests.clear()
+    _perm_cache._store.clear()
+    _FAILED_LOGIN_ATTEMPTS.clear()
+    _LOGIN_LOCKOUTS.clear()
     _FAILED_ATTEMPTS.clear()
     _DEVICE_BINDINGS.clear()
+    reset_mock_redis()
     yield
-    rate_limiter.requests.clear()
-    _PARENT_LOGIN_FAILED_ATTEMPTS.clear()
-    _PARENT_LOGIN_LOCKOUT_UNTIL.clear()
+    _fallback.requests.clear()
+    _perm_cache._store.clear()
+    _FAILED_LOGIN_ATTEMPTS.clear()
+    _LOGIN_LOCKOUTS.clear()
     _FAILED_ATTEMPTS.clear()
     _DEVICE_BINDINGS.clear()
+    reset_mock_redis()
 
 
 @pytest.fixture(autouse=True)
@@ -90,6 +107,28 @@ def stub_email_delivery(monkeypatch):
         "services.email_delivery_service.email_delivery_service.send_email",
         lambda **kwargs: None,
     )
+
+
+@pytest.fixture(autouse=True)
+def mock_redis_client(monkeypatch):
+    """Provide a mock Redis client for testing rate limiting and device binding."""
+    from test_redis_mock import get_mock_redis
+
+    mock_redis = get_mock_redis()
+
+    # Patch at the source module
+    monkeypatch.setattr("core.redis_client.get_redis_client", lambda: mock_redis)
+
+    # Patch in rate_limit module (where it's imported)
+    monkeypatch.setattr("rate_limit.get_redis_client", lambda: mock_redis)
+
+    # Patch in child_service module (where it's imported)
+    monkeypatch.setattr("services.child_service.get_redis_client", lambda: mock_redis)
+
+    # Patch in auth_service module (where it's imported)
+    monkeypatch.setattr("services.auth_service.get_redis_client", lambda: mock_redis)
+
+    yield mock_redis
 
 
 @pytest.fixture
@@ -129,6 +168,10 @@ def create_parent(db):
 
 @pytest.fixture
 def create_child(db):
+    import json
+    from datetime import date
+
+    from auth import hash_password
     from models import ChildProfile
 
     def _create_child(
@@ -139,11 +182,27 @@ def create_child(db):
         picture_password: list[str] | None = None,
         avatar: str = "assets/images/avatars/av1.png",
     ):
+        # age is a computed @property on ChildProfile; supply date_of_birth instead.
+        # Use Jan 1 so the birthday is always in the past regardless of today's date,
+        # making the computed age exactly equal to the requested value.
+        today = date.today()
+        date_of_birth = date(today.year - age, 1, 1)
+
+        # picture_password_hash stores a bcrypt_json_v1 envelope as a JSON string
+        # (column was renamed from picture_password JSON → picture_password_hash String).
+        items = picture_password or ["cat", "dog", "apple"]
+        canonical = json.dumps(items, separators=(",", ":"), ensure_ascii=True)
+        envelope = {
+            "scheme": "bcrypt_json_v1",
+            "hash": hash_password(canonical),
+            "length": len(items),
+        }
+
         child = ChildProfile(
             parent_id=parent_id,
             name=name,
-            picture_password=picture_password or ["cat", "dog", "apple"],
-            age=age,
+            picture_password_hash=json.dumps(envelope, separators=(",", ":")),
+            date_of_birth=date_of_birth,
             avatar=avatar,
         )
         db.add(child)

@@ -16,16 +16,35 @@ import 'package:kinder_world/features/admin/dashboard/admin_dashboard_screen.dar
 import 'package:kinder_world/router.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'helpers/test_admin_auth_helpers.dart';
 
 class _TestSecureStorage extends SecureStorage {
   @override
   Future<String?> getAuthToken() async => null;
 
   @override
+  bool get hasCachedAuthToken => true;
+
+  @override
+  String? get cachedAuthToken => null;
+
+  @override
   Future<String?> getUserRole() async => null;
 
   @override
   Future<String?> getChildSession() async => null;
+
+  @override
+  Future<bool> isAuthenticated() async => false;
+
+  @override
+  Future<bool> isParentPinVerified() async => false;
+
+  @override
+  Future<bool> clearParentPinVerification() async => true;
+
+  @override
+  bool get hasCachedSessionSnapshot => true;
 }
 
 class _FakeAdminAuthRepository extends AdminAuthRepository {
@@ -50,6 +69,9 @@ class _FakeAdminAuthRepository extends AdminAuthRepository {
   bool logoutCalled = false;
   String? lastLoginEmail;
   String? lastLoginPassword;
+
+  @override
+  Future<bool> canBootstrap() async => false;
 
   @override
   Future<AdminUser?> restoreSession() async {
@@ -117,6 +139,7 @@ const _supportAdmin = AdminUser(
 Future<ProviderContainer> _pumpApp(
   WidgetTester tester, {
   _FakeAdminAuthRepository? repo,
+  AdminUser? authenticatedAdmin,
 }) async {
   SharedPreferences.setMockInitialValues({});
   final sharedPreferences = await SharedPreferences.getInstance();
@@ -130,6 +153,8 @@ Future<ProviderContainer> _pumpApp(
       ),
       connectivityProvider
           .overrideWith((ref) => Stream.value(ConnectivityResult.wifi)),
+      // Override adminAuthProvider with a mock that doesn't make HTTP calls
+      ...createMockAdminAuthOverrides(admin: authenticatedAdmin),
     ],
   );
   addTearDown(container.dispose);
@@ -182,6 +207,7 @@ void main() {
     final container = await _pumpApp(
       tester,
       repo: _FakeAdminAuthRepository(restoredAdmin: null),
+      authenticatedAdmin: null,
     );
     final router = container.read(routerProvider);
 
@@ -203,6 +229,7 @@ void main() {
         restoredAdmin: _superAdmin,
         restoreDelay: const Duration(milliseconds: 10),
       ),
+      authenticatedAdmin: _superAdmin,
     );
     final router = container.read(routerProvider);
 
@@ -222,6 +249,7 @@ void main() {
     final container = await _pumpApp(
       tester,
       repo: _FakeAdminAuthRepository(restoredAdmin: _superAdmin),
+      authenticatedAdmin: _superAdmin,
     );
     final router = container.read(routerProvider);
 
@@ -236,9 +264,17 @@ void main() {
   testWidgets('sidebar visibility respects admin permissions', (
     WidgetTester tester,
   ) async {
+    // Force a narrow viewport so the hamburger Menu button and Drawer appear
+    // (AdminDashboardScreen shows the Drawer only when width < 1180).
+    tester.view.physicalSize = const Size(800, 1200);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     final container = await _pumpApp(
       tester,
       repo: _FakeAdminAuthRepository(restoredAdmin: _supportAdmin),
+      authenticatedAdmin: _supportAdmin,
     );
     final router = container.read(routerProvider);
 
@@ -256,7 +292,7 @@ void main() {
     );
     expect(
       find.descendant(of: drawerFinder, matching: find.text('Support')),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
     expect(
       find.descendant(of: drawerFinder, matching: find.text('Content')),
@@ -280,7 +316,11 @@ void main() {
     WidgetTester tester,
   ) async {
     final repo = _FakeAdminAuthRepository(restoredAdmin: _superAdmin);
-    final container = await _pumpApp(tester, repo: repo);
+    final container = await _pumpApp(
+      tester,
+      repo: repo,
+      authenticatedAdmin: _superAdmin,
+    );
     final router = container.read(routerProvider);
 
     router.go(Routes.adminDashboard);

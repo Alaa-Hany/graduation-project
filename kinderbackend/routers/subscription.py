@@ -1,6 +1,6 @@
 from typing import Any, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
@@ -11,6 +11,18 @@ from services.subscription_service import subscription_service
 router = APIRouter(prefix="/subscription", tags=["subscription"])
 public_router = APIRouter(tags=["subscription"])
 billing_router = APIRouter(prefix="/billing", tags=["subscription"])
+
+
+@billing_router.post(
+    "/portal",
+    summary="Open Billing Portal",
+    description="Open the provider billing portal to manage subscriptions or payment methods.",
+)
+def billing_portal(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    return subscription_service.billing_portal(db=db, user=user)
 
 
 class SubscriptionLifecycleOut(BaseModel):
@@ -178,38 +190,6 @@ class SubscriptionSelectResponse(SubscriptionStatus):
     )
 
 
-class SubscriptionManageResponse(BaseModel):
-    operation: str
-    current_plan_id: str
-    selected_plan_id: Optional[str] = None
-    status: str
-    last_payment_status: str
-    provider: str
-    session_id: str
-    url: str
-    customer_id: Optional[str] = None
-
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "operation": "billing_portal",
-                "current_plan_id": "PREMIUM",
-                "selected_plan_id": "PREMIUM",
-                "status": "active",
-                "last_payment_status": "paid",
-                "provider": "stripe",
-                "session_id": "bps_12345",
-                "url": "https://billing.example.invalid/session/bps_12345",
-                "customer_id": "cus_12345",
-            }
-        }
-    )
-
-
-class RefundRequest(BaseModel):
-    amount_cents: int | None = None
-    reason: str | None = None
-
 
 @router.get(
     "/me",
@@ -254,22 +234,6 @@ def upgrade_subscription(
     return subscription_service.upgrade_subscription(payload=payload, db=db, user=user)
 
 
-@router.post(
-    "/cancel",
-    response_model=SubscriptionInfo,
-    summary="Disable Deprecated Cancel Flow",
-    description="Recurring billing cancellation is disabled because plans are now sold as one-time purchases.",
-    response_description="Deprecated endpoint response.",
-)
-def cancel_subscription(
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
-):
-    raise HTTPException(
-        status_code=410,
-        detail="Cancel is disabled for one-time purchases",
-    )
-
 
 @public_router.get(
     "/plans",
@@ -299,7 +263,7 @@ def subscription_status(
 @router.post(
     "/select",
     response_model=SubscriptionSelectResponse,
-    summary="Select Purchase Plan",
+    summary="Select Subscription Plan",
     description="Choose a plan and start a one-time provider checkout session for the current billing provider.",
     response_description="Purchase status plus any provider checkout details needed by the client.",
 )
@@ -342,34 +306,32 @@ def activate_subscription(
 
 
 @router.post(
+    "/cancel",
+    summary="Cancel Purchased Plan",
+    description="Cancel current purchase; may be disabled for one-time purchases.",
+)
+def cancel_subscription(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    snapshot = subscription_service.get_subscription(db=db, user=user)
+    lifecycle = snapshot.get("lifecycle", {})
+    # One-time purchases do not expose a provider subscription id; treat as non-cancelable
+    if lifecycle.get("provider_subscription_id") is None or lifecycle.get("provider") == "internal":
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=410, detail="Cancel is disabled for one-time purchases")
+    return subscription_service.cancel_subscription(db=db, user=user)
+
+
+@router.post(
     "/manage",
-    response_model=SubscriptionManageResponse,
-    summary="Disable Deprecated Billing Portal Flow",
-    description="Billing portal access is disabled because plans are now sold as one-time purchases.",
-    response_description="Deprecated endpoint response.",
+    summary="Manage Purchased Plan",
+    description="Open billing portal to manage a recurring purchase; may be disabled for one-time purchases.",
 )
 def manage_subscription(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    raise HTTPException(
-        status_code=410,
-        detail="Billing portal is disabled for one-time purchases",
-    )
+    return subscription_service.manage_subscription(db=db, user=user)
 
-
-@billing_router.post(
-    "/portal",
-    response_model=SubscriptionManageResponse,
-    summary="Disable Deprecated Billing Portal Flow",
-    description="Billing portal access is disabled because plans are now sold as one-time purchases.",
-    response_description="Deprecated endpoint response.",
-)
-def billing_portal(
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
-):
-    raise HTTPException(
-        status_code=410,
-        detail="Billing portal is disabled for one-time purchases",
-    )

@@ -29,10 +29,21 @@ def _create_child(
     name: str = "Kid",
     picture_password: list[str] | None = None,
 ) -> ChildProfile:
+    import json
+
+    # Create proper bcrypt_json_v1 hashed password
+    items = picture_password or ["cat", "dog", "apple"]
+    canonical = json.dumps(items, separators=(",", ":"), ensure_ascii=True)
+    envelope = {
+        "scheme": PICTURE_PASSWORD_HASH_SCHEME,
+        "hash": hash_password(canonical),
+        "length": len(items),
+    }
+
     child = ChildProfile(
         parent_id=parent_id,
         name=name,
-        picture_password=picture_password or ["cat", "dog", "apple"],
+        picture_password=envelope,  # This will be JSON-encoded by the setter
         age=7,
     )
     db.add(child)

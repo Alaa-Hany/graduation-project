@@ -22,15 +22,20 @@ def _derive_fernet_key(secret_material: str) -> bytes:
 
 
 def _active_secret_material() -> str:
-    return settings.data_encryption_key or settings.jwt_active_secret
+    key = settings.data_encryption_key
+    if not key:
+        raise RuntimeError(
+            "DATA_ENCRYPTION_KEY environment variable is not set. "
+            "This is required for field-level encryption and must be separate "
+            "from the JWT secret. Set it before starting the application."
+        )
+    return key
 
 
 def _previous_secret_materials() -> tuple[str, ...]:
     if settings.data_encryption_previous_keys:
         return settings.data_encryption_previous_keys
-    if settings.data_encryption_key:
-        return ()
-    return settings.jwt_previous_secrets
+    return ()
 
 
 @lru_cache(maxsize=1)

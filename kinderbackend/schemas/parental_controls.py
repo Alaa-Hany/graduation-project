@@ -1,10 +1,11 @@
-from datetime import datetime
+from datetime import datetime, time
 from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 def _validate_hhmm(value: Optional[str]) -> Optional[str]:
+    """Validate time string in HH:MM format and return normalized format."""
     if value is None:
         return None
     text = value.strip()
@@ -18,6 +19,19 @@ def _validate_hhmm(value: Optional[str]) -> Optional[str]:
     if h < 0 or h > 23 or m < 0 or m > 59:
         raise ValueError("Time must be a valid 24-hour value")
     return f"{h:02d}:{m:02d}"
+
+
+def _validate_time_format(value: str | time) -> time:
+    """Validate and convert time value to time object."""
+    if isinstance(value, time):
+        return value
+    if isinstance(value, str):
+        validated_str = _validate_hhmm(value)
+        if validated_str is None:
+            raise ValueError("Time is required")
+        hh, mm = validated_str.split(":")
+        return time(hour=int(hh), minute=int(mm), second=0)
+    raise ValueError("Time must be a string in HH:MM format or a time object")
 
 
 class AccountParentalControlsPayload(BaseModel):
@@ -35,17 +49,15 @@ class AccountParentalControlsPayload(BaseModel):
 
 class ScheduleRuleIn(BaseModel):
     day_of_week: int = Field(..., ge=0, le=6)
-    start_time: str
-    end_time: str
+    start_time: time | str
+    end_time: time | str
     is_allowed: bool = True
 
-    @field_validator("start_time", "end_time")
+    @field_validator("start_time", "end_time", mode="before")
     @classmethod
-    def validate_time(cls, value: str) -> str:
-        validated = _validate_hhmm(value)
-        if validated is None:
-            raise ValueError("Time is required")
-        return validated
+    def validate_time(cls, value: str | time) -> time:
+        """Validate and convert time values to time objects."""
+        return _validate_time_format(value)
 
 
 class BlockedAppIn(BaseModel):

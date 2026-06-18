@@ -221,6 +221,11 @@ class _FakeAdminManagementRepository extends AdminManagementRepository {
 
   @override
   Future<AdminSupportTicket> closeSupportTicket(int ticketId) async => ticket;
+
+  @override
+  Future<AdminCmsCatalogResponse> fetchCmsCatalog({String axisKey = ''}) async {
+    return const AdminCmsCatalogResponse(categories: [], axes: []);
+  }
 }
 
 Future<void> _pumpLocalizedApp(

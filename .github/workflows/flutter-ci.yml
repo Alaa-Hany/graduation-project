@@ -62,6 +62,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Build APK for verification
+        run: flutter build apk --debug
+
       - name: Run Flutter tests
         run: flutter test --coverage
 

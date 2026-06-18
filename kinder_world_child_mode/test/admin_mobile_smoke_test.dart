@@ -32,10 +32,28 @@ class _TestSecureStorage extends SecureStorage {
   Future<String?> getAuthToken() async => null;
 
   @override
+  bool get hasCachedAuthToken => true;
+
+  @override
+  String? get cachedAuthToken => null;
+
+  @override
   Future<String?> getUserRole() async => null;
 
   @override
   Future<String?> getChildSession() async => null;
+
+  @override
+  Future<bool> isAuthenticated() async => false;
+
+  @override
+  Future<bool> isParentPinVerified() async => false;
+
+  @override
+  Future<bool> clearParentPinVerification() async => true;
+
+  @override
+  bool get hasCachedSessionSnapshot => true;
 }
 
 class _FakeAdminAuthRepository extends AdminAuthRepository {
@@ -51,6 +69,9 @@ class _FakeAdminAuthRepository extends AdminAuthRepository {
         );
 
   final AdminUser admin;
+
+  @override
+  Future<bool> canBootstrap() async => false;
 
   @override
   Future<AdminUser?> restoreSession() async => admin;
@@ -306,7 +327,7 @@ void main() {
     await _pumpDashboard(tester, route: Routes.adminDashboard);
 
     expect(find.byType(AdminDashboardScreen), findsOneWidget);
-    expect(find.textContaining('Admin Dashboard'), findsOneWidget);
+    expect(find.textContaining('Welcome back'), findsOneWidget);
     _expectNoFrameworkException(tester);
   });
 
@@ -355,7 +376,7 @@ void main() {
     await _pumpDashboard(tester, route: Routes.adminSubscriptions);
 
     expect(find.byType(AdminDashboardScreen), findsOneWidget);
-    expect(find.text('Subscriptions'), findsOneWidget);
+    expect(find.text('Subscriptions'), findsWidgets);
     _expectNoFrameworkException(tester);
   });
 

@@ -127,6 +127,7 @@ class Settings:
     ai_model: str
     ai_max_tokens: int
     ai_temperature: float
+    sentry_dsn: str | None
 
     @property
     def is_production(self) -> bool:
@@ -223,6 +224,7 @@ class Settings:
         ai_model = (os.getenv("AI_MODEL") or "gpt-4o-mini").strip() or "gpt-4o-mini"
         ai_max_tokens = max(_as_int(os.getenv("AI_MAX_TOKENS"), 500), 64)
         ai_temperature = min(max(_as_float(os.getenv("AI_TEMPERATURE"), 0.7), 0.0), 2.0)
+        sentry_dsn = (os.getenv("SENTRY_DSN") or "").strip() or None
 
         if not jwt_active_secret:
             raise ValueError(
@@ -294,6 +296,13 @@ class Settings:
         if environment == "production" and allowed_origin_regex in {"*", ".*", "^.*$", "^.*"}:
             raise ValueError("ALLOWED_ORIGIN_REGEX is too permissive for production.")
 
+        if environment == "production" and not redis_url:
+            raise ValueError(
+                "REDIS_URL is required in production. "
+                "Rate limiting uses Redis-backed counters that are not safe to run "
+                "in-process across multiple workers."
+            )
+
         if payment_reconciliation_enabled and not payment_reconciliation_schedule:
             raise ValueError(
                 "PAYMENT_RECONCILIATION_ENABLED is true but PAYMENT_RECONCILIATION_SCHEDULE is missing."
@@ -349,6 +358,7 @@ class Settings:
             ai_model=ai_model,
             ai_max_tokens=ai_max_tokens,
             ai_temperature=ai_temperature,
+            sentry_dsn=sentry_dsn,
         )
 
 

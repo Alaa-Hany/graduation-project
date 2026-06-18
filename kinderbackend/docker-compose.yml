@@ -1,0 +1,76 @@
+version: "3.9"
+
+services:
+
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       kinderdb
+      POSTGRES_USER:     kinder
+      POSTGRES_PASSWORD: kinder_secret          # override via .env in production
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kinder -d kinderdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ── Redis ───────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  # ── Backend ─────────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      # ── Database ─────────────────────────────────────────────────────────
+      DATABASE_URL: "postgresql://kinder:kinder_secret@db:5432/kinderdb"
+
+      # ── Secrets — REPLACE before deploying to any shared environment ─────
+      #
+      # Generate a JWT secret:
+      #   python -c "import secrets; print(secrets.token_hex(32))"
+      KINDER_JWT_SECRET: "change-me-in-production"
+
+      # Generate a Fernet key:
+      #   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+      DATA_ENCRYPTION_KEY: "change-me-in-production"
+
+      # ── App behaviour ────────────────────────────────────────────────────
+      ENVIRONMENT:         "development"
+      AUTO_RUN_MIGRATIONS: "true"
+
+      # ── Optional integrations (uncomment and fill in to enable) ──────────
+      REDIS_URL:              "redis://redis:6379/0"
+      # SENTRY_DSN:             ""
+      # OPENAI_API_KEY:         ""
+      # STRIPE_SECRET_KEY:      ""
+      # STRIPE_WEBHOOK_SECRET:  ""
+      # CLOUDINARY_CLOUD_NAME:  ""
+      # CLOUDINARY_API_KEY:     ""
+      # CLOUDINARY_API_SECRET:  ""
+
+volumes:
+  postgres_data:

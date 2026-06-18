@@ -4,6 +4,10 @@ Kinder World is a multi-role educational and parental-control platform built wit
 
 This README reflects the current codebase, not legacy docs.
 
+## Database Schema
+
+![ER Diagram](kinderbackend/docs/er_diagram.svg)
+
 ## Overview
 
 The repository contains:

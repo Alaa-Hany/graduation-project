@@ -1,4 +1,4 @@
-﻿from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy.orm import Session
 
@@ -10,20 +10,7 @@ from rate_limit import (
     password_change_rate_limit,
 )
 from schemas.common import SuccessResponse
-from services.auth_service import (
-    change_parent_pin,
-    change_password,
-    disable_two_factor,
-    enable_two_factor,
-    get_parent_pin_status,
-    logout,
-    request_parent_pin_reset,
-    set_parent_pin,
-    setup_two_factor,
-    two_factor_status,
-    update_profile,
-    verify_parent_pin,
-)
+from services.auth_service import auth_service
 
 router = APIRouter(tags=["auth"])
 password_change_rate_limit_check = Depends(password_change_rate_limit())
@@ -192,7 +179,7 @@ def update_profile_endpoint(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    return update_profile(payload=payload, db=db, user=user)
+    return auth_service.update_profile(payload=payload, db=db, user=user)
 
 
 @router.post(
@@ -208,7 +195,7 @@ def change_password_endpoint(
     user: User = Depends(get_current_user),
     rate_limit_check: None = password_change_rate_limit_check,
 ):
-    return change_password(payload=payload, db=db, user=user)
+    return auth_service.change_password(payload=payload, db=db, user=user)
 
 
 @router.post(
@@ -222,7 +209,7 @@ def logout_endpoint(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    return logout(db=db, user=user)
+    return auth_service.logout(db=db, user=user)
 
 
 @router.get(
@@ -233,7 +220,7 @@ def logout_endpoint(
     response_description="Current parent PIN state.",
 )
 def get_parent_pin_status_endpoint(user: User = Depends(get_current_user)):
-    return get_parent_pin_status(user=user)
+    return auth_service.get_parent_pin_status(user=user)
 
 
 @router.post(
@@ -249,7 +236,7 @@ def set_parent_pin_endpoint(
     user: User = Depends(get_current_user),
     rate_limit_check: None = parent_pin_mutation_rate_limit_check,
 ):
-    return set_parent_pin(payload=payload, db=db, user=user)
+    return auth_service.set_parent_pin(payload=payload, db=db, user=user)
 
 
 @router.post(
@@ -265,7 +252,7 @@ def verify_parent_pin_endpoint(
     user: User = Depends(get_current_user),
     rate_limit_check: None = parent_pin_verify_rate_limit_check,
 ):
-    return verify_parent_pin(payload=payload, db=db, user=user)
+    return auth_service.verify_parent_pin(payload=payload, db=db, user=user)
 
 
 @router.post(
@@ -281,7 +268,7 @@ def change_parent_pin_endpoint(
     user: User = Depends(get_current_user),
     rate_limit_check: None = parent_pin_mutation_rate_limit_check,
 ):
-    return change_parent_pin(payload=payload, db=db, user=user)
+    return auth_service.change_parent_pin(payload=payload, db=db, user=user)
 
 
 @router.post(
@@ -297,7 +284,7 @@ def request_parent_pin_reset_endpoint(
     user: User = Depends(get_current_user),
     rate_limit_check: None = parent_pin_mutation_rate_limit_check,
 ):
-    return request_parent_pin_reset(payload=payload, db=db, user=user)
+    return auth_service.request_parent_pin_reset(payload=payload, db=db, user=user)
 
 
 @router.get(
@@ -308,7 +295,7 @@ def request_parent_pin_reset_endpoint(
     response_description="Current 2FA state for the parent account.",
 )
 def get_two_factor_status_endpoint(user: User = Depends(get_current_user)):
-    return two_factor_status(user=user)
+    return auth_service.two_factor_status(user=user)
 
 
 @router.post(
@@ -322,7 +309,7 @@ def setup_two_factor_endpoint(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    return setup_two_factor(db=db, user=user)
+    return auth_service.two_factor_setup(db=db, user=user)
 
 
 @router.post(
@@ -337,7 +324,7 @@ def enable_two_factor_endpoint(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    return enable_two_factor(db=db, user=user, code=payload.code)
+    return auth_service.enable_two_factor(db=db, user=user, code=payload.code)
 
 
 @router.post(
@@ -351,4 +338,4 @@ def disable_two_factor_endpoint(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    return disable_two_factor(db=db, user=user)
+    return auth_service.disable_two_factor(db=db, user=user)

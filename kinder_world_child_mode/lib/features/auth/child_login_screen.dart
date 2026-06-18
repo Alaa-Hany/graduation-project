@@ -89,7 +89,11 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
 
   @override
   void dispose() {
-    _topMessageEntry?.remove();
+    try {
+      _topMessageEntry?.remove();
+    } catch (_) {
+      // ignore: overlay may already be detached when widget is disposed
+    }
     _topMessageEntry = null;
     _childNameController.dispose();
     _childIdController.dispose();
@@ -117,7 +121,12 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
 
   void _showTopMessage(String message, {bool isError = true}) {
     if (!mounted) return;
-    _topMessageEntry?.remove();
+    try {
+      _topMessageEntry?.remove();
+    } catch (_) {
+      // ignore: entry may already be detached
+    }
+    _topMessageEntry = null;
     final textDirection = Directionality.of(context);
     _topMessageEntry = OverlayEntry(
       builder: (overlayContext) {
@@ -163,12 +172,25 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
       },
     );
 
-    final overlay = Overlay.of(context, rootOverlay: true);
+    final overlay = Overlay.maybeOf(context, rootOverlay: true);
+    if (overlay == null) {
+      _topMessageEntry = null;
+      return;
+    }
     final entry = _topMessageEntry!;
-    overlay.insert(entry);
+    try {
+      overlay.insert(entry);
+    } catch (_) {
+      _topMessageEntry = null;
+      return;
+    }
     Future.delayed(const Duration(seconds: 3), () {
       if (_topMessageEntry == entry) {
-        entry.remove();
+        try {
+          entry.remove();
+        } catch (_) {
+          // Overlay already disposed (e.g. widget rebuilt in tests)
+        }
         _topMessageEntry = null;
       }
     });
@@ -1050,6 +1072,17 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
           onTogglePicture: _togglePicture,
         ),
         const SizedBox(height: 24),
+        if (_error != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              _error!,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.error,
+                fontSize: 14,
+              ),
+            ),
+          ),
         SizedBox(
           width: double.infinity,
           height: 56,
@@ -1209,6 +1242,17 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
           onTogglePicture: _togglePicture,
         ),
         const SizedBox(height: 24),
+        if (_error != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              _error!,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.error,
+                fontSize: 14,
+              ),
+            ),
+          ),
         SizedBox(
           width: double.infinity,
           height: 56,

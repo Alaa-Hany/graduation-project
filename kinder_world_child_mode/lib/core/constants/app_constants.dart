@@ -44,6 +44,9 @@ class AppConstants {
   static const String appName = 'Kinder World';
   static const String appVersion = '1.0.0';
 
+  /// API version token. Must match API_VERSION in kinderbackend/main.py.
+  static const String apiVersion = 'v1';
+
   // Override at build time:
   // flutter run --dart-define=API_BASE_URL=http://<HOST>:8000
   // flutter build apk --dart-define=API_BASE_URL=http://<HOST>:8000
@@ -125,6 +128,64 @@ class AppConstants {
       '--dart-define=API_BASE_URL=<URL>.',
     );
   }
+
+  // ---------------------------------------------------------------------------
+  // Certificate Pinning
+  // ---------------------------------------------------------------------------
+  //
+  // HOW TO OBTAIN THE FINGERPRINT BEFORE GOING TO PRODUCTION
+  // ─────────────────────────────────────────────────────────
+  // Option A – from a PEM file:
+  //   openssl x509 -in cert.pem -noout -fingerprint -sha256
+  //   → SHA256 Fingerprint=AA:BB:CC:...
+  //
+  // Option B – live from the server:
+  //   openssl s_client -connect api.example.com:443 < /dev/null \
+  //     | openssl x509 -noout -fingerprint -sha256
+  //
+  // HOW TO STORE THE FINGERPRINT
+  // ─────────────────────────────
+  // 1. Copy the hex string printed after "SHA256 Fingerprint=".
+  // 2. You may keep the colons (AA:BB:CC…) or remove them – the
+  //    NetworkService normalises the value at runtime.
+  // 3. Replace the placeholder below with the real value and rebuild.
+  //
+  // HOW TO ROTATE THE FINGERPRINT
+  // ──────────────────────────────
+  // Before your old cert expires, ship a release that includes BOTH the
+  // current and the new cert fingerprints (add a second constant and check
+  // both in NetworkService._verifyCertificatePin).  Once the new cert is
+  // live everywhere, remove the old constant.
+  //
+  // ENABLE / DISABLE PINNING
+  // ─────────────────────────
+  // • Default: enabled in production/prod, disabled in every other env.
+  // • Override at build time:
+  //     --dart-define=ENABLE_CERT_PINNING=true   // force-enable
+  //     --dart-define=ENABLE_CERT_PINNING=false  // force-disable (e.g. CI)
+  // • In tests, pass enablePinning: false to the NetworkService constructor.
+
+  /// SHA-256 fingerprint of the production TLS certificate.
+  ///
+  /// Replace this placeholder with the real fingerprint before building a
+  /// production release (see the comment block above for how to obtain it).
+  /// Colons are accepted and stripped at runtime.
+  static const String pinnedCertificateSha256 = String.fromEnvironment(
+    'PINNED_CERT_SHA256',
+    defaultValue: 'REPLACE_WITH_PRODUCTION_SHA256_FINGERPRINT',
+  );
+
+  /// Whether certificate pinning is active.
+  ///
+  /// Defaults to `true` when [_appEnv] is `production` or `prod`, and
+  /// `false` for every other environment.  Override with
+  /// `--dart-define=ENABLE_CERT_PINNING=true|false`.
+  static const bool enableCertificatePinning = bool.fromEnvironment(
+    'ENABLE_CERT_PINNING',
+    defaultValue: _appEnv == 'production' || _appEnv == 'prod',
+  );
+
+  // ---------------------------------------------------------------------------
 
   static const Duration apiTimeout = Duration(seconds: 60);
 

@@ -22,13 +22,7 @@ from schemas.auth import (
     VerifyEmailOtpIn,
 )
 from serializers import user_to_json
-from services.auth_service import (
-    login_parent,
-    refresh_parent_access_token,
-    register_parent,
-    resend_parent_email_otp,
-    verify_parent_email_otp,
-)
+from services.auth_service import auth_service
 from services.child_service import (
     change_child_password,
     login_child,
@@ -54,7 +48,7 @@ def register(
     db: Session = Depends(get_db),
     rate_limit_check: None = auth_rate_limit_check,
 ):
-    return register_parent(payload, db)
+    return auth_service.register_parent(payload, db)
 
 
 @router.post(
@@ -69,7 +63,7 @@ def verify_email_otp(
     db: Session = Depends(get_db),
     rate_limit_check: None = email_otp_verify_rate_limit_check,
 ):
-    return verify_parent_email_otp(payload, db)
+    return auth_service.verify_parent_email_otp(payload, db)
 
 
 @router.post(
@@ -84,7 +78,7 @@ def resend_email_otp(
     db: Session = Depends(get_db),
     rate_limit_check: None = email_otp_resend_rate_limit_check,
 ):
-    return resend_parent_email_otp(payload, db)
+    return auth_service.resend_parent_email_otp(payload, db)
 
 
 @router.post(
@@ -99,7 +93,7 @@ def login(
     db: Session = Depends(get_db),
     rate_limit_check: None = auth_rate_limit_check,
 ):
-    return login_parent(payload, db)
+    return auth_service.login_parent(payload, db)
 
 
 @router.post(
@@ -114,7 +108,7 @@ def refresh(
     db: Session = Depends(get_db),
     rate_limit_check: None = auth_rate_limit_check,
 ):
-    return refresh_parent_access_token(payload, db)
+    return auth_service.refresh_parent_access_token(payload, db)
 
 
 @router.post(

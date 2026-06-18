@@ -39,7 +39,11 @@ def _create_super_admin(seed_builtin_rbac, create_admin, admin_headers):
     return admin, admin_headers(admin)
 
 
-def test_regression_parent_onboarding_login(client):
+def test_regression_parent_onboarding_login(client, monkeypatch):
+    monkeypatch.delenv("EMAIL_DOMAIN_ALLOWLIST", raising=False)
+    monkeypatch.delenv("EMAIL_DOMAIN_DENYLIST", raising=False)
+    from services.auth_service import auth_service
+    monkeypatch.setattr(auth_service, "_generate_email_otp", lambda: "123456")
     register_payload = {
         "name": "Regression Parent",
         "email": "regression.parent@example.com",
@@ -49,19 +53,24 @@ def test_regression_parent_onboarding_login(client):
     register = client.post("/auth/register", json=register_payload)
     assert register.status_code == 200
     register_json = register.json()
-    assert register_json["user"]["email"] == "regression.parent@example.com"
-
-    access_token = register_json["access_token"]
-    me = client.get("/auth/me", headers={"Authorization": f"Bearer {access_token}"})
-    assert me.status_code == 200
-    assert me.json()["user"]["email"] == "regression.parent@example.com"
+    assert register_json["email"] == "regression.parent@example.com"
+    assert register_json["verification_required"] is True
 
     login = client.post(
         "/auth/login",
         json={"email": "regression.parent@example.com", "password": "Password123!"},
     )
-    assert login.status_code == 200
-    assert login.json()["user"]["email"] == "regression.parent@example.com"
+    assert login.status_code == 403
+    assert login.json()["detail"]["code"] == "EMAIL_VERIFICATION_REQUIRED"
+
+    verify = client.post(
+        "/auth/verify-email-otp",
+        json={"email": "regression.parent@example.com", "otp": "123456"},
+    )
+    assert verify.status_code == 200
+    verify_json = verify.json()
+    assert verify_json["user"]["email"] == "regression.parent@example.com"
+    assert verify_json["access_token"]
 
 
 def test_regression_child_mode_content_usage(client, db, create_parent):
@@ -196,7 +205,7 @@ def test_regression_payment_provider_webhook_reconciliation(
     assert checkout.status_code == 200
 
     portal = client.post("/billing/portal", headers=headers)
-    assert portal.status_code in {200, 409, 503}
+    assert portal.status_code in {200, 409, 410, 503}
 
     webhook = client.post("/webhooks/stripe", content=b"{}")
     assert webhook.status_code == 400

@@ -1,12 +1,17 @@
+import json
+from datetime import date as date_type
+
 from sqlalchemy import (
     JSON,
     Boolean,
+    CheckConstraint,
     Column,
     Date,
     ForeignKey,
     Index,
     Integer,
     String,
+    Time,
     UniqueConstraint,
     false,
     func,
@@ -282,16 +287,50 @@ class ChildProfile(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     parent_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     name = Column(String, nullable=False)
-    picture_password = Column(JSON, nullable=False)  # Legacy list or hashed JSON payload
+    picture_password_hash = Column(String, nullable=False)  # bcrypt_json_v1 envelope as JSON string; see migration h3f6d2a7b1e8c
     date_of_birth = Column(Date, nullable=True)
     created_at = Column(UTCDateTime(), server_default=func.now(), nullable=False)
     updated_at = Column(
         UTCDateTime(), server_default=func.now(), onupdate=func.now(), nullable=False
     )
-    age = Column(Integer, nullable=True)
     avatar = Column(String, nullable=True)
     is_active = Column(Boolean, default=True, nullable=False, server_default=true())
     deleted_at = Column(UTCDateTime(), nullable=True, index=True)
+
+    @property
+    def picture_password(self) -> object:
+        if not self.picture_password_hash:
+            return None
+        try:
+            return json.loads(self.picture_password_hash)
+        except (TypeError, ValueError):
+            return self.picture_password_hash
+
+    @picture_password.setter
+    def picture_password(self, value: object) -> None:
+        if isinstance(value, str):
+            self.picture_password_hash = value
+            return
+        self.picture_password_hash = json.dumps(value, separators=(",", ":"), ensure_ascii=True)
+
+    @property
+    def age(self) -> int | None:
+        """Compute age from date_of_birth."""
+        if self.date_of_birth is None:
+            return None
+        today = date_type.today()
+        return today.year - self.date_of_birth.year - (
+            (today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day)
+        )
+
+    @age.setter
+    def age(self, value: int | None) -> None:
+        if value is None:
+            self.date_of_birth = None
+            return
+        age = int(value)
+        today = date_type.today()
+        self.date_of_birth = date_type(today.year - age, 1, 1)
 
     parent = relationship("User", back_populates="children")
     activity_events = relationship(
@@ -429,6 +468,10 @@ class LessonProgress(Base):
     __tablename__ = "lesson_progress"
     __table_args__ = (
         UniqueConstraint("child_id", "lesson_id", name="uq_lesson_progress_child_lesson"),
+        CheckConstraint(
+            "progress_percent BETWEEN 0 AND 100",
+            name="ck_lesson_progress_percent_range",
+        ),
     )
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
@@ -974,6 +1017,9 @@ class ChildParentalControlSetting(Base):
 
 class ChildScheduleRule(Base):
     __tablename__ = "child_schedule_rules"
+    __table_args__ = (
+        Index("ix_child_schedule_rules_setting_day", "setting_id", "day_of_week"),
+    )
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     setting_id = Column(
@@ -983,8 +1029,8 @@ class ChildScheduleRule(Base):
         index=True,
     )
     day_of_week = Column(Integer, nullable=False, index=True)  # 0=Mon ... 6=Sun
-    start_time = Column(String, nullable=False)  # HH:MM
-    end_time = Column(String, nullable=False)  # HH:MM
+    start_time = Column(Time, nullable=False)  # HH:MM:SS
+    end_time = Column(Time, nullable=False)  # HH:MM:SS
     is_allowed = Column(Boolean, default=True, nullable=False, server_default=true())
     created_at = Column(UTCDateTime(), server_default=func.now(), nullable=False)
 
@@ -1041,10 +1087,10 @@ class PaymentMethod(Base):
     method_type = Column(String, nullable=True, index=True)
     brand = Column(String, nullable=True)
     last4 = Column(String, nullable=True)
-    exp_month = Column(Integer, nullable=True)
-    exp_year = Column(Integer, nullable=True)
-    is_default = Column(Boolean, nullable=False, default=False, server_default=false())
-    fingerprint = Column(String, nullable=True, index=True)
+    is_default = Column(Boolean, default=False, nullable=False, server_default=false())
     metadata_json = Column(JSON, nullable=True)
-    deleted_at = Column(UTCDateTime(), nullable=True, index=True)
+    expires_at = Column(UTCDateTime(), nullable=True)
     created_at = Column(UTCDateTime(), server_default=func.now(), nullable=False)
+    updated_at = Column(UTCDateTime(), server_default=func.now(), onupdate=func.now(), nullable=False)
+    deleted_at = Column(UTCDateTime(), nullable=True, index=True)
+   

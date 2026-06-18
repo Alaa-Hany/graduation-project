@@ -1,4 +1,4 @@
-﻿import json
+import json
 import logging
 import os
 import time
@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from auth import create_token, decode_token, hash_password, verify_password
 from core.errors import forbidden, http_error, not_found, unauthorized, unprocessable
+from core.redis_client import get_redis_client
 from core.time_utils import db_utc_now, utc_now
 from core.validators import resolve_child_age, validate_child_age, validate_picture_password_length
 from models import ChildProfile, User
@@ -28,6 +29,14 @@ logger = logging.getLogger(__name__)
 PREMIUM_PRICE_USD = 10
 PICTURE_PASSWORD_HASH_SCHEME = "bcrypt_json_v1"
 
+# Redis key helpers — module-level dicts removed; state lives in Redis.
+def _child_failed_key(child_id: int, client_ip: str) -> str:
+    return f"child:failed:{child_id}:{client_ip or 'unknown'}"
+
+def _child_device_key(child_id: int) -> str:
+    return f"child:device:{child_id}"
+
+
 _FAILED_ATTEMPTS: dict[str, list[float]] = defaultdict(list)
 _DEVICE_BINDINGS: dict[int, str] = {}
 
@@ -45,8 +54,6 @@ class ChildService:
         }
 
     def picture_password_length(self, stored_password: object) -> int:
-        if isinstance(stored_password, list):
-            return len(stored_password)
         if isinstance(stored_password, dict):
             length = stored_password.get("length")
             if isinstance(length, int):
@@ -59,8 +66,8 @@ class ChildService:
         stored_password: object,
         provided_password: list[str],
     ) -> bool:
-        if isinstance(stored_password, list):
-            return stored_password == provided_password
+        # Legacy plaintext-list format removed; all passwords are bcrypt_json_v1
+        # after migration c8d9e0f1a2b3.
         if isinstance(stored_password, dict):
             scheme = stored_password.get("scheme")
             password_hash = stored_password.get("hash")
@@ -119,14 +126,6 @@ class ChildService:
             "on",
         }
 
-    def _cleanup_attempts(self, key: str) -> None:
-        now = time.time()
-        window_start = now - self._rate_limit_window_seconds()
-        _FAILED_ATTEMPTS[key] = [ts for ts in _FAILED_ATTEMPTS[key] if ts > window_start]
-
-    def _attempt_key(self, *, child_id: int, client_ip: str) -> str:
-        return f"{child_id}:{client_ip or 'unknown'}"
-
     def _record_failed_attempt(
         self,
         *,
@@ -136,12 +135,30 @@ class ChildService:
         user_agent: str | None,
         device_id: str | None,
     ) -> None:
-        key = self._attempt_key(child_id=child_id, client_ip=client_ip)
-        _FAILED_ATTEMPTS[key].append(time.time())
-        self._cleanup_attempts(key)
-        count = len(_FAILED_ATTEMPTS[key])
-        suspicious = count >= self._suspicious_threshold()
+        """Increment the Redis failure counter and log."""
+        rc = get_redis_client()
+        count = 0
+        if rc is None:
+            key = _child_failed_key(child_id, client_ip)
+            now = time.time()
+            window_start = now - self._rate_limit_window_seconds()
+            attempts = [ts for ts in _FAILED_ATTEMPTS[key] if ts > window_start]
+            attempts.append(now)
+            _FAILED_ATTEMPTS[key] = attempts
+            count = len(attempts)
+        else:
+            rkey = _child_failed_key(child_id, client_ip)
+            window = self._rate_limit_window_seconds()
+            try:
+                pipe = rc.pipeline()
+                pipe.incr(rkey)
+                pipe.expire(rkey, window, nx=True)
+                count, _ = pipe.execute()
+                count = int(count)
+            except Exception as exc:
+                logger.error("Redis child failure INCR failed (%s)", exc)
 
+        suspicious = count >= self._suspicious_threshold()
         logger.warning(
             "child_auth_failed child_id=%s ip=%s reason=%s attempts_in_window=%s suspicious=%s device_id=%s user_agent=%s",
             child_id,
@@ -161,9 +178,22 @@ class ChildService:
         user_agent: str | None,
         device_id: str | None,
     ) -> None:
-        key = self._attempt_key(child_id=child_id, client_ip=client_ip)
-        self._cleanup_attempts(key)
-        attempts = len(_FAILED_ATTEMPTS[key])
+        """Raise 429 if the failure counter for this child+IP exceeds the limit."""
+        rc = get_redis_client()
+        attempts = 0
+        if rc is None:
+            key = _child_failed_key(child_id, client_ip)
+            window_start = time.time() - self._rate_limit_window_seconds()
+            _FAILED_ATTEMPTS[key] = [ts for ts in _FAILED_ATTEMPTS[key] if ts > window_start]
+            attempts = len(_FAILED_ATTEMPTS[key])
+        else:
+            rkey = _child_failed_key(child_id, client_ip)
+            try:
+                attempts = int(rc.get(rkey) or 0)
+            except Exception as exc:
+                logger.error("Redis child rate-limit GET failed (%s); skipping check", exc)
+                return
+
         limit = self._rate_limit_max_attempts()
         if attempts >= limit:
             logger.warning(
@@ -210,9 +240,36 @@ class ChildService:
                 raise unprocessable("Device ID is required for child login")
             return
 
-        bound_device = _DEVICE_BINDINGS.get(child_id)
+        rc = get_redis_client()
+        if rc is None:
+            bound_device = _DEVICE_BINDINGS.get(child_id)
+            if bound_device is None:
+                _DEVICE_BINDINGS[child_id] = device_id
+                logger.info("child_auth_device_bound child_id=%s device_id=%s", child_id, device_id)
+                return
+            if bound_device != device_id:
+                self._record_failed_attempt(
+                    child_id=child_id,
+                    client_ip=client_ip,
+                    reason="DEVICE_BINDING_MISMATCH",
+                    user_agent=user_agent,
+                    device_id=device_id,
+                )
+                raise forbidden("This child account is bound to a different device")
+            return
+
+        dkey = _child_device_key(child_id)
+        try:
+            bound_device = rc.get(dkey)
+        except Exception as exc:
+            logger.error("Redis device binding GET failed (%s); skipping binding check", exc)
+            return
+
         if bound_device is None:
-            _DEVICE_BINDINGS[child_id] = device_id
+            try:
+                rc.set(dkey, device_id)  # no TTL — binding is permanent until explicitly cleared
+            except Exception as exc:
+                logger.error("Redis device binding SET failed (%s)", exc)
             logger.info("child_auth_device_bound child_id=%s device_id=%s", child_id, device_id)
             return
 
@@ -292,9 +349,10 @@ class ChildService:
             name=payload.name,
             picture_password=self._hash_picture_password(payload.picture_password),
             date_of_birth=payload.date_of_birth,
-            age=resolved_age,
             avatar=payload.avatar,
         )
+        if payload.age is not None and payload.date_of_birth is None:
+            child.age = payload.age
         db.add(child)
         db.commit()
         db.refresh(child)
@@ -352,10 +410,13 @@ class ChildService:
             child.picture_password = self._hash_picture_password(payload.picture_password)
         if payload.date_of_birth is not None:
             child.date_of_birth = payload.date_of_birth
+        if payload.age is not None:
+            if payload.date_of_birth is None:
+                child.age = payload.age
         if payload.age is not None or payload.date_of_birth is not None:
             resolved_age = resolve_child_age(payload.age, payload.date_of_birth)
             validate_child_age(resolved_age)
-            child.age = resolved_age
+            # Age is now computed from date_of_birth; validation still applies
         if payload.avatar is not None:
             child.avatar = payload.avatar
 
@@ -366,27 +427,13 @@ class ChildService:
         return {"child": child_to_json(child)}
 
     def register_child(self, *, payload: ChildRegisterIn, parent: User, db: Session) -> dict:
-        resolved_age = resolve_child_age(payload.age, payload.date_of_birth)
-        validate_child_age(resolved_age)
-        self._ensure_parent_matches_payload_email(
-            parent=parent,
-            parent_email=payload.parent_email,
-        )
-        self.enforce_child_limit(parent=parent, db=db)
-        self.ensure_unique_child_name(parent=parent, name=payload.name, db=db)
+        from schemas.children import ChildCreate
 
-        child = ChildProfile(
-            parent_id=parent.id,
-            name=payload.name,
-            picture_password=self._hash_picture_password(payload.picture_password),
-            date_of_birth=payload.date_of_birth,
-            age=resolved_age,
-            avatar=payload.avatar,
+        return self.create_child_profile(
+            payload=ChildCreate(**payload.model_dump()),
+            parent=parent,
+            db=db,
         )
-        db.add(child)
-        db.commit()
-        db.refresh(child)
-        return {"child": child_to_json(child)}
 
     def _resolve_device_id(self, payload: ChildLoginIn) -> str | None:
         device_id = (payload.device_id or "").strip()
@@ -481,9 +528,14 @@ class ChildService:
             user_agent=user_agent,
         )
 
-        key = self._attempt_key(child_id=child.id, client_ip=client_ip)
-        if key in _FAILED_ATTEMPTS:
-            del _FAILED_ATTEMPTS[key]
+        rc = get_redis_client()
+        if rc is not None:
+            try:
+                rc.delete(_child_failed_key(child.id, client_ip))
+            except Exception as exc:
+                logger.error("Redis child failure-key DELETE failed (%s)", exc)
+        else:
+            _FAILED_ATTEMPTS.pop(_child_failed_key(child.id, client_ip), None)
 
         session_payload = self._build_child_session(child=child, device_id=device_id)
         logger.info(

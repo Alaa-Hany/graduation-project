@@ -1,12 +1,15 @@
 import logging
+import time
 from contextlib import asynccontextmanager
 
+import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 # Import admin_models so SQLAlchemy registers the tables with Base.metadata
 import admin_models  # noqa: F401
+from core.envelope_middleware import EnvelopeMiddleware
 from core.exception_handlers import build_error_body, register_exception_handlers
 from core.logging_utils import configure_logging, log_with_context
 from core.message_catalog import MaintenanceMessages
@@ -49,7 +52,25 @@ from routers.voice import router as voice_router
 
 configure_logging(settings)
 
+if settings.sentry_dsn:
+    sentry_sdk.init(
+        dsn=settings.sentry_dsn,
+        environment=settings.environment,
+        traces_sample_rate=0.2,
+        send_default_pii=False,
+    )
+
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# API versioning
+# ---------------------------------------------------------------------------
+API_V1_PREFIX = "/api/v1"  # legacy-compatible; no envelope
+API_V2_PREFIX = "/api/v2"  # envelope-wrapped responses
+
+# Keep the single constant used elsewhere (e.g. maintenance bypass).
+API_VERSION = "v1"
+API_PREFIX = API_V1_PREFIX
 
 _DEV_CORS_ORIGIN_REGEX = (
     r"^https?://("
@@ -61,15 +82,24 @@ _DEV_CORS_ORIGIN_REGEX = (
 )
 
 _MAINTENANCE_BYPASS_PREFIXES = (
-    "/admin",
+    f"{API_V1_PREFIX}/admin",  # /api/v1/admin
+    f"{API_V2_PREFIX}/admin",  # /api/v2/admin
     "/docs",
     "/redoc",
     "/openapi.json",
-    "/webhooks",
+    "/webhooks",    # payment webhooks are intentionally unversioned
+    "/health",      # health checks are intentionally unversioned
 )
 _MAINTENANCE_BYPASS_PATHS = {
     "/",
 }
+
+# ---------------------------------------------------------------------------
+# Process-level maintenance-mode cache (5-second TTL)
+# ---------------------------------------------------------------------------
+_MAINTENANCE_CACHE_TTL = 5.0  # seconds
+_maintenance_cache: bool | None = None
+_maintenance_cache_expires_at: float = 0.0
 
 
 def _run_startup_checks() -> None:
@@ -154,6 +184,9 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 register_exception_handlers(app)
+# Middleware execution order is LIFO: RequestIdMiddleware runs first (sets
+# request_id in context), then EnvelopeMiddleware reads that id when wrapping.
+app.add_middleware(EnvelopeMiddleware)
 app.add_middleware(RequestIdMiddleware)
 
 cors_config = _cors_config()
@@ -184,6 +217,23 @@ async def security_headers_middleware(request, call_next):
     return response
 
 
+def _get_maintenance_mode_cached() -> bool:
+    """Return the maintenance-mode flag, refreshing from the DB at most once every
+    ``_MAINTENANCE_CACHE_TTL`` seconds to avoid a DB round-trip on every request."""
+    global _maintenance_cache, _maintenance_cache_expires_at
+
+    now = time.monotonic()
+    if _maintenance_cache is None or now >= _maintenance_cache_expires_at:
+        db = SessionLocal()
+        try:
+            _maintenance_cache = is_maintenance_mode(db)
+        finally:
+            db.close()
+        _maintenance_cache_expires_at = now + _MAINTENANCE_CACHE_TTL
+
+    return _maintenance_cache
+
+
 @app.middleware("http")
 async def maintenance_mode_guard(request, call_next):
     path = request.url.path
@@ -194,59 +244,75 @@ async def maintenance_mode_guard(request, call_next):
     ):
         return await call_next(request)
 
-    db = SessionLocal()
-    try:
-        if is_maintenance_mode(db):
-            return JSONResponse(
+    if _get_maintenance_mode_cached():
+        return JSONResponse(
+            status_code=503,
+            content=build_error_body(
                 status_code=503,
-                content=build_error_body(
-                    status_code=503,
-                    detail={
-                        "message": MaintenanceMessages.SERVICE_TEMPORARILY_UNAVAILABLE,
-                        "code": "APP_MAINTENANCE_MODE",
-                    },
-                ),
-            )
-    finally:
-        db.close()
+                detail={
+                    "message": MaintenanceMessages.SERVICE_TEMPORARILY_UNAVAILABLE,
+                    "code": "APP_MAINTENANCE_MODE",
+                },
+            ),
+        )
 
     return await call_next(request)
 
 
 @app.get("/")
 def root():
-    return {"message": "Backend is running"}
+    return {
+        "service_name": "kinderbackend",
+        "version": API_VERSION,
+        "environment": getattr(settings, "environment", "unknown"),
+        "status": "running",
+    }
 
 
-app.include_router(children_router)
-app.include_router(public_auth_router)
-app.include_router(subscription_router)
-app.include_router(subscription_public_router)
-app.include_router(subscription_billing_router)
-app.include_router(billing_methods_router)
-app.include_router(auth_router)
-app.include_router(notifications_router)
-app.include_router(privacy_router)
-app.include_router(content_router)
-app.include_router(support_router)
-app.include_router(features_router)
-app.include_router(parental_controls_router)
-app.include_router(ai_buddy_router)
-app.include_router(voice_router)
-app.include_router(payment_webhooks_router)
-app.include_router(health_router)
+def _include_api_router(router) -> None:
+    """Register a router at three prefixes:
 
-app.include_router(admin_auth_router)
-app.include_router(admin_admins_router)
-app.include_router(admin_users_router)
-app.include_router(admin_children_router)
-app.include_router(admin_audit_router)
-app.include_router(admin_support_router)
-app.include_router(admin_analytics_router)
-app.include_router(admin_cms_router)
-app.include_router(admin_subscriptions_router)
-app.include_router(admin_settings_router)
-app.include_router(admin_diagnostics_router)
+    * bare (legacy, no prefix)           → raw response, no envelope
+    * /api/v1 (versioned legacy)         → raw response, no envelope
+    * /api/v2 (new standard)             → response wrapped in envelope
+
+    Business logic lives entirely in the service layer and is reused across
+    all three registrations — no duplication.
+    """
+    app.include_router(router)                           # bare / legacy
+    app.include_router(router, prefix=API_V1_PREFIX)     # /api/v1 — no envelope
+    app.include_router(router, prefix=API_V2_PREFIX)     # /api/v2 — envelope applied
+
+
+# --- App routes, available as legacy, /api/v1, and /api/v2 paths ------------
+_include_api_router(children_router)
+_include_api_router(public_auth_router)
+_include_api_router(subscription_router)
+_include_api_router(subscription_public_router)
+_include_api_router(subscription_billing_router)
+_include_api_router(billing_methods_router)
+_include_api_router(auth_router)
+_include_api_router(notifications_router)
+_include_api_router(privacy_router)
+_include_api_router(content_router)
+_include_api_router(support_router)
+_include_api_router(features_router)
+_include_api_router(parental_controls_router)
+_include_api_router(ai_buddy_router)
+_include_api_router(voice_router)
+
+# --- Admin routes, available as legacy, /api/v1, and /api/v2 paths ----------
+_include_api_router(admin_auth_router)
+_include_api_router(admin_admins_router)
+_include_api_router(admin_users_router)
+_include_api_router(admin_children_router)
+_include_api_router(admin_audit_router)
+_include_api_router(admin_support_router)
+_include_api_router(admin_analytics_router)
+_include_api_router(admin_cms_router)
+_include_api_router(admin_subscriptions_router)
+_include_api_router(admin_settings_router)
+_include_api_router(admin_diagnostics_router)
 if ADMIN_SEED_ENABLED:
     log_with_context(
         logger,
@@ -257,4 +323,11 @@ if ADMIN_SEED_ENABLED:
         environment=getattr(settings, "environment", None),
         outcome="warning",
     )
-    app.include_router(admin_seed_router)
+    _include_api_router(admin_seed_router)
+
+# --- Unversioned infrastructure routes ------------------------------------
+# health_router stays at /health — probed by load balancers without a version.
+# payment_webhooks_router stays at /webhooks — URL is registered externally
+# in the payment provider dashboard and cannot be versioned here alone.
+app.include_router(health_router)
+app.include_router(payment_webhooks_router)

@@ -21,6 +21,7 @@ import 'package:kinder_world/features/parent_mode/auth/parent_pin_screen.dart';
 import 'package:kinder_world/router.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'helpers/test_admin_auth_helpers.dart';
 
 class _TestSecureStorage extends SecureStorage {
   _TestSecureStorage({
@@ -128,6 +129,8 @@ Future<ProviderContainer> _pumpApp(
       connectivityProvider.overrideWith(
         (ref) => Stream.value(ConnectivityResult.wifi),
       ),
+      // Override adminAuthProvider with a mock that doesn't make HTTP calls
+      ...createMockAdminAuthOverrides(),
     ],
   );
   addTearDown(container.dispose);

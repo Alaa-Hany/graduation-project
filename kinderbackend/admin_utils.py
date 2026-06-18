@@ -174,6 +174,8 @@ def serialize_admin_user(admin: AdminUser, db: Session | None = None) -> dict[st
         "two_factor_enabled": bool(getattr(admin, "two_factor_enabled", False)),
         "two_factor_method": getattr(admin, "two_factor_method", None),
         "last_login_at": to_iso(getattr(admin, "last_login_at", None)),
+        "last_login_ip": getattr(admin, "last_login_ip", None),
+        "last_login_user_agent": getattr(admin, "last_login_user_agent", None),
         "locked_until": to_iso(getattr(admin, "locked_until", None)),
         "failed_login_attempts": int(getattr(admin, "failed_login_attempts", 0) or 0),
         "suspicious_access_count": int(getattr(admin, "suspicious_access_count", 0) or 0),
@@ -544,6 +546,15 @@ def serialize_support_ticket(
     if include_thread:
         payload["thread"] = [
             {
+                "id": f"ticket-{ticket.id}-initial",
+                "ticket_id": ticket.id,
+                "message": ticket.message,
+                "author_type": "user",
+                "author": _support_author_payload(user=getattr(ticket, "user", None)),
+                "created_at": to_iso(ticket.created_at),
+            },
+            *[
+            {
                 "id": item.id,
                 "ticket_id": item.ticket_id,
                 "message": item.message,
@@ -552,14 +563,43 @@ def serialize_support_ticket(
                 "created_at": to_iso(item.created_at),
             }
             for item in thread_messages
+            ],
         ]
     return payload
 
 
 def serialize_subscription_record(user: User, db: Session | None = None) -> dict[str, Any]:
     profile = getattr(user, "subscription_profile", None)
+    history_summary = {
+        "event_count": len(getattr(user, "subscription_events", None) or []),
+        "billing_transaction_count": len(getattr(user, "billing_transactions", None) or []),
+        "payment_attempt_count": len(getattr(user, "payment_attempts", None) or []),
+    }
     return {
         "user": serialize_user_detail(user, db),
+        "user_id": user.id,
+        "plan": profile.current_plan_id if profile is not None else user.plan,
+        "lifecycle": (
+            {
+                "current_plan_id": profile.current_plan_id,
+                "selected_plan_id": profile.selected_plan_id,
+                "status": profile.status,
+                "provider": profile.provider,
+                "provider_customer_id": profile.provider_customer_id,
+                "provider_subscription_id": profile.provider_subscription_id,
+                "started_at": to_iso(profile.started_at),
+                "expires_at": to_iso(profile.expires_at),
+                "cancel_at": to_iso(profile.cancel_at),
+                "will_renew": bool(profile.will_renew),
+                "last_payment_status": profile.last_payment_status,
+                "created_at": to_iso(profile.created_at),
+                "updated_at": to_iso(profile.updated_at),
+                "is_active": bool(user.is_active and profile.current_plan_id != "FREE"),
+                "has_paid_access": bool(user.is_active and profile.current_plan_id != "FREE"),
+            }
+            if profile is not None
+            else None
+        ),
         "subscription_profile": (
             {
                 "id": profile.id,
@@ -580,7 +620,8 @@ def serialize_subscription_record(user: User, db: Session | None = None) -> dict
             if profile is not None
             else None
         ),
-        "billing_transaction_count": len(getattr(user, "billing_transactions", None) or []),
-        "payment_attempt_count": len(getattr(user, "payment_attempts", None) or []),
-        "subscription_event_count": len(getattr(user, "subscription_events", None) or []),
+        "billing_transaction_count": history_summary["billing_transaction_count"],
+        "payment_attempt_count": history_summary["payment_attempt_count"],
+        "subscription_event_count": history_summary["event_count"],
+        "history_summary": history_summary,
     }

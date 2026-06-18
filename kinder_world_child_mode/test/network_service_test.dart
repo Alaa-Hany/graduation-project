@@ -242,6 +242,6 @@ void main() {
 
     expect(followUpResponse.statusCode, 200);
     expect(followUpResponse.data?['ok'], isTrue);
-    expect(adapter.lastOptions?.path, '/after');
+    expect(adapter.lastOptions?.path, '/api/v1/after');
   });
 }

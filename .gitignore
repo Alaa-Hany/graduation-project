@@ -52,3 +52,19 @@ build/
 .venv/
 __pycache__/
 *.pyc
+KinderWorld_Audit_Report.docx
+generate_audit_report.py
+*audit*
+*report*
+
+# Scratch / local-only files
+puzzle_block.txt
+puzzle_drag_block.txt
+**/test_failures.txt
+
+# Local Windows runner scripts
+run_*.bat
+run_*.ps1
+
+# Debug scripts
+kinderbackend/debug_create_user.py

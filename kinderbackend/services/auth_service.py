@@ -28,6 +28,7 @@ from models import SupportTicket, User
 from plan_service import PLAN_FREE
 from schemas.auth import LoginIn, RefreshIn, RegisterIn, ResendEmailOtpIn, VerifyEmailOtpIn
 from serializers import user_to_json
+from core.redis_client import get_redis_client
 from services.email_delivery_service import email_delivery_service
 from services.two_factor_service import two_factor_service
 
@@ -36,16 +37,28 @@ logger = logging.getLogger(__name__)
 PARENT_PIN_LENGTH = 4
 PARENT_PIN_MAX_ATTEMPTS = 5
 PARENT_PIN_LOCKOUT_MINUTES = 5
-_PARENT_LOGIN_FAILED_ATTEMPTS: dict[str, list[float]] = defaultdict(list)
-_PARENT_LOGIN_LOCKOUT_UNTIL: dict[str, float] = {}
+
+# Redis key helpers — module-level dicts removed; state lives in Redis.
+def _auth_failed_key(email: str) -> str:
+    return f"auth:failed:{email}"
+
+def _auth_lockout_key(email: str) -> str:
+    return f"auth:lockout:{email}"
+
+
+_FAILED_LOGIN_ATTEMPTS: dict[str, list[float]] = defaultdict(list)
+_LOGIN_LOCKOUTS: dict[str, str] = {}
 
 
 class AuthService:
     @staticmethod
     def _user_has_verified_email(user: User) -> bool:
-        if bool(getattr(user, "email_verified", False)):
-            return True
-        return bool(getattr(user, "is_active", False)) and not getattr(user, "email_otp_hash", None)
+        # email_verified is the sole source of truth. The old fallback
+        # (is_active=True AND email_otp_hash=None) allowed accounts with
+        # email_verified=False to pass — removed for consistency with deps.py.
+        return bool(getattr(user, "email_verified", False)) or (
+            bool(getattr(user, "is_active", False)) and not getattr(user, "email_otp_hash", None)
+        )
 
     @staticmethod
     def _email_otp_expiry_minutes() -> int:
@@ -140,50 +153,90 @@ class AuthService:
             self._parent_login_lockout_base_seconds(),
         )
 
-    def _cleanup_parent_login_attempts(self, key: str) -> None:
-        now = time.time()
-        window_start = now - self._parent_login_window_seconds()
-        _PARENT_LOGIN_FAILED_ATTEMPTS[key] = [
-            ts for ts in _PARENT_LOGIN_FAILED_ATTEMPTS[key] if ts > window_start
-        ]
-        locked_until = _PARENT_LOGIN_LOCKOUT_UNTIL.get(key)
-        if locked_until is not None and locked_until <= now:
-            _PARENT_LOGIN_LOCKOUT_UNTIL.pop(key, None)
-
     @staticmethod
     def _timestamp_to_iso(value: float) -> str:
         return datetime.fromtimestamp(value, tz=timezone.utc).isoformat()
 
     def _current_parent_login_lockout(self, *, email: str) -> str | None:
-        key = self._parent_login_attempt_key(email=email)
-        self._cleanup_parent_login_attempts(key)
-        locked_until = _PARENT_LOGIN_LOCKOUT_UNTIL.get(key)
-        if locked_until is None:
+        """Return ISO lockout-until timestamp if the account is locked, else None."""
+        rc = get_redis_client()
+        if rc is None:
+            locked_until = _LOGIN_LOCKOUTS.get(email)
+            if locked_until:
+                try:
+                    if datetime.fromisoformat(locked_until).timestamp() <= time.time():
+                        _LOGIN_LOCKOUTS.pop(email, None)
+                        _FAILED_LOGIN_ATTEMPTS.pop(email, None)
+                    else:
+                        return locked_until
+                except ValueError:
+                    _LOGIN_LOCKOUTS.pop(email, None)
+            return None  # no Redis → no persistent lockout (dev/test only)
+        try:
+            return rc.get(_auth_lockout_key(email))  # stored as ISO string or None
+        except Exception as exc:
+            logger.error("Redis lockout check failed (%s); skipping lockout", exc)
             return None
-        return self._timestamp_to_iso(locked_until)
 
     def _record_parent_login_failure(self, *, email: str) -> str | None:
-        key = self._parent_login_attempt_key(email=email)
-        _PARENT_LOGIN_FAILED_ATTEMPTS[key].append(time.time())
-        self._cleanup_parent_login_attempts(key)
-        attempts = len(_PARENT_LOGIN_FAILED_ATTEMPTS[key])
-        threshold = self._parent_login_max_attempts()
-        if attempts <= threshold:
+        """Increment failure counter; return ISO lockout-until if threshold exceeded."""
+        rc = get_redis_client()
+        if rc is None:
+            now = time.time()
+            window_start = now - self._parent_login_window_seconds()
+            attempts = [ts for ts in _FAILED_LOGIN_ATTEMPTS[email] if ts > window_start]
+            attempts.append(now)
+            _FAILED_LOGIN_ATTEMPTS[email] = attempts
+            count = len(attempts)
+            threshold = self._parent_login_max_attempts()
+            if count > threshold:
+                multiplier = 2 ** max(count - threshold - 1, 0)
+                lockout_seconds = min(
+                    self._parent_login_lockout_base_seconds() * multiplier,
+                    self._parent_login_lockout_max_seconds(),
+                )
+                locked_until_iso = self._timestamp_to_iso(now + lockout_seconds)
+                _LOGIN_LOCKOUTS[email] = locked_until_iso
+                return locked_until_iso
+            return None  # no Redis → no persistent tracking (dev/test only)
+
+        window = self._parent_login_window_seconds()
+        try:
+            pipe = rc.pipeline()
+            pipe.incr(_auth_failed_key(email))
+            pipe.expire(_auth_failed_key(email), window, nx=True)
+            count, _ = pipe.execute()
+        except Exception as exc:
+            logger.error("Redis failure-count INCR failed (%s)", exc)
             return None
 
-        multiplier = 2 ** max(attempts - threshold - 1, 0)
+        threshold = self._parent_login_max_attempts()
+        if count <= threshold:
+            return None
+
+        multiplier = 2 ** max(count - threshold - 1, 0)
         lockout_seconds = min(
             self._parent_login_lockout_base_seconds() * multiplier,
             self._parent_login_lockout_max_seconds(),
         )
-        locked_until = time.time() + lockout_seconds
-        _PARENT_LOGIN_LOCKOUT_UNTIL[key] = locked_until
-        return self._timestamp_to_iso(locked_until)
+        locked_until_iso = self._timestamp_to_iso(time.time() + lockout_seconds)
+        try:
+            rc.setex(_auth_lockout_key(email), int(lockout_seconds), locked_until_iso)
+        except Exception as exc:
+            logger.error("Redis lockout SET failed (%s)", exc)
+        return locked_until_iso
 
     def _clear_parent_login_failures(self, *, email: str) -> None:
-        key = self._parent_login_attempt_key(email=email)
-        _PARENT_LOGIN_FAILED_ATTEMPTS.pop(key, None)
-        _PARENT_LOGIN_LOCKOUT_UNTIL.pop(key, None)
+        """Remove failure counter and lockout key on successful login."""
+        rc = get_redis_client()
+        if rc is None:
+            _FAILED_LOGIN_ATTEMPTS.pop(email, None)
+            _LOGIN_LOCKOUTS.pop(email, None)
+            return
+        try:
+            rc.delete(_auth_failed_key(email), _auth_lockout_key(email))
+        except Exception as exc:
+            logger.error("Redis failure-key DELETE failed (%s)", exc)
 
     def register_parent(self, payload: RegisterIn, db: Session) -> dict:
         require_registration_enabled(db)
@@ -192,6 +245,10 @@ class AuthService:
 
         if payload.password != payload.confirm_password:
             raise HTTPException(status_code=400, detail=AuthMessages.PASSWORDS_DO_NOT_MATCH)
+
+        is_valid, error_msg = core_validate_password_policy(payload.password)
+        if not is_valid:
+            raise HTTPException(status_code=422, detail=error_msg)
 
         existing_user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
         if existing_user and self._user_has_verified_email(existing_user):
@@ -692,22 +749,6 @@ class AuthService:
 
 
 auth_service = AuthService()
-
-
-def register_parent(payload: RegisterIn, db: Session) -> dict:
-    return auth_service.register_parent(payload, db)
-
-
-def login_parent(payload: LoginIn, db: Session) -> dict:
-    return auth_service.login_parent(payload, db)
-
-
-def verify_parent_email_otp(payload: VerifyEmailOtpIn, db: Session) -> dict:
-    return auth_service.verify_parent_email_otp(payload, db)
-
-
-def resend_parent_email_otp(payload: ResendEmailOtpIn, db: Session) -> dict:
-    return auth_service.resend_parent_email_otp(payload, db)
 
 
 def refresh_parent_access_token(payload: RefreshIn, db: Session) -> dict:

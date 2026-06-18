@@ -1,10 +1,12 @@
 """
 Rate limiting dependencies for FastAPI.
 
-This provides simple in-memory rate limiting to prevent abuse.
-For production, consider Redis-based rate limiting.
+Uses Redis-backed INCR + EXPIRE counters (fixed-window approximation) when
+REDIS_URL is configured.  Falls back to a single-process in-memory store for
+local development / tests — NOT safe across multiple workers.
 """
 
+import logging
 import time
 from collections import defaultdict
 from typing import Dict
@@ -12,33 +14,83 @@ from typing import Dict
 from fastapi import Depends, HTTPException, Request
 from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 
+from core.redis_client import get_redis_client
 
-class InMemoryRateLimiter:
-    """Simple in-memory rate limiter using sliding window."""
+logger = logging.getLogger(__name__)
 
-    def __init__(self):
+
+# ---------------------------------------------------------------------------
+# Fallback in-memory limiter (development / tests only)
+# ---------------------------------------------------------------------------
+
+class _InMemoryFallback:
+    """Single-process sliding-window store used when Redis is unavailable."""
+
+    def __init__(self) -> None:
         self.requests: Dict[str, list] = defaultdict(list)
 
     def is_allowed(self, key: str, max_requests: int, window_seconds: int) -> bool:
-        """Check if request is allowed under rate limit."""
         now = time.time()
         window_start = now - window_seconds
-
-        # Clean old requests
-        self.requests[key] = [
-            req_time for req_time in self.requests[key] if req_time > window_start
-        ]
-
+        self.requests[key] = [t for t in self.requests[key] if t > window_start]
         if len(self.requests[key]) >= max_requests:
             return False
-
         self.requests[key].append(now)
         return True
 
 
-# Global rate limiter instance
-rate_limiter = InMemoryRateLimiter()
+_fallback = _InMemoryFallback()
 
+
+class _RateLimitRequestsProxy:
+    def clear(self) -> None:
+        _fallback.requests.clear()
+        rc = get_redis_client()
+        if hasattr(rc, "clear"):
+            rc.clear()
+
+
+# ---------------------------------------------------------------------------
+# Redis-backed limiter
+# ---------------------------------------------------------------------------
+
+class RedisRateLimiter:
+    """Rate limiter backed by Redis INCR + EXPIRE (fixed-window counter).
+
+    Key schema: ``ratelimit:{caller_key}``
+    On first request in a window, INCR creates the key and EXPIRE (NX) sets
+    the TTL equal to ``window_seconds``.  Subsequent requests within the same
+    window only increment the counter; the TTL is not reset, so the window
+    slides naturally as old keys expire.
+    """
+
+    @property
+    def requests(self):
+        return _RateLimitRequestsProxy()
+
+    def is_allowed(self, key: str, max_requests: int, window_seconds: int) -> bool:
+        rc = get_redis_client()
+        if rc is None:
+            return _fallback.is_allowed(key, max_requests, window_seconds)
+
+        full_key = f"ratelimit:{key}"
+        try:
+            pipe = rc.pipeline()
+            pipe.incr(full_key)
+            pipe.expire(full_key, window_seconds, nx=True)
+            count, _ = pipe.execute()
+            return int(count) <= max_requests
+        except Exception as exc:
+            logger.error("Redis rate-limit check failed (%s); allowing request", exc)
+            return True  # fail open to avoid blocking all traffic on Redis outage
+
+
+rate_limiter = RedisRateLimiter()
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
 def _client_ip(request: Request) -> str:
     return request.client.host if request.client else "unknown"
@@ -59,6 +111,10 @@ def _rate_limit_detail(
     }
 
 
+# ---------------------------------------------------------------------------
+# FastAPI dependency factories
+# ---------------------------------------------------------------------------
+
 def rate_limit(
     max_requests: int = 100,
     window_seconds: int = 60,
@@ -67,20 +123,16 @@ def rate_limit(
     message: str | None = None,
     scope: str = "ip",
 ):
-    """
-    Rate limiting dependency.
+    """IP + path keyed rate-limit dependency.
 
-    Args:
-        max_requests: Maximum requests allowed in the window
-        window_seconds: Time window in seconds
+    Usage::
 
-    Usage:
         @app.get("/api/endpoint")
-        def endpoint(rate_limit_check: None = Depends(rate_limit(10, 60))):
+        def endpoint(_: None = Depends(rate_limit(10, 60))):
             return {"message": "ok"}
     """
 
-    def check_rate_limit(request: Request):
+    def check_rate_limit(request: Request) -> None:
         client_ip = _client_ip(request)
         key = f"ip:{client_ip}:{request.url.path}"
         resolved_message = (
@@ -110,16 +162,11 @@ def user_rate_limit(
     message: str | None = None,
     scope: str = "user",
 ):
-    """
-    Rate limiting dependency keyed by authenticated user id and path.
-
-    This is intended for authenticated sensitive mutations where per-user
-    throttling is safer than a shared-IP bucket.
-    """
+    """Per-authenticated-user + path keyed rate-limit dependency."""
 
     from deps import get_current_user
 
-    def check_rate_limit(request: Request, user=Depends(get_current_user)):
+    def check_rate_limit(request: Request, user=Depends(get_current_user)) -> None:
         user_id = getattr(user, "id", "unknown")
         key = f"user:{user_id}:{request.url.path}"
         resolved_message = (
@@ -141,24 +188,23 @@ def user_rate_limit(
     return check_rate_limit
 
 
-# Pre-configured rate limiters for common use cases
+# ---------------------------------------------------------------------------
+# Pre-configured limiters
+# ---------------------------------------------------------------------------
+
 def auth_rate_limit():
     """Stricter rate limiting for authentication endpoints."""
-    return rate_limit(
-        max_requests=5,
-        window_seconds=300,
-        scope="authentication",
-    )  # 5 requests per 5 minutes
+    return rate_limit(max_requests=5, window_seconds=300, scope="authentication")
 
 
 def api_rate_limit():
     """Standard rate limiting for API endpoints."""
-    return rate_limit(max_requests=100, window_seconds=60)  # 100 requests per minute
+    return rate_limit(max_requests=100, window_seconds=60)
 
 
 def admin_rate_limit():
     """Rate limiting for admin endpoints."""
-    return rate_limit(max_requests=200, window_seconds=60)  # 200 requests per minute
+    return rate_limit(max_requests=200, window_seconds=60)
 
 
 def password_change_rate_limit():
