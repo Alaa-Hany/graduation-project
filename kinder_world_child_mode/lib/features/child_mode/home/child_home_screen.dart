@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kinder_world/app.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/models/activity.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
@@ -39,6 +40,7 @@ class _ChildHomeScreenState extends ConsumerState<ChildHomeScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
+  bool _isSleepTime = false;
 
   @override
   void initState() {
@@ -52,6 +54,57 @@ class _ChildHomeScreenState extends ConsumerState<ChildHomeScreen>
       curve: Curves.easeOut,
     );
     _controller.forward();
+    _checkSleepMode();
+  }
+
+  Future<void> _checkSleepMode() async {
+    try {
+      final response = await ref
+          .read(networkServiceProvider)
+          .get<Map<String, dynamic>>('/parental-controls/settings');
+      final data = response.data?['settings'];
+      if (data is! Map) return;
+
+      final sleepMode = data['sleep_mode'] == true;
+      if (!sleepMode) return;
+
+      final bedtime = _parseTime(data['bedtime']?.toString() ?? '8:00 PM');
+      final wakeTime = _parseTime(data['wake_time']?.toString() ?? '7:00 AM');
+      final now = TimeOfDay.now();
+
+      if (_isInSleepWindow(now, bedtime, wakeTime)) {
+        if (mounted) setState(() => _isSleepTime = true);
+      }
+    } catch (_) {
+      // silently ignore — don't block child if check fails
+    }
+  }
+
+  /// Returns true if [now] is between [bedtime] and [wakeTime],
+  /// handling the midnight crossing case (e.g. 8 PM → 7 AM).
+  bool _isInSleepWindow(TimeOfDay now, TimeOfDay bedtime, TimeOfDay wakeTime) {
+    final nowMins = now.hour * 60 + now.minute;
+    final bedMins = bedtime.hour * 60 + bedtime.minute;
+    final wakeMins = wakeTime.hour * 60 + wakeTime.minute;
+
+    if (bedMins > wakeMins) {
+      // crosses midnight: sleep from 8 PM (1200) to 7 AM (420)
+      return nowMins >= bedMins || nowMins < wakeMins;
+    } else {
+      return nowMins >= bedMins && nowMins < wakeMins;
+    }
+  }
+
+  TimeOfDay _parseTime(String time) {
+    // Parses formats like "8:00 PM" or "7:00 AM"
+    final parts = time.trim().split(' ');
+    final timeParts = parts[0].split(':');
+    var hour = int.tryParse(timeParts[0]) ?? 8;
+    final minute = int.tryParse(timeParts.length > 1 ? timeParts[1] : '0') ?? 0;
+    final isPM = parts.length > 1 && parts[1].toUpperCase() == 'PM';
+    if (isPM && hour != 12) hour += 12;
+    if (!isPM && hour == 12) hour = 0;
+    return TimeOfDay(hour: hour, minute: minute);
   }
 
   @override
@@ -69,6 +122,8 @@ class _ChildHomeScreenState extends ConsumerState<ChildHomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (_isSleepTime) return const _SleepModeScreen();
+
     final colors = Theme.of(context).colorScheme;
     return FadeTransition(
       opacity: _fadeAnimation,
@@ -220,6 +275,57 @@ class _NavItemWidget extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SLEEP MODE SCREEN — shown when parent's bedtime restriction is active
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _SleepModeScreen extends StatelessWidget {
+  const _SleepModeScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Scaffold(
+      backgroundColor: const Color(0xFF1A237E),
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.bedtime_rounded,
+                    size: 80, color: Colors.white70),
+                const SizedBox(height: 24),
+                Text(
+                  l10n.sleepMode,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  l10n.sleepModeMessage,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.white70,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

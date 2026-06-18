@@ -730,6 +730,8 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get sleepMode => 'وضع النوم';
   @override
+  String get sleepModeMessage => 'حان وقت النوم! التطبيق مقفول حتى الصباح. أحلام سعيدة!';
+  @override
   String get emergencyLock => 'القفل الطارئ';
   @override
   String get contentFiltering => 'تصفية المحتوى';
@@ -741,8 +743,6 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   String get allowContent => 'السماح بالمحتوى';
   @override
   String get timeLimits => 'حدود الوقت';
-  @override
-  String get breakReminders => 'تذكيرات الاستراحة';
   @override
   String get smartControl => 'التحكم الذكي';
   @override
@@ -2559,6 +2559,24 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get didntReceiveIt => 'لم تستلمه؟ حاول مرة أخرى';
   @override
+  String get createNewPassword => 'إنشاء كلمة مرور جديدة';
+  @override
+  String get confirmNewPasswordLabel => 'تأكيد كلمة المرور الجديدة';
+  @override
+  String get confirmNewPasswordHint => 'أعد إدخال كلمة المرور الجديدة';
+  @override
+  String get passwordResetSuccess => 'تم تعيين كلمة المرور بنجاح!';
+  @override
+  String get passwordResetSuccessSubtitle =>
+      'تم تحديث كلمة المرور. يمكنك الآن تسجيل الدخول بكلمة مرورك الجديدة.';
+  @override
+  String get passwordResetFailed => 'فشل تعيين كلمة المرور. يرجى المحاولة مرة أخرى.';
+  @override
+  String get invalidResetToken => 'رابط إعادة التعيين غير صالح أو منتهي الصلاحية.';
+  @override
+  String get resetLinkExpiredMessage =>
+      'تنتهي صلاحية روابط إعادة تعيين كلمة المرور بعد 30 دقيقة. يرجى طلب رابط جديد.';
+  @override
   String get difficulty => 'الصعوبة';
   @override
   String get discoverSomethingAmazing => 'اكتشف شيئًا مذهلًا اليوم!';
@@ -3327,6 +3345,60 @@ class AppLocalizationsAr extends AppLocalizationsEn {
       'لا بأس بالشعور بالحزن. لنفعل شيئاً مريحاً معاً.';
   @override
   String get moodEncouragementAngry => 'لنأخذ نفساً عميقاً ونفعل شيئاً مريحاً.';
+  @override
+  String get moodNameHappy => 'سعيد';
+  @override
+  String get moodNameExcited => 'متحمس';
+  @override
+  String get moodNameCalm => 'هادئ';
+  @override
+  String get moodNameTired => 'متعب';
+  @override
+  String get moodNameSad => 'حزين';
+  @override
+  String get moodNameAngry => 'غاضب';
+  @override
+  String get moodTodaySubLabel => 'مزاج اليوم';
+  @override
+  String get puzzleWorldTitle => 'عالم البازل';
+  @override
+  String get puzzleWorldSubtitle => 'اختر من نوعين من ألعاب البازل الممتعة!';
+  @override
+  String get puzzleTwoPuzzleStyles => 'نوعان من البازل';
+  @override
+  String get puzzleTwoPuzzleStylesSubtitle => 'بازل الصور الكلاسيكي وبازل التبديل، كلاهما في مكان واحد!';
+  @override
+  String get puzzleHDPlayTag => 'جودة عالية';
+  @override
+  String get picturePuzzleTitle => 'بازل الصور';
+  @override
+  String get picturePuzzleSubtitle => 'رتّب القطع لتكتمل الصورة!';
+  @override
+  String get puzzleClassicTag => 'كلاسيك';
+  @override
+  String get shufflePuzzleTitle => 'البازل المبعثر';
+  @override
+  String get shufflePuzzleSubtitle => 'بدّل القطع المخلوطة لتُعيد بناء الصورة!';
+  @override
+  String get puzzleNewTag => 'جديد';
+  @override
+  String get statGrid => 'الشبكة';
+  @override
+  String get statScore => 'النتيجة';
+  @override
+  String get statTime => 'الوقت';
+  @override
+  String get statSolved => 'المحلولة';
+  @override
+  String get statMoves => 'الحركات';
+  @override
+  String get statOpen => 'المفتوحة';
+  @override
+  String get chooseLevelLabel => 'اختيار المستوى';
+  @override
+  String get howToPlayLabel => 'كيف نلعب';
+  @override
+  String get statPlaced => 'المُرتَّبة';
   @override
   String get customizeProfile => 'تخصيص الملف الشخصي';
   @override

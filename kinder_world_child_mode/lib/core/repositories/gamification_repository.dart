@@ -19,6 +19,8 @@ class _Keys {
   static String badges(String childId) => 'badges_$childId';
   static String metadata(String childId) => 'meta_$childId';
   static String categories(String childId) => 'categories_$childId';
+  static String coins(String childId) => 'gam_coins_$childId';
+  static String completedActivities(String childId) => 'completed_acts_$childId';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -297,6 +299,77 @@ class GamificationRepository {
   }
 
   // ══════════════════════════════════════════════════════════════════════════
+  // COINS
+  // ══════════════════════════════════════════════════════════════════════════
+
+  Future<int> getCoins(String childId) async {
+    try {
+      return (_box.get(_Keys.coins(childId), defaultValue: 0) as num).toInt();
+    } catch (e) {
+      _logger.e('GamificationRepository.getCoins error: $e');
+      return 0;
+    }
+  }
+
+  Future<int> addCoins(String childId, int amount) async {
+    try {
+      final current = await getCoins(childId);
+      final updated = current + amount;
+      await _box.put(_Keys.coins(childId), updated);
+      return updated;
+    } catch (e) {
+      _logger.e('GamificationRepository.addCoins error: $e');
+      return 0;
+    }
+  }
+
+  /// Returns true if enough coins and subtracts them.
+  Future<bool> spendCoins(String childId, int amount) async {
+    try {
+      final current = await getCoins(childId);
+      if (current < amount) return false;
+      await _box.put(_Keys.coins(childId), current - amount);
+      return true;
+    } catch (e) {
+      _logger.e('GamificationRepository.spendCoins error: $e');
+      return false;
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // COMPLETED ACTIVITY IDs — for XP/coin deduplication
+  // ══════════════════════════════════════════════════════════════════════════
+
+  Future<Set<String>> _getCompletedActivityIds(String childId) async {
+    try {
+      final raw = _box.get(_Keys.completedActivities(childId));
+      if (raw == null) return {};
+      final List<dynamic> list = raw is String
+          ? List<dynamic>.from(jsonDecode(raw) as List)
+          : List<dynamic>.from(raw as List);
+      return list.map((e) => e.toString()).toSet();
+    } catch (e) {
+      _logger.e('GamificationRepository._getCompletedActivityIds error: $e');
+      return {};
+    }
+  }
+
+  Future<bool> hasCompletedActivityId(String childId, String activityId) async {
+    final ids = await _getCompletedActivityIds(childId);
+    return ids.contains(activityId);
+  }
+
+  Future<void> markActivityIdCompleted(String childId, String activityId) async {
+    try {
+      final ids = await _getCompletedActivityIds(childId);
+      ids.add(activityId);
+      await _box.put(_Keys.completedActivities(childId), jsonEncode(ids.toList()));
+    } catch (e) {
+      _logger.e('GamificationRepository.markActivityIdCompleted error: $e');
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
   // FULL STATE LOAD
   // ══════════════════════════════════════════════════════════════════════════
 
@@ -313,6 +386,7 @@ class GamificationRepository {
     final activitiesCompleted = await getActivitiesCompleted(childId);
     final lastActivityDate = await getLastActivityDate(childId);
     final exploredCategories = await getExploredCategories(childId);
+    final coins = await getCoins(childId);
 
     return GamificationState(
       childId: childId,
@@ -324,6 +398,7 @@ class GamificationRepository {
       activitiesCompleted: activitiesCompleted,
       lastActivityDate: lastActivityDate,
       exploredCategories: exploredCategories,
+      coins: coins,
     );
   }
 
@@ -337,6 +412,8 @@ class GamificationRepository {
       await _box.delete(_Keys.badges(childId));
       await _box.delete(_Keys.metadata(childId));
       await _box.delete(_Keys.categories(childId));
+      await _box.delete(_Keys.coins(childId));
+      await _box.delete(_Keys.completedActivities(childId));
       _logger.i('Gamification data reset for child $childId');
     } catch (e) {
       _logger.e('GamificationRepository.resetForChild error: $e');

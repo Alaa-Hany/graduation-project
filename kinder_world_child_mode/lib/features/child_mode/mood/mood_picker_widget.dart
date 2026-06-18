@@ -239,6 +239,7 @@ class _MoodEmojiButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     final moodColor = Color(MoodMeta.colorValue(mood));
 
@@ -289,7 +290,7 @@ class _MoodEmojiButton extends StatelessWidget {
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
-                    _moodShortLabel(mood),
+                    _moodShortLabel(mood, l10n),
                     maxLines: 1,
                     textAlign: TextAlign.center,
                   ),
@@ -302,20 +303,20 @@ class _MoodEmojiButton extends StatelessWidget {
     );
   }
 
-  String _moodShortLabel(String mood) {
+  String _moodShortLabel(String mood, AppLocalizations l10n) {
     switch (mood) {
       case ChildMoods.happy:
-        return 'Happy';
+        return l10n.moodNameHappy;
       case ChildMoods.excited:
-        return 'Excited';
+        return l10n.moodNameExcited;
       case ChildMoods.calm:
-        return 'Calm';
+        return l10n.moodNameCalm;
       case ChildMoods.tired:
-        return 'Tired';
+        return l10n.moodNameTired;
       case ChildMoods.sad:
-        return 'Sad';
+        return l10n.moodNameSad;
       case ChildMoods.angry:
-        return 'Angry';
+        return l10n.moodNameAngry;
       default:
         return mood;
     }
@@ -333,8 +334,11 @@ class _CurrentMoodDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     final moodColor = Color(MoodMeta.colorValue(mood));
+
+    final localizedName = _localizedMoodName(mood, l10n);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -352,7 +356,7 @@ class _CurrentMoodDisplay extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                MoodTypes.getLabel(mood),
+                localizedName,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
@@ -360,7 +364,7 @@ class _CurrentMoodDisplay extends StatelessWidget {
                 ),
               ),
               Text(
-                'Today\'s mood',
+                l10n.moodTodaySubLabel,
                 style: TextStyle(
                   fontSize: 11,
                   color: colors.onSurfaceVariant,
@@ -371,6 +375,25 @@ class _CurrentMoodDisplay extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _localizedMoodName(String mood, AppLocalizations l10n) {
+    switch (mood) {
+      case ChildMoods.happy:
+        return l10n.moodNameHappy;
+      case ChildMoods.excited:
+        return l10n.moodNameExcited;
+      case ChildMoods.calm:
+        return l10n.moodNameCalm;
+      case ChildMoods.tired:
+        return l10n.moodNameTired;
+      case ChildMoods.sad:
+        return l10n.moodNameSad;
+      case ChildMoods.angry:
+        return l10n.moodNameAngry;
+      default:
+        return mood;
+    }
   }
 }
 
@@ -385,6 +408,7 @@ class _EncouragementBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     final moodColor = Color(MoodMeta.colorValue(mood));
 
@@ -396,7 +420,7 @@ class _EncouragementBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        _encouragementText(mood),
+        _encouragementText(mood, l10n),
         style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
@@ -407,22 +431,22 @@ class _EncouragementBanner extends StatelessWidget {
     );
   }
 
-  String _encouragementText(String mood) {
+  String _encouragementText(String mood, AppLocalizations l10n) {
     switch (mood) {
       case ChildMoods.happy:
-        return '\u{1F31F} Great! Let\'s make the most of your happy mood!';
+        return '\u{1F31F} ${l10n.moodEncouragementHappy}';
       case ChildMoods.excited:
-        return '\u26A1 You\'re excited! Let\'s channel that energy!';
+        return '\u26A1 ${l10n.moodEncouragementExcited}';
       case ChildMoods.calm:
-        return '\u{1F33F} You\'re calm and focused. Perfect for learning!';
+        return '\u{1F33F} ${l10n.moodEncouragementCalm}';
       case ChildMoods.tired:
-        return '\u{1F4A4} Feeling tired? Let\'s do something light and fun.';
+        return '\u{1F4A4} ${l10n.moodEncouragementTired}';
       case ChildMoods.sad:
-        return '\u{1F499} It\'s okay to feel sad. Let\'s do something calming.';
+        return '\u{1F499} ${l10n.moodEncouragementSad}';
       case ChildMoods.angry:
-        return '\u{1F60C} Let\'s take a deep breath and do something relaxing.';
+        return '\u{1F60C} ${l10n.moodEncouragementAngry}';
       default:
-        return '\u2728 Let\'s explore something fun today!';
+        return '\u2728 ${l10n.moodEncouragementHappy}';
     }
   }
 }

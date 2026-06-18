@@ -330,3 +330,36 @@ class AccessTokenResponse(BaseModel):
 
 class CurrentUserResponse(BaseModel):
     user: UserOut
+
+
+class ForgotPasswordIn(AuthSchemaBase):
+    email: EmailStr
+
+    model_config = ConfigDict(
+        json_schema_extra={"example": {"email": "parent@example.com"}}
+    )
+
+
+class ResetPasswordIn(AuthSchemaBase):
+    token: str = Field(..., min_length=1)
+    new_password: str = Field(
+        ...,
+        min_length=1,
+        validation_alias=AliasChoices("new_password", "newPassword"),
+    )
+    confirm_password: str = Field(
+        ...,
+        min_length=1,
+        validation_alias=AliasChoices("confirm_password", "confirmPassword"),
+    )
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        json_schema_extra={
+            "example": {
+                "token": "reset-token-here",
+                "new_password": "NewPassword123!",
+                "confirm_password": "NewPassword123!",
+            }
+        },
+    )

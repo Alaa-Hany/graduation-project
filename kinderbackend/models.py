@@ -53,6 +53,8 @@ class User(Base):
     two_factor_method = Column(String, nullable=True)
     two_factor_secret = Column(EncryptedString(), nullable=True)
     two_factor_confirmed_at = Column(UTCDateTime(), nullable=True)
+    password_reset_token_hash = Column(String, nullable=True)
+    password_reset_token_expires_at = Column(UTCDateTime(), nullable=True)
     created_at = Column(UTCDateTime(), server_default=func.now(), nullable=False)
     updated_at = Column(
         UTCDateTime(), server_default=func.now(), onupdate=func.now(), nullable=False

@@ -30,16 +30,7 @@ class PlanGuard extends ConsumerWidget {
           color: Theme.of(context).colorScheme.primary,
         ),
       ),
-      error: (_, __) => Padding(
-        padding: padding,
-        child: _PlanGuardStateCard(
-          icon: Icons.cloud_off_rounded,
-          title: l10n.error,
-          subtitle: l10n.tryAgain,
-          actionLabel: l10n.retry,
-          onPressed: () => ref.invalidate(subscriptionSnapshotProvider),
-        ),
-      ),
+      error: (_, __) => const SizedBox.shrink(),
       data: (plan) {
         if (plan.canAccess(requiredTier)) {
           return child;

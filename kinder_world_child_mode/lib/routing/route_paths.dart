@@ -11,6 +11,7 @@ class Routes {
   static const parentRegister = '/parent/register';
   static const parentVerifyEmail = '/parent/verify-email';
   static const parentForgotPassword = '/parent/forgot-password';
+  static const parentResetPassword = '/parent/reset-password';
   static const childLogin = '/child/login';
   static const childForgotPassword = '/child/forgot-password';
 

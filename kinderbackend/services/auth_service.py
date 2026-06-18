@@ -27,7 +27,9 @@ from core.validators import validate_password_policy as core_validate_password_p
 from core.validators import validate_pin_format
 from models import SupportTicket, User
 from plan_service import PLAN_FREE
-from schemas.auth import LoginIn, RefreshIn, RegisterIn, ResendEmailOtpIn, VerifyEmailOtpIn
+import secrets
+
+from schemas.auth import ForgotPasswordIn, LoginIn, RefreshIn, RegisterIn, ResendEmailOtpIn, ResetPasswordIn, VerifyEmailOtpIn
 from serializers import user_to_json
 from services.email_delivery_service import email_delivery_service
 from services.two_factor_service import two_factor_service
@@ -129,14 +131,50 @@ class AuthService:
 
     @staticmethod
     def _send_email_otp(*, email: str, name: str | None, otp_code: str) -> None:
-        subject = "Your Kinder World verification code"
+        subject = "Your Kinder World Verification Code"
         greeting_name = (name or "there").strip() or "there"
         body = (
             f"Hello {greeting_name},\n\n"
             f"Your Kinder World verification code is: {otp_code}\n\n"
-            "This code expires in 5 minutes. If you did not create this account, you can ignore this email."
+            "This code expires in 5 minutes.\n"
+            "If you did not create this account, you can safely ignore this email.\n\n"
+            "— The Kinder World Team"
         )
-        email_delivery_service.send_email(to_email=email, subject=subject, body=body)
+        html_body = f"""<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#f4f7fb;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 0;">
+    <tr><td align="center">
+      <table width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;padding:40px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+        <tr><td align="center" style="padding-bottom:24px;">
+          <h1 style="margin:0;font-size:26px;color:#1a3a6b;">Kinder World</h1>
+        </td></tr>
+        <tr><td style="font-size:16px;color:#333333;padding-bottom:16px;">
+          Hello <strong>{greeting_name}</strong>,
+        </td></tr>
+        <tr><td style="font-size:16px;color:#333333;padding-bottom:24px;">
+          Use the code below to verify your account:
+        </td></tr>
+        <tr><td align="center" style="padding-bottom:24px;">
+          <div style="display:inline-block;background:#f0f4ff;border:2px dashed #4a6cf7;border-radius:10px;padding:16px 40px;font-size:36px;font-weight:bold;letter-spacing:8px;color:#1a3a6b;">
+            {otp_code}
+          </div>
+        </td></tr>
+        <tr><td style="font-size:14px;color:#888888;padding-bottom:8px;">
+          This code expires in <strong>5 minutes</strong>.
+        </td></tr>
+        <tr><td style="font-size:13px;color:#aaaaaa;">
+          If you did not create this account, you can safely ignore this email.
+        </td></tr>
+        <tr><td style="padding-top:32px;font-size:13px;color:#aaaaaa;text-align:center;">
+          The Kinder World Team
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>"""
+        email_delivery_service.send_email(to_email=email, subject=subject, body=body, html_body=html_body)
 
     def _parent_login_attempt_key(self, *, email: str) -> str:
         return email.strip().lower()
@@ -732,6 +770,138 @@ class AuthService:
                 exc_info=True,
             )
             raise HTTPException(status_code=500, detail=AuthMessages.FAILED_CHANGE_PARENT_PIN)
+
+    def _password_reset_expiry_minutes(self) -> int:
+        return max(int(os.getenv("PASSWORD_RESET_EXPIRES_MINUTES", "30")), 5)
+
+    def _store_password_reset_token(self, *, user: User, token: str) -> None:
+        now = db_utc_now()
+        user.password_reset_token_hash = hash_password(token)
+        user.password_reset_token_expires_at = now + timedelta(
+            minutes=self._password_reset_expiry_minutes()
+        )
+        user.updated_at = now
+
+    @staticmethod
+    def _clear_password_reset_token(user: User) -> None:
+        user.password_reset_token_hash = None
+        user.password_reset_token_expires_at = None
+
+    def _password_reset_token_expired(self, user: User) -> bool:
+        expires_at = getattr(user, "password_reset_token_expires_at", None)
+        return expires_at is None or ensure_utc(expires_at) <= utc_now()
+
+    def _send_password_reset_email(
+        self, *, email: str, name: str | None, token: str, app_base_url: str
+    ) -> None:
+        reset_url = f"{app_base_url.rstrip('/')}/#/parent/reset-password?token={token}"
+        greeting_name = (name or "there").strip() or "there"
+        subject = "Reset Your Kinder World Password"
+        body = (
+            f"Hello {greeting_name},\n\n"
+            f"Click the link below to reset your Kinder World password:\n{reset_url}\n\n"
+            f"This link expires in {self._password_reset_expiry_minutes()} minutes.\n"
+            "If you did not request a password reset, you can safely ignore this email.\n\n"
+            "— The Kinder World Team"
+        )
+        html_body = f"""<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#f4f7fb;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 0;">
+    <tr><td align="center">
+      <table width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;padding:40px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+        <tr><td align="center" style="padding-bottom:24px;">
+          <h1 style="margin:0;font-size:26px;color:#1a3a6b;">Kinder World</h1>
+        </td></tr>
+        <tr><td style="font-size:16px;color:#333333;padding-bottom:16px;">
+          Hello <strong>{greeting_name}</strong>,
+        </td></tr>
+        <tr><td style="font-size:16px;color:#333333;padding-bottom:24px;">
+          We received a request to reset your password. Click the button below to create a new one:
+        </td></tr>
+        <tr><td align="center" style="padding-bottom:24px;">
+          <a href="{reset_url}" style="display:inline-block;background:linear-gradient(135deg,#1a3a6b,#4a6cf7);color:#ffffff;text-decoration:none;border-radius:10px;padding:14px 36px;font-size:16px;font-weight:bold;">
+            Reset Password
+          </a>
+        </td></tr>
+        <tr><td style="font-size:14px;color:#888888;padding-bottom:8px;">
+          This link expires in <strong>{self._password_reset_expiry_minutes()} minutes</strong>.
+        </td></tr>
+        <tr><td style="font-size:13px;color:#aaaaaa;">
+          If you did not request a password reset, you can safely ignore this email.
+        </td></tr>
+        <tr><td style="padding-top:32px;font-size:13px;color:#aaaaaa;text-align:center;">
+          The Kinder World Team
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>"""
+        email_delivery_service.send_email(
+            to_email=email, subject=subject, body=body, html_body=html_body
+        )
+
+    def request_password_reset(self, payload: ForgotPasswordIn, db: Session) -> dict:
+        normalized_email = normalize_email(payload.email)
+        user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
+
+        if user and self._user_has_verified_email(user):
+            token = secrets.token_urlsafe(32)
+            self._store_password_reset_token(user=user, token=token)
+            db.add(user)
+            db.commit()
+
+            app_base_url = os.getenv("APP_BASE_URL", "http://localhost:44377")
+            try:
+                self._send_password_reset_email(
+                    email=user.email, name=user.name, token=token, app_base_url=app_base_url
+                )
+            except Exception as exc:
+                logger.error(
+                    "Failed to send password reset email to %s: %s",
+                    user.email,
+                    exc,
+                    exc_info=True,
+                )
+                db.rollback()
+                raise HTTPException(status_code=503, detail=AuthMessages.PASSWORD_RESET_SEND_FAILED)
+
+        return {"success": True, "message": AuthMessages.PASSWORD_RESET_EMAIL_SENT}
+
+    def confirm_password_reset(self, payload: ResetPasswordIn, db: Session) -> dict:
+        if payload.new_password != payload.confirm_password:
+            raise HTTPException(status_code=400, detail=AuthMessages.PASSWORDS_DO_NOT_MATCH)
+
+        is_valid, error_msg = core_validate_password_policy(payload.new_password)
+        if not is_valid:
+            raise HTTPException(status_code=422, detail=error_msg)
+
+        user = (
+            db.query(User)
+            .filter(User.password_reset_token_hash.isnot(None))
+            .all()
+        )
+        matching_user: User | None = None
+        for u in user:
+            token_hash = getattr(u, "password_reset_token_hash", None)
+            if token_hash and verify_password(payload.token, token_hash):
+                matching_user = u
+                break
+
+        if matching_user is None or self._password_reset_token_expired(matching_user):
+            raise HTTPException(
+                status_code=400, detail=AuthMessages.INVALID_OR_EXPIRED_RESET_TOKEN
+            )
+
+        matching_user.password_hash = hash_password(payload.new_password)
+        matching_user.token_version = (matching_user.token_version or 0) + 1
+        self._clear_password_reset_token(matching_user)
+        matching_user.updated_at = db_utc_now()
+        db.add(matching_user)
+        db.commit()
+
+        return {"success": True, "message": AuthMessages.PASSWORD_RESET_SUCCESSFUL}
 
     def request_parent_pin_reset(self, *, payload: Any, db: Session, user: User) -> dict:
         note = (payload.note or "").strip()

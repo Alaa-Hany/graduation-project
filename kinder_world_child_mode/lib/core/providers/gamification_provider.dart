@@ -11,6 +11,7 @@ import 'package:kinder_world/core/models/achievement.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/repositories/gamification_repository.dart';
 import 'package:kinder_world/core/services/gamification_service.dart';
+import 'package:kinder_world/features/child_mode/store/reward_store_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // INFRASTRUCTURE PROVIDERS
@@ -55,7 +56,7 @@ final gamificationStateProvider = StateNotifierProvider.autoDispose<
   (ref) {
     final service = ref.watch(gamificationServiceProvider);
     final childId = ref.watch(currentChildIdProvider);
-    final notifier = GamificationNotifier(service: service);
+    final notifier = GamificationNotifier(service: service, ref: ref);
     if (childId != null) {
       notifier.loadForChild(childId);
     }
@@ -106,9 +107,11 @@ class GamificationNotifierState {
 
 class GamificationNotifier extends StateNotifier<GamificationNotifierState> {
   final GamificationService _service;
+  final Ref _ref;
 
-  GamificationNotifier({required GamificationService service})
+  GamificationNotifier({required GamificationService service, required Ref ref})
       : _service = service,
+        _ref = ref,
         super(const GamificationNotifierState(isLoading: false));
 
   // ── Load ──────────────────────────────────────────────────────────────────
@@ -140,6 +143,7 @@ class GamificationNotifier extends StateNotifier<GamificationNotifierState> {
     String? category,
     int score = 0,
     bool awardXp = true,
+    String? activityId,
   }) async {
     try {
       final result = await _service.recordActivity(
@@ -148,15 +152,23 @@ class GamificationNotifier extends StateNotifier<GamificationNotifierState> {
         category: category,
         score: score,
         awardXp: awardXp,
+        activityId: activityId,
       );
 
-      // Reload state to reflect new XP/level/streak/achievements
+      // Reload state to reflect new XP/level/streak/achievements/coins
       final newGamState = await _service.loadState(childId);
 
       state = state.copyWith(
         gamificationState: newGamState,
         pendingReward: result.hasRewards || result.leveledUp ? result : null,
       );
+
+      // Sync coins to reward store if coins were awarded
+      if (result.coinsAwarded > 0) {
+        try {
+          _ref.read(rewardStoreProvider.notifier).syncCoinsFromRepo();
+        } catch (_) {}
+      }
 
       return result;
     } catch (e) {
@@ -264,4 +276,9 @@ final childGamificationStateProvider = FutureProvider.autoDispose
     .family<GamificationState, String>((ref, childId) async {
   final service = ref.watch(gamificationServiceProvider);
   return service.loadState(childId);
+});
+
+/// Current child's coin balance (for display in UI).
+final currentCoinsProvider = Provider.autoDispose<int>((ref) {
+  return ref.watch(currentGamificationStateProvider)?.coins ?? 0;
 });

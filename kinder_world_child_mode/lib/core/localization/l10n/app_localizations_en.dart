@@ -1072,6 +1072,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sleepMode => 'Sleep Mode';
 
   @override
+  String get sleepModeMessage => 'It\'s bedtime! The app is locked until morning. Sweet dreams!';
+
+  @override
   String get emergencyLock => 'Emergency Lock';
 
   @override
@@ -1088,9 +1091,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get timeLimits => 'Time Limits';
-
-  @override
-  String get breakReminders => 'Break Reminders';
 
   @override
   String get smartControl => 'Smart Control';
@@ -2810,6 +2810,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get didntReceiveIt => 'Didn\'t receive it? Try again';
+
+  // ── Parent Reset Password Screen ──
+  @override
+  String get createNewPassword => 'Create New Password';
+
+  @override
+  String get confirmNewPasswordLabel => 'Confirm New Password';
+
+  @override
+  String get confirmNewPasswordHint => 'Re-enter your new password';
+
+  @override
+  String get passwordResetSuccess => 'Password Reset Successfully!';
+
+  @override
+  String get passwordResetSuccessSubtitle =>
+      'Your password has been updated. You can now log in with your new password.';
+
+  @override
+  String get passwordResetFailed => 'Failed to reset password. Please try again.';
+
+  @override
+  String get invalidResetToken => 'This reset link is invalid or has expired.';
+
+  @override
+  String get resetLinkExpiredMessage =>
+      'Password reset links expire after 30 minutes. Please request a new one.';
 
   // ── Child Forgot Password Screen ──
   @override
@@ -5389,6 +5416,62 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get moodEncouragementAngry =>
       'Let\'s take a deep breath and do something relaxing.';
+
+  @override
+  String get moodNameHappy => 'Happy';
+  @override
+  String get moodNameExcited => 'Excited';
+  @override
+  String get moodNameCalm => 'Calm';
+  @override
+  String get moodNameTired => 'Tired';
+  @override
+  String get moodNameSad => 'Sad';
+  @override
+  String get moodNameAngry => 'Angry';
+  @override
+  String get moodTodaySubLabel => 'Today\'s mood';
+
+  @override
+  String get puzzleWorldTitle => 'Puzzle World';
+  @override
+  String get puzzleWorldSubtitle => 'Choose from two fun picture puzzle styles!';
+  @override
+  String get puzzleTwoPuzzleStyles => 'Two Puzzle Styles';
+  @override
+  String get puzzleTwoPuzzleStylesSubtitle => 'Classic picture puzzle and shuffle puzzle, all in one place!';
+  @override
+  String get puzzleHDPlayTag => 'HD Play';
+  @override
+  String get picturePuzzleTitle => 'Picture Puzzle';
+  @override
+  String get picturePuzzleSubtitle => 'Arrange the pieces to build the full picture!';
+  @override
+  String get puzzleClassicTag => 'Classic';
+  @override
+  String get shufflePuzzleTitle => 'Shuffle Puzzle';
+  @override
+  String get shufflePuzzleSubtitle => 'Swap the mixed tiles to rebuild the picture!';
+  @override
+  String get puzzleNewTag => 'New';
+  @override
+  String get statGrid => 'Grid';
+  @override
+  String get statScore => 'Score';
+  @override
+  String get statTime => 'Time';
+  @override
+  String get statSolved => 'Solved';
+  @override
+  String get statMoves => 'Moves';
+  @override
+  String get statOpen => 'Open';
+  @override
+  String get chooseLevelLabel => 'Choose Level';
+  @override
+  String get howToPlayLabel => 'How to Play';
+  @override
+  String get statPlaced => 'Placed';
 
   @override
   String get placeholderDash => '-';

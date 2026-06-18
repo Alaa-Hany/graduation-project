@@ -108,7 +108,8 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
           type: ActivityType.lesson,
           category: lesson.category,
           score: 100,
-          awardXp: false,
+          awardXp: false, // XP added by recordActivityCompletion above
+          activityId: 'lesson_${widget.lessonId}',
         );
     unawaited(HapticFeedback.lightImpact());
 

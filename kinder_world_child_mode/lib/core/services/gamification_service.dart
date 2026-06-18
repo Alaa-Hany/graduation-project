@@ -12,6 +12,30 @@ import 'package:kinder_world/core/repositories/child_repository.dart';
 import 'package:kinder_world/core/repositories/gamification_repository.dart';
 import 'package:logger/logger.dart';
 
+// Coin awards per activity type
+int _coinsForActivity(ActivityType type, {int score = 0}) {
+  switch (type) {
+    case ActivityType.lesson:
+      return CoinRewards.completeLesson;
+    case ActivityType.activity:
+      return CoinRewards.completeActivity;
+    case ActivityType.quiz:
+      return CoinRewards.completeQuiz + (score >= 100 ? CoinRewards.perfectScore : 0);
+    case ActivityType.perfectQuiz:
+      return CoinRewards.completeQuiz + CoinRewards.perfectScore;
+    case ActivityType.play:
+      return CoinRewards.playActivity;
+    case ActivityType.coloring:
+      return CoinRewards.coloringPage;
+    case ActivityType.aiBuddy:
+      return CoinRewards.aiBuddySession;
+    case ActivityType.dailyStreak:
+      return CoinRewards.dailyStreak;
+    case ActivityType.firstLogin:
+      return CoinRewards.firstLogin;
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // RESULT TYPES
 // ─────────────────────────────────────────────────────────────────────────────
@@ -19,6 +43,7 @@ import 'package:logger/logger.dart';
 /// Returned by [GamificationService.recordActivity] — summarises what changed.
 class ActivityResult {
   final int xpAwarded;
+  final int coinsAwarded;
   final bool leveledUp;
   final int newLevel;
   final int newXP;
@@ -26,9 +51,11 @@ class ActivityResult {
   final List<Badge> newlyEarnedBadges;
   final bool streakUpdated;
   final int newStreak;
+  final bool alreadyCompleted;
 
   const ActivityResult({
     required this.xpAwarded,
+    required this.coinsAwarded,
     required this.leveledUp,
     required this.newLevel,
     required this.newXP,
@@ -36,6 +63,7 @@ class ActivityResult {
     required this.newlyEarnedBadges,
     required this.streakUpdated,
     required this.newStreak,
+    this.alreadyCompleted = false,
   });
 
   bool get hasRewards =>
@@ -43,6 +71,7 @@ class ActivityResult {
 
   static ActivityResult empty(int xp, int level, int streak) => ActivityResult(
         xpAwarded: 0,
+        coinsAwarded: 0,
         leveledUp: false,
         newLevel: level,
         newXP: xp,
@@ -105,6 +134,7 @@ class GamificationService {
     String? category,
     int score = 0,
     bool awardXp = true,
+    String? activityId, // used for deduplication (each activity earns XP/coins once)
   }) async {
     try {
       // 1. Load current child profile
@@ -114,13 +144,34 @@ class GamificationService {
         return ActivityResult.empty(0, 1, 0);
       }
 
+      // 2. Deduplication: skip XP/coins if this specific activity was already completed
+      if (activityId != null && activityId.isNotEmpty) {
+        final alreadyDone = await _gamificationRepo.hasCompletedActivityId(childId, activityId);
+        if (alreadyDone) {
+          _logger.d('GamificationService: activity already completed: $activityId');
+          return ActivityResult(
+            xpAwarded: 0,
+            coinsAwarded: 0,
+            leveledUp: false,
+            newLevel: child.level,
+            newXP: child.xp,
+            newlyUnlockedAchievements: const [],
+            newlyEarnedBadges: const [],
+            streakUpdated: false,
+            newStreak: child.streak,
+            alreadyCompleted: true,
+          );
+        }
+        await _gamificationRepo.markActivityIdCompleted(childId, activityId);
+      }
+
       final oldXP = child.xp;
       final oldLevel = child.level;
 
-      // 2. Calculate XP to award
+      // 3. Calculate XP to award
       final xpToAward = awardXp ? _xpForActivity(type, score: score) : 0;
 
-      // 3. Update streak
+      // 4. Update streak
       final streakResult = awardXp
           ? await _updateStreak(childId, child.streak)
           : _StreakResult(
@@ -131,13 +182,14 @@ class GamificationService {
       final newStreak = streakResult.newStreak;
       final streakBonusXP = streakResult.bonusXP;
 
-      // 4. Award XP (base + streak bonus)
+      // 5. Award XP (base + streak bonus)
       final totalXPToAward = xpToAward + streakBonusXP;
       final newXP = oldXP + totalXPToAward;
       final newLevel = LevelThresholds.levelForXP(newXP);
       final leveledUp = newLevel > oldLevel;
+      final levelsGained = (newLevel - oldLevel).clamp(0, 9);
 
-      // 5. Persist XP + level + streak to ChildProfile
+      // 6. Persist XP + level + streak to ChildProfile
       if (awardXp && totalXPToAward > 0) {
         await _childRepo.addXP(childId, totalXPToAward);
       }
@@ -145,16 +197,24 @@ class GamificationService {
         await _childRepo.updateStreak(childId);
       }
 
-      // 6. Increment activities counter in gamification repo
+      // 7. Award coins (always, regardless of awardXp flag)
+      final baseCoins = _coinsForActivity(type, score: score);
+      final levelUpCoins = levelsGained * CoinRewards.levelUpBonus;
+      final totalCoins = baseCoins + levelUpCoins;
+      if (totalCoins > 0) {
+        await _gamificationRepo.addCoins(childId, totalCoins);
+      }
+
+      // 8. Increment activities counter in gamification repo
       final activitiesCompleted =
           await _gamificationRepo.incrementActivitiesCompleted(childId);
 
-      // 7. Track explored category
+      // 9. Track explored category
       if (category != null && category.isNotEmpty) {
         await _gamificationRepo.addExploredCategory(childId, category);
       }
 
-      // 8. Check and unlock achievements
+      // 10. Check and unlock achievements
       final exploredCategories =
           await _gamificationRepo.getExploredCategories(childId);
 
@@ -175,7 +235,7 @@ class GamificationService {
 
       _logger.i(
         'GamificationService.recordActivity: child=$childId '
-        'type=$type xp+$totalXPToAward newXP=$newXP '
+        'type=$type xp+$totalXPToAward coins+$totalCoins newXP=$newXP '
         'level=$oldLevel→$newLevel streak=$newStreak '
         'achievements=${unlockResult.newAchievements.length} '
         'badges=${unlockResult.newBadges.length}',
@@ -183,6 +243,7 @@ class GamificationService {
 
       return ActivityResult(
         xpAwarded: totalXPToAward,
+        coinsAwarded: totalCoins,
         leveledUp: leveledUp,
         newLevel: newLevel,
         newXP: newXP,

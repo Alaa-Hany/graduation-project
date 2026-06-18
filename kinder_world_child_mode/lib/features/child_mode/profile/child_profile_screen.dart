@@ -23,6 +23,7 @@ import 'package:kinder_world/core/widgets/gamification_widgets.dart';
 import 'package:kinder_world/core/widgets/material_compat.dart';
 import 'package:kinder_world/core/widgets/picture_password_row.dart';
 import 'package:kinder_world/core/providers/locale_provider.dart';
+import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/app.dart';
 import 'package:kinder_world/features/child_mode/store/reward_store_screen.dart';
 import 'package:kinder_world/router.dart' show Routes;

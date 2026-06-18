@@ -5,6 +5,7 @@ import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
+import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/avatar_view.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
@@ -25,6 +26,14 @@ class ChildProfileOverviewScreen extends ConsumerWidget {
     final child = ref.watch(currentChildProvider);
     final isLoading = ref.watch(childLoadingProvider);
     final error = ref.watch(childErrorProvider);
+    final childId = ref.watch(currentChildIdProvider) ?? '';
+    final todayAsync = ref.watch(currentChildTodayProgressProvider);
+    final weeklyAsync = ref.watch(weeklySummaryProvider(childId));
+    const dailyTarget = 3;
+    const weeklyTarget = 10;
+    final todayDone = todayAsync.valueOrNull?.length ?? 0;
+    final weeklyDone =
+        (weeklyAsync.valueOrNull?['totalActivities'] as int?) ?? 0;
 
     if (isLoading) {
       return Scaffold(
@@ -286,16 +295,16 @@ class ChildProfileOverviewScreen extends ConsumerWidget {
                     const SizedBox(height: 16),
                     _ProgressRow(
                       label: l10n.dailyGoal,
-                      value: 0.7,
+                      value: (todayDone / dailyTarget).clamp(0.0, 1.0),
                       color: context.successColor,
-                      valueText: '7/10 ${l10n.activities}',
+                      valueText: '$todayDone/$dailyTarget ${l10n.activities}',
                     ),
                     const SizedBox(height: 16),
                     _ProgressRow(
                       label: l10n.weeklyChallenge,
-                      value: 0.5,
+                      value: (weeklyDone / weeklyTarget).clamp(0.0, 1.0),
                       color: colors.secondary,
-                      valueText: '3/6',
+                      valueText: '$weeklyDone/$weeklyTarget',
                     ),
                   ],
                 ),

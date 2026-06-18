@@ -32,12 +32,6 @@ mixin _$ScreenTimeRule {
   String? get sleepStartTime => throw _privateConstructorUsedError;
   @JsonKey(name: 'sleep_end_time')
   String? get sleepEndTime => throw _privateConstructorUsedError;
-  @JsonKey(name: 'break_reminders_enabled')
-  bool get breakRemindersEnabled => throw _privateConstructorUsedError;
-  @JsonKey(name: 'break_interval_minutes')
-  int? get breakIntervalMinutes => throw _privateConstructorUsedError;
-  @JsonKey(name: 'break_duration_minutes')
-  int? get breakDurationMinutes => throw _privateConstructorUsedError;
   @JsonKey(name: 'emergency_lock_enabled')
   bool get emergencyLockEnabled => throw _privateConstructorUsedError;
   @JsonKey(name: 'smart_control_enabled')
@@ -78,9 +72,6 @@ abstract class $ScreenTimeRuleCopyWith<$Res> {
       @JsonKey(name: 'sleep_mode_enabled') bool sleepModeEnabled,
       @JsonKey(name: 'sleep_start_time') String? sleepStartTime,
       @JsonKey(name: 'sleep_end_time') String? sleepEndTime,
-      @JsonKey(name: 'break_reminders_enabled') bool breakRemindersEnabled,
-      @JsonKey(name: 'break_interval_minutes') int? breakIntervalMinutes,
-      @JsonKey(name: 'break_duration_minutes') int? breakDurationMinutes,
       @JsonKey(name: 'emergency_lock_enabled') bool emergencyLockEnabled,
       @JsonKey(name: 'smart_control_enabled') bool smartControlEnabled,
       @JsonKey(name: 'ai_recommendations_enabled')
@@ -116,9 +107,6 @@ class _$ScreenTimeRuleCopyWithImpl<$Res, $Val extends ScreenTimeRule>
     Object? sleepModeEnabled = null,
     Object? sleepStartTime = freezed,
     Object? sleepEndTime = freezed,
-    Object? breakRemindersEnabled = null,
-    Object? breakIntervalMinutes = freezed,
-    Object? breakDurationMinutes = freezed,
     Object? emergencyLockEnabled = null,
     Object? smartControlEnabled = null,
     Object? aiRecommendationsEnabled = null,
@@ -156,18 +144,6 @@ class _$ScreenTimeRuleCopyWithImpl<$Res, $Val extends ScreenTimeRule>
           ? _value.sleepEndTime
           : sleepEndTime // ignore: cast_nullable_to_non_nullable
               as String?,
-      breakRemindersEnabled: null == breakRemindersEnabled
-          ? _value.breakRemindersEnabled
-          : breakRemindersEnabled // ignore: cast_nullable_to_non_nullable
-              as bool,
-      breakIntervalMinutes: freezed == breakIntervalMinutes
-          ? _value.breakIntervalMinutes
-          : breakIntervalMinutes // ignore: cast_nullable_to_non_nullable
-              as int?,
-      breakDurationMinutes: freezed == breakDurationMinutes
-          ? _value.breakDurationMinutes
-          : breakDurationMinutes // ignore: cast_nullable_to_non_nullable
-              as int?,
       emergencyLockEnabled: null == emergencyLockEnabled
           ? _value.emergencyLockEnabled
           : emergencyLockEnabled // ignore: cast_nullable_to_non_nullable
@@ -227,9 +203,6 @@ abstract class _$$ScreenTimeRuleImplCopyWith<$Res>
       @JsonKey(name: 'sleep_mode_enabled') bool sleepModeEnabled,
       @JsonKey(name: 'sleep_start_time') String? sleepStartTime,
       @JsonKey(name: 'sleep_end_time') String? sleepEndTime,
-      @JsonKey(name: 'break_reminders_enabled') bool breakRemindersEnabled,
-      @JsonKey(name: 'break_interval_minutes') int? breakIntervalMinutes,
-      @JsonKey(name: 'break_duration_minutes') int? breakDurationMinutes,
       @JsonKey(name: 'emergency_lock_enabled') bool emergencyLockEnabled,
       @JsonKey(name: 'smart_control_enabled') bool smartControlEnabled,
       @JsonKey(name: 'ai_recommendations_enabled')
@@ -264,9 +237,6 @@ class __$$ScreenTimeRuleImplCopyWithImpl<$Res>
     Object? sleepModeEnabled = null,
     Object? sleepStartTime = freezed,
     Object? sleepEndTime = freezed,
-    Object? breakRemindersEnabled = null,
-    Object? breakIntervalMinutes = freezed,
-    Object? breakDurationMinutes = freezed,
     Object? emergencyLockEnabled = null,
     Object? smartControlEnabled = null,
     Object? aiRecommendationsEnabled = null,
@@ -304,18 +274,6 @@ class __$$ScreenTimeRuleImplCopyWithImpl<$Res>
           ? _value.sleepEndTime
           : sleepEndTime // ignore: cast_nullable_to_non_nullable
               as String?,
-      breakRemindersEnabled: null == breakRemindersEnabled
-          ? _value.breakRemindersEnabled
-          : breakRemindersEnabled // ignore: cast_nullable_to_non_nullable
-              as bool,
-      breakIntervalMinutes: freezed == breakIntervalMinutes
-          ? _value.breakIntervalMinutes
-          : breakIntervalMinutes // ignore: cast_nullable_to_non_nullable
-              as int?,
-      breakDurationMinutes: freezed == breakDurationMinutes
-          ? _value.breakDurationMinutes
-          : breakDurationMinutes // ignore: cast_nullable_to_non_nullable
-              as int?,
       emergencyLockEnabled: null == emergencyLockEnabled
           ? _value.emergencyLockEnabled
           : emergencyLockEnabled // ignore: cast_nullable_to_non_nullable
@@ -360,10 +318,6 @@ class _$ScreenTimeRuleImpl extends _ScreenTimeRule {
       @JsonKey(name: 'sleep_mode_enabled') required this.sleepModeEnabled,
       @JsonKey(name: 'sleep_start_time') this.sleepStartTime,
       @JsonKey(name: 'sleep_end_time') this.sleepEndTime,
-      @JsonKey(name: 'break_reminders_enabled')
-      required this.breakRemindersEnabled,
-      @JsonKey(name: 'break_interval_minutes') this.breakIntervalMinutes,
-      @JsonKey(name: 'break_duration_minutes') this.breakDurationMinutes,
       @JsonKey(name: 'emergency_lock_enabled')
       required this.emergencyLockEnabled,
       @JsonKey(name: 'smart_control_enabled') required this.smartControlEnabled,
@@ -405,15 +359,6 @@ class _$ScreenTimeRuleImpl extends _ScreenTimeRule {
   @JsonKey(name: 'sleep_end_time')
   final String? sleepEndTime;
   @override
-  @JsonKey(name: 'break_reminders_enabled')
-  final bool breakRemindersEnabled;
-  @override
-  @JsonKey(name: 'break_interval_minutes')
-  final int? breakIntervalMinutes;
-  @override
-  @JsonKey(name: 'break_duration_minutes')
-  final int? breakDurationMinutes;
-  @override
   @JsonKey(name: 'emergency_lock_enabled')
   final bool emergencyLockEnabled;
   @override
@@ -437,7 +382,7 @@ class _$ScreenTimeRuleImpl extends _ScreenTimeRule {
 
   @override
   String toString() {
-    return 'ScreenTimeRule(id: $id, childId: $childId, dailyLimitMinutes: $dailyLimitMinutes, allowedHours: $allowedHours, sleepModeEnabled: $sleepModeEnabled, sleepStartTime: $sleepStartTime, sleepEndTime: $sleepEndTime, breakRemindersEnabled: $breakRemindersEnabled, breakIntervalMinutes: $breakIntervalMinutes, breakDurationMinutes: $breakDurationMinutes, emergencyLockEnabled: $emergencyLockEnabled, smartControlEnabled: $smartControlEnabled, aiRecommendationsEnabled: $aiRecommendationsEnabled, contentRestrictions: $contentRestrictions, createdAt: $createdAt, updatedAt: $updatedAt, isActive: $isActive)';
+    return 'ScreenTimeRule(id: $id, childId: $childId, dailyLimitMinutes: $dailyLimitMinutes, allowedHours: $allowedHours, sleepModeEnabled: $sleepModeEnabled, sleepStartTime: $sleepStartTime, sleepEndTime: $sleepEndTime, emergencyLockEnabled: $emergencyLockEnabled, smartControlEnabled: $smartControlEnabled, aiRecommendationsEnabled: $aiRecommendationsEnabled, contentRestrictions: $contentRestrictions, createdAt: $createdAt, updatedAt: $updatedAt, isActive: $isActive)';
   }
 
   @override
@@ -457,12 +402,6 @@ class _$ScreenTimeRuleImpl extends _ScreenTimeRule {
                 other.sleepStartTime == sleepStartTime) &&
             (identical(other.sleepEndTime, sleepEndTime) ||
                 other.sleepEndTime == sleepEndTime) &&
-            (identical(other.breakRemindersEnabled, breakRemindersEnabled) ||
-                other.breakRemindersEnabled == breakRemindersEnabled) &&
-            (identical(other.breakIntervalMinutes, breakIntervalMinutes) ||
-                other.breakIntervalMinutes == breakIntervalMinutes) &&
-            (identical(other.breakDurationMinutes, breakDurationMinutes) ||
-                other.breakDurationMinutes == breakDurationMinutes) &&
             (identical(other.emergencyLockEnabled, emergencyLockEnabled) ||
                 other.emergencyLockEnabled == emergencyLockEnabled) &&
             (identical(other.smartControlEnabled, smartControlEnabled) ||
@@ -491,9 +430,6 @@ class _$ScreenTimeRuleImpl extends _ScreenTimeRule {
       sleepModeEnabled,
       sleepStartTime,
       sleepEndTime,
-      breakRemindersEnabled,
-      breakIntervalMinutes,
-      breakDurationMinutes,
       emergencyLockEnabled,
       smartControlEnabled,
       aiRecommendationsEnabled,
@@ -530,10 +466,6 @@ abstract class _ScreenTimeRule extends ScreenTimeRule {
       @JsonKey(name: 'sleep_mode_enabled') required final bool sleepModeEnabled,
       @JsonKey(name: 'sleep_start_time') final String? sleepStartTime,
       @JsonKey(name: 'sleep_end_time') final String? sleepEndTime,
-      @JsonKey(name: 'break_reminders_enabled')
-      required final bool breakRemindersEnabled,
-      @JsonKey(name: 'break_interval_minutes') final int? breakIntervalMinutes,
-      @JsonKey(name: 'break_duration_minutes') final int? breakDurationMinutes,
       @JsonKey(name: 'emergency_lock_enabled')
       required final bool emergencyLockEnabled,
       @JsonKey(name: 'smart_control_enabled')
@@ -570,15 +502,6 @@ abstract class _ScreenTimeRule extends ScreenTimeRule {
   @override
   @JsonKey(name: 'sleep_end_time')
   String? get sleepEndTime;
-  @override
-  @JsonKey(name: 'break_reminders_enabled')
-  bool get breakRemindersEnabled;
-  @override
-  @JsonKey(name: 'break_interval_minutes')
-  int? get breakIntervalMinutes;
-  @override
-  @JsonKey(name: 'break_duration_minutes')
-  int? get breakDurationMinutes;
   @override
   @JsonKey(name: 'emergency_lock_enabled')
   bool get emergencyLockEnabled;

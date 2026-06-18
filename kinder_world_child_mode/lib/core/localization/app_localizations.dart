@@ -590,13 +590,13 @@ abstract class AppLocalizations {
   String get dailyLimit;
   String get allowedHours;
   String get sleepMode;
+  String get sleepModeMessage;
   String get emergencyLock;
   String get contentFiltering;
   String get ageAppropriate;
   String get blockContent;
   String get allowContent;
   String get timeLimits;
-  String get breakReminders;
   String get smartControl;
   String get aiRecommendations;
 
@@ -968,6 +968,16 @@ abstract class AppLocalizations {
   String get step2ClickLink;
   String get step3CreatePassword;
   String get didntReceiveIt;
+
+  // ── Parent Reset Password Screen ──
+  String get createNewPassword;
+  String get confirmNewPasswordLabel;
+  String get confirmNewPasswordHint;
+  String get passwordResetSuccess;
+  String get passwordResetSuccessSubtitle;
+  String get passwordResetFailed;
+  String get invalidResetToken;
+  String get resetLinkExpiredMessage;
 
   // ── Child Forgot Password Screen ──
   String get needHelp;
@@ -1971,6 +1981,33 @@ abstract class AppLocalizations {
   String get moodEncouragementTired;
   String get moodEncouragementSad;
   String get moodEncouragementAngry;
+  String get moodNameHappy;
+  String get moodNameExcited;
+  String get moodNameCalm;
+  String get moodNameTired;
+  String get moodNameSad;
+  String get moodNameAngry;
+  String get moodTodaySubLabel;
+  String get puzzleWorldTitle;
+  String get puzzleWorldSubtitle;
+  String get puzzleTwoPuzzleStyles;
+  String get puzzleTwoPuzzleStylesSubtitle;
+  String get puzzleHDPlayTag;
+  String get picturePuzzleTitle;
+  String get picturePuzzleSubtitle;
+  String get puzzleClassicTag;
+  String get shufflePuzzleTitle;
+  String get shufflePuzzleSubtitle;
+  String get puzzleNewTag;
+  String get statGrid;
+  String get statScore;
+  String get statTime;
+  String get statSolved;
+  String get statMoves;
+  String get statOpen;
+  String get chooseLevelLabel;
+  String get howToPlayLabel;
+  String get statPlaced;
 }
 
 class _AppLocalizationsDelegate

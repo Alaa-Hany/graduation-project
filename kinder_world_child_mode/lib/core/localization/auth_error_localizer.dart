@@ -13,7 +13,9 @@ String localizeAuthErrorMessage(String message, AppLocalizations l10n) {
     return l10n.connectionError;
   }
 
-  if (normalized == AuthUiMessages.invalidEmailOrPassword) {
+  if (normalized == AuthUiMessages.invalidEmailOrPassword ||
+      normalizedLower.contains('invalid credentials') ||
+      normalizedLower.contains('[401]')) {
     return l10n.authInvalidEmailOrPassword;
   }
   if (normalized == AuthUiMessages.loginFailedTryAgain) {

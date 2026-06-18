@@ -327,6 +327,32 @@ class AuthApi {
     return Map<String, dynamic>.from(response.data ?? const {});
   }
 
+  Future<Map<String, dynamic>> forgotPassword({
+    required String email,
+  }) async {
+    final response = await _network.post<Map<String, dynamic>>(
+      '/auth/forgot-password',
+      data: {'email': email.trim().toLowerCase()},
+    );
+    return Map<String, dynamic>.from(response.data ?? const {});
+  }
+
+  Future<Map<String, dynamic>> resetPassword({
+    required String token,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    final response = await _network.post<Map<String, dynamic>>(
+      '/auth/reset-password',
+      data: {
+        'token': token,
+        'new_password': newPassword,
+        'confirm_password': confirmPassword,
+      },
+    );
+    return Map<String, dynamic>.from(response.data ?? const {});
+  }
+
   AuthSessionPayload _toSessionPayload(Map<String, dynamic>? data) {
     final body = Map<String, dynamic>.from(data ?? const {});
     return AuthSessionPayload(

@@ -18,6 +18,105 @@ PUBLIC_PAGE_SLUGS = {
     "privacy": "legal-privacy",
     "coppa": "legal-coppa",
 }
+
+_LEGAL_DEFAULT_CONTENT: dict[str, dict[str, str]] = {
+    "terms": {
+        "title_en": "Terms of Service",
+        "title_ar": "شروط الخدمة",
+        "body_en": (
+            "These terms explain how Kinder World should be used by parents, guardians, "
+            "and children under adult supervision.\n\n"
+            "Parents are responsible for the account, subscription choices, and the child "
+            "profiles created under that account. Please keep login credentials, PINs, and "
+            "any linked payment methods secure.\n\n"
+            "Kinder World content is intended for guided educational and entertainment use. "
+            "You may not copy, resell, scrape, reverse engineer, or misuse the service or "
+            "its content.\n\n"
+            "We may update features, content catalogs, and subscription benefits over time. "
+            "If a change materially affects service terms, the latest published version "
+            "inside the app or backend legal endpoint should be treated as the current "
+            "reference.\n\n"
+            "If you continue using the service after updates are published, that continued "
+            "use counts as acceptance of the updated terms."
+        ),
+        "body_ar": (
+            "توضح هذه الشروط كيفية استخدام Kinder World من قبل الوالدين أو الأوصياء، "
+            "مع استخدام الأطفال للتطبيق تحت إشراف بالغ.\n\n"
+            "يكون ولي الأمر مسؤولًا عن الحساب وخيارات الاشتراك وملفات الأطفال المرتبطة به. "
+            "يجب الحفاظ على بيانات الدخول ورمز PIN ووسائل الدفع المرتبطة بشكل آمن.\n\n"
+            "تم تصميم محتوى Kinder World للاستخدام التعليمي والترفيهي الموجّه. لا يجوز "
+            "نسخ الخدمة أو إعادة بيعها أو جمع محتواها آليًا أو إساءة استخدامها بأي شكل.\n\n"
+            "قد نقوم بتحديث الميزات والمحتوى ومزايا الاشتراك مع الوقت. وعند وجود تغيير "
+            "مؤثر، تُعد النسخة المنشورة عبر التطبيق أو نقطة النهاية القانونية في الخلفية "
+            "هي المرجع الأحدث.\n\n"
+            "استمرارك في استخدام الخدمة بعد نشر التحديثات يعني موافقتك على الشروط المحدثة."
+        ),
+    },
+    "privacy": {
+        "title_en": "Privacy Policy",
+        "title_ar": "سياسة الخصوصية",
+        "body_en": (
+            "Kinder World collects only the information needed to provide accounts, child "
+            "profiles, learning progress, subscriptions, and support.\n\n"
+            "Parent account information may include email, authentication details, "
+            "subscription status, and support history. Child profile information may include "
+            "display name, avatar, learning activity, preferences, and progress metrics.\n\n"
+            "We use this information to keep the app working, personalize age-appropriate "
+            "content, protect accounts, and improve reliability. We do not treat child data "
+            "as a source for advertising profiles.\n\n"
+            "Where caching or offline storage is enabled, some content and profile "
+            "information may be stored locally on the device to keep the experience working "
+            "during connectivity issues.\n\n"
+            "If you need to update or remove account-related information, use the available "
+            "in-app controls or contact support through the parent-facing help channels."
+        ),
+        "body_ar": (
+            "يجمع Kinder World فقط البيانات اللازمة لتشغيل الحسابات وملفات الأطفال "
+            "والتقدم التعليمي والاشتراكات والدعم.\n\n"
+            "قد تتضمن بيانات حساب ولي الأمر البريد الإلكتروني وبيانات التحقق وحالة "
+            "الاشتراك وسجل الدعم. وقد تتضمن بيانات ملف الطفل الاسم الظاهر والصورة الرمزية "
+            "والنشاط التعليمي والتفضيلات ومؤشرات التقدم.\n\n"
+            "نستخدم هذه البيانات لتشغيل التطبيق وتخصيص محتوى مناسب للعمر وحماية الحسابات "
+            "وتحسين الاعتمادية. ولا نستخدم بيانات الأطفال لبناء ملفات إعلانية.\n\n"
+            "عند تفعيل التخزين المؤقت أو العمل دون اتصال، قد تُحفظ بعض البيانات محليًا "
+            "على الجهاز لضمان استمرار التجربة عند ضعف الاتصال.\n\n"
+            "إذا احتجت إلى تحديث بيانات الحساب أو حذفها، فاستخدم الأدوات المتاحة داخل "
+            "التطبيق أو تواصل مع الدعم من خلال قنوات المساعدة الخاصة بولي الأمر."
+        ),
+    },
+    "coppa": {
+        "title_en": "COPPA Compliance",
+        "title_ar": "امتثال COPPA",
+        "body_en": (
+            "Kinder World is designed for child-facing use under verified parent or guardian "
+            "control.\n\n"
+            "Child profiles are created and managed from the parent side of the app. Parents "
+            "decide what child information is provided, which profiles remain active, and how "
+            "subscriptions or safety settings are configured.\n\n"
+            "We limit child profile data to the information required to deliver educational "
+            "content, save progress, and enforce safety or access rules. Parent-facing "
+            "controls are used for account recovery, subscription management, and support "
+            "requests.\n\n"
+            "If COPPA-specific disclosures or consent text are published from the backend, "
+            "that published version should be treated as the authoritative legal copy for "
+            "production use.\n\n"
+            "Parents who need help with review, correction, or deletion requests should use "
+            "the in-app support and legal contact paths available in the parent experience."
+        ),
+        "body_ar": (
+            "تم تصميم Kinder World لاستخدام الأطفال تحت إشراف وتحكم ولي أمر أو وصي موثّق.\n\n"
+            "يتم إنشاء ملفات الأطفال وإدارتها من جهة ولي الأمر داخل التطبيق. ويحدد ولي "
+            "الأمر البيانات المقدمة لكل طفل، والملفات النشطة، وإعدادات الاشتراك والسلامة.\n\n"
+            "نقصر بيانات ملف الطفل على ما يلزم لتقديم المحتوى التعليمي وحفظ التقدم وتطبيق "
+            "قواعد السلامة والوصول. كما تُستخدم أدوات ولي الأمر لاستعادة الحساب وإدارة "
+            "الاشتراك وطلبات الدعم.\n\n"
+            "إذا تم نشر إفصاحات أو نصوص موافقة خاصة بـ COPPA من خلال الخلفية، فتُعد "
+            "النسخة المنشورة هناك هي المرجع القانوني المعتمد في بيئة الإنتاج.\n\n"
+            "يمكن لولي الأمر استخدام مسارات الدعم والاتصال القانوني داخل تجربة الوالدين "
+            "لطلبات المراجعة أو التصحيح أو الحذف."
+        ),
+    },
+}
 PUBLIC_CHILD_CONTENT_TYPES = {"lesson", "story", "video", "activity"}
 
 
@@ -226,25 +325,41 @@ def about(db: Session = Depends(get_db)):
     }
 
 
+def _legal_response(*, db: Session, key: str) -> dict[str, Any]:
+    page = _get_published_page(db=db, slug=PUBLIC_PAGE_SLUGS[key])
+    defaults = _LEGAL_DEFAULT_CONTENT[key]
+    if page is not None:
+        body_en = (page.body_en or "").strip() or defaults["body_en"]
+        body_ar = (page.body_ar or "").strip() or defaults["body_ar"]
+        return {
+            "body": body_en,
+            "body_en": body_en,
+            "body_ar": body_ar,
+            "content": body_en,
+            "item": _serialize_public_content_item(page),
+        }
+    return {
+        "body": defaults["body_en"],
+        "body_en": defaults["body_en"],
+        "body_ar": defaults["body_ar"],
+        "content": defaults["body_en"],
+        "item": None,
+    }
+
+
 @router.get("/legal/terms")
 def terms(db: Session = Depends(get_db)):
-    page = _get_published_page_or_404(db=db, slug=PUBLIC_PAGE_SLUGS["terms"])
-    body = _body_from_page(page)
-    return {"body": body, "content": body, "item": _serialize_public_content_item(page)}
+    return _legal_response(db=db, key="terms")
 
 
 @router.get("/legal/privacy")
 def privacy(db: Session = Depends(get_db)):
-    page = _get_published_page_or_404(db=db, slug=PUBLIC_PAGE_SLUGS["privacy"])
-    body = _body_from_page(page)
-    return {"body": body, "content": body, "item": _serialize_public_content_item(page)}
+    return _legal_response(db=db, key="privacy")
 
 
 @router.get("/legal/coppa")
 def coppa(db: Session = Depends(get_db)):
-    page = _get_published_page_or_404(db=db, slug=PUBLIC_PAGE_SLUGS["coppa"])
-    body = _body_from_page(page)
-    return {"body": body, "content": body, "item": _serialize_public_content_item(page)}
+    return _legal_response(db=db, key="coppa")
 
 
 @router.get("/content/child/categories")

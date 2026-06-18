@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from deps import get_current_user, get_db
 from models import User
-from rate_limit import auth_rate_limit, email_otp_resend_rate_limit, email_otp_verify_rate_limit
+from rate_limit import auth_rate_limit, email_otp_resend_rate_limit, email_otp_verify_rate_limit, password_reset_rate_limit
 from schemas.auth import (
     AccessTokenResponse,
     AuthTokenResponse,
@@ -12,12 +12,14 @@ from schemas.auth import (
     ChildRegisterIn,
     ChildSessionValidateIn,
     CurrentUserResponse,
+    ForgotPasswordIn,
     LoginIn,
     OtpActionResponse,
     PendingVerificationResponse,
     RefreshIn,
     RegisterIn,
     ResendEmailOtpIn,
+    ResetPasswordIn,
     VerifyEmailOtpIn,
 )
 from serializers import user_to_json
@@ -33,6 +35,7 @@ router = APIRouter()
 auth_rate_limit_check = Depends(auth_rate_limit())
 email_otp_verify_rate_limit_check = Depends(email_otp_verify_rate_limit())
 email_otp_resend_rate_limit_check = Depends(email_otp_resend_rate_limit())
+password_reset_rate_limit_check = Depends(password_reset_rate_limit())
 
 
 @router.post(
@@ -167,6 +170,34 @@ def child_change_password(
     rate_limit_check: None = auth_rate_limit_check,
 ):
     return change_child_password(payload, db)
+
+
+@router.post(
+    "/auth/forgot-password",
+    summary="Request Password Reset",
+    description="Send a password reset link to the given email if it belongs to a verified account. Always returns success to prevent email enumeration.",
+    response_description="Success acknowledgment.",
+)
+def forgot_password(
+    payload: ForgotPasswordIn,
+    db: Session = Depends(get_db),
+    rate_limit_check: None = password_reset_rate_limit_check,
+):
+    return auth_service.request_password_reset(payload, db)
+
+
+@router.post(
+    "/auth/reset-password",
+    summary="Reset Password",
+    description="Verify a password reset token and set a new password for the parent account.",
+    response_description="Password reset result.",
+)
+def reset_password(
+    payload: ResetPasswordIn,
+    db: Session = Depends(get_db),
+    rate_limit_check: None = password_reset_rate_limit_check,
+):
+    return auth_service.confirm_password_reset(payload, db)
 
 
 @router.get(

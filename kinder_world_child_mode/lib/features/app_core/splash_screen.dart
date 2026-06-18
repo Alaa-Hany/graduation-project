@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' show ImageFilter, lerpDouble;
 
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -209,13 +210,14 @@ class _SplashScene extends StatelessWidget {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  ImageFiltered(
-                    imageFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                    child: const _AssetImage(
-                      assetPath: _SplashAssets.star,
-                      fit: BoxFit.contain,
+                  if (kDebugMode)
+                    ImageFiltered(
+                      imageFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: const _AssetImage(
+                        assetPath: _SplashAssets.star,
+                        fit: BoxFit.contain,
+                      ),
                     ),
-                  ),
                   const _AssetImage(
                     assetPath: _SplashAssets.star,
                     fit: BoxFit.contain,
@@ -288,20 +290,21 @@ class _SplashBranding extends StatelessWidget {
         Stack(
           alignment: Alignment.center,
           children: [
-            ImageFiltered(
-              imageFilter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-              child: Text(
-                'Kinder World',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white.withValuesCompat(alpha: 0.95),
-                  fontSize: layout.titleFontSize,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -1,
-                  height: 1,
+            if (kDebugMode)
+              ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                child: Text(
+                  'Kinder World',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white.withValuesCompat(alpha: 0.95),
+                    fontSize: layout.titleFontSize,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -1,
+                    height: 1,
+                  ),
                 ),
               ),
-            ),
             Text(
               'Kinder World',
               textAlign: TextAlign.center,
@@ -602,7 +605,7 @@ class _SplashAssets {
 
 class _SplashDurations {
   static const screenFadeIn = Duration(milliseconds: 260);
-  static const navigationDelay = Duration(seconds: 3);
+  static const navigationDelay = Duration(milliseconds: 3000);
   static const backgroundStarsFloat = Duration(milliseconds: 4200);
   static const starFloat = Duration(milliseconds: 2600);
   static const bookFloat = Duration(milliseconds: 3000);

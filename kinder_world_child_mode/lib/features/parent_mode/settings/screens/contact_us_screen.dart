@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/localization/auth_error_localizer.dart';
 import 'package:kinder_world/core/models/support_ticket_record.dart';
 import 'package:kinder_world/core/providers/support_controller.dart';
 import 'package:kinder_world/core/widgets/material_compat.dart';
@@ -138,7 +139,7 @@ class _ParentContactUsScreenState extends ConsumerState<ParentContactUsScreen> {
             ),
             if (supportState.errorMessage != null) ...[
               const SizedBox(height: 16),
-              _ErrorBanner(message: supportState.errorMessage!),
+              _ErrorBanner(message: localizeAuthErrorMessage(supportState.errorMessage!, l10n)),
             ],
             const SizedBox(height: 16),
             SizedBox(

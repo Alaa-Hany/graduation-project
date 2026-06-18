@@ -17,7 +17,7 @@ class EmailDeliveryService:
         self.use_ssl = os.getenv("SMTP_USE_SSL", "true").lower() == "true"
         self.use_tls = os.getenv("SMTP_USE_TLS", "false").lower() == "true"
 
-    def send_email(self, *, to_email: str, subject: str, body: str) -> None:
+    def send_email(self, *, to_email: str, subject: str, body: str, html_body: str | None = None) -> None:
         if not self.username or not self.password or not self.from_email:
             raise RuntimeError("SMTP credentials are not configured")
 
@@ -25,7 +25,10 @@ class EmailDeliveryService:
         message["Subject"] = subject
         message["From"] = f"{self.from_name} <{self.from_email}>"
         message["To"] = to_email
+        message["X-Mailer"] = "Kinder World Mailer"
         message.set_content(body)
+        if html_body:
+            message.add_alternative(html_body, subtype="html")
 
         if self.use_ssl:
             with smtplib.SMTP_SSL(self.host, self.port) as server:

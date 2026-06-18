@@ -25,6 +25,21 @@ class XPRewards {
   static const int firstLogin = 100; // one-time welcome bonus
 }
 
+class CoinRewards {
+  CoinRewards._();
+
+  static const int completeLesson = 5;
+  static const int completeActivity = 3;
+  static const int completeQuiz = 4;
+  static const int perfectScore = 6;
+  static const int playActivity = 3;
+  static const int coloringPage = 2;
+  static const int aiBuddySession = 1;
+  static const int dailyStreak = 2;
+  static const int levelUpBonus = 10; // per level gained
+  static const int firstLogin = 10;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // LEVEL SYSTEM
 // ─────────────────────────────────────────────────────────────────────────────
@@ -310,6 +325,7 @@ class GamificationState {
   final int activitiesCompleted;
   final Set<String>
       exploredCategories; // tracks which content categories visited
+  final int coins;
 
   const GamificationState({
     required this.childId,
@@ -321,6 +337,7 @@ class GamificationState {
     this.lastActivityDate,
     this.activitiesCompleted = 0,
     this.exploredCategories = const {},
+    this.coins = 0,
   });
 
   // Computed helpers
@@ -349,6 +366,7 @@ class GamificationState {
     DateTime? lastActivityDate,
     int? activitiesCompleted,
     Set<String>? exploredCategories,
+    int? coins,
   }) {
     return GamificationState(
       childId: childId,
@@ -360,6 +378,7 @@ class GamificationState {
       lastActivityDate: lastActivityDate ?? this.lastActivityDate,
       activitiesCompleted: activitiesCompleted ?? this.activitiesCompleted,
       exploredCategories: exploredCategories ?? this.exploredCategories,
+      coins: coins ?? this.coins,
     );
   }
 }

@@ -2,12 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
-import 'package:kinder_world/core/subscription/plan_info.dart';
-import 'package:kinder_world/core/providers/plan_provider.dart';
 import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/core/widgets/plan_status_banner.dart';
-import 'package:kinder_world/core/widgets/premium_badge.dart';
-import 'package:kinder_world/core/widgets/premium_section_upsell.dart';
 import 'package:kinder_world/app.dart';
 import 'package:kinder_world/router.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
@@ -22,18 +18,9 @@ class ParentalControlsScreen extends ConsumerStatefulWidget {
 
 class _ParentalControlsScreenState
     extends ConsumerState<ParentalControlsScreen> {
-  bool _dailyLimitEnabled = true;
-  double _hoursPerDay = 2;
-  bool _breakRemindersEnabled = true;
-
-  bool _ageAppropriateOnly = true;
-  bool _blockEducational = false;
-  bool _requireApproval = false;
-
   bool _sleepMode = true;
   String _bedtime = '8:00 PM';
   String _wakeTime = '7:00 AM';
-  bool _emergencyLock = false;
   bool _isLoading = true;
 
   @override
@@ -50,16 +37,9 @@ class _ParentalControlsScreenState
       final data = response.data?['settings'];
       if (data is Map) {
         setState(() {
-          _dailyLimitEnabled = data['daily_limit_enabled'] == true;
-          _hoursPerDay = (data['hours_per_day'] ?? 2).toDouble();
-          _breakRemindersEnabled = data['break_reminders_enabled'] == true;
-          _ageAppropriateOnly = data['age_appropriate_only'] == true;
-          _blockEducational = data['block_educational'] == true;
-          _requireApproval = data['require_approval'] == true;
           _sleepMode = data['sleep_mode'] == true;
           _bedtime = data['bedtime']?.toString() ?? _bedtime;
           _wakeTime = data['wake_time']?.toString() ?? _wakeTime;
-          _emergencyLock = data['emergency_lock'] == true;
         });
       }
     } catch (_) {
@@ -79,16 +59,9 @@ class _ParentalControlsScreenState
       await ref.read(networkServiceProvider).put<Map<String, dynamic>>(
         '/parental-controls/settings',
         data: {
-          'daily_limit_enabled': _dailyLimitEnabled,
-          'hours_per_day': _hoursPerDay.round(),
-          'break_reminders_enabled': _breakRemindersEnabled,
-          'age_appropriate_only': _ageAppropriateOnly,
-          'block_educational': _blockEducational,
-          'require_approval': _requireApproval,
           'sleep_mode': _sleepMode,
           'bedtime': _bedtime,
           'wake_time': _wakeTime,
-          'emergency_lock': _emergencyLock,
         },
       );
     } catch (_) {
@@ -103,9 +76,6 @@ class _ParentalControlsScreenState
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final plan = ref.watch(planInfoProvider).asData?.value ??
-        PlanInfo.fromTier(PlanTier.free);
-    final isAdvancedLocked = !plan.hasSmartControls;
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
@@ -173,96 +143,6 @@ class _ParentalControlsScreenState
                     const SizedBox(height: 24),
 
                     _buildControlSection(
-                      l10n.screenTimeLimits,
-                      Icons.timer,
-                      [
-                        _buildToggleSetting(
-                          l10n.dailyLimit,
-                          _dailyLimitEnabled,
-                          (value) {
-                            setState(() => _dailyLimitEnabled = value);
-                            _saveControls();
-                          },
-                        ),
-                        _buildDisabledControlGroup(
-                          enabled: _dailyLimitEnabled,
-                          child: Column(
-                            children: [
-                              _buildSliderSetting(
-                                l10n.hoursPerDay,
-                                _hoursPerDay,
-                                0,
-                                6,
-                                (value) {
-                                  setState(() => _hoursPerDay = value);
-                                  _saveControls();
-                                },
-                                enabled: _dailyLimitEnabled,
-                              ),
-                              _buildToggleSetting(
-                                l10n.breakReminders,
-                                _breakRemindersEnabled,
-                                (value) {
-                                  setState(
-                                    () => _breakRemindersEnabled = value,
-                                  );
-                                  _saveControls();
-                                },
-                                enabled: _dailyLimitEnabled,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    _buildControlSection(
-                      l10n.contentFiltering,
-                      Icons.filter_list,
-                      [
-                        _buildToggleSetting(
-                          l10n.ageAppropriate,
-                          _ageAppropriateOnly,
-                          (value) {
-                            setState(() => _ageAppropriateOnly = value);
-                            _saveControls();
-                          },
-                        ),
-                        _buildToggleSetting(
-                          l10n.blockContent,
-                          _blockEducational,
-                          (value) {
-                            setState(() => _blockEducational = value);
-                            _saveControls();
-                          },
-                        ),
-                        _buildToggleSetting(
-                          l10n.requireApproval,
-                          _requireApproval,
-                          (value) {
-                            setState(() => _requireApproval = value);
-                            _saveControls();
-                          },
-                        ),
-                      ],
-                      trailing: const PremiumBadge(),
-                      isDimmed: isAdvancedLocked,
-                      footer: isAdvancedLocked
-                          ? PremiumSectionUpsell(
-                              title: l10n.planFeatureInPremium,
-                              description: l10n.smartControl,
-                              buttonLabel: l10n.upgradeNow,
-                              showBadge: false,
-                              padding: const EdgeInsets.all(12),
-                            )
-                          : null,
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    _buildControlSection(
                       l10n.timeRestrictions,
                       Icons.access_time,
                       [
@@ -292,62 +172,6 @@ class _ParentalControlsScreenState
                           : null,
                     ),
 
-                    const SizedBox(height: 40),
-
-                    // Emergency Controls
-                    ParentCard(
-                      backgroundColor:
-                          ParentColors.alertRed.withValuesCompat(alpha: 0.06),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 34,
-                                height: 34,
-                                decoration: BoxDecoration(
-                                  color: ParentColors.alertRed
-                                      .withValuesCompat(alpha: 0.14),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: const Icon(Icons.lock_rounded,
-                                    color: ParentColors.alertRed, size: 18),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                l10n.emergencyControls,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800,
-                                  color: ParentColors.alertRed,
-                                  letterSpacing: -0.2,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          FilledButton.icon(
-                            onPressed: () {
-                              setState(() => _emergencyLock = true);
-                              _saveControls();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(l10n.lockAppNow)),
-                              );
-                            },
-                            icon: const Icon(Icons.lock_rounded, size: 18),
-                            label: Text(l10n.lockAppNow),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: ParentColors.alertRed,
-                              minimumSize: const Size(double.infinity, 48),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -361,11 +185,8 @@ class _ParentalControlsScreenState
   Widget _buildControlSection(
     String title,
     IconData icon,
-    List<Widget> controls, {
-    Widget? trailing,
-    Widget? footer,
-    bool isDimmed = false,
-  }) {
+    List<Widget> controls,
+  ) {
     return ParentCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -392,18 +213,10 @@ class _ParentalControlsScreenState
                   ),
                 ),
               ),
-              if (trailing != null) trailing,
             ],
           ),
           const SizedBox(height: 16),
-          Opacity(
-            opacity: isDimmed ? 0.55 : 1,
-            child: IgnorePointer(
-              ignoring: isDimmed,
-              child: Column(children: controls),
-            ),
-          ),
-          if (footer != null) ...[const SizedBox(height: 12), footer],
+          Column(children: controls),
         ],
       ),
     );
@@ -432,68 +245,6 @@ class _ParentalControlsScreenState
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSliderSetting(String title, double value, double min, double max,
-      ValueChanged<double> onChanged,
-      {bool enabled = true}) {
-    final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    final hoursLabel = '${value.round()} h';
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: textTheme.bodyMedium,
-                ),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: colors.primary.withValuesCompat(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  hoursLabel,
-                  style: textTheme.bodySmall?.copyWith(
-                    color: colors.primary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Slider(
-            value: value,
-            min: min,
-            max: max,
-            onChanged: enabled ? onChanged : null,
-            activeColor: colors.primary,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDisabledControlGroup({
-    required bool enabled,
-    required Widget child,
-  }) {
-    return Opacity(
-      opacity: enabled ? 1 : 0.45,
-      child: IgnorePointer(
-        ignoring: !enabled,
-        child: child,
       ),
     );
   }

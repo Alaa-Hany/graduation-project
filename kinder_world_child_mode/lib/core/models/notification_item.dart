@@ -99,7 +99,6 @@ class NotificationTypes {
   static const String warning = 'warning';
   static const String reportReady = 'report_ready';
   static const String contentRecommended = 'content_recommended';
-  static const String breakReminder = 'break_reminder';
   static const String timeLimitWarning = 'time_limit_warning';
   static const String approvalRequired = 'approval_required';
   static const String subscription = 'subscription';
@@ -113,7 +112,6 @@ class NotificationTypes {
     warning,
     reportReady,
     contentRecommended,
-    breakReminder,
     timeLimitWarning,
     approvalRequired,
     subscription,
@@ -135,8 +133,6 @@ class NotificationTypes {
         return 'Report Ready';
       case contentRecommended:
         return 'Content Recommended';
-      case breakReminder:
-        return 'Break Reminder';
       case timeLimitWarning:
         return 'Time Limit Warning';
       case approvalRequired:
@@ -166,8 +162,6 @@ class NotificationTypes {
         return Icons.assessment;
       case contentRecommended:
         return Icons.recommend;
-      case breakReminder:
-        return Icons.coffee;
       case timeLimitWarning:
         return Icons.timer;
       case approvalRequired:

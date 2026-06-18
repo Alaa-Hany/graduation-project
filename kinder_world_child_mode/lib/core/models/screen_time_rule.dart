@@ -17,10 +17,6 @@ class ScreenTimeRule with _$ScreenTimeRule {
     @JsonKey(name: 'sleep_mode_enabled') required bool sleepModeEnabled,
     @JsonKey(name: 'sleep_start_time') String? sleepStartTime,
     @JsonKey(name: 'sleep_end_time') String? sleepEndTime,
-    @JsonKey(name: 'break_reminders_enabled')
-    required bool breakRemindersEnabled,
-    @JsonKey(name: 'break_interval_minutes') int? breakIntervalMinutes,
-    @JsonKey(name: 'break_duration_minutes') int? breakDurationMinutes,
     @JsonKey(name: 'emergency_lock_enabled') required bool emergencyLockEnabled,
     @JsonKey(name: 'smart_control_enabled') required bool smartControlEnabled,
     @JsonKey(name: 'ai_recommendations_enabled')
@@ -71,14 +67,6 @@ class ScreenTimeRule with _$ScreenTimeRule {
     } else {
       return currentTime >= startTime && currentTime <= endTime;
     }
-  }
-
-  // Check if it's time for a break
-  bool shouldTakeBreak(int sessionTimeMinutes) {
-    if (!breakRemindersEnabled || breakIntervalMinutes == null) {
-      return false;
-    }
-    return sessionTimeMinutes >= breakIntervalMinutes!;
   }
 
   // Get remaining time for today

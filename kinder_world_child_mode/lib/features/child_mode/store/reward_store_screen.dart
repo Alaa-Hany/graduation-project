@@ -8,6 +8,7 @@ import 'package:kinder_world/core/models/achievement.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/providers/gamification_provider.dart';
+import 'package:kinder_world/core/repositories/gamification_repository.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
 
@@ -311,23 +312,8 @@ class RewardRedeemResult {
   final int? currentCoins;
 }
 
-int rewardStoreCoinFloor({
-  GamificationState? gamification,
-  ChildProfile? child,
-}) {
-  final completedActivities =
-      gamification?.activitiesCompleted ?? child?.activitiesCompleted ?? 0;
-  if (completedActivities <= 0) {
-    return 0;
-  }
-
-  // Keep the store simple for the presentation: each completed activity
-  // guarantees a small, visible coin reward.
-  return completedActivities * 2;
-}
-
 class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
-  RewardStoreNotifier(this._box, this._childId, this._coinFloor)
+  RewardStoreNotifier(this._box, this._childId, this._gamRepo)
       : super(const RewardStoreState(
           coins: 0,
           ownedIds: {},
@@ -340,29 +326,15 @@ class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
 
   final Box _box;
   final String _childId;
-  final int _coinFloor;
+  final GamificationRepository _gamRepo;
 
-  String get _coinsKey => 'store_coins_$_childId';
   String get _ownedKey => 'store_owned_$_childId';
   String get _equippedKey => 'store_equipped_$_childId';
-  String get _seededKey => 'store_seeded_$_childId';
   String get _pendingRequestsKey => 'store_pending_requests_$_childId';
   String get _historyRequestsKey => 'store_history_requests_$_childId';
 
-  void _load() {
-    final alreadySeeded = _box.get(_seededKey, defaultValue: false) == true;
-    int coins;
-    if (!alreadySeeded) {
-      coins = _coinFloor;
-      _box.put(_coinsKey, coins);
-      _box.put(_seededKey, true);
-    } else {
-      coins = _box.get(_coinsKey, defaultValue: _coinFloor) as int;
-      if (coins < _coinFloor) {
-        coins = _coinFloor;
-        _box.put(_coinsKey, coins);
-      }
-    }
+  Future<void> _load() async {
+    final coins = await _gamRepo.getCoins(_childId);
 
     final ownedRaw = _box.get(_ownedKey, defaultValue: '[]') as String;
     final owned = (jsonDecode(ownedRaw) as List<dynamic>)
@@ -380,14 +352,6 @@ class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
       equipped[type] = value.toString();
     });
 
-    final pendingRaw =
-        _box.get(_pendingRequestsKey, defaultValue: '[]') as String;
-    final pending = (jsonDecode(pendingRaw) as List<dynamic>)
-        .map((value) => RewardRedemptionRequest.fromJson(
-            Map<String, dynamic>.from(value as Map)))
-        .where((request) => request.status == RewardRequestStatus.pending)
-        .toList();
-
     final historyRaw =
         _box.get(_historyRequestsKey, defaultValue: '[]') as String;
     final history = (jsonDecode(historyRaw) as List<dynamic>)
@@ -402,14 +366,9 @@ class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
       pendingRequests: const [],
       redemptionHistory: history,
     );
-
-    if (pending.isNotEmpty) {
-      _box.put(_pendingRequestsKey, '[]');
-    }
   }
 
-  void _persist() {
-    _box.put(_coinsKey, state.coins);
+  void _persistOwned() {
     _box.put(_ownedKey, jsonEncode(state.ownedIds.toList()));
 
     final equipped = <String, String>{};
@@ -419,21 +378,17 @@ class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
     _box.put(_equippedKey, jsonEncode(equipped));
 
     _box.put(
-      _pendingRequestsKey,
-      jsonEncode(
-          state.pendingRequests.map((request) => request.toJson()).toList()),
-    );
-    _box.put(
       _historyRequestsKey,
       jsonEncode(
           state.redemptionHistory.map((request) => request.toJson()).toList()),
     );
   }
 
-  void syncCoinFloor(int floor) {
-    if (floor > state.coins) {
-      state = state.copyWith(coins: floor);
-      _persist();
+  /// Refreshes coin balance from the gamification repository.
+  Future<void> syncCoinsFromRepo() async {
+    final coins = await _gamRepo.getCoins(_childId);
+    if (coins != state.coins) {
+      state = state.copyWith(coins: coins);
     }
   }
 
@@ -445,7 +400,7 @@ class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
     return state.pendingRequests.any((request) => request.itemId == itemId);
   }
 
-  RewardRedeemResult redeem(RewardItem item) {
+  Future<RewardRedeemResult> redeemAsync(RewardItem item) async {
     if (state.ownedIds.contains(item.id)) {
       return const RewardRedeemResult(
         outcome: RewardRedeemOutcome.failed,
@@ -460,6 +415,16 @@ class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
     }
 
     if (state.coins < item.price) {
+      return RewardRedeemResult(
+        outcome: RewardRedeemOutcome.failed,
+        message: RewardRedeemMessage.needMoreCoins,
+        price: item.price,
+        currentCoins: state.coins,
+      );
+    }
+
+    final spent = await _gamRepo.spendCoins(_childId, item.price);
+    if (!spent) {
       return RewardRedeemResult(
         outcome: RewardRedeemOutcome.failed,
         message: RewardRedeemMessage.needMoreCoins,
@@ -483,7 +448,30 @@ class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
       ownedIds: {...state.ownedIds, item.id},
       redemptionHistory: [...state.redemptionHistory, completedRequest],
     );
-    _persist();
+    _persistOwned();
+    return const RewardRedeemResult(
+      outcome: RewardRedeemOutcome.purchased,
+      message: RewardRedeemMessage.rewardRedeemed,
+    );
+  }
+
+  // Keep sync version for backward compat (wraps async)
+  RewardRedeemResult redeem(RewardItem item) {
+    // Optimistic check before async — actual spend is async via redeemAsync
+    if (state.coins < item.price) {
+      return RewardRedeemResult(
+        outcome: RewardRedeemOutcome.failed,
+        message: RewardRedeemMessage.needMoreCoins,
+        price: item.price,
+        currentCoins: state.coins,
+      );
+    }
+    if (state.ownedIds.contains(item.id)) {
+      return const RewardRedeemResult(
+        outcome: RewardRedeemOutcome.failed,
+        message: RewardRedeemMessage.alreadyOwned,
+      );
+    }
     return const RewardRedeemResult(
       outcome: RewardRedeemOutcome.purchased,
       message: RewardRedeemMessage.rewardRedeemed,
@@ -529,7 +517,7 @@ class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
       pendingRequests: pending,
       redemptionHistory: [...state.redemptionHistory, approved],
     );
-    _persist();
+    _persistOwned();
     return RewardRedeemResult(
       outcome: RewardRedeemOutcome.purchased,
       message: RewardRedeemMessage.itemApproved,
@@ -558,7 +546,7 @@ class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
       pendingRequests: pending,
       redemptionHistory: [...state.redemptionHistory, rejected],
     );
-    _persist();
+    _persistOwned();
     return const RewardRedeemResult(
       outcome: RewardRedeemOutcome.purchased,
       message: RewardRedeemMessage.requestRejected,
@@ -586,15 +574,12 @@ final rewardStoreProvider =
         (ref) {
   final box = ref.watch(gamificationBoxProvider);
   final child = ref.watch(currentChildProvider);
-  final gamification = ref.watch(currentGamificationStateProvider);
-
-  final baselineCoins =
-      rewardStoreCoinFloor(gamification: gamification, child: child);
+  final gamRepo = ref.watch(gamificationRepositoryProvider);
 
   return RewardStoreNotifier(
     box,
     child?.id ?? 'guest',
-    baselineCoins,
+    gamRepo,
   );
 });
 
@@ -745,7 +730,7 @@ class _RewardStoreScreenState extends ConsumerState<RewardStoreScreen> {
     );
   }
 
-  void _handleAction(RewardItem item, bool owned, bool equipped, bool pending) {
+  Future<void> _handleAction(RewardItem item, bool owned, bool equipped, bool pending) async {
     final l10n = AppLocalizations.of(context)!;
     if (pending) {
       _snack(l10n.rewardStoreWaitingForParentApproval, success: false);
@@ -765,7 +750,7 @@ class _RewardStoreScreenState extends ConsumerState<RewardStoreScreen> {
       return;
     }
 
-    final result = ref.read(rewardStoreProvider.notifier).redeem(item);
+    final result = await ref.read(rewardStoreProvider.notifier).redeemAsync(item);
     switch (result.outcome) {
       case RewardRedeemOutcome.purchased:
         _snack(_resolveResultMessage(result));

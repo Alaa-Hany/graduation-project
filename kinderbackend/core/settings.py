@@ -5,9 +5,11 @@ import re
 from dataclasses import dataclass
 from urllib.parse import urlparse
 
+from pathlib import Path
+
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(Path(__file__).parent.parent / ".env")
 
 
 def _as_bool(value: str | None, default: bool = False) -> bool:

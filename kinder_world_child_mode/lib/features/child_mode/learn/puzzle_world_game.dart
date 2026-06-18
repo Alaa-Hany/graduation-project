@@ -5,45 +5,46 @@ class PuzzleHubGameScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const cards = <_PuzzleHubCardData>[
+    final l10n = AppLocalizations.of(context)!;
+    final cards = <_PuzzleHubCardData>[
       _PuzzleHubCardData(
-          title: 'Picture Puzzle',
-          subtitle: 'Classic image puzzle with a polished gallery feel.',
-          accent: Color(0xFFFFA726),
+          title: l10n.picturePuzzleTitle,
+          subtitle: l10n.picturePuzzleSubtitle,
+          gradientColors: const [Color(0xFFFF9800), Color(0xFFFFCC02)],
           icon: Icons.image_rounded,
-          badge: 'Classic',
+          badge: l10n.puzzleClassicTag,
+          emoji: '🖼️',
           screenBuilder: PuzzleGameScreen.new),
       _PuzzleHubCardData(
-          title: 'Shuffle Puzzle',
-          subtitle: 'Rebuild a scrambled picture by swapping image tiles.',
-          accent: Color(0xFFEF5350),
+          title: l10n.shufflePuzzleTitle,
+          subtitle: l10n.shufflePuzzleSubtitle,
+          gradientColors: const [Color(0xFFE91E8C), Color(0xFFFF6B6B)],
           icon: Icons.shuffle_rounded,
-          badge: 'New',
+          badge: l10n.puzzleNewTag,
+          emoji: '🔀',
           screenBuilder: ShufflePuzzleScreen.new),
     ];
     return _GameScaffold(
-      title: 'Puzzle World',
-      subtitle: 'Choose from two polished picture puzzle styles.',
-      accent: const Color(0xFFFFA726),
+      title: l10n.puzzleWorldTitle,
+      subtitle: l10n.puzzleWorldSubtitle,
+      accent: const Color(0xFFFF9800),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _PremiumBanner(
-              title: 'Two Puzzle Styles',
-              subtitle:
-                  'A polished picture puzzle hub with classic and shuffle play.',
-              accent: Color(0xFFFFA726),
-              icon: Icons.auto_awesome_rounded,
-              tag: 'HD Play'),
-          const SizedBox(height: 16),
+          _KidsBanner(
+            title: l10n.puzzleTwoPuzzleStyles,
+            subtitle: l10n.puzzleTwoPuzzleStylesSubtitle,
+            tag: l10n.puzzleHDPlayTag,
+          ),
+          const SizedBox(height: 20),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                crossAxisSpacing: 14,
-                mainAxisSpacing: 14,
-                childAspectRatio: 0.93),
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 0.85),
             itemCount: cards.length,
             itemBuilder: (context, index) => _PuzzleHubCard(card: cards[index]),
           ),
@@ -56,17 +57,19 @@ class PuzzleHubGameScreen extends StatelessWidget {
 class _PuzzleHubCardData {
   final String title;
   final String subtitle;
-  final Color accent;
+  final List<Color> gradientColors;
   final IconData icon;
   final String badge;
+  final String emoji;
   final Widget Function() screenBuilder;
 
   const _PuzzleHubCardData(
       {required this.title,
       required this.subtitle,
-      required this.accent,
+      required this.gradientColors,
       required this.icon,
       required this.badge,
+      required this.emoji,
       required this.screenBuilder});
 }
 
@@ -80,20 +83,20 @@ class _PuzzleHubCard extends StatelessWidget {
     return InkWell(
       onTap: () => Navigator.of(context)
           .push(MaterialPageRoute(builder: (_) => card.screenBuilder())),
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(28),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          gradient: LinearGradient(colors: [
-            const Color(0xFF11151C),
-            card.accent.withValuesCompat(alpha: 0.24)
-          ], begin: Alignment.topLeft, end: Alignment.bottomRight),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: card.accent.withValuesCompat(alpha: 0.28)),
+          gradient: LinearGradient(
+            colors: card.gradientColors,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-                color: card.accent.withValuesCompat(alpha: 0.14),
-                blurRadius: 18,
+                color: card.gradientColors.last.withValuesCompat(alpha: 0.40),
+                blurRadius: 20,
                 offset: const Offset(0, 10))
           ],
         ),
@@ -101,30 +104,41 @@ class _PuzzleHubCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                    width: 52,
-                    height: 52,
+                    width: 54,
+                    height: 54,
                     decoration: BoxDecoration(
-                        color: Colors.white.withValuesCompat(alpha: 0.08),
+                        color: Colors.white.withValuesCompat(alpha: 0.28),
                         borderRadius: BorderRadius.circular(16)),
-                    child: Icon(card.icon, color: Colors.white, size: 28)),
+                    child: Center(
+                      child: Text(card.emoji,
+                          style: const TextStyle(fontSize: 28)),
+                    )),
                 const Spacer(),
-                _GlassTag(text: card.badge),
+                _KidsTag(text: card.badge),
               ],
             ),
             const Spacer(),
             Text(card.title,
                 style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800)),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    shadows: [
+                      Shadow(
+                          color: Colors.black26,
+                          offset: Offset(0, 2),
+                          blurRadius: 4)
+                    ])),
             const SizedBox(height: 6),
             Text(card.subtitle,
                 style: TextStyle(
-                    color: Colors.white.withValuesCompat(alpha: 0.78),
-                    fontSize: 13.2,
-                    height: 1.35)),
+                    color: Colors.white.withValuesCompat(alpha: 0.90),
+                    fontSize: 12.5,
+                    height: 1.4,
+                    fontWeight: FontWeight.w600)),
           ],
         ),
       ),
@@ -132,6 +146,33 @@ class _PuzzleHubCard extends StatelessWidget {
   }
 }
 
+class _KidsTag extends StatelessWidget {
+  final String text;
+
+  const _KidsTag({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValuesCompat(alpha: 0.30),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValuesCompat(alpha: 0.50)),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w800,
+          fontSize: 12,
+        ),
+      ),
+    );
+  }
+}
+
+// Kept for backward compatibility with other callers in learn_support_screens.dart
 class _GlassTag extends StatelessWidget {
   final String text;
 
@@ -153,6 +194,90 @@ class _GlassTag extends StatelessWidget {
           fontWeight: FontWeight.w700,
           fontSize: 11.5,
         ),
+      ),
+    );
+  }
+}
+
+class _KidsBanner extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String tag;
+
+  const _KidsBanner({
+    required this.title,
+    required this.subtitle,
+    required this.tag,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFF9800), Color(0xFFFFCC02), Color(0xFFFF6B6B)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFF9800).withValuesCompat(alpha: 0.40),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: Colors.white.withValuesCompat(alpha: 0.28),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Center(
+              child: Text('🧩', style: TextStyle(fontSize: 34)),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _KidsTag(text: tag),
+                const SizedBox(height: 10),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    shadows: [
+                      Shadow(
+                          color: Colors.black26,
+                          offset: Offset(0, 2),
+                          blurRadius: 4)
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: Colors.white.withValuesCompat(alpha: 0.92),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -277,6 +402,15 @@ abstract class _PremiumPuzzleState<T extends ConsumerStatefulWidget>
             xpEarned: xpEarned,
             notes: notes,
             performanceMetrics: performanceMetrics);
+    // Award coins once per level
+    await ref.read(gamificationStateProvider.notifier).recordActivity(
+      childId: childProfile.id,
+      type: ActivityType.play,
+      category: 'entertaining',
+      score: score,
+      awardXp: false,
+      activityId: activityId,
+    );
   }
 }
 
@@ -543,7 +677,7 @@ class _ShufflePuzzleScreenState
           fallback: SystemSoundType.click,
         ));
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
+          if (mounted && (ModalRoute.of(context)?.isCurrent ?? false)) {
             _showLostDialog();
           }
         });
@@ -554,11 +688,13 @@ class _ShufflePuzzleScreenState
   }
 
   Future<void> _openLevelPicker() async {
+    final l10n = AppLocalizations.of(context)!;
     final picked = await Navigator.of(context).push<_PuzzleLevel>(
       MaterialPageRoute(
         builder: (context) => _PuzzleLevelGridScreen(
-          title:
-              _isArabic ? 'مستويات البازل المتلخبط' : 'Shuffle Puzzle Levels',
+          title: _isArabic
+              ? 'مستويات ${l10n.shufflePuzzleTitle}'
+              : 'Shuffle Puzzle Levels',
           accent: _selectedLevel.accent,
           levels: _levels,
           selectedLevel: _selectedLevel,
@@ -617,7 +753,7 @@ class _ShufflePuzzleScreenState
         fallback: SystemSoundType.alert,
       ));
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
+        if (mounted && (ModalRoute.of(context)?.isCurrent ?? false)) {
           _showSolvedDialog();
         }
       });
@@ -782,8 +918,9 @@ class _ShufflePuzzleScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return _GameScaffold(
-      title: _isArabic ? 'البازل المتلخبط' : 'Shuffle Puzzle',
+      title: l10n.shufflePuzzleTitle,
       subtitle: _isSolved
           ? (_isArabic
               ? 'اكتملت الصورة بالكامل.'
@@ -810,14 +947,14 @@ class _ShufflePuzzleScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(),
+          _buildHeader(l10n),
           const SizedBox(height: 18),
           _buildPreviewCard(),
           const SizedBox(height: 18),
           if (_hasArtworkLibrary) ...[
             _buildBoard(),
             const SizedBox(height: 18),
-            _buildHowToPlay(),
+            _buildHowToPlay(l10n),
           ] else ...[
             _buildEmptyState(),
           ],
@@ -826,12 +963,12 @@ class _ShufflePuzzleScreenState
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _LevelGridLauncher(
-          title: _isArabic ? 'اختيار المستوى' : 'Choose Level',
+          title: l10n.chooseLevelLabel,
           subtitle: _levelLabel(_selectedLevel),
           accent: _selectedLevel.accent,
           icon: Icons.grid_view_rounded,
@@ -841,19 +978,19 @@ class _ShufflePuzzleScreenState
         buildStats([
           _PuzzleStatCard(
             icon: Icons.grid_on_rounded,
-            label: 'Grid',
+            label: l10n.statGrid,
             value: '${_boardSize}x$_boardSize',
             accent: _selectedLevel.accent,
           ),
           _PuzzleStatCard(
             icon: Icons.workspace_premium_rounded,
-            label: 'Score',
+            label: l10n.statScore,
             value: '$_scorePoints',
             accent: Colors.amber.shade700,
           ),
           _PuzzleStatCard(
             icon: Icons.hourglass_bottom_rounded,
-            label: 'Time',
+            label: l10n.statTime,
             value: _logicTime(_remainingSeconds),
             accent: _remainingSeconds <= 15
                 ? Colors.redAccent
@@ -864,19 +1001,19 @@ class _ShufflePuzzleScreenState
         buildStats([
           _PuzzleStatCard(
             icon: Icons.extension_rounded,
-            label: 'Solved',
+            label: l10n.statSolved,
             value: '$_solvedTilesCount/$_pieceCount',
             accent: _selectedLevel.accent,
           ),
           _PuzzleStatCard(
             icon: Icons.swipe_rounded,
-            label: 'Moves',
+            label: l10n.statMoves,
             value: '$_moveCount',
             accent: const Color(0xFF7E57C2),
           ),
           _PuzzleStatCard(
             icon: Icons.lock_open_rounded,
-            label: 'Open',
+            label: l10n.statOpen,
             value: '${_unlockedLevelIndex + 1}/50',
             accent: const Color(0xFF26A69A),
           ),
@@ -928,8 +1065,8 @@ class _ShufflePuzzleScreenState
                   const SizedBox(height: 6),
                   Text(
                     _isArabic
-                        ? 'ضعي صور اللعبة داخل assets/images/puzzle_shuffle/ ويفضل صورة لكل مستوى باسم مرتب مثل level_01.png ثم اعملي Hot Restart.'
-                        : 'Add the level images inside assets/images/puzzle_shuffle/. One image per level is recommended, with ordered names like level_01.png, then run a hot restart.',
+                        ? 'ضعي صور اللعبة داخل assets/images/puzzle_shuffle/'
+                        : 'Add the level images inside assets/images/puzzle_shuffle/.',
                     style: const TextStyle(fontSize: 14.5, height: 1.45),
                   ),
                 ],
@@ -989,11 +1126,11 @@ class _ShufflePuzzleScreenState
                           : 'Loading the image library...')
                       : shortage > 0
                           ? (_isArabic
-                              ? 'يوجد حاليًا ${_artworkPaths.length} صورة فقط. يمكن إعادة استخدام الصور تلقائيًا، لكن الأفضل إضافة 50 صورة مرتبة للمستويات.'
-                              : 'Only ${_artworkPaths.length} images are available right now. The game can reuse them, but adding 50 ordered level images is best.')
+                              ? 'يوجد ${_artworkPaths.length} صورة متاحة.'
+                              : 'Only ${_artworkPaths.length} images available.')
                           : (_isArabic
-                              ? 'كل مستوى يعرض صورة من مجلدك ثم يبعثرها داخل اللوحة لتعيدي ترتيبها.'
-                              : 'Each level uses one of your asset images, scrambles it on the board, then asks the player to rebuild it.'),
+                              ? 'كل مستوى يعرض صورة ثم يبعثرها لتعيدي ترتيبها.'
+                              : 'Each level scrambles an image for you to rebuild.'),
                   style: const TextStyle(fontSize: 14.5, height: 1.45),
                 ),
               ],
@@ -1164,7 +1301,7 @@ class _ShufflePuzzleScreenState
     );
   }
 
-  Widget _buildHowToPlay() {
+  Widget _buildHowToPlay(AppLocalizations l10n) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
@@ -1184,7 +1321,7 @@ class _ShufflePuzzleScreenState
                   color: _selectedLevel.accent),
               const SizedBox(width: 10),
               Text(
-                _isArabic ? 'كيف نلعب' : 'How to Play',
+                l10n.howToPlayLabel,
                 style: TextStyle(
                   color: _selectedLevel.accent,
                   fontWeight: FontWeight.w800,
@@ -1248,8 +1385,8 @@ class _ShufflePuzzleScreenState
           const SizedBox(height: 8),
           Text(
             _isArabic
-                ? 'أضيفي صور المستويات داخل assets/images/puzzle_shuffle/ ثم نفذي Hot Restart. يفضل استخدام 50 صورة مرتبة، صورة لكل مستوى.'
-                : 'Add your level images inside assets/images/puzzle_shuffle/ and run a hot restart. Using 50 ordered images, one per level, is recommended.',
+                ? 'أضيفي صور المستويات داخل assets/images/puzzle_shuffle/ ثم نفذي Hot Restart.'
+                : 'Add your level images inside assets/images/puzzle_shuffle/ and run a hot restart.',
             textAlign: TextAlign.center,
             style: const TextStyle(height: 1.5),
           ),

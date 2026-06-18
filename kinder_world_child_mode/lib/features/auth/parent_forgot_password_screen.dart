@@ -1,28 +1,33 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kinder_world/core/api/api_providers.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 import 'package:kinder_world/core/utils/email_validation.dart';
 import 'package:kinder_world/core/widgets/auth_widgets.dart';
-import 'package:kinder_world/core/utils/color_compat.dart';
 
-class ParentForgotPasswordScreen extends StatefulWidget {
+class ParentForgotPasswordScreen extends ConsumerStatefulWidget {
   const ParentForgotPasswordScreen({super.key});
 
   @override
-  State<ParentForgotPasswordScreen> createState() =>
+  ConsumerState<ParentForgotPasswordScreen> createState() =>
       _ParentForgotPasswordScreenState();
 }
 
-class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
+class _ParentForgotPasswordScreenState
+    extends ConsumerState<ParentForgotPasswordScreen>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
 
   bool _sending = false;
   bool _sent = false;
+  String? _errorMessage;
 
   late AnimationController _animController;
   late Animation<double> _fade;
@@ -52,18 +57,37 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
 
   Future<void> _sendReset() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _sending = true);
-
-    await Future.delayed(const Duration(milliseconds: 250));
-
-    if (!mounted) return;
     setState(() {
-      _sending = false;
-      _sent = true;
+      _sending = true;
+      _errorMessage = null;
     });
 
-    _animController.reset();
-    unawaited(_animController.forward());
+    try {
+      final authApi = ref.read(authApiProvider);
+      await authApi.forgotPassword(email: _emailController.text.trim());
+
+      if (!mounted) return;
+      setState(() {
+        _sending = false;
+        _sent = true;
+      });
+      _animController.reset();
+      unawaited(_animController.forward());
+    } on DioException catch (e) {
+      if (!mounted) return;
+      final detail = e.response?.data;
+      final msg = detail is Map ? detail['detail']?.toString() : null;
+      setState(() {
+        _sending = false;
+        _errorMessage = msg ?? AppLocalizations.of(context)!.connectionError;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _sending = false;
+        _errorMessage = AppLocalizations.of(context)!.connectionError;
+      });
+    }
   }
 
   void _resetState() {
@@ -313,6 +337,29 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
               ),
             ),
             const SizedBox(height: 28),
+            if (_errorMessage != null) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValuesCompat(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.red.withValuesCompat(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error_outline_rounded, size: 16, color: Colors.red),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _errorMessage!,
+                        style: const TextStyle(fontSize: 13, color: Colors.red),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
             GradientButton(
               label: l10n.sendResetLink,
               isLoading: _sending,

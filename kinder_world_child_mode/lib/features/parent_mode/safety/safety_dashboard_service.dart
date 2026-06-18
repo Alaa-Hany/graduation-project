@@ -25,7 +25,6 @@ class SafetyControlsSummary {
   const SafetyControlsSummary({
     required this.dailyLimitEnabled,
     required this.hoursPerDay,
-    required this.breakRemindersEnabled,
     required this.ageAppropriateOnly,
     required this.requireApproval,
     required this.sleepMode,
@@ -36,7 +35,6 @@ class SafetyControlsSummary {
 
   final bool dailyLimitEnabled;
   final int hoursPerDay;
-  final bool breakRemindersEnabled;
   final bool ageAppropriateOnly;
   final bool requireApproval;
   final bool sleepMode;
@@ -55,7 +53,6 @@ class SafetyControlsSummary {
     return SafetyControlsSummary(
       dailyLimitEnabled: json['daily_limit_enabled'] != false,
       hoursPerDay: (json['hours_per_day'] as num?)?.toInt() ?? 2,
-      breakRemindersEnabled: json['break_reminders_enabled'] == true,
       ageAppropriateOnly: json['age_appropriate_only'] != false,
       requireApproval: json['require_approval'] == true,
       sleepMode: json['sleep_mode'] == true,
@@ -69,7 +66,6 @@ class SafetyControlsSummary {
     return const SafetyControlsSummary(
       dailyLimitEnabled: true,
       hoursPerDay: 2,
-      breakRemindersEnabled: true,
       ageAppropriateOnly: true,
       requireApproval: false,
       sleepMode: true,

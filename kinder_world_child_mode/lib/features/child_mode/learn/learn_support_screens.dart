@@ -1217,11 +1217,11 @@ class _EntertainmentDetailScreenState
     return switch (raw) {
       'Puzzle Game' => l10n.contentPuzzleGame,
       'Memory Match' => l10n.historyMemoryGame,
-      'Catch the Falling Stars' => isArabic ? '?????? ??????' : raw,
-      'Whack the Animal' => isArabic ? '???? ???????' : raw,
-      'Pop the Balloons' => isArabic ? '????? ?????????' : raw,
-      'Turtle Run' => isArabic ? '??? ????????' : raw,
-      'Funny Paint' => isArabic ? '????? ?????' : raw,
+      'Catch the Falling Stars' => isArabic ? 'التقاط النجوم' : raw,
+      'Whack the Animal' => isArabic ? 'اضرب الحيوان' : raw,
+      'Pop the Balloons' => isArabic ? 'فرقعة البالونات' : raw,
+      'Turtle Run' => isArabic ? 'جري السلحفاة' : raw,
+      'Funny Paint' => isArabic ? 'الرسم المرح' : raw,
       'Friendly Puppets' => isArabic ? 'الدمى المرحة' : raw,
       'Animal Parade' => isArabic ? 'موكب الحيوانات' : raw,
       'Rainbow Stage' => isArabic ? 'مسرح قوس المطر' : raw,
@@ -1274,7 +1274,7 @@ class _EntertainmentDetailScreenState
   String _comingSoonText(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return isArabic
-        ? '??? ??????? ?????? ??????.'
+        ? 'هذا المحتوى سيتوفر قريباً.'
         : 'This content is coming soon.';
   }
 }
@@ -1493,7 +1493,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
     final picked = await Navigator.of(context).push<_PuzzleLevel>(
       MaterialPageRoute(
         builder: (context) => _PuzzleLevelGridScreen(
-          title: _isArabic ? '??????? ??????' : 'Puzzle Levels',
+          title: _isArabic ? 'مستويات الألغاز' : 'Puzzle Levels',
           accent: _selectedLevel.accent,
           levels: _levels,
           selectedLevel: _selectedLevel,
@@ -1520,7 +1520,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
         unawaited(_audio.playEffect('sounds/games/puzzle_lose.mp3',
             fallback: SystemSoundType.click));
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _showLostDialog();
+          if (mounted && (ModalRoute.of(context)?.isCurrent ?? false)) _showLostDialog();
         });
         return;
       }
@@ -1546,7 +1546,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
       unawaited(_audio.playEffect('sounds/games/puzzle_win.mp3',
           fallback: SystemSoundType.alert));
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _showSolvedDialog();
+        if (mounted && (ModalRoute.of(context)?.isCurrent ?? false)) _showSolvedDialog();
       });
     }
   }
@@ -1617,7 +1617,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
           children: [
             Icon(Icons.emoji_events_rounded, color: _selectedLevel.accent),
             const SizedBox(width: 10),
-            Expanded(child: Text(_isArabic ? '?????!' : 'Great Job!')),
+            Expanded(child: Text(_isArabic ? 'أحسنت!' : 'Great Job!')),
           ],
         ),
         content: Column(
@@ -1626,7 +1626,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
           children: [
             Text(
               _isArabic
-                  ? '?????? ?????? ?? ${_formatTime(_elapsedSeconds)} ??? $_moveCount ??????.'
+                  ? 'اكتملت الصورة في ${_formatTime(_elapsedSeconds)} مع $_moveCount قطعة.'
                   : 'The picture was completed in ${_formatTime(_elapsedSeconds)} with $_moveCount placements.',
             ),
             const SizedBox(height: 14),
@@ -1635,10 +1635,10 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
             Text(
               _currentProgress.bestTimeSeconds == null
                   ? (_isArabic
-                      ? '?? ??? ??? ????? ????? ???? ???????.'
+                      ? 'تم تسجيل أفضل نتيجة لك في هذا المستوى.'
                       : 'Your first best result for this level has been saved.')
                   : (_isArabic
-                      ? '???? ???: ${_formatTime(_currentProgress.bestTimeSeconds!)}'
+                      ? 'أفضل وقت: ${_formatTime(_currentProgress.bestTimeSeconds!)}'
                       : 'Best time: ${_formatTime(_currentProgress.bestTimeSeconds!)}'),
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
@@ -1650,7 +1650,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
               Navigator.of(dialogContext).pop();
               _startLevel(resetClock: true);
             },
-            child: Text(_isArabic ? '????? ???????' : 'Replay Level'),
+            child: Text(_isArabic ? 'إعادة المستوى' : 'Replay Level'),
           ),
           if (_selectedLevel != _levels.last)
             FilledButton(
@@ -1660,7 +1660,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
               },
               style: FilledButton.styleFrom(
                   backgroundColor: _selectedLevel.accent),
-              child: Text(_isArabic ? '??????? ??????' : 'Next Level'),
+              child: Text(_isArabic ? 'المستوى التالي' : 'Next Level'),
             ),
         ],
       ),
@@ -1676,12 +1676,12 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
           children: [
             const Icon(Icons.timer_off_rounded, color: Colors.redAccent),
             const SizedBox(width: 10),
-            Expanded(child: Text(_isArabic ? '????? ?????' : 'Time Is Up')),
+            Expanded(child: Text(_isArabic ? 'انتهى الوقت' : 'Time Is Up')),
           ],
         ),
         content: Text(
           _isArabic
-              ? '????? ????? ??? ?????? ??????. ???? ??? ????? ?? ??????? ??????? ????? ????.'
+              ? 'انتهى الوقت قبل اكتمال الصورة. حاول وضع القطع بشكل أسرع.'
               : 'Time ran out before the picture was complete. Try placing the pieces faster.',
         ),
         actions: [
@@ -1690,7 +1690,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
               Navigator.of(dialogContext).pop();
               _startLevel(resetClock: true);
             },
-            child: Text(_isArabic ? '????? ????????' : 'Try Again'),
+            child: Text(_isArabic ? 'حاول مرة أخرى' : 'Try Again'),
           ),
         ],
       ),
@@ -1699,18 +1699,19 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return _GameScaffold(
-      title: _isArabic ? '???? ?????' : 'Picture Puzzle',
+      title: l10n.picturePuzzleTitle,
       subtitle: _isSolved
           ? (_isArabic
-              ? '?????? ?????? ???????.'
+              ? 'اكتملت الصورة بالكامل.'
               : 'The picture is fully assembled.')
           : _isLost
               ? (_isArabic
-                  ? '????? ????? ??? ?????? ??????.'
+                  ? 'انتهى الوقت قبل اكتمال الصورة.'
                   : 'Time ran out before the picture was complete.')
               : (_isArabic
-                  ? '????? ?? ???? ??? ?????? ?????? ??? ?????? ??????.'
+                  ? 'اسحب كل قطعة إلى مكانها الصحيح لتكتمل الصورة.'
                   : 'Drag each piece into its correct place to build the full picture.'),
       accent: _selectedLevel.accent,
       trailing: Wrap(
@@ -1719,7 +1720,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
           TextButton.icon(
             onPressed: () => _startLevel(resetClock: true),
             icon: const Icon(Icons.refresh),
-            label: Text(_isArabic ? '?????' : 'Reset'),
+            label: Text(_isArabic ? 'إعادة' : 'Reset'),
           ),
         ],
       ),
@@ -1748,11 +1749,12 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
   }
 
   Widget _buildPuzzleHeader() {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _LevelGridLauncher(
-          title: _isArabic ? 'Choose Puzzle Level' : 'Choose Level',
+          title: l10n.chooseLevelLabel,
           subtitle: _levelLabel(_selectedLevel),
           accent: _selectedLevel.accent,
           icon: Icons.extension_rounded,
@@ -1764,7 +1766,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
             Expanded(
               child: _PuzzleStatCard(
                 icon: Icons.grid_view_rounded,
-                label: 'Grid',
+                label: l10n.statGrid,
                 value: 'x',
                 accent: _selectedLevel.accent,
               ),
@@ -1773,7 +1775,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
             Expanded(
               child: _PuzzleStatCard(
                 icon: Icons.workspace_premium_rounded,
-                label: 'Score',
+                label: l10n.statScore,
                 value: '',
                 accent: Colors.amber.shade700,
               ),
@@ -1782,7 +1784,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
             Expanded(
               child: _PuzzleStatCard(
                 icon: Icons.hourglass_bottom_rounded,
-                label: 'Time',
+                label: l10n.statTime,
                 value: _formatTime(_remainingSeconds),
                 accent: _remainingSeconds <= 15
                     ? Colors.redAccent
@@ -1797,7 +1799,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
             Expanded(
               child: _PuzzleStatCard(
                 icon: Icons.ads_click_rounded,
-                label: 'Placed',
+                label: l10n.statPlaced,
                 value: '/',
                 accent: _selectedLevel.accent,
               ),
@@ -1806,7 +1808,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
             Expanded(
               child: _PuzzleStatCard(
                 icon: Icons.touch_app_rounded,
-                label: 'Moves',
+                label: l10n.statMoves,
                 value: '',
                 accent: const Color(0xFF7E57C2),
               ),
@@ -1848,7 +1850,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _isArabic ? '????? ??? ??????' : 'Add Puzzle Images',
+                    _isArabic ? 'إضافة صور الألغاز' : 'Add Puzzle Images',
                     style: TextStyle(
                       color: _selectedLevel.accent,
                       fontWeight: FontWeight.w800,
@@ -1857,7 +1859,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
                   const SizedBox(height: 6),
                   Text(
                     _isArabic
-                        ? '?????? ???? ?????? ??? ????. ??? ???? ???? assets/images/picture_puzzle/ ?? ????? Hot Restart.'
+                        ? 'هذه اللعبة تستخدم صورك فقط. أضف صور الألغاز داخل assets/images/picture_puzzle/، ثم أعد تشغيل التطبيق.'
                         : 'This game now uses only your images. Add puzzle photos inside assets/images/picture_puzzle/, then run a hot restart.',
                     style: const TextStyle(fontSize: 14.5, height: 1.45),
                   ),
@@ -1890,7 +1892,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
               children: [
                 Text(
                   _isArabic
-                      ? '???? ??????? ${_selectedLevelIndex + 1}'
+                      ? 'صورة المستوى ${_selectedLevelIndex + 1}'
                       : 'Level ${_selectedLevelIndex + 1} Picture',
                   style: TextStyle(
                       color: _selectedLevel.accent,
@@ -1900,10 +1902,10 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
                 Text(
                   _isLoadingGallery
                       ? (_isArabic
-                          ? '??? ????? ??? ?????????...'
+                          ? 'جاري تحميل مكتبة الصور...'
                           : 'Loading the picture library...')
                       : (_isArabic
-                          ? '?? ????? ????? ????? ?????? ????????. ??? ??? ??? ????? ??? ?? ??? ????????? ????? ????? ????????? ????????.'
+                          ? 'كل مستوى مرتبط بصورة مختلفة تلقائياً. إذا كان عدد الصور أقل من المستويات، يتم إعادة استخدامها بالترتيب.'
                           : 'Each level is linked to a different picture automatically. If there are fewer pictures than levels, they are reused in order.'),
                   style: const TextStyle(fontSize: 14.5, height: 1.45),
                 ),
@@ -1933,7 +1935,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
           const SizedBox(height: 12),
           Text(
             _isArabic
-                ? '?? ???? ??? ???? ????? ???'
+                ? 'لم تُضف صور للألغاز بعد'
                 : 'No puzzle images added yet',
             style: TextStyle(
               fontWeight: FontWeight.w800,
@@ -1943,7 +1945,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
           const SizedBox(height: 8),
           Text(
             _isArabic
-                ? '????? ??? ????? ???? ?????? ????????? ???? assets/images/picture_puzzle/. ?? ???? ?? ??? ???????? ??? ????.'
+                ? 'أضف الصور التي تريد استخدامها داخل assets/images/picture_puzzle/. لا تظهر صور مدمجة بعد الآن.'
                 : 'Add only the images you want to use inside assets/images/picture_puzzle/. No built-in pictures are shown anymore.',
             textAlign: TextAlign.center,
             style: const TextStyle(height: 1.5),
@@ -2235,7 +2237,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
   String _levelLabel(_PuzzleLevel level) {
     final levelNumber = _levels.indexOf(level) + 1;
     return _isArabic
-        ? '??????? $levelNumber ? ${level.size}x${level.size}'
+        ? 'المستوى $levelNumber - ${level.size}x${level.size}'
         : 'Level $levelNumber ? ${level.size}x${level.size}';
   }
 
@@ -2532,19 +2534,19 @@ class _RacingCarsGameScreenState extends State<RacingCarsGameScreen> {
   @override
   Widget build(BuildContext context) {
     return _GameScaffold(
-      title: _isArabic ? '???? ????????' : 'Racing Cars',
+      title: _isArabic ? 'سيارات السباق' : 'Racing Cars',
       subtitle: _finished
           ? (_isArabic
-              ? '????? ??? ???????! ????? ????? ???? ????.'
+              ? 'وصلت خط النهاية! العب مرة أخرى لتحسين نتيجتك.'
               : 'You reached the finish line! Play again for a better score.')
           : (_isArabic
-              ? '????? ?? ???????? ????? ??? ???? ???????.'
+              ? 'اضغط على زر الانطلاق بسرعة حتى تصل خط النهاية.'
               : 'Tap the go button quickly until you reach the finish line.'),
       accent: const Color(0xFF42A5F5),
       trailing: TextButton.icon(
         onPressed: _resetRace,
         icon: const Icon(Icons.restart_alt),
-        label: Text(_isArabic ? '?????' : 'Restart'),
+        label: Text(_isArabic ? 'إعادة البداية' : 'Restart'),
       ),
       child: Column(
         children: [
@@ -2560,10 +2562,10 @@ class _RacingCarsGameScreenState extends State<RacingCarsGameScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(_isArabic
-                        ? '??? ???????: $_tapCount'
+                        ? 'النقرات: $_tapCount'
                         : 'Taps: $_tapCount'),
                     Text(_isArabic
-                        ? '??????: ${(_progress * 100).round()}%'
+                        ? 'التقدم: ${(_progress * 100).round()}%'
                         : 'Progress: ${(_progress * 100).round()}%'),
                   ],
                 ),
@@ -2601,8 +2603,8 @@ class _RacingCarsGameScreenState extends State<RacingCarsGameScreen> {
                     onPressed: _accelerate,
                     icon: const Icon(Icons.flash_on),
                     label: Text(_finished
-                        ? (_isArabic ? '????? ??????' : 'Race finished')
-                        : (_isArabic ? '??????!' : 'Go!')),
+                        ? (_isArabic ? 'انتهى السباق' : 'Race finished')
+                        : (_isArabic ? 'انطلق!' : 'Go!'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF42A5F5),
                       foregroundColor: Colors.white,
@@ -2736,7 +2738,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
         return _MemoryToken(
           imagePath: customImages[index],
           label: 'Card ${index + 1}',
-          arabicLabel: '???? ${index + 1}',
+          arabicLabel: 'بطاقة ${index + 1}',
           color: palette[index % palette.length],
         );
       });
@@ -2881,7 +2883,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
     final picked = await Navigator.of(context).push<_MemoryLevel>(
       MaterialPageRoute(
         builder: (context) => _MemoryLevelGridScreen(
-          title: _isArabic ? '??????? ????????' : 'Memory Levels',
+          title: _isArabic ? 'مستويات الذاكرة' : 'Memory Levels',
           accent: _selectedLevel.accent,
           levels: _levels,
           selectedLevel: _selectedLevel,
@@ -2909,7 +2911,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
         unawaited(_audio.playEffect('sounds/games/memory_lose.mp3',
             fallback: SystemSoundType.click));
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
+          if (mounted && (ModalRoute.of(context)?.isCurrent ?? false)) {
             unawaited(_showLostDialog());
           }
         });
@@ -2953,7 +2955,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
         _didShowWinDialog = true;
         _timer?.cancel();
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
+          if (mounted && (ModalRoute.of(context)?.isCurrent ?? false)) {
             unawaited(_showWinDialog());
           }
         });
@@ -2983,12 +2985,12 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
           children: [
             const Icon(Icons.timer_off_rounded, color: Colors.redAccent),
             const SizedBox(width: 10),
-            Expanded(child: Text(_isArabic ? '????? ?????' : 'Time Is Up')),
+            Expanded(child: Text(_isArabic ? 'انتهى الوقت' : 'Time Is Up')),
           ],
         ),
         content: Text(
           _isArabic
-              ? '????? ????? ??? ??? ?? ???????. ????? ???????? ????? ????.'
+              ? 'انتهى الوقت قبل مطابقة جميع الأزواج. حاول مرة أخرى بشكل أسرع.'
               : 'Time ran out before all pairs were matched. Try again a little faster.',
         ),
         actions: [
@@ -2997,7 +2999,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
               Navigator.of(dialogContext).pop();
               _resetGame();
             },
-            child: Text(_isArabic ? '????? ????????' : 'Try Again'),
+            child: Text(_isArabic ? 'حاول مرة أخرى' : 'Try Again'),
           ),
         ],
       ),
@@ -3024,8 +3026,8 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
           Text(
             _isArabic
                 ? (needsMoreForLevel
-                    ? '????? ????? ???? ???? ???????'
-                    : '????? ??? ???? ????????')
+                    ? 'أضف المزيد من الصور لهذا المستوى'
+                    : 'أضف صور بطاقات الذاكرة')
                 : (needsMoreForLevel
                     ? 'Add more images for this level'
                     : 'Add memory card images'),
@@ -3038,8 +3040,8 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
           Text(
             _isArabic
                 ? (needsMoreForLevel
-                    ? '??? ??????? ????? ${_selectedLevel.pairCount} ??? ?????? ??? ????? ???? assets/images/memory_cards/. ?????? ???? ${_tokenPool.length} ???.'
-                    : '?????? ???? ?????? ??? ????? ???? ???????? ???? assets/images/memory_cards/. ????? 4 ??? ?????? ??? ????? ?? ????? Hot Restart.')
+                    ? 'هذا المستوى يحتاج على الأقل ${_selectedLevel.pairCount} صور مختلفة داخل assets/images/memory_cards/. متاح الآن فقط ${_tokenPool.length} صور.'
+                    : 'هذه اللعبة تستخدم الصور التي تضيفها داخل assets/images/memory_cards/. أضف على الأقل 4 صور مختلفة، ثم أعد تشغيل التطبيق.')
                 : (needsMoreForLevel
                     ? 'This level needs at least ${_selectedLevel.pairCount} different images inside assets/images/memory_cards/. Right now only ${_tokenPool.length} are available.'
                     : 'This game now uses only the images you add inside assets/images/memory_cards/. Add at least 4 different images, then run a hot restart.'),
@@ -3068,7 +3070,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
           children: [
             Icon(Icons.celebration_rounded, color: _selectedLevel.accent),
             const SizedBox(width: 10),
-            Expanded(child: Text(_isArabic ? '?????!' : 'Well Done!')),
+            Expanded(child: Text(_isArabic ? 'أحسنت!' : 'Well Done!')),
           ],
         ),
         content: Column(
@@ -3077,7 +3079,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
           children: [
             Text(
               _isArabic
-                  ? '??????? ?? ??????? ?? ${_formatTime(_secondsElapsed)} ???? $_moves ??????.'
+                  ? 'وجدت جميع الأزواج في ${_formatTime(_secondsElapsed)} باستخدام $_moves محاولة.'
                   : 'You found all pairs in ${_formatTime(_secondsElapsed)} using $_moves tries.',
             ),
             const SizedBox(height: 14),
@@ -3109,8 +3111,8 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
                 FilledButton.styleFrom(backgroundColor: _selectedLevel.accent),
             child: Text(
               _selectedLevel != _levels.last
-                  ? (_isArabic ? '??????? ??????' : 'Next Level')
-                  : (_isArabic ? '????? ?????' : 'Play Again'),
+                  ? (_isArabic ? 'المستوى التالي' : 'Next Level')
+                  : (_isArabic ? 'العب مجدداً' : 'Play Again'),
             ),
           ),
         ],
@@ -3123,23 +3125,23 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
     final crossAxisCount = _selectedLevel.pairCount == 8 ? 4 : 3;
 
     return _GameScaffold(
-      title: _isArabic ? '???? ??????' : 'Memory Match',
+      title: _isArabic ? 'مطابقة الذاكرة' : 'Memory Match',
       subtitle: _finished
           ? (_isArabic
-              ? '??????? ????? ?? ??????? ?????????.'
+              ? 'رائع، لقد وجدت جميع الأزواج المتطابقة.'
               : 'Amazing, you found every matching pair.')
           : _isLost
               ? (_isArabic
-                  ? '????? ????? ??? ????? ??????.'
+                  ? 'انتهى الوقت قبل انتهاء اللعبة.'
                   : 'Time ran out before the game was finished.')
               : (_isArabic
-                  ? '????? ??????? ?????? ?? ???????? ??????????? ??? ?????? ?????.'
+                  ? 'اقلب بطاقتين وابحث عن الزوج المتطابق قبل انتهاء الوقت.'
                   : 'Flip two cards and find the matching pair before time runs out.'),
       accent: _selectedLevel.accent,
       trailing: TextButton.icon(
         onPressed: _canPlayCurrentLevel ? _resetGame : null,
         icon: const Icon(Icons.refresh),
-        label: Text(_isArabic ? '?????' : 'Shuffle'),
+        label: Text(_isArabic ? 'خلط' : 'Shuffle'),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -3147,7 +3149,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
           _buildMemoryHero(),
           const SizedBox(height: 16),
           _LevelGridLauncher(
-            title: _isArabic ? '?????? ???????' : 'Choose Level',
+            title: _isArabic ? 'اختر المستوى' : 'Choose Level',
             subtitle: _memoryLevelLabel(_selectedLevel),
             accent: _selectedLevel.accent,
             icon: Icons.auto_awesome_motion_rounded,
@@ -3172,7 +3174,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
                   Expanded(
                     child: Text(
                       _isArabic
-                          ? '????? ????? ??? ??? ?? ???????.'
+                          ? 'انتهى الوقت قبل مطابقة جميع الأزواج.'
                           : 'Time ran out before all pairs were matched.',
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
@@ -3188,7 +3190,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
               Expanded(
                 child: _PuzzleStatCard(
                   icon: Icons.favorite_rounded,
-                  label: _isArabic ? '???????' : 'Pairs',
+                  label: _isArabic ? 'الأزواج' : 'Pairs',
                   value: '$_matchedPairs/${_selectedLevel.pairCount}',
                   accent: _selectedLevel.accent,
                 ),
@@ -3197,7 +3199,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
               Expanded(
                 child: _PuzzleStatCard(
                   icon: Icons.touch_app_rounded,
-                  label: _isArabic ? '?????????' : 'Moves',
+                  label: _isArabic ? 'المحاولات' : 'Moves',
                   value: '$_moves',
                   accent: _selectedLevel.accent,
                 ),
@@ -3206,7 +3208,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
               Expanded(
                 child: _PuzzleStatCard(
                   icon: Icons.timer_rounded,
-                  label: _isArabic ? '?????' : 'Time',
+                  label: _isArabic ? 'الوقت' : 'Time',
                   value: _formatTime(_remainingSeconds),
                   accent: _selectedLevel.accent,
                 ),
@@ -3230,10 +3232,10 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
                   child: Text(
                     _isLoadingProgress
                         ? (_isArabic
-                            ? '???? ????? ??????...'
+                            ? 'جاري تحميل النجوم...'
                             : 'Loading stars...')
                         : (_isArabic
-                            ? '???? ????? ????? ???? ???????'
+                            ? 'أفضل تقييم محفوظ لهذا المستوى'
                             : 'Best saved rating for this level'),
                     style: TextStyle(
                       color: _selectedLevel.accent,
@@ -3316,7 +3318,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _isArabic ? '???? ??????? ???????' : 'Playful Memory Time',
+                  _isArabic ? 'وقت الذاكرة المرح' : 'Playful Memory Time',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
@@ -3326,7 +3328,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
                 const SizedBox(height: 6),
                 Text(
                   _isArabic
-                      ? '????? ????? ??????? ????? ??? ???? ????? ???? ????? ???????.'
+                      ? 'الألوان الهادئة والبطاقات الكبيرة تجعل المطابقة أسهل وأكثر متعة للأطفال.'
                       : 'Soft colors and bigger cards make matching easier and more fun for kids.',
                   style: const TextStyle(fontSize: 14.5, height: 1.4),
                 ),
@@ -3342,7 +3344,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
     switch (level.id) {
       default:
         final number = _levels.indexOf(level) + 1;
-        return _isArabic ? '??????? $number' : 'Level $number';
+        return _isArabic ? 'المستوى $number' : 'Level $number';
     }
   }
 
@@ -3519,7 +3521,7 @@ class _MemoryCardTile extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 10),
                                 Text(
-                                  isArabic ? '??????' : 'Flip Me',
+                                  isArabic ? 'اقلبني' : 'Flip Me',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w700,
                                     color: Colors.white,

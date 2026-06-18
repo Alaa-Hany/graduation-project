@@ -124,22 +124,23 @@ class _ParentLegalPageState extends ConsumerState<_ParentLegalPage> {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
-            if (snapshot.hasError) {
+            final languageCode = Localizations.localeOf(context).languageCode;
+            final fallbackBody =
+                legalDefaultDocumentForType(_typeFromEndpoint())
+                    ?.bodyForLanguageCode(languageCode);
+            if (snapshot.hasError && (fallbackBody == null || fallbackBody.isEmpty)) {
               return _EmptyState(
                 message: AppLocalizations.of(context)!.connectionError,
                 accent: config.accent,
                 textColor: colors.onSurfaceVariant,
               );
             }
-            final languageCode = Localizations.localeOf(context).languageCode;
             final payload = snapshot.data ?? const LegalContentPayload();
             final fetchedBody =
                 payload.resolvedBodyForLanguageCode(languageCode);
-            final fallbackBody =
-                legalDefaultDocumentForType(_typeFromEndpoint())
-                    ?.bodyForLanguageCode(languageCode);
-            final body =
-                fetchedBody.isNotEmpty ? fetchedBody : (fallbackBody ?? '');
+            final body = fetchedBody.isNotEmpty
+                ? fetchedBody
+                : (fallbackBody ?? '');
             final isUsingDefaultBody = fetchedBody.isEmpty &&
                 fallbackBody != null &&
                 fallbackBody.isNotEmpty;

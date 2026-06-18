@@ -270,3 +270,13 @@ def email_otp_resend_rate_limit():
         message="Too many OTP resend requests. Please try again later.",
         scope="email_otp_resend",
     )
+
+
+def password_reset_rate_limit():
+    """IP-based throttling for password reset requests."""
+    return rate_limit(
+        max_requests=5,
+        window_seconds=600,
+        message="Too many password reset requests. Please try again later.",
+        scope="password_reset",
+    )

@@ -64,6 +64,7 @@ class _ActivityOfTheDayScreenState
             category: 'behavioral',
             score: 100,
             awardXp: false,
+            activityId: 'activity_of_the_day',
           );
     }
 

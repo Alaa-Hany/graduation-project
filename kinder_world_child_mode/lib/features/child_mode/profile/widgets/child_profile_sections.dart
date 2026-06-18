@@ -213,18 +213,32 @@ class _ChildProfileStatsSection extends StatelessWidget {
   }
 }
 
-class _ChildProfileProgressSection extends StatelessWidget {
+class _ChildProfileProgressSection extends ConsumerWidget {
   const _ChildProfileProgressSection({
     required this.child,
   });
 
   final dynamic child;
 
+  static const int _dailyTarget = 3;
+  static const int _weeklyTarget = 10;
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     final childTheme = context.childTheme;
+
+    final childId = ref.watch(currentChildIdProvider) ?? '';
+    final todayAsync = ref.watch(currentChildTodayProgressProvider);
+    final weeklyAsync = ref.watch(weeklySummaryProvider(childId));
+
+    final todayDone = todayAsync.valueOrNull?.length ?? 0;
+    final weeklyDone =
+        (weeklyAsync.valueOrNull?['totalActivities'] as int?) ?? 0;
+
+    final dailyProgress = (todayDone / _dailyTarget).clamp(0.0, 1.0);
+    final weeklyProgress = (weeklyDone / _weeklyTarget).clamp(0.0, 1.0);
 
     return KinderCard(
       child: Column(
@@ -240,16 +254,16 @@ class _ChildProfileProgressSection extends StatelessWidget {
           const SizedBox(height: 16),
           _ChildProfileProgressMetric(
             label: l10n.dailyGoal,
-            value: 0.7,
+            value: dailyProgress,
             color: childTheme.success,
-            valueText: '7/10 ${l10n.activities}',
+            valueText: '$todayDone/$_dailyTarget ${l10n.activities}',
           ),
           const SizedBox(height: 16),
           _ChildProfileProgressMetric(
             label: l10n.weeklyChallenge,
-            value: 0.5,
+            value: weeklyProgress,
             color: colors.secondary,
-            valueText: '3/6',
+            valueText: '$weeklyDone/$_weeklyTarget',
           ),
         ],
       ),
