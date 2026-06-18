@@ -6,6 +6,8 @@ This README reflects the current codebase, not legacy docs.
 
 ## Database Schema
 
+> [📊 Open Interactive ERD](https://alaa-hany.github.io/graduation-project/kinderbackend/docs/Kinder_World_ERD.html)
+
 ![ER Diagram](kinderbackend/docs/er_diagram.svg)
 
 ## Overview
