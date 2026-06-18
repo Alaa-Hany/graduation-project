@@ -34,7 +34,7 @@ def upgrade() -> None:
         batch_op.add_column(sa.Column("email_otp_expires_at", sa.DateTime(timezone=True), nullable=True))
         batch_op.add_column(sa.Column("email_otp_last_sent_at", sa.DateTime(timezone=True), nullable=True))
 
-    op.execute("UPDATE users SET email_verified = CASE WHEN is_active = 1 THEN 1 ELSE 0 END")
+    op.execute("UPDATE users SET email_verified = CASE WHEN is_active THEN TRUE ELSE FALSE END")
 
     with op.batch_alter_table("users", schema=None) as batch_op:
         batch_op.alter_column("email_verified", server_default=None)

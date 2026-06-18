@@ -194,10 +194,10 @@ def upgrade() -> None:
                 CASE WHEN UPPER(COALESCE(users.plan, 'FREE')) != 'FREE' THEN users.updated_at ELSE NULL END,
                 NULL,
                 NULL,
-                CASE WHEN UPPER(COALESCE(users.plan, 'FREE')) != 'FREE' THEN 1 ELSE 0 END,
+                CASE WHEN UPPER(COALESCE(users.plan, 'FREE')) != 'FREE' THEN TRUE ELSE FALSE END,
                 CASE
                     WHEN UPPER(COALESCE(users.plan, 'FREE')) = 'FREE' THEN 'free'
-                    WHEN users.is_active = 1 THEN 'active'
+                    WHEN users.is_active THEN 'active'
                     ELSE 'canceled'
                 END,
                 CASE

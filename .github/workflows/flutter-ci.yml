@@ -62,9 +62,6 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build APK for verification
-        run: flutter build apk --debug
-
       - name: Run Flutter tests
         run: flutter test --coverage
 
@@ -73,6 +70,9 @@ jobs:
           python ../tools/coverage_policy.py flutter \
             --coverage-file coverage/lcov.info \
             --summary-file "$GITHUB_STEP_SUMMARY"
+
+      - name: Build APK for verification
+        run: flutter build apk --debug
 
       - name: Upload Flutter coverage artifacts
         uses: actions/upload-artifact@v4
