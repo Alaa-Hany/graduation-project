@@ -55,8 +55,8 @@ Future<void> main() async {
   };
   ErrorWidget.builder = (FlutterErrorDetails details) {
     // Child-friendly error screen instead of red debug screen
-    return Material(
-      color: const Color(0xFFF0F4FF),
+    return const Material(
+      color: Color(0xFFF0F4FF),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
