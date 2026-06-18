@@ -182,7 +182,12 @@ async def lifespan(_: FastAPI):
         )
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan,
+    docs_url=None if settings.is_production else "/docs",
+    redoc_url=None if settings.is_production else "/redoc",
+    openapi_url=None if settings.is_production else "/openapi.json",
+)
 register_exception_handlers(app)
 # Middleware execution order is LIFO: RequestIdMiddleware runs first (sets
 # request_id in context), then EnvelopeMiddleware reads that id when wrapping.
