@@ -9,7 +9,6 @@ from datetime import timedelta
 import pytest
 from jose import jwt
 
-import admin_auth
 import auth
 from admin_auth import (
     ACCESS_TOKEN_TYPE,
