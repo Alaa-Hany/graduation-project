@@ -69,8 +69,14 @@ def test_decode_admin_token_rejects_expired():
 
 
 def test_verify_admin_access_token_rejects_non_admin_role():
-    token = _encode({"sub": "1", "exp": utc_now() + timedelta(minutes=5),
-                     "role": "user", "type": ACCESS_TOKEN_TYPE})
+    token = _encode(
+        {
+            "sub": "1",
+            "exp": utc_now() + timedelta(minutes=5),
+            "role": "user",
+            "type": ACCESS_TOKEN_TYPE,
+        }
+    )
     with pytest.raises(Exception, match="Not an admin token"):
         verify_admin_access_token(token)
 
@@ -83,8 +89,14 @@ def test_verify_admin_access_token_rejects_wrong_type():
 
 
 def test_verify_admin_refresh_token_rejects_non_admin_role():
-    token = _encode({"sub": "1", "exp": utc_now() + timedelta(minutes=5),
-                     "role": "user", "type": REFRESH_TOKEN_TYPE})
+    token = _encode(
+        {
+            "sub": "1",
+            "exp": utc_now() + timedelta(minutes=5),
+            "role": "user",
+            "type": REFRESH_TOKEN_TYPE,
+        }
+    )
     with pytest.raises(Exception, match="Not an admin token"):
         verify_admin_refresh_token(token)
 
