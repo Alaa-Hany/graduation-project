@@ -51,7 +51,7 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Security scan
-        run: pip install safety && safety check --json || true
+        run: pip install safety && safety check --json
 
       - name: Ruff lint
         run: ruff check .

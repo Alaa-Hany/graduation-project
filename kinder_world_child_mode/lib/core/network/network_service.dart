@@ -199,6 +199,14 @@ class NetworkService {
   /// • If the adapter is not an [IOHttpClientAdapter] (e.g. a mock injected in
   ///   tests), pinning is gracefully skipped with a warning log.
   void _applyPinning() {
+    assert(
+      !AppConstants.enableCertificatePinning ||
+          AppConstants.pinnedCertificateSha256 !=
+              'REPLACE_WITH_PRODUCTION_SHA256_FINGERPRINT',
+      'Certificate pinning is enabled but the SHA-256 fingerprint placeholder '
+      'has not been replaced. Provide --dart-define=PINNED_CERT_SHA256=<fingerprint> '
+      'or disable pinning with --dart-define=ENABLE_CERT_PINNING=false.',
+    );
     final adapter = _dio.httpClientAdapter;
     if (adapter is! IOHttpClientAdapter) {
       _logWarning(

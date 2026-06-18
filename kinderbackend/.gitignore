@@ -21,6 +21,9 @@ env/
 .env.*
 !.env.example
 
+# isort build artifacts
+*.isorted
+
 # Editors / OS
 .vscode/
 .idea/

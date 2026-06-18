@@ -52,25 +52,11 @@ services:
       #
       # Generate a JWT secret:
       #   python -c "import secrets; print(secrets.token_hex(32))"
-      KINDER_JWT_SECRET: "change-me-in-production"
+      KINDER_JWT_SECRET: ${KINDER_JWT_SECRET}
 
       # Generate a Fernet key:
       #   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
-      DATA_ENCRYPTION_KEY: "change-me-in-production"
+      DATA_ENCRYPTION_KEY: ${DATA_ENCRYPTION_KEY}
 
       # ── App behaviour ────────────────────────────────────────────────────
-      ENVIRONMENT:         "development"
-      AUTO_RUN_MIGRATIONS: "true"
-
-      # ── Optional integrations (uncomment and fill in to enable) ──────────
-      REDIS_URL:              "redis://redis:6379/0"
-      # SENTRY_DSN:             ""
-      # OPENAI_API_KEY:         ""
-      # STRIPE_SECRET_KEY:      ""
-      # STRIPE_WEBHOOK_SECRET:  ""
-      # CLOUDINARY_CLOUD_NAME:  ""
-      # CLOUDINARY_API_KEY:     ""
-      # CLOUDINARY_API_SECRET:  ""
-
-volumes:
-  postgres_data:
+   

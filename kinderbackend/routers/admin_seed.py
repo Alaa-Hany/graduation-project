@@ -2,7 +2,8 @@
 Admin seed router.
 
 Provides a single idempotent endpoint:
-  POST /admin/seed?secret=kinder_admin_seed_2024
+  POST /admin/seed
+  Body: {"secret": "<ADMIN_SEED_SECRET>"}
 
 It seeds:
   - permissions
@@ -14,6 +15,7 @@ It seeds:
 import os
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from auth import hash_password
@@ -22,6 +24,10 @@ from core.time_utils import db_utc_now
 from deps import get_db
 
 router = APIRouter(prefix="/admin", tags=["Admin Seed"])
+
+
+class SeedRequest(BaseModel):
+    secret: str
 
 SEED_ENABLED = os.getenv("ENABLE_ADMIN_SEED_ENDPOINT", "").strip().lower() in {
     "1",
@@ -112,7 +118,7 @@ def ensure_builtin_admin_rbac(db: Session) -> dict[str, object]:
 
 
 @router.post("/seed", summary="Seed admin roles, permissions, and default super admin")
-def seed_admin_system(secret: str, db: Session = Depends(get_db)):
+def seed_admin_system(body: SeedRequest, db: Session = Depends(get_db)):
     if not SEED_ENABLED:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -128,7 +134,7 @@ def seed_admin_system(secret: str, db: Session = Depends(get_db)):
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Admin seed password is not configured",
         )
-    if secret != SEED_SECRET:
+    if body.secret != SEED_SECRET:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid seed secret",

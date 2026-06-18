@@ -39,7 +39,7 @@ PARENT_PIN_MAX_ATTEMPTS = 5
 PARENT_PIN_LOCKOUT_MINUTES = 5
 
 
-# Redis key helpers — module-level dicts removed; state lives in Redis.
+# Redis key helpers — brute-force state lives in Redis in production.
 def _auth_failed_key(email: str) -> str:
     return f"auth:failed:{email}"
 
@@ -48,6 +48,9 @@ def _auth_lockout_key(email: str) -> str:
     return f"auth:lockout:{email}"
 
 
+# Emergency in-memory fallback — TEST ENVIRONMENTS ONLY.
+# In production, Redis must be configured (REDIS_URL env var).
+# These dicts are process-local and WILL NOT work correctly under multiple workers.
 _FAILED_LOGIN_ATTEMPTS: dict[str, list[float]] = defaultdict(list)
 _LOGIN_LOCKOUTS: dict[str, str] = {}
 
@@ -55,12 +58,8 @@ _LOGIN_LOCKOUTS: dict[str, str] = {}
 class AuthService:
     @staticmethod
     def _user_has_verified_email(user: User) -> bool:
-        # email_verified is the sole source of truth. The old fallback
-        # (is_active=True AND email_otp_hash=None) allowed accounts with
-        # email_verified=False to pass — removed for consistency with deps.py.
-        return bool(getattr(user, "email_verified", False)) or (
-            bool(getattr(user, "is_active", False)) and not getattr(user, "email_otp_hash", None)
-        )
+        # Keep consistent with deps.py: only email_verified flag determines verification status
+        return bool(getattr(user, "email_verified", False))
 
     @staticmethod
     def _email_otp_expiry_minutes() -> int:
@@ -165,6 +164,11 @@ class AuthService:
         """Return ISO lockout-until timestamp if the account is locked, else None."""
         rc = get_redis_client()
         if rc is None:
+            if os.getenv("TESTING", "").lower() not in ("1", "true", "yes"):
+                raise RuntimeError(
+                    "REDIS_URL is required in production for brute-force protection. "
+                    "Set REDIS_URL or run in test mode (TESTING=1)."
+                )
             locked_until = _LOGIN_LOCKOUTS.get(email)
             if locked_until:
                 try:
@@ -175,7 +179,7 @@ class AuthService:
                         return locked_until
                 except ValueError:
                     _LOGIN_LOCKOUTS.pop(email, None)
-            return None  # no Redis → no persistent lockout (dev/test only)
+            return None  # no Redis → no persistent lockout (test only)
         try:
             return rc.get(_auth_lockout_key(email))  # stored as ISO string or None
         except Exception as exc:
@@ -186,6 +190,11 @@ class AuthService:
         """Increment failure counter; return ISO lockout-until if threshold exceeded."""
         rc = get_redis_client()
         if rc is None:
+            if os.getenv("TESTING", "").lower() not in ("1", "true", "yes"):
+                raise RuntimeError(
+                    "REDIS_URL is required in production for brute-force protection. "
+                    "Set REDIS_URL or run in test mode (TESTING=1)."
+                )
             now = time.time()
             window_start = now - self._parent_login_window_seconds()
             attempts = [ts for ts in _FAILED_LOGIN_ATTEMPTS[email] if ts > window_start]
@@ -202,7 +211,7 @@ class AuthService:
                 locked_until_iso = self._timestamp_to_iso(now + lockout_seconds)
                 _LOGIN_LOCKOUTS[email] = locked_until_iso
                 return locked_until_iso
-            return None  # no Redis → no persistent tracking (dev/test only)
+            return None  # no Redis → no persistent tracking (test only)
 
         window = self._parent_login_window_seconds()
         try:

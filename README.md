@@ -42,12 +42,14 @@ Main user contexts:
 - Child change-password flow
 - Child home, learn, play, AI buddy, profile, achievements, and store routes
 - Child home presentation surfaces prefer real data and hide unsupported sections instead of showing placeholder cards
+- Voice interaction via AI buddy: ASR (speech-to-text) and TTS (text-to-speech) endpoints
 
 ### Admin
 
 - Dedicated admin login, refresh, logout, and profile retrieval
 - RBAC-protected admin routes
-- Admin user, child, analytics, audit, support, content, subscription, and settings management
+- Admin user, child, analytics, audit, support, content, subscription, settings, and diagnostics management
+- Two-factor authentication (TOTP) for admin accounts
 
 ### Reports
 
@@ -94,7 +96,18 @@ Notable backend modules:
 - `services/support_ticket_service.py`: parent/admin support flows
 - `services/admin_auth_service.py`: admin auth and security logic
 - `services/subscription_service.py`: one-time purchase state, entitlement unlock, refunds, and plan selection logic
-- `services/analytics_service.py`: analytics ingestion and report construction
+- `services/analytics_service.py` / `analytics_ingestion_service.py` / `analytics_report_service.py`: analytics ingestion and report construction
+- `services/ai_buddy_service.py` and sub-modules: AI buddy orchestration, content, moderation, persistence, response generation, and visibility
+- `services/voice_service.py`: ASR and TTS for the voice feature
+- `services/two_factor_service.py`: TOTP-based two-factor authentication
+- `services/payment_provider.py` / `payment_providers/`: pluggable payment backend (internal or Stripe)
+- `services/payment_webhook_service.py` / `payment_webhook_verifier.py`: inbound webhook handling and verification
+- `services/payment_reconciliation_service.py`: payment reconciliation job
+- `services/premium_behavior_service.py`: premium feature gating logic
+- `services/parental_controls_service.py`: parental control rule evaluation
+- `services/email_delivery_service.py`: transactional email delivery
+- `services/media_service.py`: media upload and management
+- `services/data_lifecycle_service.py`: analytics retention and data-lifecycle operations
 
 ### Frontend
 
@@ -208,6 +221,8 @@ Roles present in code:
 
 Backend entrypoint: `kinderbackend/main.py`
 
+The API is served under two version prefixes: `/api/v1` (legacy-compatible, no envelope) and `/api/v2` (envelope-wrapped responses). Most routers are mounted under both.
+
 The app currently includes routers for:
 
 - public auth
@@ -220,6 +235,10 @@ The app currently includes routers for:
 - subscriptions
 - billing methods
 - feature-gated reports, notifications, parental controls, AI, and downloads
+- AI buddy (voice ASR/TTS)
+- voice
+- payment webhooks
+- health
 - admin auth
 - admin users
 - admin children
@@ -229,6 +248,8 @@ The app currently includes routers for:
 - admin CMS
 - admin subscriptions
 - admin settings
+- admin diagnostics
+- admin admins
 - optional admin seed
 
 Database behavior:
@@ -237,6 +258,8 @@ Database behavior:
 - PostgreSQL supported via `DATABASE_URL`
 - Alembic is present for migrations
 - startup schema verification exists and can be skipped with env flags
+- optional Redis-backed read-path cache (`CACHE_ENABLED`, `REDIS_URL`)
+- optional Sentry error tracking (`SENTRY_DSN`)
 
 ## Frontend Overview
 
@@ -266,11 +289,25 @@ Backend tests use `pytest` with shared fixtures in `kinderbackend/conftest.py`.
 
 Current backend coverage areas include:
 
-- auth and admin auth
-- RBAC
-- support
-- subscriptions and paid access
-- parent/child flows
+- auth and admin auth (including brute-force protection, token helpers, security regressions, and time regression)
+- RBAC and admin sensitive permissions
+- support (including support ticket enhancements)
+- subscriptions, paid access, subscription lifecycle and history, and provider integration
+- parent/child flows and settings
+- parent PIN flows
+- AI buddy backend, safety, and visibility
+- two-factor authentication flows
+- payment webhooks and reconciliation
+- email OTP verification
+- HTTP security headers and CORS regression
+- health endpoints
+- observability (events and logging)
+- Redis and cache service
+- data protection at rest
+- DB migration reliability and relational deletion behavior
+- rate limits and sensitive rate limits
+- internal provider guard and premium rules
+- public content routes and OpenAPI docs
 - presentation-focused smoke flows
 
 Useful commands:
@@ -385,7 +422,11 @@ Optional integrations:
 
 - Email OTP verification uses SMTP settings such as `SMTP_HOST`, `SMTP_USERNAME`, and `SMTP_PASSWORD`.
 - Admin video uploads use Cloudinary settings such as `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET`.
-- If these optional settings are empty, the rest of the local app can still run, but email delivery and media uploads will not be fully configured.
+- Stripe payment provider requires `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and related price/URL settings. Set `PAYMENT_PROVIDER=stripe` to enable; the default is `internal`.
+- AI buddy responses require an OpenAI-compatible key via `AI_PROVIDER_API_KEY`. Set `AI_PROVIDER_MODE=fallback` to gracefully degrade when no key is present.
+- Redis caching is optional. Set `CACHE_ENABLED=true` and `REDIS_URL` to enable read-path caching.
+- Sentry error tracking is optional via `SENTRY_DSN`.
+- If these optional settings are empty, the rest of the local app can still run, but the corresponding features will not be fully configured.
 
 Run:
 
@@ -427,16 +468,54 @@ flutter run --dart-define=APP_ENV=development --dart-define=DEV_API_BASE_URL=htt
 
 Common backend environment variables recognized in code include:
 
+Runtime and logging:
+
 - `ENVIRONMENT`
+- `APP_LOG_FILE`
+- `APP_LOG_LEVEL`
+
+CORS:
+
+- `ALLOWED_ORIGINS`
+- `ALLOWED_ORIGIN_REGEX`
+- `CORS_ALLOW_CREDENTIALS`
+
+Database:
+
 - `DATABASE_URL`
+- `DB_POOL_SIZE`
+- `DB_MAX_OVERFLOW`
+- `DB_POOL_RECYCLE_SECONDS`
+- `SKIP_SCHEMA_VERIFY`
+- `AUTO_RUN_MIGRATIONS`
+
+Cache / Redis:
+
+- `CACHE_ENABLED`
+- `REDIS_URL`
+- `ADMIN_ANALYTICS_CACHE_TTL_SECONDS`
+
+JWT / Auth secrets:
+
 - `KINDER_JWT_SECRET`
 - `JWT_SECRET_KEY`
 - `SECRET_KEY`
 - `JWT_ALGORITHM`
 - `JWT_ACTIVE_KID`
 - `JWT_PREVIOUS_SECRETS`
-- `SKIP_SCHEMA_VERIFY`
-- `AUTO_RUN_MIGRATIONS`
+
+Data encryption:
+
+- `DATA_ENCRYPTION_KEY`
+- `DATA_ENCRYPTION_PREVIOUS_KEYS`
+
+Email domain policy:
+
+- `EMAIL_DOMAIN_ALLOWLIST`
+- `EMAIL_DOMAIN_DENYLIST`
+
+SMTP / Email OTP:
+
 - `SMTP_HOST`
 - `SMTP_PORT`
 - `SMTP_USERNAME`
@@ -447,26 +526,63 @@ Common backend environment variables recognized in code include:
 - `SMTP_USE_TLS`
 - `EMAIL_OTP_EXPIRES_MINUTES`
 - `EMAIL_OTP_RESEND_COOLDOWN_SECONDS`
-- `CLOUDINARY_CLOUD_NAME`
-- `CLOUDINARY_API_KEY`
-- `CLOUDINARY_API_SECRET`
-- `CLOUDINARY_MEDIA_ROOT_FOLDER`
-- `MEDIA_MAX_UPLOAD_SIZE_MB`
-- `EMAIL_DOMAIN_ALLOWLIST`
-- `EMAIL_DOMAIN_DENYLIST`
+
+Child auth hardening:
+
 - `CHILD_AUTH_RATE_LIMIT_MAX_ATTEMPTS`
 - `CHILD_AUTH_RATE_LIMIT_WINDOW_SECONDS`
 - `CHILD_AUTH_SUSPICIOUS_THRESHOLD`
 - `CHILD_SESSION_TTL_MINUTES`
 - `CHILD_AUTH_DEVICE_BINDING_ENABLED`
 - `CHILD_AUTH_REQUIRE_DEVICE_ID`
+
+Analytics lifecycle:
+
 - `ANALYTICS_RETENTION_DAYS`
 - `ANALYTICS_SUMMARY_RETENTION_DAYS`
+
+Payments:
+
+- `PAYMENT_PROVIDER` (`internal` or `stripe`)
+- `STRIPE_SECRET_KEY`
+- `STRIPE_PUBLISHABLE_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_CHECKOUT_SUCCESS_URL`
+- `STRIPE_CHECKOUT_CANCEL_URL`
+- `STRIPE_PORTAL_RETURN_URL`
+- `STRIPE_PRICE_PREMIUM_MONTHLY`
+- `STRIPE_PRICE_FAMILY_PLUS_MONTHLY`
+
+AI provider:
+
+- `AI_PROVIDER_MODE`
+- `AI_PROVIDER_API_KEY`
+- `AI_MODEL`
+- `AI_MAX_TOKENS`
+- `AI_TEMPERATURE`
+
+Media uploads (Cloudinary):
+
+- `CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
+- `CLOUDINARY_MEDIA_ROOT_FOLDER`
+- `MEDIA_MAX_UPLOAD_SIZE_MB`
+
+Observability:
+
+- `SENTRY_DSN`
+
+Admin seed (dev/test only):
+
 - `ENABLE_ADMIN_SEED_ENDPOINT`
 - `ADMIN_SEED_SECRET`
 - `ADMIN_SEED_PASSWORD`
 - `ADMIN_SEED_EMAIL`
 - `ADMIN_SEED_NAME`
+
+Admin auth hardening:
+
 - `ADMIN_AUTH_MAX_FAILED_ATTEMPTS`
 - `ADMIN_AUTH_LOCKOUT_MINUTES`
 - `ADMIN_SUSPICIOUS_FAILED_THRESHOLD`

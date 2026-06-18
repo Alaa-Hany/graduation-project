@@ -53,6 +53,34 @@ Future<void> main() async {
       'library=${details.library ?? "unknown"}',
     );
   };
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    // Child-friendly error screen instead of red debug screen
+    return Material(
+      color: const Color(0xFFF0F4FF),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('🌟', style: TextStyle(fontSize: 64)),
+            const SizedBox(height: 16),
+            const Text(
+              'Oops! Something went wrong.',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF5B6AF0),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Please ask a parent for help.',
+              style: TextStyle(fontSize: 14, color: Color(0xFF8892A4)),
+            ),
+          ],
+        ),
+      ),
+    );
+  };
   PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
     logger.e('event=app.platform_error error=$error stack=$stack');
     // Return true to mark it handled and keep app alive where possible.

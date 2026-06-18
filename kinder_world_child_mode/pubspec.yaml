@@ -85,7 +85,8 @@ flutter:
     - assets/icons/
     - assets/animations/
     - assets/sounds/
-    - assets/videos/
+    # TODO: add real video files before release
+    # - assets/videos/
 
   fonts:
     - family: Poppins
