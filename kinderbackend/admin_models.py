@@ -21,10 +21,10 @@ from core.field_encryption import EncryptedString
 from core.sqlalchemy_types import UTCDateTime
 from database import Base
 
-
 # =========================================
 # Admin User
 # =========================================
+
 
 class AdminUser(Base):
     __tablename__ = "admin_users"
@@ -52,13 +52,17 @@ class AdminUser(Base):
     failed_login_attempts = Column(Integer, default=0, nullable=False, server_default=text("0"))
     suspicious_access_count = Column(Integer, default=0, nullable=False, server_default=text("0"))
 
-    is_flagged_suspicious = Column(Boolean, default=False, nullable=False, server_default=text("false"))
+    is_flagged_suspicious = Column(
+        Boolean, default=False, nullable=False, server_default=text("false")
+    )
 
     locked_until = Column(UTCDateTime())
     is_locked = Column(Boolean, default=False, nullable=False, server_default=text("false"))
 
     # 🔐 2FA
-    two_factor_enabled = Column(Boolean, default=False, nullable=False, server_default=text("false"))
+    two_factor_enabled = Column(
+        Boolean, default=False, nullable=False, server_default=text("false")
+    )
     two_factor_method = Column(String)
     two_factor_secret = Column(EncryptedString())
     two_factor_confirmed_at = Column(UTCDateTime())
@@ -84,6 +88,7 @@ class AdminUser(Base):
 # =========================================
 # Roles
 # =========================================
+
 
 class Role(Base):
     __tablename__ = "roles"
@@ -111,6 +116,7 @@ class Role(Base):
 # Permissions
 # =========================================
 
+
 class Permission(Base):
     __tablename__ = "permissions"
 
@@ -131,12 +137,11 @@ class Permission(Base):
 # Role ↔ Permission
 # =========================================
 
+
 class RolePermission(Base):
     __tablename__ = "role_permissions"
 
-    __table_args__ = (
-        UniqueConstraint("role_id", "permission_id", name="uq_role_permission"),
-    )
+    __table_args__ = (UniqueConstraint("role_id", "permission_id", name="uq_role_permission"),)
 
     id = Column(Integer, primary_key=True, index=True)
 
@@ -162,12 +167,11 @@ class RolePermission(Base):
 # Admin ↔ Role
 # =========================================
 
+
 class AdminUserRole(Base):
     __tablename__ = "admin_user_roles"
 
-    __table_args__ = (
-        UniqueConstraint("admin_user_id", "role_id", name="uq_admin_user_role"),
-    )
+    __table_args__ = (UniqueConstraint("admin_user_id", "role_id", name="uq_admin_user_role"),)
 
     id = Column(Integer, primary_key=True, index=True)
 
@@ -192,6 +196,7 @@ class AdminUserRole(Base):
 # =========================================
 # Audit Logs
 # =========================================
+
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"

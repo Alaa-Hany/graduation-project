@@ -61,9 +61,7 @@ class StripePaymentProvider:
         customer_id: str,
         metadata: dict[str, str],
     ) -> PortalSessionResult:
-        raise PaymentProviderUnavailableError(
-            "Billing portal is disabled for one-time purchases"
-        )
+        raise PaymentProviderUnavailableError("Billing portal is disabled for one-time purchases")
 
     def retrieve_subscription(self, *, subscription_id: str) -> ProviderSubscriptionSnapshot:
         raise PaymentProviderUnavailableError(
@@ -232,7 +230,4 @@ class StripePaymentProvider:
             ) from exc
 
         self._client = StripeClient(settings.stripe_secret_key)
-        return self._client
-
-
-stripe_payment_provider = StripePaymentProvider()
+        return self._

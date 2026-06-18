@@ -105,6 +105,7 @@ def test_parent_protected_endpoints_require_auth(
 
 def test_parent_register_login_refresh_and_logout_revokes_refresh_token(client, db, monkeypatch):
     from services.auth_service import auth_service
+
     FIXED_OTP = "123456"
     monkeypatch.setattr(auth_service, "_generate_email_otp", lambda: FIXED_OTP)
 

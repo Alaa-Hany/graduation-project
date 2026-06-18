@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 # Fallback in-memory limiter (development / tests only)
 # ---------------------------------------------------------------------------
 
+
 class _InMemoryFallback:
     """Single-process sliding-window store used when Redis is unavailable."""
 
@@ -53,6 +54,7 @@ class _RateLimitRequestsProxy:
 # ---------------------------------------------------------------------------
 # Redis-backed limiter
 # ---------------------------------------------------------------------------
+
 
 class RedisRateLimiter:
     """Rate limiter backed by Redis INCR + EXPIRE (fixed-window counter).
@@ -92,6 +94,7 @@ rate_limiter = RedisRateLimiter()
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _client_ip(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
@@ -114,6 +117,7 @@ def _rate_limit_detail(
 # ---------------------------------------------------------------------------
 # FastAPI dependency factories
 # ---------------------------------------------------------------------------
+
 
 def rate_limit(
     max_requests: int = 100,
@@ -191,6 +195,7 @@ def user_rate_limit(
 # ---------------------------------------------------------------------------
 # Pre-configured limiters
 # ---------------------------------------------------------------------------
+
 
 def auth_rate_limit():
     """Stricter rate limiting for authentication endpoints."""

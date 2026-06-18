@@ -18,6 +18,7 @@ Usage
     body = unwrap_response(response.json())
     assert body["items"][0]["id"] == expected_id
 """
+
 from __future__ import annotations
 
 from typing import Any

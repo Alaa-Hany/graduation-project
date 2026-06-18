@@ -1,6 +1,7 @@
 """
 Tests for analytics event ingestion and aggregation.
 """
+
 from __future__ import annotations
 import pytest
 from models import ChildActivityEvent, ChildDailyActivitySummary, ChildSessionLog
@@ -72,7 +73,11 @@ def test_ingest_mood_entry_event(client, db, parent, child, parent_headers, api)
 def test_ingest_achievement_unlocked_event(client, db, parent, child, parent_headers, api):
     resp = client.post(
         EVENTS_URL,
-        json={"child_id": child.id, "event_type": "achievement_unlocked", "achievement_key": "first_lesson"},
+        json={
+            "child_id": child.id,
+            "event_type": "achievement_unlocked",
+            "achievement_key": "first_lesson",
+        },
         headers=parent_headers,
     )
     assert resp.status_code == 200
@@ -91,12 +96,19 @@ def test_invalid_event_type_rejected(client, db, parent, child, parent_headers):
 def test_event_persisted_to_database(client, db, parent, child, parent_headers):
     client.post(
         EVENTS_URL,
-        json={"child_id": child.id, "event_type": "lesson_completed", "lesson_id": "lesson-db-check"},
+        json={
+            "child_id": child.id,
+            "event_type": "lesson_completed",
+            "lesson_id": "lesson-db-check",
+        },
         headers=parent_headers,
     )
     event = (
         db.query(ChildActivityEvent)
-        .filter(ChildActivityEvent.child_id == child.id, ChildActivityEvent.lesson_id == "lesson-db-check")
+        .filter(
+            ChildActivityEvent.child_id == child.id,
+            ChildActivityEvent.lesson_id == "lesson-db-check",
+        )
         .first()
     )
     assert event is not None
@@ -184,7 +196,9 @@ def test_lesson_completed_increments_daily_summary(client, db, parent, child, pa
         headers=parent_headers,
     )
     summary = (
-        db.query(ChildDailyActivitySummary).filter(ChildDailyActivitySummary.child_id == child.id).first()
+        db.query(ChildDailyActivitySummary)
+        .filter(ChildDailyActivitySummary.child_id == child.id)
+        .first()
     )
     assert summary is not None
     assert summary.lessons_completed >= 1
@@ -195,17 +209,25 @@ def test_multiple_events_accumulate_in_daily_summary(client, db, parent, child, 
     for _ in range(3):
         client.post(
             EVENTS_URL,
-            json={"child_id": child.id, "event_type": "activity_completed", "occurred_at": "2026-06-17T08:00:00Z"},
+            json={
+                "child_id": child.id,
+                "event_type": "activity_completed",
+                "occurred_at": "2026-06-17T08:00:00Z",
+            },
             headers=parent_headers,
         )
     summary = (
-        db.query(ChildDailyActivitySummary).filter(ChildDailyActivitySummary.child_id == child.id).first()
+        db.query(ChildDailyActivitySummary)
+        .filter(ChildDailyActivitySummary.child_id == child.id)
+        .first()
     )
     assert summary is not None
     assert summary.activities_completed >= 3
 
 
-def test_session_log_increments_screen_time_in_daily_summary(client, db, parent, child, parent_headers):
+def test_session_log_increments_screen_time_in_daily_summary(
+    client, db, parent, child, parent_headers
+):
     client.post(
         SESSIONS_URL,
         json={
@@ -216,7 +238,9 @@ def test_session_log_increments_screen_time_in_daily_summary(client, db, parent,
         headers=parent_headers,
     )
     summary = (
-        db.query(ChildDailyActivitySummary).filter(ChildDailyActivitySummary.child_id == child.id).first()
+        db.query(ChildDailyActivitySummary)
+        .filter(ChildDailyActivitySummary.child_id == child.id)
+        .first()
     )
     assert summary is not None
     assert summary.screen_time_minutes >= 20
@@ -225,8 +249,14 @@ def test_session_log_increments_screen_time_in_daily_summary(client, db, parent,
 def test_basic_reports_endpoint_reflects_ingested_events(client, db, parent, child, parent_headers):
     client.post(
         EVENTS_URL,
-        json={"child_id": child.id, "event_type": "lesson_completed", "lesson_id": "lesson-report-check"},
+        json={
+            "child_id": child.id,
+            "event_type": "lesson_completed",
+            "lesson_id": "lesson-report-check",
+        },
         headers=parent_headers,
     )
-    resp = client.get(BASIC_REPORTS_URL, params={"child_id": child.id, "days": 7}, headers=parent_headers)
+    resp = client.get(
+        BASIC_REPORTS_URL, params={"child_id": child.id, "days": 7}, headers=parent_headers
+    )
     assert resp.status_code == 200

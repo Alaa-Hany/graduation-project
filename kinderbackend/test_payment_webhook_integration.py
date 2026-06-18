@@ -374,8 +374,7 @@ def test_invoice_paid_and_failed_and_subscription_deleted_webhooks_update_histor
         history_payload = history.json()
         assert not any(item["event_type"] == "invoice_paid" for item in history_payload["events"])
         assert not any(
-            item["event_type"] == "invoice_payment_failed"
-            for item in history_payload["events"]
+            item["event_type"] == "invoice_payment_failed" for item in history_payload["events"]
         )
         assert not any(item["event_type"] == "cancel" for item in history_payload["events"])
         assert not any(

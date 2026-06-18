@@ -484,7 +484,9 @@ def list_categories(
     if axis_key.strip():
         normalized_axis_key = _normalize_axis_key_or_error(axis_key)
         query = query.filter(ContentCategory.axis_key == normalized_axis_key)
-    items = query.order_by(ContentCategory.axis_key.asc(), func.lower(ContentCategory.title_en)).all()
+    items = query.order_by(
+        ContentCategory.axis_key.asc(), func.lower(ContentCategory.title_en)
+    ).all()
     all_categories = (
         _categories_query(db)
         .filter(ContentCategory.deleted_at.is_(None))

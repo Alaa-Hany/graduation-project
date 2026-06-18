@@ -8,9 +8,18 @@ from sqlalchemy.orm import Session
 
 from admin_models import AdminUser, AdminUserRole, AuditLog, Permission, Role, RolePermission
 from core.time_utils import ensure_utc
-from models import ChildActivityEvent, ChildProfile, ContentCategory, ContentItem, LessonProgress, Quiz, SupportTicket, SystemSetting, User
+from models import (
+    ChildActivityEvent,
+    ChildProfile,
+    ContentCategory,
+    ContentItem,
+    LessonProgress,
+    Quiz,
+    SupportTicket,
+    SystemSetting,
+    User,
+)
 from serializers import child_to_json, user_to_json
-
 
 CONTENT_AXIS_METADATA = {
     "behavioral": {"key": "behavioral", "title_en": "Behavioral", "title_ar": "سلوكي"},
@@ -85,10 +94,16 @@ def serialize_content_axis_summary(
     category_items = categories or []
     payload["category_count"] = len(category_items)
     payload["content_count"] = sum(
-        1 for category in category_items for item in (category.contents or []) if item.deleted_at is None
+        1
+        for category in category_items
+        for item in (category.contents or [])
+        if item.deleted_at is None
     )
     payload["quiz_count"] = sum(
-        1 for category in category_items for item in (category.quizzes or []) if item.deleted_at is None
+        1
+        for category in category_items
+        for item in (category.quizzes or [])
+        if item.deleted_at is None
     )
     return payload
 
@@ -108,10 +123,16 @@ def serialize_axis_dashboard(axis_key: str, db: Session) -> dict[str, Any]:
         "stats": {
             "categories": len(categories),
             "contents": sum(
-                1 for category in categories for item in (category.contents or []) if item.deleted_at is None
+                1
+                for category in categories
+                for item in (category.contents or [])
+                if item.deleted_at is None
             ),
             "quizzes": sum(
-                1 for category in categories for item in (category.quizzes or []) if item.deleted_at is None
+                1
+                for category in categories
+                for item in (category.quizzes or [])
+                if item.deleted_at is None
             ),
         },
     }
@@ -295,7 +316,11 @@ def serialize_category(category: ContentCategory) -> dict[str, Any]:
 
 
 def serialize_quiz(quiz: Quiz) -> dict[str, Any]:
-    axis_key = normalize_content_axis_key(quiz.category.axis_key) if getattr(quiz, "category", None) else None
+    axis_key = (
+        normalize_content_axis_key(quiz.category.axis_key)
+        if getattr(quiz, "category", None)
+        else None
+    )
     return {
         "id": quiz.id,
         "content_id": quiz.content_id,
@@ -363,7 +388,9 @@ def serialize_content_item(
     }
     if include_quizzes:
         payload["quizzes"] = [
-            serialize_quiz(quiz) for quiz in (getattr(content, "quizzes", None) or []) if quiz.deleted_at is None
+            serialize_quiz(quiz)
+            for quiz in (getattr(content, "quizzes", None) or [])
+            if quiz.deleted_at is None
         ]
     return payload
 
@@ -387,7 +414,10 @@ def _build_user_axis_engagement(user: User, db: Session) -> dict[str, Any]:
     """Build axis engagement data for a user based on their children's activities."""
     child_ids = [child.id for child in getattr(user, "children", None) or []]
     if not child_ids:
-        return {axis_key: {"activities": 0, "completed_lessons": 0} for axis_key in CONTENT_AXIS_METADATA.keys()}
+        return {
+            axis_key: {"activities": 0, "completed_lessons": 0}
+            for axis_key in CONTENT_AXIS_METADATA.keys()
+        }
 
     engagement = {}
 
@@ -463,7 +493,9 @@ def serialize_user_detail(user: User, db: Session | None = None) -> dict[str, An
     return payload
 
 
-def build_user_activity(user: User, audit_logs: list[AuditLog], db: Session | None = None) -> dict[str, Any]:
+def build_user_activity(
+    user: User, audit_logs: list[AuditLog], db: Session | None = None
+) -> dict[str, Any]:
     return {
         "user": serialize_user_detail(user, db),
         "summary": {
@@ -480,7 +512,9 @@ def serialize_child_detail(child: ChildProfile) -> dict[str, Any]:
     payload.update(
         {
             "deleted_at": to_iso(getattr(child, "deleted_at", None)),
-            "parent": user_to_json(child.parent) if getattr(child, "parent", None) is not None else None,
+            "parent": (
+                user_to_json(child.parent) if getattr(child, "parent", None) is not None else None
+            ),
         }
     )
     return payload
@@ -493,7 +527,9 @@ def build_child_progress(child: ChildProfile, audit_logs: list[AuditLog]) -> dic
         "summary": {
             "audit_count": len(audit_logs),
             "edit_count": sum(1 for action in actions if "edit" in action),
-            "disable_count": sum(1 for action in actions if "deactivate" in action or "disable" in action),
+            "disable_count": sum(
+                1 for action in actions if "deactivate" in action or "disable" in action
+            ),
         },
         "recent_activity": [serialize_audit_log(item) for item in audit_logs[:20]],
     }
@@ -506,7 +542,9 @@ def build_child_activity_log(child: ChildProfile, audit_logs: list[AuditLog]) ->
     }
 
 
-def _support_author_payload(user: User | None = None, admin: AdminUser | None = None) -> dict[str, Any] | None:
+def _support_author_payload(
+    user: User | None = None, admin: AdminUser | None = None
+) -> dict[str, Any] | None:
     if admin is not None:
         return {"id": admin.id, "email": admin.email, "name": admin.name}
     if user is not None:
@@ -537,7 +575,9 @@ def serialize_support_ticket(
         "updated_at": to_iso(getattr(ticket, "updated_at", None)),
         "closed_at": to_iso(getattr(ticket, "closed_at", None)),
         "reply_count": len(thread_messages),
-        "last_message_at": to_iso(thread_messages[-1].created_at if thread_messages else ticket.updated_at),
+        "last_message_at": to_iso(
+            thread_messages[-1].created_at if thread_messages else ticket.updated_at
+        ),
         "preview": preview[:160],
         "priority_level": "normal",
         "priority_score": 0,
@@ -554,15 +594,17 @@ def serialize_support_ticket(
                 "created_at": to_iso(ticket.created_at),
             },
             *[
-            {
-                "id": item.id,
-                "ticket_id": item.ticket_id,
-                "message": item.message,
-                "author_type": "admin" if item.admin_user_id else "user",
-                "author": _support_author_payload(user=getattr(item, "user", None), admin=getattr(item, "admin_user", None)),
-                "created_at": to_iso(item.created_at),
-            }
-            for item in thread_messages
+                {
+                    "id": item.id,
+                    "ticket_id": item.ticket_id,
+                    "message": item.message,
+                    "author_type": "admin" if item.admin_user_id else "user",
+                    "author": _support_author_payload(
+                        user=getattr(item, "user", None), admin=getattr(item, "admin_user", None)
+                    ),
+                    "created_at": to_iso(item.created_at),
+                }
+                for item in thread_messages
             ],
         ]
     return payload

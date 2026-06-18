@@ -287,7 +287,9 @@ class ChildProfile(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     parent_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     name = Column(String, nullable=False)
-    picture_password_hash = Column(String, nullable=False)  # bcrypt_json_v1 envelope as JSON string; see migration h3f6d2a7b1e8c
+    picture_password_hash = Column(
+        String, nullable=False
+    )  # bcrypt_json_v1 envelope as JSON string; see migration h3f6d2a7b1e8c
     date_of_birth = Column(Date, nullable=True)
     created_at = Column(UTCDateTime(), server_default=func.now(), nullable=False)
     updated_at = Column(
@@ -319,8 +321,10 @@ class ChildProfile(Base):
         if self.date_of_birth is None:
             return None
         today = date_type.today()
-        return today.year - self.date_of_birth.year - (
-            (today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day)
+        return (
+            today.year
+            - self.date_of_birth.year
+            - ((today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day))
         )
 
     @age.setter
@@ -1017,9 +1021,7 @@ class ChildParentalControlSetting(Base):
 
 class ChildScheduleRule(Base):
     __tablename__ = "child_schedule_rules"
-    __table_args__ = (
-        Index("ix_child_schedule_rules_setting_day", "setting_id", "day_of_week"),
-    )
+    __table_args__ = (Index("ix_child_schedule_rules_setting_day", "setting_id", "day_of_week"),)
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     setting_id = Column(
@@ -1091,6 +1093,7 @@ class PaymentMethod(Base):
     metadata_json = Column(JSON, nullable=True)
     expires_at = Column(UTCDateTime(), nullable=True)
     created_at = Column(UTCDateTime(), server_default=func.now(), nullable=False)
-    updated_at = Column(UTCDateTime(), server_default=func.now(), onupdate=func.now(), nullable=False)
+    updated_at = Column(
+        UTCDateTime(), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
     deleted_at = Column(UTCDateTime(), nullable=True, index=True)
-

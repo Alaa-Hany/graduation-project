@@ -1,6 +1,7 @@
 """
 Tests for admin RBAC permission enforcement.
 """
+
 from __future__ import annotations
 
 CONTENT_LIST_URL = "/api/v1/admin/contents"
@@ -73,27 +74,21 @@ def test_content_admin_cannot_view_analytics(
     assert resp.status_code == 403
 
 
-def test_super_admin_can_view_contents(
-    client, db, seed_builtin_rbac, create_admin, admin_headers
-):
+def test_super_admin_can_view_contents(client, db, seed_builtin_rbac, create_admin, admin_headers):
     seed_builtin_rbac()
     admin = create_admin(email="super.admin1@example.invalid", role_names=["super_admin"])
     resp = client.get(CONTENT_LIST_URL, headers=admin_headers(admin))
     assert resp.status_code == 200
 
 
-def test_super_admin_can_view_users(
-    client, db, seed_builtin_rbac, create_admin, admin_headers
-):
+def test_super_admin_can_view_users(client, db, seed_builtin_rbac, create_admin, admin_headers):
     seed_builtin_rbac()
     admin = create_admin(email="super.admin2@example.invalid", role_names=["super_admin"])
     resp = client.get(USERS_LIST_URL, headers=admin_headers(admin))
     assert resp.status_code == 200
 
 
-def test_super_admin_can_view_analytics(
-    client, db, seed_builtin_rbac, create_admin, admin_headers
-):
+def test_super_admin_can_view_analytics(client, db, seed_builtin_rbac, create_admin, admin_headers):
     seed_builtin_rbac()
     admin = create_admin(email="super.admin3@example.invalid", role_names=["super_admin"])
     resp = client.get(ANALYTICS_URL, headers=admin_headers(admin))

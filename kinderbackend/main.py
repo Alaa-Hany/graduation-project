@@ -87,8 +87,8 @@ _MAINTENANCE_BYPASS_PREFIXES = (
     "/docs",
     "/redoc",
     "/openapi.json",
-    "/webhooks",    # payment webhooks are intentionally unversioned
-    "/health",      # health checks are intentionally unversioned
+    "/webhooks",  # payment webhooks are intentionally unversioned
+    "/health",  # health checks are intentionally unversioned
 )
 _MAINTENANCE_BYPASS_PATHS = {
     "/",
@@ -279,9 +279,9 @@ def _include_api_router(router) -> None:
     Business logic lives entirely in the service layer and is reused across
     all three registrations — no duplication.
     """
-    app.include_router(router)                           # bare / legacy
-    app.include_router(router, prefix=API_V1_PREFIX)     # /api/v1 — no envelope
-    app.include_router(router, prefix=API_V2_PREFIX)     # /api/v2 — envelope applied
+    app.include_router(router)  # bare / legacy
+    app.include_router(router, prefix=API_V1_PREFIX)  # /api/v1 — no envelope
+    app.include_router(router, prefix=API_V2_PREFIX)  # /api/v2 — envelope applied
 
 
 # --- App routes, available as legacy, /api/v1, and /api/v2 paths ------------
@@ -327,7 +327,4 @@ if ADMIN_SEED_ENABLED:
 
 # --- Unversioned infrastructure routes ------------------------------------
 # health_router stays at /health — probed by load balancers without a version.
-# payment_webhooks_router stays at /webhooks — URL is registered externally
-# in the payment provider dashboard and cannot be versioned here alone.
-app.include_router(health_router)
-app.include_router(payment_webhooks_router)
+# payment_webhooks_

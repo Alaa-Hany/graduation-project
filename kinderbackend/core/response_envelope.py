@@ -15,6 +15,7 @@ Most routes are wrapped automatically by EnvelopeMiddleware registered in
 main.py, so manual use is only needed when you want the OpenAPI schema to
 reflect the envelope shape.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone

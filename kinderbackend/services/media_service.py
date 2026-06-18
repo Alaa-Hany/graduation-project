@@ -99,9 +99,7 @@ class MediaService:
         )
 
         if response.status_code >= 400:
-            raise MediaServiceError(
-                f"Cloudinary upload failed with status {response.status_code}"
-            )
+            raise MediaServiceError(f"Cloudinary upload failed with status {response.status_code}")
 
         payload = response.json()
         secure_url = str(payload.get("secure_url") or "").strip()
@@ -127,10 +125,7 @@ class MediaService:
         )
 
     def _upload_url(self) -> str:
-        return (
-            f"https://api.cloudinary.com/v1_1/"
-            f"{settings.cloudinary_cloud_name}/video/upload"
-        )
+        return f"https://api.cloudinary.com/v1_1/" f"{settings.cloudinary_cloud_name}/video/upload"
 
     def _build_folder(self, *, axis_key: str | None, category_slug: str | None) -> str:
         parts = [settings.cloudinary_media_root_folder]

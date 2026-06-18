@@ -155,7 +155,7 @@ void main() {
     test('setPalette updates paletteId in state', () async {
       final container = await _makeContainer();
       // Use the first available palette id (different from default)
-      final allPalettes = ThemePalettes.all;
+      const allPalettes = ThemePalettes.all;
       final target = allPalettes.firstWhere(
         (p) => p.id != ThemePalettes.defaultPaletteId,
         orElse: () => allPalettes.first,
@@ -168,7 +168,7 @@ void main() {
 
     test('setPalette persists and survives container rebuild', () async {
       final container = await _makeContainer();
-      final allPalettes = ThemePalettes.all;
+      const allPalettes = ThemePalettes.all;
       final target = allPalettes.firstWhere(
         (p) => p.id != ThemePalettes.defaultPaletteId,
         orElse: () => allPalettes.first,
@@ -205,7 +205,7 @@ void main() {
     });
 
     test('restores persisted palette on startup', () async {
-      final allPalettes = ThemePalettes.all;
+      const allPalettes = ThemePalettes.all;
       final target = allPalettes.firstWhere(
         (p) => p.id != ThemePalettes.defaultPaletteId,
         orElse: () => allPalettes.first,
@@ -270,7 +270,7 @@ void main() {
 
     test('returns correct palette after setPalette', () async {
       final container = await _makeContainer();
-      final allPalettes = ThemePalettes.all;
+      const allPalettes = ThemePalettes.all;
       final target = allPalettes.firstWhere(
         (p) => p.id != ThemePalettes.defaultPaletteId,
         orElse: () => allPalettes.first,

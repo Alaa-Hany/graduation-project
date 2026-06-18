@@ -313,6 +313,7 @@ class OtpActionResponse(BaseModel):
     otp_expires_at: str | None = None
     resend_available_at: str | None = None
 
+
 class AccessTokenResponse(BaseModel):
     access_token: str
     token_type: str

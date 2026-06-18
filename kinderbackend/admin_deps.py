@@ -28,6 +28,7 @@ _admin_security = HTTPBearer(auto_error=False, bearerFormat="JWT")
 # Permission cache
 # =========================================
 
+
 class _TTLCache:
     """
     Thread-safe in-process LRU cache with per-entry TTL.
@@ -72,6 +73,7 @@ _perm_cache = _TTLCache(maxsize=256, ttl=60.0)
 # =========================================
 # Get Current Admin
 # =========================================
+
 
 def get_current_admin(
     creds: HTTPAuthorizationCredentials = Depends(_admin_security),
@@ -155,6 +157,7 @@ def get_current_admin(
 # Simple Admin Guard
 # =========================================
 
+
 def require_admin():
     def _check(admin=Depends(get_current_admin)):
         return admin
@@ -165,6 +168,7 @@ def require_admin():
 # =========================================
 # Permissions
 # =========================================
+
 
 def _get_admin_permissions(admin_id: int, token_version: int, db: Session) -> Set[str]:
     """
@@ -226,6 +230,7 @@ def require_permission(permission_name: str):
 # =========================================
 # Runtime Check
 # =========================================
+
 
 def ensure_permission(*, admin, db: Session, permission_name: str) -> None:
     permissions = _get_admin_permissions(admin.id, int(admin.token_version or 0), db)

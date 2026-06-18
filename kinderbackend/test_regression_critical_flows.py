@@ -43,6 +43,7 @@ def test_regression_parent_onboarding_login(client, monkeypatch):
     monkeypatch.delenv("EMAIL_DOMAIN_ALLOWLIST", raising=False)
     monkeypatch.delenv("EMAIL_DOMAIN_DENYLIST", raising=False)
     from services.auth_service import auth_service
+
     monkeypatch.setattr(auth_service, "_generate_email_otp", lambda: "123456")
     register_payload = {
         "name": "Regression Parent",

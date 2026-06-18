@@ -301,6 +301,7 @@ class _InternalFallbackAiBuddyBackend:
         if intent == "motivation":
             return f"{prefix}ظ…ظ† ط§ظ„ط·ط¨ظٹط¹ظٹ ط£ظ† طھط´ط¹ط± ط¨ط§ظ„طھط¹ط¨ ط£ظˆ ط§ظ„ط­ط²ظ† ط£ط­ظٹط§ظ†ط§. ط®ط° ظ†ظپط³ط§ ط¹ظ…ظٹظ‚ط§طŒ ظˆط­ط±ظƒ ظƒطھظپظٹظƒ ظ‚ظ„ظٹظ„ط§طŒ ط«ظ… ظ†ط¨ط¯ط£ ط®ط·ظˆط© طµط؛ظٹط±ط© ظ…ط¹ط§."
         return f"{prefix}ط£ظ†ط§ ظ‡ظ†ط§ ظ„ط£ط³ط§ط¹ط¯ظƒ. ظٹظ…ظƒظ†ظ†ظٹ ط£ظ† ط£ظ‚طھط±ط­ ط¯ط±ط³ط§ ط¨ط³ظٹط·ط§ ط£ظˆ ظ„ط¹ط¨ط© ظ…ظ…طھط¹ط© ط£ظˆ ظ‚طµط© ظ‚طµظٹط±ط© ط£ظˆ ظ…ط¹ظ„ظˆظ…ط© ط¬ط¯ظٹط¯ط©."
+
     def _build_arabic_response(
         self,
         *,
@@ -311,8 +312,7 @@ class _InternalFallbackAiBuddyBackend:
         prefix = f"{child_name}، " if child_name else ""
         if intent == "recommend_lesson":
             return (
-                f"{prefix}لنجرّب درسًا قصيرًا وممتعًا. "
-                "عد خمسة أشياء حولك، ثم أخبرني أيها أكبر."
+                f"{prefix}لنجرّب درسًا قصيرًا وممتعًا. " "عد خمسة أشياء حولك، ثم أخبرني أيها أكبر."
             )
         if intent == "suggest_game":
             return (

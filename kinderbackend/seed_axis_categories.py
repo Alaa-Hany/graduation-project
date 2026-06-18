@@ -7,7 +7,6 @@ from core.time_utils import db_utc_now
 from database import SessionLocal
 from models import ContentCategory
 
-
 CATEGORY_SEED = {
     "educational": [
         {

@@ -2,6 +2,7 @@
 Integration test: complete parent-registration -> OTP verification
 -> child creation -> child login flow.
 """
+
 import pytest
 from services.auth_service import auth_service
 
@@ -77,4 +78,6 @@ def test_parent_register_verify_otp_create_child_child_login(client, patched_otp
     login_body = api.parse(login_resp)
     assert login_body["success"] is True
     assert login_body["child_id"] == child_id
-    assert login_body.get("session_token"), "expected a non-empty session_token in child login response"
+    assert login_body.get(
+        "session_token"
+    ), "expected a non-empty session_token in child login response"

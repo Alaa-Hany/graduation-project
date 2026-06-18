@@ -38,9 +38,11 @@ PARENT_PIN_LENGTH = 4
 PARENT_PIN_MAX_ATTEMPTS = 5
 PARENT_PIN_LOCKOUT_MINUTES = 5
 
+
 # Redis key helpers — module-level dicts removed; state lives in Redis.
 def _auth_failed_key(email: str) -> str:
     return f"auth:failed:{email}"
+
 
 def _auth_lockout_key(email: str) -> str:
     return f"auth:lockout:{email}"
@@ -92,9 +94,11 @@ class AuthService:
         last_sent_at = getattr(user, "email_otp_last_sent_at", None)
         if last_sent_at is None:
             return True
-        return ensure_utc(last_sent_at) + timedelta(
-            seconds=AuthService._email_otp_resend_cooldown_seconds()
-        ) <= utc_now()
+        return (
+            ensure_utc(last_sent_at)
+            + timedelta(seconds=AuthService._email_otp_resend_cooldown_seconds())
+            <= utc_now()
+        )
 
     @staticmethod
     def _pending_verification_payload(user: User, *, message: str) -> dict[str, Any]:
@@ -286,7 +290,9 @@ class AuthService:
         try:
             self._send_email_otp(email=user.email, name=user.name, otp_code=otp_code)
         except Exception as exc:
-            logger.error("Failed to send registration OTP to %s: %s", user.email, exc, exc_info=True)
+            logger.error(
+                "Failed to send registration OTP to %s: %s", user.email, exc, exc_info=True
+            )
             raise HTTPException(status_code=503, detail=AuthMessages.OTP_SEND_FAILED)
 
         return self._pending_verification_payload(
@@ -405,7 +411,9 @@ class AuthService:
         try:
             self._send_email_otp(email=user.email, name=user.name, otp_code=otp_code)
         except Exception as exc:
-            logger.error("Failed to resend registration OTP to %s: %s", user.email, exc, exc_info=True)
+            logger.error(
+                "Failed to resend registration OTP to %s: %s", user.email, exc, exc_info=True
+            )
             raise HTTPException(status_code=503, detail=AuthMessages.OTP_SEND_FAILED)
 
         return {

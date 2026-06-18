@@ -19,6 +19,7 @@ Usage in a test
     # Or when you only need a single key:
         token = api.parse(client.post("/api/v1/auth/login", json={...}))["access_token"]
 """
+
 from __future__ import annotations
 
 import pytest

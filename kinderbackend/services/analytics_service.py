@@ -7,6 +7,7 @@ All logic has been extracted into:
 Existing callers that import ``analytics_service`` or the module-level
 helper functions continue to work without changes.
 """
+
 from __future__ import annotations
 
 from sqlalchemy.orm import Session

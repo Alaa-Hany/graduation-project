@@ -191,8 +191,8 @@ class Settings:
         cloudinary_api_key = (os.getenv("CLOUDINARY_API_KEY") or "").strip() or None
         cloudinary_api_secret = (os.getenv("CLOUDINARY_API_SECRET") or "").strip() or None
         cloudinary_media_root_folder = (
-            (os.getenv("CLOUDINARY_MEDIA_ROOT_FOLDER") or "kinderworld").strip() or "kinderworld"
-        )
+            os.getenv("CLOUDINARY_MEDIA_ROOT_FOLDER") or "kinderworld"
+        ).strip() or "kinderworld"
         media_max_upload_size_mb = max(
             _as_int(os.getenv("MEDIA_MAX_UPLOAD_SIZE_MB"), 200),
             1,

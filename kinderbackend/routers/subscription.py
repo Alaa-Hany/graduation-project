@@ -190,7 +190,6 @@ class SubscriptionSelectResponse(SubscriptionStatus):
     )
 
 
-
 @router.get(
     "/me",
     response_model=SubscriptionInfo,
@@ -232,7 +231,6 @@ def upgrade_subscription(
     user: User = Depends(get_current_user),
 ):
     return subscription_service.upgrade_subscription(payload=payload, db=db, user=user)
-
 
 
 @public_router.get(
@@ -334,4 +332,3 @@ def manage_subscription(
     user: User = Depends(get_current_user),
 ):
     return subscription_service.manage_subscription(db=db, user=user)
-

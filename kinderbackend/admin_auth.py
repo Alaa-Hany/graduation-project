@@ -32,6 +32,7 @@ _REFRESH_DAYS = 7
 # Token Creation
 # ================================
 
+
 def create_admin_access_token(admin_id: int, token_version: int = 0) -> str:
     expire = utc_now() + timedelta(minutes=_ACCESS_MINUTES)
 
@@ -68,6 +69,7 @@ def create_admin_refresh_token(admin_id: int, token_version: int = 0) -> str:
 # Token Decoding
 # ================================
 
+
 def decode_admin_token(token: str) -> dict:
     """
     Decode and validate an admin JWT.
@@ -83,6 +85,7 @@ def decode_admin_token(token: str) -> dict:
 # ================================
 # Validators
 # ================================
+
 
 def verify_admin_access_token(token: str) -> dict:
     payload = decode_admin_token(token)

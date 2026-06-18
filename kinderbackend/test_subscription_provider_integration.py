@@ -374,6 +374,8 @@ def test_external_provider_incomplete_checkout_keeps_access_gated(
         history_payload = history.json()
         assert any(item["event_type"] == "failure" for item in history_payload["events"])
         assert not any(item["event_type"] == "renew" for item in history_payload["events"])
-        assert not any(item["attempt_type"] == "renewal" for item in history_payload["payment_attempts"])
+        assert not any(
+            item["attempt_type"] == "renewal" for item in history_payload["payment_attempts"]
+        )
     finally:
         subscription_service._payment_provider_factory = original_factory

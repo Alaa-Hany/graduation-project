@@ -72,12 +72,12 @@ class NetworkService {
           // absolute URLs (fallback retry with full URI) are left untouched.
           // Infrastructure paths (/health, /webhooks) don't go through this
           // client, so no exclusion list is needed here.
-          const _apiPrefix = '/api/${AppConstants.apiVersion}';
+          const apiPrefix = '/api/${AppConstants.apiVersion}';
           final rawPath = options.path;
-          if (!rawPath.startsWith(_apiPrefix) &&
+          if (!rawPath.startsWith(apiPrefix) &&
               !rawPath.startsWith('http://') &&
               !rawPath.startsWith('https://')) {
-            options.path = '$_apiPrefix$rawPath';
+            options.path = '$apiPrefix$rawPath';
           }
 
           final requestId = _resolveRequestId(options);

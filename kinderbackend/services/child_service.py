@@ -29,9 +29,11 @@ logger = logging.getLogger(__name__)
 PREMIUM_PRICE_USD = 10
 PICTURE_PASSWORD_HASH_SCHEME = "bcrypt_json_v1"
 
+
 # Redis key helpers — module-level dicts removed; state lives in Redis.
 def _child_failed_key(child_id: int, client_ip: str) -> str:
     return f"child:failed:{child_id}:{client_ip or 'unknown'}"
+
 
 def _child_device_key(child_id: int) -> str:
     return f"child:device:{child_id}"

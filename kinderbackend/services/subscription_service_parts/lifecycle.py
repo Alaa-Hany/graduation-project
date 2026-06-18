@@ -158,16 +158,12 @@ class SubscriptionLifecycleMixin:
 
         profile = self._ensure_subscription_profile(db=db, user=user)
         if requested == PLAN_FREE:
-            return self._selection_payload_from_snapshot(
-                self.get_subscription(db=db, user=user)
-            )
+            return self._selection_payload_from_snapshot(self.get_subscription(db=db, user=user))
         now = db_utc_now()
         previous_plan = profile.current_plan_id
         previous_status = profile.status
         if previous_plan == requested and profile.status == SUBSCRIPTION_STATUS_ACTIVE:
-            return self._selection_payload_from_snapshot(
-                self.get_subscription(db=db, user=user)
-            )
+            return self._selection_payload_from_snapshot(self.get_subscription(db=db, user=user))
         provider = self._payment_provider()
         profile.selected_plan_id = requested
         profile.status = SUBSCRIPTION_STATUS_PENDING
@@ -351,9 +347,7 @@ class SubscriptionLifecycleMixin:
                 detail=SubscriptionMessages.PLAN_ID_OR_TYPE_REQUIRED,
             )
         if requested == PLAN_FREE:
-            return self._selection_payload_from_snapshot(
-                self.get_subscription(db=db, user=user)
-            )
+            return self._selection_payload_from_snapshot(self.get_subscription(db=db, user=user))
 
         profile = self._ensure_subscription_profile(db=db, user=user)
         if profile.selected_plan_id and profile.selected_plan_id != requested:

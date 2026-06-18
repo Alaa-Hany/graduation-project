@@ -18,6 +18,7 @@ ErrorResponse / HTTPException shape is preserved for all clients.
 Implementation note: BaseHTTPMiddleware buffers the full response body in
 memory, which is fine for this API (all responses are small JSON payloads).
 """
+
 from __future__ import annotations
 
 import json

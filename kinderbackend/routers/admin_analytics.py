@@ -13,7 +13,16 @@ from core.cache_service import cache_service
 from core.settings import settings
 from core.time_utils import utc_start_of_day, utc_today
 from deps import get_db
-from models import ChildActivityEvent, ChildProfile, ContentCategory, ContentItem, LessonProgress, Notification, SupportTicket, User
+from models import (
+    ChildActivityEvent,
+    ChildProfile,
+    ContentCategory,
+    ContentItem,
+    LessonProgress,
+    Notification,
+    SupportTicket,
+    User,
+)
 
 router = APIRouter(prefix="/admin/analytics", tags=["Admin Analytics"])
 
@@ -199,7 +208,7 @@ def _build_axis_usage_payload(*, db: Session, axis_key: str, range_name: str) ->
     for last_activity_at, child_count in (
         db.query(
             func.date(LessonProgress.last_activity_at),
-            func.count(func.distinct(LessonProgress.child_id))
+            func.count(func.distinct(LessonProgress.child_id)),
         )
         .filter(
             LessonProgress.last_activity_at >= start_dt,
