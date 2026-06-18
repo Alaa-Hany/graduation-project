@@ -77,7 +77,6 @@ def _build_axis_analytics_overview_payload(*, db: Session, axis_key: str) -> dic
         )
         .all()
     )
-    content_ids = [item.id for item in content_items]
     lesson_ids = [item.slug for item in content_items]  # Assuming slug is used as lesson_id
 
     # Count activities related to this axis

@@ -4,7 +4,6 @@ import logging
 from datetime import timedelta
 
 from fastapi import HTTPException, Request, status
-from jose import JWTError
 from sqlalchemy.orm import Session
 
 from admin_auth import (
@@ -14,7 +13,7 @@ from admin_auth import (
     decode_admin_token,
 )
 from admin_utils import build_admin_payload, write_audit_log
-from auth import decode_token, verify_password
+from auth import verify_password
 from core.message_catalog import AdminAuthMessages
 from core.settings import settings
 from core.time_utils import db_utc_now, ensure_utc, utc_now

@@ -23,6 +23,7 @@ def test_user(db: Session):
         plan="FREE",
         role="parent",
         is_active=True,
+        email_verified=True,
     )
     db.add(user)
     db.commit()

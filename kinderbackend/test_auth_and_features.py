@@ -24,6 +24,7 @@ def free_user(db: Session):
         plan=PLAN_FREE,
         role="parent",
         is_active=True,
+        email_verified=True,
     )
     db.add(user)
     db.commit()
@@ -41,6 +42,7 @@ def premium_user(db: Session):
         plan=PLAN_PREMIUM,
         role="parent",
         is_active=True,
+        email_verified=True,
     )
     db.add(user)
     db.commit()
@@ -58,6 +60,7 @@ def family_plus_user(db: Session):
         plan=PLAN_FAMILY_PLUS,
         role="parent",
         is_active=True,
+        email_verified=True,
     )
     db.add(user)
     db.commit()

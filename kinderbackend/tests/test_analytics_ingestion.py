@@ -2,7 +2,6 @@
 Tests for analytics event ingestion and aggregation.
 """
 from __future__ import annotations
-from datetime import datetime, timezone
 import pytest
 from models import ChildActivityEvent, ChildDailyActivitySummary, ChildSessionLog
 

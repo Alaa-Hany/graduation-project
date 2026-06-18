@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from admin_models import AdminUser, AdminUserRole, AuditLog, Permission, Role, RolePermission
 from core.time_utils import ensure_utc
-from models import ChildProfile, ContentCategory, ContentItem, Quiz, SupportTicket, SystemSetting, User
+from models import ChildActivityEvent, ChildProfile, ContentCategory, ContentItem, LessonProgress, Quiz, SupportTicket, SystemSetting, User
 from serializers import child_to_json, user_to_json
 
 

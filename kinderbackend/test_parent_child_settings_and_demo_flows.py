@@ -33,6 +33,7 @@ def _create_parent(
         name=name,
         role="parent",
         is_active=is_active,
+        email_verified=is_active,
         plan=plan,
     )
     db.add(user)

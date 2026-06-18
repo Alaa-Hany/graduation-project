@@ -21,6 +21,7 @@ def _create_parent(db, *, email: str, plan: str) -> User:
         name="Report Parent",
         role="parent",
         is_active=True,
+        email_verified=True,
         plan=plan,
     )
     db.add(user)

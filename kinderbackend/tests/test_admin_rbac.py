@@ -2,7 +2,6 @@
 Tests for admin RBAC permission enforcement.
 """
 from __future__ import annotations
-import pytest
 
 CONTENT_LIST_URL = "/api/v1/admin/contents"
 USERS_LIST_URL = "/api/v1/admin/users"

@@ -15,13 +15,8 @@ from models import PaymentAttempt, PaymentWebhookEvent, SubscriptionProfile, Use
 from plan_service import PLAN_FREE
 from services.payment_webhook_verifier import WebhookVerificationError, stripe_webhook_verifier
 from services.subscription_service import (
-    PAYMENT_STATUS_ACTION_REQUIRED,
-    PAYMENT_STATUS_CANCELED,
-    PAYMENT_STATUS_FAILED,
     PAYMENT_STATUS_SUCCEEDED,
     SUBSCRIPTION_STATUS_ACTIVE,
-    SUBSCRIPTION_STATUS_CANCELED,
-    SUBSCRIPTION_STATUS_PAST_DUE,
     SUBSCRIPTION_STATUS_PENDING,
     SubscriptionService,
     subscription_service,

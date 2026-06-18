@@ -93,6 +93,7 @@ def test_subscription_endpoints(client, db):
         plan=PLAN_FREE,
         role="parent",
         is_active=True,
+        email_verified=True,
     )
     db.add(user)
     db.commit()

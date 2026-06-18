@@ -7,6 +7,8 @@ from services.payment_provider import (
     CheckoutSessionResult,
     PaymentMethodReference,
     PaymentProviderUnavailableError,
+    PortalSessionResult,
+    ProviderSubscriptionSnapshot,
     RefundResult,
 )
 

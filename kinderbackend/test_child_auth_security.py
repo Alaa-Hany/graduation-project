@@ -13,6 +13,7 @@ def _create_parent(db, email: str = "child.auth.parent@example.com") -> User:
         role="parent",
         plan=PLAN_FREE,
         is_active=True,
+        email_verified=True,
         created_at=db_utc_now(),
         updated_at=db_utc_now(),
     )
