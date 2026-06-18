@@ -90,7 +90,7 @@ def serialize_content_axis_summary(
     categories: list[ContentCategory] | None = None,
 ) -> dict[str, Any]:
     normalized = normalize_content_axis_key(axis_key)
-    payload = dict(CONTENT_AXIS_METADATA[normalized])
+    payload: dict[str, Any] = dict(CONTENT_AXIS_METADATA[normalized])
     category_items = categories or []
     payload["category_count"] = len(category_items)
     payload["content_count"] = sum(
