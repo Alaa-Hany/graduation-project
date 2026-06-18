@@ -30,19 +30,19 @@ FALLBACK_FK_NAMES = {
         "subscription_events",
         ("subscription_profile_id",),
         "subscription_profiles",
-    ): "fk_subscription_events_subscription_profile_id",
+    ): "fk_subscription_events_subscription_profile_id_subscription_profiles",
     ("billing_transactions", ("user_id",), "users"): "fk_billing_transactions_user_id_users",
     (
         "billing_transactions",
         ("subscription_profile_id",),
         "subscription_profiles",
-    ): "fk_billing_transactions_subscription_profile_id",
+    ): "fk_billing_transactions_subscription_profile_id_subscription_profiles",
     ("payment_attempts", ("user_id",), "users"): "fk_payment_attempts_user_id_users",
     (
         "payment_attempts",
         ("subscription_profile_id",),
         "subscription_profiles",
-    ): "fk_payment_attempts_subscription_profile_id",
+    ): "fk_payment_attempts_subscription_profile_id_subscription_profiles",
 }
 
 
