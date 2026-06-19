@@ -68,6 +68,9 @@ class User(Base):
     privacy_setting = relationship(
         "PrivacySetting", back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
+    parental_control = relationship(
+        "ParentalControl", uselist=False, cascade="all, delete-orphan"
+    )
     support_tickets = relationship("SupportTicket", back_populates="user")
     payment_methods = relationship("PaymentMethod", cascade="all, delete-orphan")
     subscription_profile = relationship(

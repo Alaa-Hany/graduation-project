@@ -199,14 +199,23 @@ class NetworkService {
   /// • If the adapter is not an [IOHttpClientAdapter] (e.g. a mock injected in
   ///   tests), pinning is gracefully skipped with a warning log.
   void _applyPinning() {
-    assert(
-      !AppConstants.enableCertificatePinning ||
-          AppConstants.pinnedCertificateSha256 !=
-              'REPLACE_WITH_PRODUCTION_SHA256_FINGERPRINT',
-      'Certificate pinning is enabled but the SHA-256 fingerprint placeholder '
-      'has not been replaced. Provide --dart-define=PINNED_CERT_SHA256=<fingerprint> '
-      'or disable pinning with --dart-define=ENABLE_CERT_PINNING=false.',
-    );
+    // `assert` is stripped from release builds, so relying on it alone would
+    // let a release ship with pinning enabled against the placeholder
+    // fingerprint. Because withTrustedRoots is disabled below, every TLS
+    // handshake is then checked against that placeholder and can never
+    // match a real certificate - the practical effect is not "pinning
+    // silently disabled" but every network request silently failing in
+    // production. Throwing here (unconditionally, not just in debug mode)
+    // turns that into a loud, immediate, diagnosable startup failure instead.
+    if (AppConstants.pinnedCertificateSha256 ==
+        'REPLACE_WITH_PRODUCTION_SHA256_FINGERPRINT') {
+      throw StateError(
+        'Certificate pinning is enabled but the SHA-256 fingerprint '
+        'placeholder has not been replaced. Provide '
+        '--dart-define=PINNED_CERT_SHA256=<fingerprint> or disable pinning '
+        'with --dart-define=ENABLE_CERT_PINNING=false.',
+      );
+    }
     final adapter = _dio.httpClientAdapter;
     if (adapter is! IOHttpClientAdapter) {
       _logWarning(

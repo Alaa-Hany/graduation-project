@@ -70,7 +70,9 @@ class RedisRateLimiter:
     def requests(self):
         return _RateLimitRequestsProxy()
 
-    def is_allowed(self, key: str, max_requests: int, window_seconds: int) -> bool:
+    def is_allowed(
+        self, key: str, max_requests: int, window_seconds: int, *, fail_open: bool = True
+    ) -> bool:
         rc = get_redis_client()
         if rc is None:
             return _fallback.is_allowed(key, max_requests, window_seconds)
@@ -83,8 +85,19 @@ class RedisRateLimiter:
             count, _ = pipe.execute()
             return int(count) <= max_requests
         except Exception as exc:
-            logger.error("Redis rate-limit check failed (%s); allowing request", exc)
-            return True  # fail open to avoid blocking all traffic on Redis outage
+            if fail_open:
+                logger.error("Redis rate-limit check failed (%s); allowing request", exc)
+                return True  # fail open to avoid blocking all traffic on Redis outage
+            # Authentication-scoped limiters must not silently lose brute-force
+            # protection on a Redis outage. Degrade to the per-process in-memory
+            # limiter instead of either allowing every request or blocking all of
+            # them outright.
+            logger.error(
+                "Redis rate-limit check failed (%s); degrading to in-memory limiter "
+                "for security-sensitive scope",
+                exc,
+            )
+            return _fallback.is_allowed(key, max_requests, window_seconds)
 
 
 rate_limiter = RedisRateLimiter()
@@ -126,8 +139,15 @@ def rate_limit(
     code: str = "RATE_LIMIT_EXCEEDED",
     message: str | None = None,
     scope: str = "ip",
+    fail_open: bool = True,
 ):
     """IP + path keyed rate-limit dependency.
+
+    ``fail_open`` controls behavior when Redis is unreachable: general API
+    limiters fail open (allow the request) to avoid blocking all traffic on
+    a Redis outage, while authentication-sensitive limiters should pass
+    ``fail_open=False`` so brute-force protection degrades to a per-process
+    in-memory limiter instead of disappearing entirely.
 
     Usage::
 
@@ -143,7 +163,7 @@ def rate_limit(
             message or f"Too many requests. Limit: {max_requests} per {window_seconds} seconds"
         )
 
-        if not rate_limiter.is_allowed(key, max_requests, window_seconds):
+        if not rate_limiter.is_allowed(key, max_requests, window_seconds, fail_open=fail_open):
             raise HTTPException(
                 status_code=HTTP_429_TOO_MANY_REQUESTS,
                 detail=_rate_limit_detail(
@@ -165,8 +185,12 @@ def user_rate_limit(
     code: str = "RATE_LIMIT_EXCEEDED",
     message: str | None = None,
     scope: str = "user",
+    fail_open: bool = True,
 ):
-    """Per-authenticated-user + path keyed rate-limit dependency."""
+    """Per-authenticated-user + path keyed rate-limit dependency.
+
+    See :func:`rate_limit` for the meaning of ``fail_open``.
+    """
 
     from deps import get_current_user
 
@@ -177,7 +201,7 @@ def user_rate_limit(
             message or f"Too many requests. Limit: {max_requests} per {window_seconds} seconds"
         )
 
-        if not rate_limiter.is_allowed(key, max_requests, window_seconds):
+        if not rate_limiter.is_allowed(key, max_requests, window_seconds, fail_open=fail_open):
             raise HTTPException(
                 status_code=HTTP_429_TOO_MANY_REQUESTS,
                 detail=_rate_limit_detail(
@@ -199,7 +223,9 @@ def user_rate_limit(
 
 def auth_rate_limit():
     """Stricter rate limiting for authentication endpoints."""
-    return rate_limit(max_requests=5, window_seconds=300, scope="authentication")
+    return rate_limit(
+        max_requests=5, window_seconds=300, scope="authentication", fail_open=False
+    )
 
 
 def api_rate_limit():
@@ -219,6 +245,7 @@ def password_change_rate_limit():
         window_seconds=300,
         message="Too many password change attempts. Please try again later.",
         scope="password_change",
+        fail_open=False,
     )
 
 
@@ -229,6 +256,7 @@ def parent_pin_mutation_rate_limit():
         window_seconds=300,
         message="Too many parent PIN attempts. Please try again later.",
         scope="parent_pin",
+        fail_open=False,
     )
 
 
@@ -239,6 +267,7 @@ def parent_pin_verify_rate_limit():
         window_seconds=300,
         message="Too many parent PIN attempts. Please try again later.",
         scope="parent_pin",
+        fail_open=False,
     )
 
 
@@ -259,6 +288,7 @@ def email_otp_verify_rate_limit():
         window_seconds=300,
         message="Too many OTP verification attempts. Please try again later.",
         scope="email_otp_verify",
+        fail_open=False,
     )
 
 
@@ -269,6 +299,7 @@ def email_otp_resend_rate_limit():
         window_seconds=300,
         message="Too many OTP resend requests. Please try again later.",
         scope="email_otp_resend",
+        fail_open=False,
     )
 
 
@@ -279,4 +310,5 @@ def password_reset_rate_limit():
         window_seconds=600,
         message="Too many password reset requests. Please try again later.",
         scope="password_reset",
+        fail_open=False,
     )

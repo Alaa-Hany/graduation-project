@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, joinedload
 
 from admin_utils import normalize_content_axis_key, serialize_content_axis_summary
@@ -390,6 +390,8 @@ def list_child_content_items(
     content_type: str | None = None,
     age: int | None = None,
     search: str | None = None,
+    page: int = Query(1, ge=1),
+    limit: int = Query(200, ge=1, le=500),
     db: Session = Depends(get_db),
 ):
     query = _published_content_query(db).filter(
@@ -435,7 +437,20 @@ def list_child_content_items(
                     filtered.append(item)
         items = filtered
 
-    return {"items": [_serialize_public_content_item(item, include_quizzes=True) for item in items]}
+    # Age filtering happens in Python (age_group is a free-text range string,
+    # not something SQL can range-check), so pagination is applied to the
+    # final filtered list rather than at the query level. This still caps
+    # response payload size, which is the actual risk being mitigated here.
+    total = len(items)
+    start = (page - 1) * limit
+    page_items = items[start : start + limit]
+
+    return {
+        "items": [_serialize_public_content_item(item, include_quizzes=True) for item in page_items],
+        "page": page,
+        "limit": limit,
+        "total": total,
+    }
 
 
 @router.get("/content/child/items/{slug}")
@@ -457,6 +472,8 @@ def get_child_content_item(slug: str, db: Session = Depends(get_db)):
 def list_child_quizzes(
     category_slug: str | None = None,
     content_slug: str | None = None,
+    page: int = Query(1, ge=1),
+    limit: int = Query(200, ge=1, le=500),
     db: Session = Depends(get_db),
 ):
     query = _published_quiz_query(db)
@@ -464,5 +481,17 @@ def list_child_quizzes(
         query = query.join(Quiz.category).filter(ContentCategory.slug == category_slug.lower())
     if content_slug:
         query = query.join(Quiz.content).filter(ContentItem.slug == content_slug.lower())
-    items = query.order_by(Quiz.published_at.desc(), Quiz.id.desc()).all()
-    return {"items": [_serialize_public_quiz(item) for item in items]}
+
+    total = query.count()
+    items = (
+        query.order_by(Quiz.published_at.desc(), Quiz.id.desc())
+        .offset((page - 1) * limit)
+        .limit(limit)
+        .all()
+    )
+    return {
+        "items": [_serialize_public_quiz(item) for item in items],
+        "page": page,
+        "limit": limit,
+        "total": total,
+    }

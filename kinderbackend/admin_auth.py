@@ -12,7 +12,7 @@ from datetime import timedelta
 
 from jose import JWTError, jwt
 
-from auth import ALGORITHM, SECRET_KEY
+from auth import ALGORITHM, SECRET_KEY, get_jwt_decode_secrets
 from core.time_utils import utc_now
 
 # ================================
@@ -74,13 +74,24 @@ def create_admin_refresh_token(admin_id: int, token_version: int = 0) -> str:
 def decode_admin_token(token: str) -> dict:
     """
     Decode and validate an admin JWT.
-    Raises Exception if invalid.
+
+    Tries the active secret first, then falls back through previously
+    rotated secrets (same staged-rotation chain used for user tokens), so
+    rotating the JWT secret doesn't instantly invalidate every outstanding
+    admin session.
+
+    Raises JWTError("Invalid or expired admin token") if the token is invalid
+    or expired under every secret. The original jose exception (e.g. a
+    signature-expiry message) is intentionally not surfaced to keep one
+    stable, generic error contract for callers regardless of which secret
+    in the rotation chain rejected the token.
     """
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return payload
-    except JWTError:
-        raise Exception("Invalid or expired admin token")
+    for secret in get_jwt_decode_secrets():
+        try:
+            return jwt.decode(token, secret, algorithms=[ALGORITHM])
+        except JWTError:
+            continue
+    raise JWTError("Invalid or expired admin token")
 
 
 # ================================

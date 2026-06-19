@@ -183,6 +183,14 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(
+    title="Kinder World API",
+    description=(
+        "Backend API for Kinder World, a children's educational app with "
+        "parent, child, and admin surfaces covering authentication, child "
+        "profiles, content/quizzes, subscriptions and payments, the AI "
+        "buddy, parental controls, and admin management/analytics."
+    ),
+    version="1.0.0",
     lifespan=lifespan,
     docs_url=None if settings.is_production else "/docs",
     redoc_url=None if settings.is_production else "/redoc",

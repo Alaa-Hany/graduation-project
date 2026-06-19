@@ -9,11 +9,13 @@ from cryptography.fernet import Fernet, InvalidToken
 from sqlalchemy import Text
 from sqlalchemy.types import TypeDecorator
 
+from core.observability import emit_event
 from core.settings import settings
 
 logger = logging.getLogger(__name__)
 
 ENCRYPTED_VALUE_PREFIX = "enc::v1::"
+DECRYPT_FAILURE_SENTINEL = "[ENCRYPTED_FIELD_UNREADABLE]"
 
 
 def _derive_fernet_key(secret_material: str) -> bytes:
@@ -65,8 +67,19 @@ def decrypt_text(value: str) -> str:
         except InvalidToken:
             continue
 
-    logger.error("encrypted_field_decrypt_failed prefix=%s", ENCRYPTED_VALUE_PREFIX)
-    return value
+    # Every active/previous key failed to decrypt this value, meaning the
+    # ciphertext is corrupted or was encrypted under a key that has since
+    # been retired without being kept in DATA_ENCRYPTION_PREVIOUS_KEYS.
+    # Returning the raw ciphertext here would let an opaque Fernet token
+    # silently flow into API responses/UI as if it were valid plaintext, and
+    # a plain log.error is easy to miss. Emit a tracked observability event
+    # (visible via /admin/diagnostics) and return a clearly-marked sentinel.
+    emit_event(
+        "encrypted_field.decrypt_failed",
+        category="security",
+        severity="critical",
+    )
+    return DECRYPT_FAILURE_SENTINEL
 
 
 class EncryptedString(TypeDecorator[str]):

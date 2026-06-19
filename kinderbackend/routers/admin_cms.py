@@ -418,33 +418,30 @@ def _quizzes_query(db: Session):
     )
 
 
+def _first_or_404(query, *, not_found_detail: str):
+    obj = query.first()
+    if obj is None:
+        raise HTTPException(status_code=404, detail=not_found_detail)
+    return obj
+
+
 def _get_category_or_404(category_id: int, db: Session) -> ContentCategory:
-    category = (
-        _categories_query(db)
-        .filter(ContentCategory.id == category_id, ContentCategory.deleted_at.is_(None))
-        .first()
+    query = _categories_query(db).filter(
+        ContentCategory.id == category_id, ContentCategory.deleted_at.is_(None)
     )
-    if category is None:
-        raise HTTPException(status_code=404, detail="Category not found")
-    return category
+    return _first_or_404(query, not_found_detail="Category not found")
 
 
 def _get_content_or_404(content_id: int, db: Session) -> ContentItem:
-    content = (
-        _contents_query(db)
-        .filter(ContentItem.id == content_id, ContentItem.deleted_at.is_(None))
-        .first()
+    query = _contents_query(db).filter(
+        ContentItem.id == content_id, ContentItem.deleted_at.is_(None)
     )
-    if content is None:
-        raise HTTPException(status_code=404, detail="Content not found")
-    return content
+    return _first_or_404(query, not_found_detail="Content not found")
 
 
 def _get_quiz_or_404(quiz_id: int, db: Session) -> Quiz:
-    quiz = _quizzes_query(db).filter(Quiz.id == quiz_id, Quiz.deleted_at.is_(None)).first()
-    if quiz is None:
-        raise HTTPException(status_code=404, detail="Quiz not found")
-    return quiz
+    query = _quizzes_query(db).filter(Quiz.id == quiz_id, Quiz.deleted_at.is_(None))
+    return _first_or_404(query, not_found_detail="Quiz not found")
 
 
 def _ensure_category_exists(category_id: Optional[int], db: Session) -> None:

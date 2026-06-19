@@ -1,3 +1,4 @@
 Alembic migration scripts for KinderWorld backend.
 
-See `../MIGRATIONS.md` for the migration workflow and startup behavior.
+See `../MIGRATIONS.md` for the migration workflow, startup verification behavior, and branch
+hygiene notes.
