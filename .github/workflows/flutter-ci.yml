@@ -25,7 +25,7 @@ jobs:
         working-directory: kinder_world_child_mode
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -50,7 +50,7 @@ jobs:
         working-directory: kinder_world_child_mode
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
