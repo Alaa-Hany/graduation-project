@@ -123,7 +123,7 @@ jobs:
             --summary-file "$GITHUB_STEP_SUMMARY"
 
       - name: Upload backend coverage artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: backend-coverage

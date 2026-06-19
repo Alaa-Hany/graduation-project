@@ -75,7 +75,7 @@ jobs:
         run: flutter build apk --debug
 
       - name: Upload Flutter coverage artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: flutter-coverage
