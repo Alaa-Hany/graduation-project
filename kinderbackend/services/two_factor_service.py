@@ -6,6 +6,7 @@ from fastapi import HTTPException
 
 from core.errors import http_error
 from core.message_catalog import AdminAuthMessages, AuthMessages
+from core.settings import settings
 from core.time_utils import db_utc_now
 from core.two_factor import (
     DEFAULT_TWO_FACTOR_ISSUER,
@@ -124,6 +125,14 @@ class TwoFactorService:
 
     def require_admin_login_code(self, *, account: TwoFactorAccount, code: str | None) -> None:
         if not bool(getattr(account, "two_factor_enabled", False)):
+            if settings.enforce_admin_2fa:
+                raise HTTPException(
+                    status_code=403,
+                    detail={
+                        "code": "ADMIN_2FA_SETUP_REQUIRED",
+                        "message": AdminAuthMessages.TWO_FACTOR_MANDATORY,
+                    },
+                )
             return
 
         if not verify_totp_code(getattr(account, "two_factor_secret", None) or "", code):

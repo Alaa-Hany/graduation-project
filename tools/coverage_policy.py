@@ -52,7 +52,7 @@ BACKEND_CRITICAL_AREAS: dict[str, tuple[float, tuple[str, ...]]] = {
 
 
 FLUTTER_EXCLUDED_SUFFIXES = (".g.dart",)
-FLUTTER_MIN_TOTAL = 28.0
+FLUTTER_MIN_TOTAL = 35.0
 
 
 @dataclass(frozen=True)

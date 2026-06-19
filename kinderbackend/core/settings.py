@@ -108,6 +108,7 @@ class Settings:
     admin_auth_lockout_minutes: int
     admin_suspicious_failed_threshold: int
     admin_sensitive_confirmation_required: bool
+    enforce_admin_2fa: bool
     cloudinary_cloud_name: str | None
     cloudinary_api_key: str | None
     cloudinary_api_secret: str | None
@@ -187,6 +188,10 @@ class Settings:
         )
         admin_sensitive_confirmation_required = _as_bool(
             os.getenv("ADMIN_SENSITIVE_CONFIRMATION_REQUIRED"),
+            default=False,
+        )
+        enforce_admin_2fa = _as_bool(
+            os.getenv("ENFORCE_ADMIN_2FA"),
             default=False,
         )
         cloudinary_cloud_name = (os.getenv("CLOUDINARY_CLOUD_NAME") or "").strip() or None
@@ -339,6 +344,7 @@ class Settings:
             admin_auth_lockout_minutes=admin_auth_lockout_minutes,
             admin_suspicious_failed_threshold=admin_suspicious_failed_threshold,
             admin_sensitive_confirmation_required=admin_sensitive_confirmation_required,
+            enforce_admin_2fa=enforce_admin_2fa,
             cloudinary_cloud_name=cloudinary_cloud_name,
             cloudinary_api_key=cloudinary_api_key,
             cloudinary_api_secret=cloudinary_api_secret,

@@ -78,6 +78,11 @@ class AdminAuthMessages:
     TWO_FACTOR_SETUP_REQUIRED = "Two-factor authentication setup is required before enabling it"
     TWO_FACTOR_ENABLED_SUCCESSFULLY = "Two-factor authentication enabled successfully"
     TWO_FACTOR_DISABLED_SUCCESSFULLY = "Two-factor authentication disabled successfully"
+    TWO_FACTOR_MANDATORY = (
+        "Two-factor authentication is mandatory for admin accounts. "
+        "Please set up 2FA via POST /api/v2/admin/2fa/setup then POST /api/v2/admin/2fa/enable "
+        "before logging in."
+    )
 
 
 class SubscriptionMessages:
