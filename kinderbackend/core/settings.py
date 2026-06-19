@@ -310,6 +310,18 @@ class Settings:
                 "in-process across multiple workers."
             )
 
+        # Matches the exact truthy set routers/admin_seed.py checks, so this
+        # guard fires precisely when that endpoint would actually be enabled.
+        admin_seed_endpoint_enabled = os.getenv(
+            "ENABLE_ADMIN_SEED_ENDPOINT", ""
+        ).strip().lower() in {"1", "true", "yes"}
+        if environment == "production" and admin_seed_endpoint_enabled:
+            raise ValueError(
+                "ENABLE_ADMIN_SEED_ENDPOINT must be false in production. This endpoint "
+                "creates an admin account from environment-configured credentials and "
+                "must never be reachable outside local/dev environments."
+            )
+
         if payment_reconciliation_enabled and not payment_reconciliation_schedule:
             raise ValueError(
                 "PAYMENT_RECONCILIATION_ENABLED is true but PAYMENT_RECONCILIATION_SCHEDULE is missing."

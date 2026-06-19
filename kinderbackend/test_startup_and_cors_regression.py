@@ -162,6 +162,9 @@ def test_settings_from_env_parses_cors_and_runtime_flags(
     monkeypatch.setenv("CACHE_ENABLED", "true")
     monkeypatch.setenv("REDIS_URL", "redis://cache.example.invalid/0")
     monkeypatch.setenv("ADMIN_ANALYTICS_CACHE_TTL_SECONDS", "45")
+    # conftest.py defaults this to "true" for the rest of the suite (admin-seed
+    # flows need it locally); production must never inherit that default.
+    monkeypatch.setenv("ENABLE_ADMIN_SEED_ENDPOINT", "false")
 
     settings = Settings.from_env()
 
