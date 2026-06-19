@@ -107,9 +107,9 @@ class GamificationNotifierState {
 
 class GamificationNotifier extends StateNotifier<GamificationNotifierState> {
   final GamificationService _service;
-  final Ref _ref;
+  final Ref? _ref;
 
-  GamificationNotifier({required GamificationService service, required Ref ref})
+  GamificationNotifier({required GamificationService service, Ref? ref})
       : _service = service,
         _ref = ref,
         super(const GamificationNotifierState(isLoading: false));
@@ -166,7 +166,7 @@ class GamificationNotifier extends StateNotifier<GamificationNotifierState> {
       // Sync coins to reward store if coins were awarded
       if (result.coinsAwarded > 0) {
         try {
-          _ref.read(rewardStoreProvider.notifier).syncCoinsFromRepo();
+          await _ref?.read(rewardStoreProvider.notifier).syncCoinsFromRepo();
         } catch (_) {}
       }
 

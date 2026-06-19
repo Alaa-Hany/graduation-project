@@ -61,9 +61,9 @@ Future<void> main() async {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('🌟', style: TextStyle(fontSize: 64)),
-            const SizedBox(height: 16),
-            const Text(
+            Text('🌟', style: TextStyle(fontSize: 64)),
+            SizedBox(height: 16),
+            Text(
               'Oops! Something went wrong.',
               style: TextStyle(
                 fontSize: 18,
@@ -71,8 +71,8 @@ Future<void> main() async {
                 color: Color(0xFF5B6AF0),
               ),
             ),
-            const SizedBox(height: 8),
-            const Text(
+            SizedBox(height: 8),
+            Text(
               'Please ask a parent for help.',
               style: TextStyle(fontSize: 14, color: Color(0xFF8892A4)),
             ),

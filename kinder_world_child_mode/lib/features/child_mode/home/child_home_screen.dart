@@ -19,6 +19,7 @@ import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/features/child_mode/profile/child_profile_screen.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/features/child_mode/mood/mood_picker_widget.dart';
+import 'package:kinder_world/core/providers/gamification_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NAVIGATION SHELL — wraps all child tabs with the premium bottom nav bar
@@ -484,6 +485,27 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
     );
   }
 
+  // ── BADGES ROW ─────────────────────────────────────────────────────────────
+
+  Widget _buildBadgesRow(ColorScheme colors) {
+    final gamState = ref.watch(currentGamificationStateProvider);
+    final earned = gamState?.earnedBadges ?? [];
+    if (earned.isEmpty) return const SizedBox.shrink();
+    final display = earned.take(4).toList();
+    return Row(
+      children: display
+          .map((badge) => Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: Tooltip(
+                  message: badge.nameKey,
+                  child: Text(badge.iconEmoji,
+                      style: const TextStyle(fontSize: 18)),
+                ),
+              ))
+          .toList(),
+    );
+  }
+
   // ── HERO SECTION ───────────────────────────────────────────────────────────
 
   Widget _buildHeroSection(ChildProfile child) {
@@ -536,6 +558,8 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                       ),
                     ),
                     const SizedBox(height: 6),
+                    _buildBadgesRow(colors),
+                    const SizedBox(height: 4),
                     Text(
                       _motivationalLine(child, l10n),
                       style: textTheme.bodyMedium?.copyWith(

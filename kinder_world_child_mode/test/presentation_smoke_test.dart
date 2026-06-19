@@ -304,6 +304,7 @@ class _SmokeGamificationNotifier extends GamificationNotifier {
     String? category,
     int score = 0,
     bool awardXp = true,
+    String? activityId,
   }) async {
     activityCalls++;
     return ActivityResult.empty(0, 1, 0);

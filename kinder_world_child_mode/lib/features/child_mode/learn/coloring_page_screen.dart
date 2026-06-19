@@ -2,15 +2,19 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/providers/child_session_controller.dart';
+import 'package:kinder_world/core/providers/gamification_provider.dart';
+import 'package:kinder_world/core/services/gamification_service.dart';
 import 'package:kinder_world/core/utils/color_serialization.dart';
 import 'package:kinder_world/features/child_mode/learn/coloring_progress_storage.dart';
 import 'package:path_drawing/path_drawing.dart';
 import 'package:xml/xml.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
 
-class ColoringPageScreen extends StatefulWidget {
+class ColoringPageScreen extends ConsumerStatefulWidget {
   const ColoringPageScreen({
     super.key,
     required this.svgAssetPath,
@@ -21,10 +25,11 @@ class ColoringPageScreen extends StatefulWidget {
   final String title;
 
   @override
-  State<ColoringPageScreen> createState() => _ColoringPageScreenState();
+  ConsumerState<ColoringPageScreen> createState() =>
+      _ColoringPageScreenState();
 }
 
-class _ColoringPageScreenState extends State<ColoringPageScreen> {
+class _ColoringPageScreenState extends ConsumerState<ColoringPageScreen> {
   late final ColoringPageController _controller;
   final ScrollController _paletteScrollController = ScrollController();
   final TransformationController _canvasTransformController =
@@ -146,8 +151,21 @@ class _ColoringPageScreenState extends State<ColoringPageScreen> {
     });
   }
 
+  Future<void> _awardColoringXp() async {
+    final child = ref.read(currentChildProvider);
+    if (child == null) return;
+    await ref.read(gamificationStateProvider.notifier).recordActivity(
+          childId: child.id,
+          type: ActivityType.coloring,
+          category: 'skillful',
+          awardXp: true,
+          activityId: 'coloring_${widget.svgAssetPath}',
+        );
+  }
+
   void _showCompletionReward() {
     if (!mounted) return;
+    _awardColoringXp();
     showDialog<void>(
       context: context,
       barrierDismissible: true,

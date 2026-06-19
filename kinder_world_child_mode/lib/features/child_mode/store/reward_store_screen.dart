@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
-import 'package:kinder_world/core/models/achievement.dart';
-import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/providers/gamification_provider.dart';
 import 'package:kinder_world/core/repositories/gamification_repository.dart';
@@ -249,6 +247,7 @@ class RewardRedemptionRequest {
   }
 }
 
+
 class RewardStoreState {
   const RewardStoreState({
     required this.coins,
@@ -330,7 +329,6 @@ class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
 
   String get _ownedKey => 'store_owned_$_childId';
   String get _equippedKey => 'store_equipped_$_childId';
-  String get _pendingRequestsKey => 'store_pending_requests_$_childId';
   String get _historyRequestsKey => 'store_history_requests_$_childId';
 
   Future<void> _load() async {
@@ -368,7 +366,7 @@ class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
     );
   }
 
-  void _persistOwned() {
+  void _persist() {
     _box.put(_ownedKey, jsonEncode(state.ownedIds.toList()));
 
     final equipped = <String, String>{};
@@ -448,7 +446,7 @@ class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
       ownedIds: {...state.ownedIds, item.id},
       redemptionHistory: [...state.redemptionHistory, completedRequest],
     );
-    _persistOwned();
+    _persist();
     return const RewardRedeemResult(
       outcome: RewardRedeemOutcome.purchased,
       message: RewardRedeemMessage.rewardRedeemed,
@@ -517,7 +515,7 @@ class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
       pendingRequests: pending,
       redemptionHistory: [...state.redemptionHistory, approved],
     );
-    _persistOwned();
+    _persist();
     return RewardRedeemResult(
       outcome: RewardRedeemOutcome.purchased,
       message: RewardRedeemMessage.itemApproved,
@@ -546,7 +544,7 @@ class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
       pendingRequests: pending,
       redemptionHistory: [...state.redemptionHistory, rejected],
     );
-    _persistOwned();
+    _persist();
     return const RewardRedeemResult(
       outcome: RewardRedeemOutcome.purchased,
       message: RewardRedeemMessage.requestRejected,
@@ -906,7 +904,7 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-class _StoreItemCard extends StatelessWidget {
+class _StoreItemCard extends StatefulWidget {
   const _StoreItemCard({
     required this.item,
     required this.owned,
@@ -924,59 +922,205 @@ class _StoreItemCard extends StatelessWidget {
   final VoidCallback onAction;
 
   @override
+  State<_StoreItemCard> createState() => _StoreItemCardState();
+}
+
+class _StoreItemCardState extends State<_StoreItemCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _shimmerCtrl;
+  late Animation<double> _shimmerAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _shimmerCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat(reverse: true);
+    _shimmerAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _shimmerCtrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _shimmerCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
-    final canAfford = coins >= item.price;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: equipped
-              ? item.color
-              : colors.outlineVariant.withValuesCompat(alpha: 0.5),
-          width: equipped ? 2 : 1,
-        ),
-      ),
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Align(
-            alignment: Alignment.topRight,
-            child: Text(item.type.typeEmoji),
-          ),
-          Text(item.emoji, style: const TextStyle(fontSize: 46)),
-          Text(
-            l10n.rewardItemName(item.id),
-            style: const TextStyle(fontWeight: FontWeight.w800),
-          ),
-          Text(l10n.rewardStorePriceCoins(item.price),
-              style: TextStyle(
-                  color:
-                      canAfford ? context.childTheme.success : colors.error)),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: pendingApproval ? null : onAction,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: item.color,
-                foregroundColor: item.color.onColor,
-              ),
-              child: Text(_actionLabel(context, canAfford)),
+    final canAfford = widget.coins >= widget.item.price;
+    final isOwned = widget.owned;
+    final isEquipped = widget.equipped;
+
+    return AnimatedBuilder(
+      animation: _shimmerAnim,
+      builder: (context, child) {
+        return Container(
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(24),
+            gradient: isOwned
+                ? LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      widget.item.color.withValuesCompat(alpha: 0.08),
+                      widget.item.color.withValuesCompat(
+                          alpha: 0.04 + _shimmerAnim.value * 0.06),
+                    ],
+                  )
+                : null,
+            border: Border.all(
+              color: isEquipped
+                  ? widget.item.color
+                  : isOwned
+                      ? widget.item.color.withValuesCompat(alpha: 0.5)
+                      : colors.outlineVariant.withValuesCompat(alpha: 0.4),
+              width: isEquipped ? 2.5 : 1.5,
             ),
+            boxShadow: isEquipped
+                ? [
+                    BoxShadow(
+                      color: widget.item.color.withValuesCompat(alpha: 0.35),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: colors.shadow.withValuesCompat(alpha: 0.06),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
           ),
-        ],
-      ),
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(widget.item.type.typeEmoji,
+                      style: const TextStyle(fontSize: 14)),
+                  if (isOwned)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isEquipped
+                            ? widget.item.color
+                            : widget.item.color.withValuesCompat(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        isEquipped ? '✓' : '★',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: isEquipped
+                              ? widget.item.color.onColor
+                              : widget.item.color,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              // Emoji with slight bounce for equipped items
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 1.0, end: isEquipped ? 1.12 : 1.0),
+                duration: const Duration(milliseconds: 300),
+                builder: (_, scale, __) => Transform.scale(
+                  scale: scale,
+                  child: Text(
+                    widget.item.emoji,
+                    style: const TextStyle(fontSize: 46),
+                  ),
+                ),
+              ),
+              Text(
+                l10n.rewardItemName(widget.item.id),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                  color: colors.onSurface,
+                ),
+              ),
+              // Price badge
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                decoration: BoxDecoration(
+                  color: canAfford || isOwned
+                      ? context.childTheme.success.withValuesCompat(alpha: 0.12)
+                      : colors.error.withValuesCompat(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      '🪙',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      isOwned
+                          ? l10n.rewardItemName(widget.item.id)
+                              .isNotEmpty // reuse, show price
+                              ? '${widget.item.price}'
+                              : '${widget.item.price}'
+                          : '${widget.item.price}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: canAfford || isOwned
+                            ? context.childTheme.success
+                            : colors.error,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: widget.pendingApproval ? null : widget.onAction,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        isOwned ? widget.item.color : (canAfford ? widget.item.color : colors.surfaceContainerHighest),
+                    foregroundColor: isOwned
+                        ? widget.item.color.onColor
+                        : (canAfford ? widget.item.color.onColor : colors.onSurfaceVariant),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    elevation: isOwned ? 2 : 0,
+                  ),
+                  child: Text(
+                    _actionLabel(context, canAfford),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w800, fontSize: 13),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
   String _actionLabel(BuildContext context, bool canAfford) {
     final l10n = AppLocalizations.of(context)!;
-    if (pendingApproval) return l10n.rewardStorePendingAction;
-    if (owned && equipped) return l10n.rewardStoreUnequipAction;
-    if (owned) return l10n.rewardStoreEquipAction;
+    if (widget.pendingApproval) return l10n.rewardStorePendingAction;
+    if (widget.owned && widget.equipped) return l10n.rewardStoreUnequipAction;
+    if (widget.owned) return l10n.rewardStoreEquipAction;
     if (!canAfford) return l10n.rewardStoreNeedMoreCoinsAction;
     return l10n.rewardStoreRedeemAction;
   }

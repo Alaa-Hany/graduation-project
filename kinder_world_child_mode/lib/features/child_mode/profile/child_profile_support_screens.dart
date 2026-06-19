@@ -947,11 +947,12 @@ class _SettingsAvatarSelectionScreenState
 
   @override
   Widget build(BuildContext context) {
-    final avatars = ref.watch(availableAvatarsProvider);
+    final avatarOptionsWithLock = ref.watch(childAvatarOptionsWithLockProvider);
     final child = ref.watch(currentChildProvider);
     final l10n = AppLocalizations.of(context)!;
+    final allPaths = avatarOptionsWithLock.map((e) => e.option.assetPath).toList();
     final selectedPath = _selectedAvatarPath ??
-        (avatars.isNotEmpty ? avatars.first : AppConstants.defaultChildAvatar);
+        (allPaths.isNotEmpty ? allPaths.first : AppConstants.defaultChildAvatar);
     final previewCustomization = ChildAvatarCustomization(
       avatarPath: selectedPath,
       frameColorId: _selectedFrameColorId,
@@ -1034,34 +1035,71 @@ class _SettingsAvatarSelectionScreenState
               mainAxisSpacing: 16,
               childAspectRatio: 1.0,
             ),
-            itemCount: avatars.length,
+            itemCount: avatarOptionsWithLock.length,
             itemBuilder: (context, index) {
-              final avatarPath = avatars[index];
-              final isSelected = selectedPath == avatarPath;
+              final entry = avatarOptionsWithLock[index];
+              final avatarPath = entry.option.assetPath;
+              final isUnlocked = entry.isUnlocked;
+              final unlockLevel = entry.option.unlockLevel;
+              final isSelected = selectedPath == avatarPath && isUnlocked;
               return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedAvatarPath = avatarPath;
-                  });
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isSelected
-                          ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).colorScheme.outlineVariant,
-                      width: isSelected ? 3 : 1.5,
+                onTap: isUnlocked
+                    ? () => setState(() => _selectedAvatarPath = avatarPath)
+                    : null,
+                child: Stack(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: isUnlocked
+                            ? Theme.of(context).colorScheme.surface
+                            : Theme.of(context).colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isSelected
+                              ? Theme.of(context).colorScheme.primary
+                              : isUnlocked
+                                  ? Theme.of(context).colorScheme.outlineVariant
+                                  : Theme.of(context).colorScheme.outline.withValuesCompat(alpha: 0.3),
+                          width: isSelected ? 3 : 1.5,
+                        ),
+                      ),
+                      child: Center(
+                        child: Opacity(
+                          opacity: isUnlocked ? 1.0 : 0.35,
+                          child: AvatarView(
+                            avatarPath: avatarPath,
+                            radius: 28,
+                            backgroundColor: Colors.transparent,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                  child: Center(
-                    child: AvatarView(
-                      avatarPath: avatarPath,
-                      radius: 28,
-                      backgroundColor: Colors.transparent,
-                    ),
-                  ),
+                    if (!isUnlocked)
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            color: Colors.black.withValuesCompat(alpha: 0.08),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.lock_rounded,
+                                  color: Colors.white, size: 22),
+                              if (unlockLevel != null)
+                                Text(
+                                  'LV$unlockLevel',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               );
             },

@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/providers/plan_provider.dart';
 import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/core/widgets/plan_status_banner.dart';
+import 'package:kinder_world/core/widgets/premium_badge.dart';
+import 'package:kinder_world/core/widgets/premium_section_upsell.dart';
 import 'package:kinder_world/app.dart';
 import 'package:kinder_world/router.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
@@ -76,6 +79,12 @@ class _ParentalControlsScreenState
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final planAsync = ref.watch(planInfoStateProvider);
+    final isAdvancedLocked = planAsync.when(
+      data: (plan) => !plan.hasSmartControls,
+      loading: () => false,
+      error: (_, __) => false,
+    );
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
@@ -185,39 +194,51 @@ class _ParentalControlsScreenState
   Widget _buildControlSection(
     String title,
     IconData icon,
-    List<Widget> controls,
-  ) {
-    return ParentCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: ParentColors.parentGreen.withValuesCompat(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
+    List<Widget> controls, {
+    Widget? trailing,
+    bool isDimmed = false,
+    Widget? footer,
+  }) {
+    return Opacity(
+      opacity: isDimmed ? 0.6 : 1.0,
+      child: ParentCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color:
+                        ParentColors.parentGreen.withValuesCompat(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, color: ParentColors.parentGreen, size: 18),
                 ),
-                child: Icon(icon, color: ParentColors.parentGreen, size: 18),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.2,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.2,
+                    ),
                   ),
                 ),
-              ),
+                if (trailing != null) trailing,
+              ],
+            ),
+            const SizedBox(height: 16),
+            Column(children: controls),
+            if (footer != null) ...[
+              const SizedBox(height: 12),
+              footer,
             ],
-          ),
-          const SizedBox(height: 16),
-          Column(children: controls),
-        ],
+          ],
+        ),
       ),
     );
   }

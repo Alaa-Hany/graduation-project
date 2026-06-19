@@ -11,6 +11,8 @@ import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/models/activity.dart';
 import 'package:kinder_world/core/models/public_content.dart';
+import 'package:kinder_world/core/providers/gamification_provider.dart';
+import 'package:kinder_world/core/services/gamification_service.dart';
 import 'package:kinder_world/core/providers/content_controller.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/providers/progress_controller.dart';

@@ -1,3 +1,5 @@
+// ignore_for_file: unused_element
+
 part of 'learn_screen.dart';
 
 class PuzzleHubGameScreen extends StatelessWidget {

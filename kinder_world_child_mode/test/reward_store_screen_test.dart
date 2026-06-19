@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
-import 'package:kinder_world/core/models/achievement.dart';
-import 'package:kinder_world/core/models/child_profile.dart';
+import 'package:kinder_world/core/repositories/gamification_repository.dart';
 import 'package:kinder_world/features/child_mode/store/reward_store_screen.dart';
+import 'package:logger/logger.dart';
 
 import 'support/test_harness.dart';
 
@@ -19,42 +19,13 @@ void main() {
     await Hive.box<dynamic>('gamification_data').clear();
   });
 
-  test('coin floor gives 2 coins per completed activity', () {
-    final child = ChildProfile(
-      id: 'kid-1',
-      name: 'Lina',
-      age: 7,
-      avatar: 'bear',
-      interests: const <String>[],
-      level: 1,
-      xp: 0,
-      streak: 0,
-      favorites: const <String>[],
-      parentId: 'parent-1',
-      picturePassword: const <String>['sun'],
-      createdAt: DateTime(2026, 1, 1),
-      updatedAt: DateTime(2026, 1, 1),
-      totalTimeSpent: 0,
-      activitiesCompleted: 3,
-    );
-
-    const gamification = GamificationState(
-      childId: 'kid-1',
-      totalXP: 40,
-      level: 1,
-      streak: 0,
-      achievements: <Achievement>[],
-      badges: <Badge>[],
-      activitiesCompleted: 3,
-    );
-
-    expect(rewardStoreCoinFloor(gamification: null, child: child), 6);
-    expect(rewardStoreCoinFloor(gamification: gamification, child: child), 6);
-  });
 
   test('redeem buys item directly without parent approval', () {
     final box = Hive.box<dynamic>('gamification_data');
-    final notifier = RewardStoreNotifier(box, 'kid-1', 10);
+    box.put('gam_coins_kid-1', 10);
+    final gamRepo =
+        GamificationRepository(gamificationBox: box, logger: Logger());
+    final notifier = RewardStoreNotifier(box, 'kid-1', gamRepo);
     final item = rewardCatalog.firstWhere((reward) => reward.id == 'av_robot');
 
     final result = notifier.redeem(item);
@@ -81,7 +52,9 @@ void main() {
       ]),
     );
 
-    final notifier = RewardStoreNotifier(box, 'kid-1', 0);
+    final gamRepo =
+        GamificationRepository(gamificationBox: box, logger: Logger());
+    final notifier = RewardStoreNotifier(box, 'kid-1', gamRepo);
 
     expect(notifier.state.pendingRequests, isEmpty);
     expect(box.get('store_pending_requests_kid-1'), '[]');

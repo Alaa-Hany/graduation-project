@@ -5,7 +5,10 @@ import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/ai_buddy_models.dart';
 import 'package:kinder_world/core/providers/ai_buddy_provider.dart';
+import 'package:kinder_world/core/providers/child_session_controller.dart';
+import 'package:kinder_world/core/providers/gamification_provider.dart';
 import 'package:kinder_world/core/services/ai_buddy_service.dart';
+import 'package:kinder_world/core/services/gamification_service.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
@@ -220,6 +223,20 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
         _isSending = false;
       });
       _scrollToBottom();
+      // Award coins once per day for using the AI buddy
+      final currentChild = ref.read(currentChildProvider);
+      if (currentChild != null) {
+        final today = DateTime.now();
+        final dayKey =
+            'ai_buddy_${today.year}_${today.month}_${today.day}';
+        await ref.read(gamificationStateProvider.notifier).recordActivity(
+              childId: currentChild.id,
+              type: ActivityType.aiBuddy,
+              category: 'educational',
+              awardXp: true,
+              activityId: dayKey,
+            );
+      }
     } on AiBuddyUnavailableException catch (e) {
       if (!mounted) return;
       setState(() {

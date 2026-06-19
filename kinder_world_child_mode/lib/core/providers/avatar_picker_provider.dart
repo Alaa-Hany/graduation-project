@@ -2,6 +2,8 @@ import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
+import 'package:kinder_world/core/data/child_avatar_catalog.dart';
+import 'package:kinder_world/core/providers/child_session_controller.dart';
 
 /// Manages the currently selected child avatar asset path.
 class AvatarPickerNotifier extends StateNotifier<String> {
@@ -42,4 +44,15 @@ final avatarPickerProvider =
 
 final availableAvatarsProvider = Provider<List<String>>((ref) {
   return AvatarPickerNotifier.availableAvatars;
+});
+
+/// Returns all avatar options with their unlock state for the current child.
+/// Used in child profile avatar picker to show locked/unlocked state.
+final childAvatarOptionsWithLockProvider =
+    Provider<List<({ChildAvatarOption option, bool isUnlocked})>>((ref) {
+  final child = ref.watch(currentChildProvider);
+  final level = child?.level ?? 1;
+  return childAvatarOptions
+      .map((option) => (option: option, isUnlocked: option.isUnlockedForLevel(level)))
+      .toList();
 });

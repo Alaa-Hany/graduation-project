@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_const_constructors, unused_element, unused_element_parameter
+﻿// ignore_for_file: prefer_const_constructors, unused_element, unused_element_parameter
 part of 'learn_screen.dart';
 
 class EntertainingScreen extends StatelessWidget {
@@ -1597,6 +1597,15 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
           'image_path': _currentImagePath,
         },
       );
+      // Award coins once per level
+      await ref.read(gamificationStateProvider.notifier).recordActivity(
+        childId: childProfile.id,
+        type: ActivityType.play,
+        category: 'entertaining',
+        score: score,
+        awardXp: false,
+        activityId: 'game_${_selectedLevel.id}',
+      );
     } finally {
       _isRecordingCompletion = false;
     }
@@ -2604,7 +2613,7 @@ class _RacingCarsGameScreenState extends State<RacingCarsGameScreen> {
                     icon: const Icon(Icons.flash_on),
                     label: Text(_finished
                         ? (_isArabic ? 'انتهى السباق' : 'Race finished')
-                        : (_isArabic ? 'انطلق!' : 'Go!'),
+                        : (_isArabic ? 'انطلق!' : 'Go!')),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF42A5F5),
                       foregroundColor: Colors.white,
@@ -3088,7 +3097,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
             Row(
               children: [
                 Text(
-                  _isArabic ? '???? ????:' : 'Best stars:',
+                  _isArabic ? 'أفضل النجوم:' : 'Best stars:',
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(width: 8),
