@@ -147,6 +147,13 @@ class AvatarView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Avatars repeat across many screens (headers, lists, dashboards). Isolating
+    // them in their own layer prevents avatar repaints from invalidating
+    // surrounding widgets — and vice versa.
+    return RepaintBoundary(child: _buildAvatar(context));
+  }
+
+  Widget _buildAvatar(BuildContext context) {
     // First try to get icon data (new approach)
     final iconData = _resolveIconData(context);
     if (iconData != null) {

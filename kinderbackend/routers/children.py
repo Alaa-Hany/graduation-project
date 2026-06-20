@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from core.report_cache import invalidate_report_cache
 from deps import get_current_user, get_db
 from models import User
-from schemas.children import ChildCreate, ChildUpdate
+from schemas.children import ChildCreate, ChildListResponse, ChildUpdate
 from schemas.common import SuccessResponse
 from services.child_service import (
     create_child_profile,
@@ -21,14 +22,19 @@ def create_child(
     db: Session = Depends(get_db),
     parent: User = Depends(get_current_user),
 ):
-    return create_child_profile(data, parent, db)
+    result = create_child_profile(data, parent, db)
+    # Child roster changed → reports that summarize children are now stale.
+    invalidate_report_cache(parent.id)
+    return result
 
 
-@router.get("/children")
+@router.get("/children", response_model=ChildListResponse)
 def list_children(
     db: Session = Depends(get_db),
     parent: User = Depends(get_current_user),
 ):
+    # ChildListResponse trims audit timestamps, raw FKs, and date_of_birth that
+    # the child-list card never renders — Pydantic drops them before serializing.
     return list_parent_children(parent, db)
 
 
@@ -38,7 +44,9 @@ def delete_child(
     db: Session = Depends(get_db),
     parent: User = Depends(get_current_user),
 ):
-    return delete_child_profile(child_id, parent, db)
+    result = delete_child_profile(child_id, parent, db)
+    invalidate_report_cache(parent.id)
+    return result
 
 
 @router.put("/children/{child_id}")
@@ -48,4 +56,6 @@ def update_child(
     db: Session = Depends(get_db),
     parent: User = Depends(get_current_user),
 ):
-    return update_child_profile(child_id, payload, parent, db)
+    result = update_child_profile(child_id, payload, parent, db)
+    invalidate_report_cache(parent.id)
+    return result

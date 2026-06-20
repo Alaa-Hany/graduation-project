@@ -11,7 +11,7 @@ def test_parent_registration_requires_email_otp_before_activation(client, db, mo
     monkeypatch.setattr(auth_service, "_generate_email_otp", lambda: "123456")
     monkeypatch.setattr(
         "services.email_delivery_service.email_delivery_service.send_email",
-        lambda *, to_email, subject, body: sent_messages.append(
+        lambda *, to_email, subject, body, html_body=None: sent_messages.append(
             {"to_email": to_email, "subject": subject, "body": body}
         ),
     )

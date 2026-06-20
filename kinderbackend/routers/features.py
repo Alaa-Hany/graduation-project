@@ -1,8 +1,15 @@
+import asyncio
 import logging
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
+from core.report_cache import (
+    cache_report,
+    get_cached_report,
+    invalidate_report_cache,
+    report_cache_key,
+)
 from core.system_settings import require_ai_buddy_enabled
 from deps import get_current_user, get_db, require_feature
 from models import User
@@ -28,7 +35,10 @@ def ingest_activity_event(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    return analytics_service.record_activity_event(db=db, parent=user, payload=payload)
+    result = analytics_service.record_activity_event(db=db, parent=user, payload=payload)
+    # New activity invalidates every cached report variant for this parent.
+    invalidate_report_cache(user.id)
+    return result
 
 
 @router.post("/analytics/sessions")
@@ -37,7 +47,10 @@ def ingest_session_log(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    return analytics_service.record_session_log(db=db, parent=user, payload=payload)
+    result = analytics_service.record_session_log(db=db, parent=user, payload=payload)
+    # New screen-time data changes report aggregates → drop cached reports.
+    invalidate_report_cache(user.id)
+    return result
 
 
 # ===============================
@@ -46,30 +59,57 @@ def ingest_session_log(
 
 
 @router.get("/reports/basic")
-def get_basic_reports(
+async def get_basic_reports(
     child_id: int | None = Query(None),
     days: int = Query(7, ge=1, le=365),
     user: User = Depends(require_feature("basic_reports")),
     db: Session = Depends(get_db),
 ):
     logger.info("Basic reports requested by user %s", user.id)
-    return analytics_service.build_basic_report(db=db, user=user, child_id=child_id, days=days)
+    cache_key = report_cache_key(
+        user_id=user.id, child_id=child_id, report_type="basic", days=days
+    )
+    cached = get_cached_report(cache_key)
+    if cached is not None:
+        return cached
+
+    # Heavy multi-table aggregation: run off the event loop so concurrent
+    # requests are not blocked while the DB work happens.
+    payload = await asyncio.to_thread(
+        analytics_service.build_basic_report,
+        db=db,
+        user=user,
+        child_id=child_id,
+        days=days,
+    )
+    cache_report(cache_key, payload)
+    return payload
 
 
 @router.get("/reports/advanced")
-def advanced_reports(
+async def advanced_reports(
     child_id: int | None = Query(None),
     days: int = Query(30, ge=1, le=365),
     user: User = Depends(require_feature("advanced_reports")),
     db: Session = Depends(get_db),
 ):
     logger.info("Advanced reports requested by user %s", user.id)
-    return analytics_service.build_advanced_report(
+    cache_key = report_cache_key(
+        user_id=user.id, child_id=child_id, report_type="advanced", days=days
+    )
+    cached = get_cached_report(cache_key)
+    if cached is not None:
+        return cached
+
+    payload = await asyncio.to_thread(
+        analytics_service.build_advanced_report,
         db=db,
         user=user,
         child_id=child_id,
         days=days,
     )
+    cache_report(cache_key, payload)
+    return payload
 
 
 # ===============================

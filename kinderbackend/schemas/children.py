@@ -46,6 +46,26 @@ class ChildCreate(BaseModel):
         return normalize_child_avatar(value)
 
 
+class ChildListItem(BaseModel):
+    """Slim child shape for the parent's child-list card.
+
+    Excludes ``parent_id`` (raw FK), ``date_of_birth``, and the
+    ``created_at``/``updated_at`` audit timestamps that the list card never
+    renders. Used as ``response_model`` so Pydantic drops the extra fields
+    from each serialized child, trimming both CPU and wire payload.
+    """
+
+    id: int
+    name: str
+    age: Optional[int] = None
+    avatar: Optional[str] = None
+    is_active: bool = True
+
+
+class ChildListResponse(BaseModel):
+    children: List[ChildListItem]
+
+
 class ChildUpdate(BaseModel):
     name: Optional[str] = Field(default=None, min_length=1, max_length=100)
     picture_password: Optional[List[str]] = Field(default=None, min_length=3, max_length=3)

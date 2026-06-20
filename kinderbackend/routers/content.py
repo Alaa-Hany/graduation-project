@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -363,25 +364,30 @@ def coppa(db: Session = Depends(get_db)):
 
 
 @router.get("/content/child/categories")
-def list_child_content_categories(db: Session = Depends(get_db)):
-    categories = (
-        db.query(ContentCategory)
-        .options(joinedload(ContentCategory.contents), joinedload(ContentCategory.quizzes))
-        .filter(ContentCategory.deleted_at.is_(None))
-        .all()
-    )
-    items = []
-    for category in categories:
-        if any(
-            content.deleted_at is None
-            and content.status == "published"
-            and content.published_at is not None
-            and content.content_type in PUBLIC_CHILD_CONTENT_TYPES
-            for content in (category.contents or [])
-        ):
-            items.append(_serialize_public_category(category))
-    items.sort(key=lambda item: item["title_en"].lower())
-    return {"items": items}
+async def list_child_content_categories(db: Session = Depends(get_db)):
+    # Child-home landing query: eager-loads every category with its contents and
+    # quizzes. Run it off the event loop so it doesn't block concurrent requests.
+    def _build() -> dict[str, Any]:
+        categories = (
+            db.query(ContentCategory)
+            .options(joinedload(ContentCategory.contents), joinedload(ContentCategory.quizzes))
+            .filter(ContentCategory.deleted_at.is_(None))
+            .all()
+        )
+        items = []
+        for category in categories:
+            if any(
+                content.deleted_at is None
+                and content.status == "published"
+                and content.published_at is not None
+                and content.content_type in PUBLIC_CHILD_CONTENT_TYPES
+                for content in (category.contents or [])
+            ):
+                items.append(_serialize_public_category(category))
+        items.sort(key=lambda item: item["title_en"].lower())
+        return {"items": items}
+
+    return await asyncio.to_thread(_build)
 
 
 @router.get("/content/child/items")

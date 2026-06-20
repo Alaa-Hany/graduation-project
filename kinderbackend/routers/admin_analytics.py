@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 
@@ -389,7 +390,7 @@ def _build_analytics_usage_payload(*, db: Session, range_name: str) -> dict[str,
 
 
 @router.get("/overview")
-def get_analytics_overview(
+async def get_analytics_overview(
     db: Session = Depends(get_db),
     admin=Depends(require_permission("admin.analytics.view")),
 ):
@@ -398,7 +399,9 @@ def get_analytics_overview(
     if isinstance(cached, dict):
         return cached
 
-    payload = _build_analytics_overview_payload(db=db)
+    # Heavy KPI rollup across users/children/tickets/subscriptions: offload the
+    # DB work so the event loop can serve other admin requests meanwhile.
+    payload = await asyncio.to_thread(_build_analytics_overview_payload, db=db)
     cache_service.set_json(
         cache_key,
         payload,

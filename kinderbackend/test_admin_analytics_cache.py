@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from types import SimpleNamespace
 
 import pytest
@@ -36,8 +37,9 @@ def test_admin_analytics_overview_uses_cache(monkeypatch: pytest.MonkeyPatch) ->
     )
     monkeypatch.setattr(admin_analytics, "_build_analytics_overview_payload", fake_build)
 
-    first = admin_analytics.get_analytics_overview(db=object(), admin=object())
-    second = admin_analytics.get_analytics_overview(db=object(), admin=object())
+    # get_analytics_overview is async (offloads its DB work via asyncio.to_thread).
+    first = asyncio.run(admin_analytics.get_analytics_overview(db=object(), admin=object()))
+    second = asyncio.run(admin_analytics.get_analytics_overview(db=object(), admin=object()))
 
     assert first == {"kpis": {"total_users": 7}}
     assert second == first

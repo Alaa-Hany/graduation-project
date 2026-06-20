@@ -615,10 +615,10 @@ class _CmsContentItemCard extends StatelessWidget {
                 width: 92,
                 height: 92,
                 child: hasRemoteImage
-                    ? Image.network(
-                        thumbnailUrl,
+                    ? CachedNetworkImage(
+                        imageUrl: thumbnailUrl,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
+                        errorWidget: (_, __, ___) =>
                             _CmsContentFallbackIcon(axisKey: axisKey),
                       )
                     : _CmsContentFallbackIcon(axisKey: axisKey),
@@ -1031,10 +1031,10 @@ class _EntertainmentDetailScreenState
             fit: StackFit.expand,
             children: [
               if (hasRemoteImage)
-                Image.network(
-                  thumbnailUrl,
+                CachedNetworkImage(
+                  imageUrl: thumbnailUrl,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _buildEntertainmentFallback(),
+                  errorWidget: (_, __, ___) => _buildEntertainmentFallback(),
                 )
               else
                 _buildEntertainmentFallback(),
@@ -4613,10 +4613,10 @@ class _MethodContentScreenState extends ConsumerState<MethodContentScreen> {
                 height: 128,
                 color: AppColors.behavioral.withValuesCompat(alpha: 0.1),
                 child: hasRemoteImage
-                    ? Image.network(
-                        thumbnailUrl,
+                    ? CachedNetworkImage(
+                        imageUrl: thumbnailUrl,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Icon(
+                        errorWidget: (_, __, ___) => Icon(
                           Icons.extension,
                           color: AppColors.behavioral,
                           size: 36,
@@ -4744,11 +4744,11 @@ class _BehavioralContentDetailScreenState
               if ((item.effectiveThumbnailUrl ?? '').isNotEmpty)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(22),
-                  child: Image.network(
-                    item.effectiveThumbnailUrl!,
+                  child: CachedNetworkImage(
+                    imageUrl: item.effectiveThumbnailUrl!,
                     height: 210,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                    errorWidget: (_, __, ___) => const SizedBox.shrink(),
                   ),
                 ),
               if ((item.effectiveThumbnailUrl ?? '').isNotEmpty)
@@ -5219,9 +5219,11 @@ class _SkillDetailScreenState extends ConsumerState<SkillDetailScreen> {
                     );
                   }
 
-                  return ListView(
+                  return ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    children: cmsItems.map(_buildCmsVideoCard).toList(),
+                    itemCount: cmsItems.length,
+                    itemBuilder: (context, index) =>
+                        _buildCmsVideoCard(cmsItems[index]),
                   );
                 },
               ),
@@ -5285,10 +5287,10 @@ class _SkillDetailScreenState extends ConsumerState<SkillDetailScreen> {
                   bottomLeft: Radius.circular(20),
                 ),
                 child: hasRemoteImage
-                    ? Image.network(
-                        thumbnailUrl,
+                    ? CachedNetworkImage(
+                        imageUrl: thumbnailUrl,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
+                        errorWidget: (_, __, ___) =>
                             _buildCmsVideoFallbackIcon(),
                       )
                     : _buildCmsVideoFallbackIcon(),
@@ -5632,10 +5634,10 @@ class _SkillCmsVideoHeroCard extends StatelessWidget {
                   height: 220,
                   width: double.infinity,
                   child: hasThumbnail
-                      ? Image.network(
-                          thumbnailUrl!,
+                      ? CachedNetworkImage(
+                          imageUrl: thumbnailUrl!,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
+                          errorWidget: (_, __, ___) =>
                               _SkillCmsVideoFallbackThumbnail(),
                         )
                       : _SkillCmsVideoFallbackThumbnail(),
@@ -6299,10 +6301,10 @@ class _EducationalSubjectScreenState
                   bottomLeft: Radius.circular(20),
                 ),
                 child: hasRemoteImage
-                    ? Image.network(
-                        thumbnailUrl,
+                    ? CachedNetworkImage(
+                        imageUrl: thumbnailUrl,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
+                        errorWidget: (_, __, ___) =>
                             _buildCmsLessonFallbackIcon(),
                       )
                     : _buildCmsLessonFallbackIcon(),

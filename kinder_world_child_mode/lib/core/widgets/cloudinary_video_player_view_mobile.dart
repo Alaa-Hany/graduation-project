@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/utils/video_url_utils.dart';
@@ -79,10 +80,10 @@ class _CloudinaryVideoPlayerViewState extends State<CloudinaryVideoPlayerView> {
                 fit: StackFit.expand,
                 children: [
                   if (thumbnailUrl != null)
-                    Image.network(
-                      thumbnailUrl,
+                    CachedNetworkImage(
+                      imageUrl: thumbnailUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
+                      errorWidget: (_, __, ___) =>
                           Container(color: Colors.black12),
                     )
                   else

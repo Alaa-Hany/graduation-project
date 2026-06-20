@@ -289,4 +289,9 @@ class StripePaymentProvider:
             ) from exc
 
         self._client = StripeClient(settings.stripe_secret_key)
-        return self._
+        return self._client
+
+
+# Module-level singleton, mirroring internal_payment_provider. get_payment_provider()
+# imports this name when settings.payment_provider == "stripe".
+stripe_payment_provider = StripePaymentProvider()

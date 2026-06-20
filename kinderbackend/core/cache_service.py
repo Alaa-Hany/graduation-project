@@ -79,6 +79,21 @@ class CacheService:
         except Exception as exc:  # pragma: no cover - depends on runtime Redis availability
             logger.warning("Redis cache delete failed for key %s: %s", key, exc)
 
+    def clear_pattern(self, pattern: str) -> None:
+        """Delete every key matching a glob-style pattern (e.g. ``report:42:*``).
+
+        Uses non-blocking SCAN so a large keyspace never stalls Redis. Safe to
+        call when caching is disabled or Redis is down — it becomes a no-op.
+        """
+        client = self._get_client()
+        if client is None:
+            return
+        try:
+            for key in client.scan_iter(match=pattern, count=100):
+                client.delete(key)
+        except Exception as exc:  # pragma: no cover - depends on runtime Redis availability
+            logger.warning("Redis cache pattern delete failed for %s: %s", pattern, exc)
+
     def reset_for_tests(self) -> None:
         self._client = None
         self._initialization_attempted = False

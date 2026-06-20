@@ -17,6 +17,12 @@ os.environ.setdefault("ADMIN_SEED_NAME", "DEV ONLY ADMIN")
 os.environ.setdefault("SKIP_SCHEMA_VERIFY", "true")
 os.environ.setdefault("DATA_ENCRYPTION_KEY", "TEST_ONLY_PLACEHOLDER_ENCRYPTION_KEY")
 os.environ.setdefault("AI_PROVIDER_MODE", "fallback")
+# Tests must be deterministic and independent of the developer's local .env
+# (which may set PAYMENT_PROVIDER=stripe with live test keys). Force the internal
+# mock provider here, before core.settings runs load_dotenv() — load_dotenv uses
+# override=False, so this value wins. Stripe-specific tests inject their own fake
+# provider via subscription_service._payment_provider_factory and are unaffected.
+os.environ["PAYMENT_PROVIDER"] = "internal"
 
 
 @pytest.fixture(scope="session")

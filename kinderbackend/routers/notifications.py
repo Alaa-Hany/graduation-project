@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
@@ -57,13 +59,14 @@ class NotificationListResponse(BaseModel):
     description="Return the authenticated user's notifications ordered from newest to oldest, along with the unread count.",
     response_description="Notification list and unread summary for the current user.",
 )
-def list_notifications(
+async def list_notifications(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    return notification_service.list_notifications(
+    return await asyncio.to_thread(
+        notification_service.list_notifications,
         db=db,
         user=user,
         limit=limit,

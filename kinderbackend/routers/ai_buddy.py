@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
@@ -63,13 +65,16 @@ def get_ai_buddy_session(
 
 
 @router.post("/sessions/{session_id}/messages", response_model=AiBuddySendMessageOut)
-def send_ai_buddy_message(
+async def send_ai_buddy_message(
     session_id: int,
     payload: AiBuddySendMessageIn,
     db: Session = Depends(get_db),
     principal: AiBuddyPrincipal = Depends(get_ai_buddy_principal),
 ):
-    return ai_buddy_service.send_message(
+    # send_message runs moderation + an external AI provider call; offload it so
+    # the event loop stays free to serve other requests while it waits on I/O.
+    return await asyncio.to_thread(
+        ai_buddy_service.send_message,
         db=db,
         parent=principal.parent,
         session_id=session_id,

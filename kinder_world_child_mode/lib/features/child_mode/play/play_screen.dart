@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
@@ -647,10 +648,10 @@ class _PlayDetailHero extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
         child: hasRemoteImage
-            ? Image.network(
-                thumbnailUrl,
+            ? CachedNetworkImage(
+                imageUrl: thumbnailUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _PlayDetailHeroFallback(
+                errorWidget: (_, __, ___) => _PlayDetailHeroFallback(
                   icon: _contentIcon(item.contentType),
                   color: accent,
                 ),
@@ -748,10 +749,10 @@ class _Thumbnail extends StatelessWidget {
         width: 110,
         height: 80,
         child: hasRemoteImage
-            ? Image.network(
-                url!,
+            ? CachedNetworkImage(
+                imageUrl: url!,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _fallback(),
+                errorWidget: (_, __, ___) => _fallback(),
               )
             : _fallback(),
       ),
