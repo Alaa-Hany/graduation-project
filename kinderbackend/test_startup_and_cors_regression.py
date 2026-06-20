@@ -157,6 +157,8 @@ def test_settings_from_env_parses_cors_and_runtime_flags(
     monkeypatch.setenv("STRIPE_PORTAL_RETURN_URL", "https://app.example.invalid/portal")
     monkeypatch.setenv("STRIPE_PRICE_PREMIUM_MONTHLY", "price_placeholder_premium")
     monkeypatch.setenv("STRIPE_PRICE_FAMILY_PLUS_MONTHLY", "price_placeholder_family")
+    monkeypatch.setenv("STRIPE_PRICE_PREMIUM_YEARLY", "price_placeholder_premium_yearly")
+    monkeypatch.setenv("STRIPE_PRICE_FAMILY_PLUS_YEARLY", "price_placeholder_family_yearly")
     monkeypatch.setenv("AUTO_RUN_MIGRATIONS", "true")
     monkeypatch.setenv("SKIP_SCHEMA_VERIFY", "true")
     monkeypatch.setenv("CACHE_ENABLED", "true")
@@ -228,6 +230,8 @@ def test_settings_rejects_permissive_origin_regex_in_production(
     monkeypatch.setenv("STRIPE_PORTAL_RETURN_URL", "https://app.example.invalid/portal")
     monkeypatch.setenv("STRIPE_PRICE_PREMIUM_MONTHLY", "price_placeholder_premium")
     monkeypatch.setenv("STRIPE_PRICE_FAMILY_PLUS_MONTHLY", "price_placeholder_family")
+    monkeypatch.setenv("STRIPE_PRICE_PREMIUM_YEARLY", "price_placeholder_premium_yearly")
+    monkeypatch.setenv("STRIPE_PRICE_FAMILY_PLUS_YEARLY", "price_placeholder_family_yearly")
     monkeypatch.setenv("ALLOWED_ORIGIN_REGEX", ".*")
 
     with pytest.raises(ValueError, match="too permissive"):

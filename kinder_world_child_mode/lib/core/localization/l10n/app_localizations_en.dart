@@ -2441,21 +2441,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get basicFeaturesOnly => 'Free Access';
 
   @override
-  String get bestForFamilies => 'Lifetime access for bigger families';
+  String get bestForFamilies => 'Recurring plan for bigger families';
 
   @override
   String get planPremiumSubtitle =>
-      'Pay once for lifetime access with up to 3 children, advanced reports, AI insights, and offline downloads';
+      'Subscribe for access with up to 3 children, advanced reports, AI insights, and offline downloads';
 
   @override
   String get planFamilyPlusSubtitle =>
-      'Pay once for lifetime access for larger families with dashboard tools and priority support';
+      'Subscribe for larger families with dashboard tools and priority support';
 
   @override
-  String get oneTimePurchaseLabel => 'One-time purchase';
+  String get billedPerMonthLabel => 'per month';
 
   @override
-  String get lifetimeAccessLabel => 'Lifetime access';
+  String get billedPerYearLabel => 'per year';
+
+  @override
+  String get yearlyDiscountLabel => 'Save 25%';
+
+  @override
+  String get billingMonthlyLabel => 'Monthly';
+
+  @override
+  String get billingYearlyLabel => 'Yearly';
+
+  @override
+  String get activeSubscriptionLabel => 'Active subscription';
 
   @override
   String get unlockPremiumLabel => 'Unlock Premium';

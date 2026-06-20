@@ -3,7 +3,13 @@ from __future__ import annotations
 from datetime import timedelta
 
 from core.settings import settings
-from plan_service import PLAN_FREE, get_plan_catalog, get_plan_features
+from plan_service import (
+    PLAN_FREE,
+    get_plan_catalog,
+    get_plan_features,
+    get_plan_price,
+    normalize_billing_interval,
+)
 
 
 class SubscriptionPlansMixin:
@@ -20,6 +26,7 @@ class SubscriptionPlansMixin:
                     "price": details["price"],
                     "billing_type": details["billing_type"],
                     "access_type": details["access_type"],
+                    "pricing": details.get("pricing", {}),
                     "limits": {
                         "max_children": catalog[plan_id].get("max_children")
                         or self._max_children_for_plan(plan_id)
@@ -44,10 +51,8 @@ class SubscriptionPlansMixin:
         return None
 
     @staticmethod
-    def _price_cents_for_plan(plan: str) -> int:
-        catalog = get_plan_catalog()
-        details = catalog.get(plan, catalog[PLAN_FREE])
-        return int(float(details.get("price", 0)) * 100)
+    def _price_cents_for_plan(plan: str, billing_interval: str | None = None) -> int:
+        return int(get_plan_price(plan, billing_interval) * 100)
 
     @staticmethod
     def _mock_session_id(*, plan: str, user_id: int) -> str:

@@ -2433,21 +2433,33 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get beginner => 'مبتدئ';
   @override
-  String get bestForFamilies => 'وصول دائم للعائلات الكبيرة';
+  String get bestForFamilies => 'خطة اشتراك للعائلات الكبيرة';
 
   @override
   String get planPremiumSubtitle =>
-      'ادفع مرة واحدة لتحصل على وصول مدى الحياة لما يصل إلى 3 أطفال مع تقارير متقدمة ورؤى ذكية وتنزيلات دون اتصال';
+      'اشترك للوصول لما يصل إلى 3 أطفال مع تقارير متقدمة ورؤى ذكية وتنزيلات دون اتصال';
 
   @override
   String get planFamilyPlusSubtitle =>
-      'ادفع مرة واحدة لتحصل على وصول مدى الحياة للعائلات الأكبر مع لوحة تحكم عائلية ودعم ذي أولوية';
+      'اشترك للعائلات الأكبر مع لوحة تحكم عائلية ودعم ذي أولوية';
 
   @override
-  String get oneTimePurchaseLabel => 'شراء مرة واحدة';
+  String get billedPerMonthLabel => 'شهريًا';
 
   @override
-  String get lifetimeAccessLabel => 'وصول مدى الحياة';
+  String get billedPerYearLabel => 'سنويًا';
+
+  @override
+  String get yearlyDiscountLabel => 'وفّر 25%';
+
+  @override
+  String get billingMonthlyLabel => 'شهري';
+
+  @override
+  String get billingYearlyLabel => 'سنوي';
+
+  @override
+  String get activeSubscriptionLabel => 'اشتراك نشط';
 
   @override
   String get unlockPremiumLabel => 'فعّل مميز';

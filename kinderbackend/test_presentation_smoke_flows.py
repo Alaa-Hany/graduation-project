@@ -62,6 +62,7 @@ class _FakeStripeProvider:
         user_name,
         customer_id,
         metadata,
+        billing_interval="monthly",
     ):
         return CheckoutSessionResult(
             provider=self.provider_key,
@@ -217,7 +218,7 @@ def test_presentation_admin_login_smoke(
     assert payload["admin"]["email"] == admin.email
 
 
-def test_presentation_one_time_purchase_unlocks_premium_access(
+def test_presentation_recurring_purchase_unlocks_premium_access(
     client,
     create_parent,
     auth_headers,

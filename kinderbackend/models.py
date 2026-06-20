@@ -115,6 +115,9 @@ class SubscriptionProfile(Base):
     provider = Column(String, nullable=False, default="internal", server_default=text("'internal'"))
     provider_customer_id = Column(String, nullable=True, index=True)
     provider_subscription_id = Column(String, nullable=True, index=True)
+    billing_interval = Column(
+        String, nullable=False, default="monthly", server_default=text("'monthly'")
+    )
     created_at = Column(UTCDateTime(), server_default=func.now(), nullable=False)
     updated_at = Column(
         UTCDateTime(), server_default=func.now(), onupdate=func.now(), nullable=False

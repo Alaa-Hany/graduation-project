@@ -33,11 +33,12 @@ class InternalPaymentProvider:
         user_name: str | None,
         customer_id: str | None,
         metadata: dict[str, str],
+        billing_interval: str = "monthly",
     ) -> CheckoutSessionResult:
         self._ensure_non_production()
         user_id = metadata.get("user_id", "0")
         normalized_plan = plan_id.lower()
-        session_id = f"mock_session_{user_id}_{normalized_plan}"
+        session_id = f"mock_session_{user_id}_{normalized_plan}_{billing_interval}"
         return CheckoutSessionResult(
             provider=self.provider_key,
             session_id=session_id,
@@ -45,9 +46,9 @@ class InternalPaymentProvider:
             status="open",
             payment_status="pending",
             customer_id=customer_id or f"mock_customer_{user_id}",
-            subscription_id=None,
+            subscription_id=f"mock_sub_{user_id}_{normalized_plan}",
             payment_intent_id=f"mock_pi_{user_id}_{normalized_plan}",
-            raw={"mode": "internal"},
+            raw={"mode": "internal", "billing_interval": billing_interval},
         )
 
     def retrieve_checkout_session(self, *, session_id: str) -> CheckoutSessionResult:

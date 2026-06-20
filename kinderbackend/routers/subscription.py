@@ -1,6 +1,7 @@
 from typing import Any, List, Optional
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
@@ -33,6 +34,11 @@ class SubscriptionLifecycleOut(BaseModel):
     last_payment_status: str
     provider: str
     provider_customer_id: Optional[str] = None
+    provider_subscription_id: Optional[str] = None
+    billing_interval: Optional[str] = None
+    expires_at: Optional[str] = None
+    cancel_at: Optional[str] = None
+    will_renew: bool = False
     is_active: bool
     has_paid_access: bool
 
@@ -106,6 +112,7 @@ class PlanOut(BaseModel):
     price: float
     billing_type: str
     access_type: str
+    pricing: dict[str, Any] = Field(default_factory=dict)
     limits: dict[str, Any]
     features: dict[str, Any]
 
@@ -141,15 +148,21 @@ class SubscriptionSelectRequest(BaseModel):
         None,
         description="Checkout session id returned by select/checkout for external providers",
     )
+    billing_interval: str | None = Field(
+        "monthly",
+        description="Billing interval for recurring plans: monthly|yearly",
+    )
 
     model_config = ConfigDict(
         json_schema_extra={
             "examples": [
                 {
                     "plan_id": "PREMIUM",
+                    "billing_interval": "monthly",
                 },
                 {
                     "plan_type": "family_plus",
+                    "billing_interval": "yearly",
                     "session_id": "cs_test_12345",
                 },
             ]
@@ -262,7 +275,7 @@ def subscription_status(
     "/select",
     response_model=SubscriptionSelectResponse,
     summary="Select Subscription Plan",
-    description="Choose a plan and start a one-time provider checkout session for the current billing provider.",
+    description="Choose a plan and billing interval and start a recurring provider checkout session.",
     response_description="Purchase status plus any provider checkout details needed by the client.",
 )
 def select_subscription(
@@ -277,7 +290,7 @@ def select_subscription(
     "/checkout",
     response_model=SubscriptionSelectResponse,
     summary="Create Checkout Session",
-    description="Create or resume a provider-backed one-time checkout session for the selected plan.",
+    description="Create or resume a provider-backed recurring checkout session for the selected plan.",
     response_description="Checkout session details and updated purchase status.",
 )
 def create_checkout_session(
@@ -305,8 +318,8 @@ def activate_subscription(
 
 @router.post(
     "/cancel",
-    summary="Cancel Purchased Plan",
-    description="Cancel current purchase; may be disabled for one-time purchases.",
+    summary="Cancel Subscription",
+    description="Cancel the active recurring subscription. Disabled for free accounts.",
 )
 def cancel_subscription(
     db: Session = Depends(get_db),
@@ -314,21 +327,70 @@ def cancel_subscription(
 ):
     snapshot = subscription_service.get_subscription(db=db, user=user)
     lifecycle = snapshot.get("lifecycle", {})
-    # One-time purchases do not expose a provider subscription id; treat as non-cancelable
-    if lifecycle.get("provider_subscription_id") is None or lifecycle.get("provider") == "internal":
+    if lifecycle.get("current_plan_id") == "FREE" and not lifecycle.get("provider_subscription_id"):
         from fastapi import HTTPException
 
-        raise HTTPException(status_code=410, detail="Cancel is disabled for one-time purchases")
+        raise HTTPException(status_code=410, detail="No active subscription to cancel")
     return subscription_service.cancel_subscription(db=db, user=user)
 
 
 @router.post(
     "/manage",
-    summary="Manage Purchased Plan",
-    description="Open billing portal to manage a recurring purchase; may be disabled for one-time purchases.",
+    summary="Manage Subscription",
+    description="Open the billing portal to manage payment methods and the recurring subscription.",
 )
 def manage_subscription(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
     return subscription_service.manage_subscription(db=db, user=user)
+
+
+def _payment_redirect_page(title: str, message: str) -> HTMLResponse:
+    return HTMLResponse(
+        f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>{title}</title>
+<style>
+body {{ font-family: -apple-system, Roboto, sans-serif; background: #0f172a; color: #f8fafc;
+       display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }}
+.card {{ text-align: center; padding: 32px; max-width: 360px; }}
+h1 {{ font-size: 20px; margin-bottom: 8px; }}
+p {{ font-size: 14px; color: #cbd5e1; }}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>{title}</h1>
+<p>{message}</p>
+</div>
+</body>
+</html>"""
+    )
+
+
+@public_router.get("/payment/success", response_class=HTMLResponse, include_in_schema=False)
+def payment_success_page():
+    return _payment_redirect_page(
+        "Payment received",
+        "You can close this window and return to the Kinder World app.",
+    )
+
+
+@public_router.get("/payment/cancel", response_class=HTMLResponse, include_in_schema=False)
+def payment_cancel_page():
+    return _payment_redirect_page(
+        "Checkout cancelled",
+        "No charge was made. You can close this window and return to the Kinder World app.",
+    )
+
+
+@public_router.get("/payment/return", response_class=HTMLResponse, include_in_schema=False)
+def payment_return_page():
+    return _payment_redirect_page(
+        "Billing portal closed",
+        "You can close this window and return to the Kinder World app.",
+    )

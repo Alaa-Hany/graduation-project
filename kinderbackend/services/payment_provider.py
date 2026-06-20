@@ -107,6 +107,7 @@ class PaymentProviderAdapter(Protocol):
         user_name: str | None,
         customer_id: str | None,
         metadata: MetadataPayload,
+        billing_interval: str = "monthly",
     ) -> CheckoutSessionResult: ...
 
     def retrieve_checkout_session(self, *, session_id: str) -> CheckoutSessionResult: ...

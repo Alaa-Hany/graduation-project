@@ -40,6 +40,7 @@ class FakeStripeProvider:
         user_name: str | None,
         customer_id: str | None,
         metadata: dict[str, str],
+        billing_interval: str = "monthly",
     ) -> CheckoutSessionResult:
         return CheckoutSessionResult(
             provider=self.provider_key,
@@ -184,7 +185,7 @@ class FakeStripeProvider:
         return {"id": payment_method_id, "detached": True}
 
 
-def test_external_provider_one_time_purchase_unlocks_access_and_supports_refund(
+def test_external_provider_recurring_purchase_unlocks_access_and_supports_refund(
     client,
     create_parent,
     auth_headers,
@@ -233,8 +234,8 @@ def test_external_provider_one_time_purchase_unlocks_access_and_supports_refund(
             snapshot_payload["lifecycle"]["provider_customer_id"] == fake_provider.state.customer_id
         )
         assert snapshot_payload["lifecycle"]["has_paid_access"] is True
-        assert "provider_subscription_id" not in snapshot_payload["lifecycle"]
-        assert "will_renew" not in snapshot_payload["lifecycle"]
+        assert snapshot_payload["lifecycle"]["provider_subscription_id"] == fake_provider.state.subscription_id
+        assert snapshot_payload["lifecycle"]["will_renew"] is True
         assert any(
             item["provider_reference"] == fake_provider.state.session_id
             for item in snapshot_payload["payment_attempts"]
@@ -260,17 +261,17 @@ def test_external_provider_one_time_purchase_unlocks_access_and_supports_refund(
         assert attach_method.status_code == 200
         assert attach_method.json()["method"]["provider_method_id"] == "pm_card_amex"
 
-        cancel = client.post("/subscription/cancel", headers=headers)
-        assert cancel.status_code == 410
-        assert cancel.json()["detail"] == "Cancel is disabled for one-time purchases"
-
         manage = client.post("/subscription/manage", headers=headers)
-        assert manage.status_code == 410
-        assert manage.json()["detail"] == "Billing portal is disabled for one-time purchases"
+        assert manage.status_code == 200
+        assert manage.json()["url"] == "https://billing.stripe.test/portal"
 
         portal = client.post("/billing/portal", headers=headers)
-        assert portal.status_code == 410
-        assert portal.json()["detail"] == "Billing portal is disabled for one-time purchases"
+        assert portal.status_code == 200
+        assert portal.json()["url"] == "https://billing.stripe.test/portal"
+
+        cancel = client.post("/subscription/cancel", headers=headers)
+        assert cancel.status_code == 200
+        assert cancel.json()["lifecycle"]["will_renew"] is False
 
         history_after_purchase = client.get("/subscription/history", headers=headers)
         assert history_after_purchase.status_code == 200

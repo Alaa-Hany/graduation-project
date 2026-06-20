@@ -69,8 +69,7 @@ class PlanInfo {
     }
   }
 
-  bool get isOneTimePurchase => tier != PlanTier.free;
-  bool get hasLifetimeAccess => tier != PlanTier.free;
+  bool get isRecurringSubscription => tier != PlanTier.free;
   bool get isUnlimitedChildren => tier == PlanTier.familyPlus;
 
   bool canAccess(PlanTier requiredTier) {

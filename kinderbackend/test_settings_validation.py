@@ -38,6 +38,8 @@ def test_production_requires_cors():
             "STRIPE_PORTAL_RETURN_URL": "https://app.example.invalid/portal",
             "STRIPE_PRICE_PREMIUM_MONTHLY": "price_placeholder_premium",
             "STRIPE_PRICE_FAMILY_PLUS_MONTHLY": "price_placeholder_family",
+            "STRIPE_PRICE_PREMIUM_YEARLY": "price_placeholder_premium_yearly",
+            "STRIPE_PRICE_FAMILY_PLUS_YEARLY": "price_placeholder_family_yearly",
             "KINDER_JWT_SECRET": "TEST_ONLY_PLACEHOLDER_SECRET",
         }
     )
@@ -76,6 +78,8 @@ def test_stripe_https_required_in_production():
             "STRIPE_PORTAL_RETURN_URL": "http://app.example.invalid/portal",
             "STRIPE_PRICE_PREMIUM_MONTHLY": "price_placeholder_premium",
             "STRIPE_PRICE_FAMILY_PLUS_MONTHLY": "price_placeholder_family",
+            "STRIPE_PRICE_PREMIUM_YEARLY": "price_placeholder_premium_yearly",
+            "STRIPE_PRICE_FAMILY_PLUS_YEARLY": "price_placeholder_family_yearly",
             "ALLOWED_ORIGINS": "https://app.example.invalid",
             "KINDER_JWT_SECRET": "TEST_ONLY_PLACEHOLDER_SECRET",
         }

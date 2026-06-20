@@ -981,7 +981,7 @@ void main() {
   });
 
   testWidgets(
-      'presentation smoke: subscription screen reflects one-time purchase and unlocked premium',
+      'presentation smoke: subscription screen reflects active subscription and unlocked premium',
       (tester) async {
     _setLargeViewport(tester);
     final harness = await TestHarness.create(
@@ -1009,9 +1009,11 @@ void main() {
 
     final l10n =
         AppLocalizations.of(tester.element(find.byType(SubscriptionScreen)))!;
-    expect(find.textContaining(l10n.oneTimePurchaseLabel), findsWidgets);
-    expect(find.textContaining(l10n.lifetimeAccessLabel), findsWidgets);
+    expect(find.textContaining(l10n.billedPerMonthLabel), findsWidgets);
     expect(find.text(l10n.unlockPremiumLabel), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
 
     await harness.pumpApp(
       tester,
@@ -1032,7 +1034,7 @@ void main() {
     );
 
     expect(find.text(l10n.planPremium), findsWidgets);
-    expect(find.textContaining(l10n.lifetimeAccessLabel), findsWidgets);
+    expect(find.textContaining(l10n.activeSubscriptionLabel), findsWidgets);
     expect(find.text(l10n.subscriptionEventsTitle), findsNothing);
     expect(find.text(l10n.subscriptionBillingHistoryTitle), findsNothing);
     expect(find.text(l10n.subscriptionPaymentAttemptsTitle), findsNothing);

@@ -127,8 +127,7 @@ void main() {
     expect(snapshot.recentEvents.single.eventType, 'purchase');
     expect(snapshot.billingHistory.single.transactionType, 'purchase');
     expect(snapshot.paymentAttempts.single.attemptType, 'checkout');
-    expect(snapshot.planInfo.isOneTimePurchase, isTrue);
-    expect(snapshot.planInfo.hasLifetimeAccess, isTrue);
+    expect(snapshot.planInfo.isRecurringSubscription, isTrue);
   });
 
   test('SubscriptionHistorySnapshot parses full history payload', () {

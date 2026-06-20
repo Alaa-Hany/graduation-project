@@ -60,29 +60,60 @@ PLAN_FEATURES: Dict[str, Dict[str, bool]] = {
 
 FEATURE_FLAGS = list(PLAN_FEATURES[PLAN_FREE].keys())
 
+BILLING_INTERVAL_MONTHLY = "monthly"
+BILLING_INTERVAL_YEARLY = "yearly"
+BILLING_INTERVALS = (BILLING_INTERVAL_MONTHLY, BILLING_INTERVAL_YEARLY)
+DEFAULT_BILLING_INTERVAL = BILLING_INTERVAL_MONTHLY
+
 PLAN_CATALOG: Dict[str, Dict[str, object]] = {
     PLAN_FREE: {
         "id": PLAN_FREE,
         "name": "Free",
         "price": 0,
-        "billing_type": "one_time",
+        "billing_type": "free",
         "access_type": "free",
+        "pricing": {},
     },
     PLAN_PREMIUM: {
         "id": PLAN_PREMIUM,
         "name": "Premium",
-        "price": 39,
-        "billing_type": "one_time",
-        "access_type": "lifetime",
+        "price": 3,
+        "billing_type": "recurring",
+        "access_type": "subscription",
+        "pricing": {
+            BILLING_INTERVAL_MONTHLY: {"price": 3},
+            BILLING_INTERVAL_YEARLY: {"price": 27, "discount_percent": 25},
+        },
     },
     PLAN_FAMILY_PLUS: {
         "id": PLAN_FAMILY_PLUS,
         "name": "Family Plus",
-        "price": 69,
-        "billing_type": "one_time",
-        "access_type": "lifetime",
+        "price": 5,
+        "billing_type": "recurring",
+        "access_type": "subscription",
+        "pricing": {
+            BILLING_INTERVAL_MONTHLY: {"price": 5},
+            BILLING_INTERVAL_YEARLY: {"price": 45, "discount_percent": 25},
+        },
     },
 }
+
+
+def normalize_billing_interval(interval: Optional[str]) -> str:
+    if not interval:
+        return DEFAULT_BILLING_INTERVAL
+    value = interval.strip().lower()
+    return value if value in BILLING_INTERVALS else DEFAULT_BILLING_INTERVAL
+
+
+def get_plan_price(plan: str, interval: Optional[str] = None) -> float:
+    catalog = PLAN_CATALOG.get(plan, PLAN_CATALOG[PLAN_FREE])
+    pricing = catalog.get("pricing") or {}
+    normalized_interval = normalize_billing_interval(interval)
+    entry = pricing.get(normalized_interval)
+    if entry is None:
+        return float(catalog.get("price", 0))
+    return float(entry["price"])
 
 
 def normalize_plan_value(plan: Optional[str]) -> str:

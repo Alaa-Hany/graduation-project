@@ -123,6 +123,8 @@ class Settings:
     stripe_portal_return_url: str | None
     stripe_price_premium_monthly: str | None
     stripe_price_family_plus_monthly: str | None
+    stripe_price_premium_yearly: str | None
+    stripe_price_family_plus_yearly: str | None
     payment_reconciliation_enabled: bool
     payment_reconciliation_schedule: str | None
     ai_provider_mode: str
@@ -219,6 +221,12 @@ class Settings:
         stripe_price_family_plus_monthly = (
             os.getenv("STRIPE_PRICE_FAMILY_PLUS_MONTHLY") or ""
         ).strip() or None
+        stripe_price_premium_yearly = (
+            os.getenv("STRIPE_PRICE_PREMIUM_YEARLY") or ""
+        ).strip() or None
+        stripe_price_family_plus_yearly = (
+            os.getenv("STRIPE_PRICE_FAMILY_PLUS_YEARLY") or ""
+        ).strip() or None
         payment_reconciliation_enabled = _as_bool(
             os.getenv("PAYMENT_RECONCILIATION_ENABLED"),
             default=False,
@@ -259,6 +267,8 @@ class Settings:
                     "STRIPE_PORTAL_RETURN_URL": stripe_portal_return_url,
                     "STRIPE_PRICE_PREMIUM_MONTHLY": stripe_price_premium_monthly,
                     "STRIPE_PRICE_FAMILY_PLUS_MONTHLY": stripe_price_family_plus_monthly,
+                    "STRIPE_PRICE_PREMIUM_YEARLY": stripe_price_premium_yearly,
+                    "STRIPE_PRICE_FAMILY_PLUS_YEARLY": stripe_price_family_plus_yearly,
                 }.items()
                 if not value
             ]
@@ -287,6 +297,8 @@ class Settings:
             for name, value in {
                 "STRIPE_PRICE_PREMIUM_MONTHLY": stripe_price_premium_monthly,
                 "STRIPE_PRICE_FAMILY_PLUS_MONTHLY": stripe_price_family_plus_monthly,
+                "STRIPE_PRICE_PREMIUM_YEARLY": stripe_price_premium_yearly,
+                "STRIPE_PRICE_FAMILY_PLUS_YEARLY": stripe_price_family_plus_yearly,
             }.items():
                 if value and not value.startswith("price_"):
                     raise ValueError(f"{name} is invalid (expected 'price_...').")
@@ -371,6 +383,8 @@ class Settings:
             stripe_portal_return_url=stripe_portal_return_url,
             stripe_price_premium_monthly=stripe_price_premium_monthly,
             stripe_price_family_plus_monthly=stripe_price_family_plus_monthly,
+            stripe_price_premium_yearly=stripe_price_premium_yearly,
+            stripe_price_family_plus_yearly=stripe_price_family_plus_yearly,
             payment_reconciliation_enabled=payment_reconciliation_enabled,
             payment_reconciliation_schedule=payment_reconciliation_schedule,
             ai_provider_mode=ai_provider_mode,

@@ -480,11 +480,11 @@ def test_subscription_demo_mode_and_placeholder_billing_endpoints(client: TestCl
 
     manage = client.post("/subscription/manage", headers=headers)
     assert manage.status_code == 410
-    assert manage.json()["detail"] == "Billing portal is disabled for one-time purchases"
+    assert manage.json()["detail"] == "Billing portal is not available for this account."
 
     portal = client.post("/billing/portal", headers=headers)
     assert portal.status_code == 410
-    assert portal.json()["detail"] == "Billing portal is disabled for one-time purchases"
+    assert portal.json()["detail"] == "Billing portal is not available for this account."
 
 
 def test_feature_gated_sparse_data_responses_use_real_account_state(client: TestClient, db):

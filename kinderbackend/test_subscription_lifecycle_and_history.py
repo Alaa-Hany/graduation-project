@@ -69,11 +69,11 @@ def test_subscription_lifecycle_and_history_flow(client, db, create_parent, auth
 
     cancel = client.post("/subscription/cancel", headers=headers)
     assert cancel.status_code == 410
-    assert cancel.json()["detail"] == "Cancel is disabled for one-time purchases"
+    assert cancel.json()["detail"] == "No active subscription to cancel"
 
     manage = client.post("/subscription/manage", headers=headers)
     assert manage.status_code == 410
-    assert manage.json()["detail"] == "Billing portal is disabled for one-time purchases"
+    assert manage.json()["detail"] == "Billing portal is not available for this account."
 
 
 def test_activate_rejects_mismatched_pending_plan(client, create_parent, auth_headers):
@@ -109,7 +109,7 @@ def test_manage_subscription_rejects_accounts_without_billing_customer(
 
     manage = client.post("/subscription/manage", headers=headers)
     assert manage.status_code == 410
-    assert manage.json()["detail"] == "Billing portal is disabled for one-time purchases"
+    assert manage.json()["detail"] == "Billing portal is not available for this account."
 
 
 def test_manage_subscription_requires_authentication(client):
@@ -127,7 +127,7 @@ def test_billing_portal_rejects_accounts_without_billing_customer(
 
     portal = client.post("/billing/portal", headers=headers)
     assert portal.status_code == 410
-    assert portal.json()["detail"] == "Billing portal is disabled for one-time purchases"
+    assert portal.json()["detail"] == "Billing portal is not available for this account."
 
 
 def test_billing_portal_requires_authentication(client):

@@ -30,6 +30,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
     with WidgetsBindingObserver {
   bool _isProcessing = false;
   String? _actionKey;
+  BillingInterval _billingInterval = BillingInterval.monthly;
   bool _refreshOnResume = false;
   String? _pendingSessionId;
   PlanTier? _pendingTier;
@@ -162,7 +163,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
 
     try {
       final service = ref.read(subscriptionServiceProvider);
-      final session = await service.startCheckout(tier);
+      final session =
+          await service.startCheckout(tier, billingInterval: _billingInterval);
       final uri = Uri.tryParse(session.checkoutUrl);
       if (uri == null) {
         throw StateError(l10n.subscriptionInvalidCheckoutUrl);
@@ -600,7 +602,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                               const SizedBox(height: 4),
                               Text(
                                 isPremium
-                                    ? l10n.lifetimeAccessLabel
+                                    ? l10n.activeSubscriptionLabel
                                     : _displayStatus(context, lifecycle.status),
                                 style: textTheme.bodySmall?.copyWith(
                                   fontSize: 13,
@@ -683,7 +685,12 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                   const SizedBox(height: 20),
                   ParentSectionHeader(title: l10n.availablePlans),
                   const SizedBox(height: 12),
-                  ...buildSubscriptionPlanCardConfigs(l10n)
+                  _buildBillingIntervalToggle(l10n),
+                  const SizedBox(height: 12),
+                  ...buildSubscriptionPlanCardConfigs(
+                    l10n,
+                    interval: _billingInterval,
+                  )
                       .asMap()
                       .entries
                       .map((entry) {
@@ -714,6 +721,57 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
             );
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildBillingIntervalToggle(AppLocalizations l10n) {
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: BillingInterval.values.map((interval) {
+          final isSelected = interval == _billingInterval;
+          final label = interval == BillingInterval.monthly
+              ? l10n.billingMonthlyLabel
+              : l10n.billingYearlyLabel;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _billingInterval = interval),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: isSelected ? colors.surface : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: colors.shadow.withValuesCompat(alpha: 0.08),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  interval == BillingInterval.yearly
+                      ? '$label • ${l10n.yearlyDiscountLabel}'
+                      : label,
+                  style: textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: isSelected ? colors.onSurface : colors.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }

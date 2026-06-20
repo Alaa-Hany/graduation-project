@@ -1,6 +1,7 @@
 import 'package:kinder_world/core/api/subscription_api.dart';
 import 'package:kinder_world/core/cache/app_cache_store.dart';
 import 'package:kinder_world/core/subscription/plan_info.dart';
+import 'package:kinder_world/features/parent_mode/subscription/subscription_plan_catalog.dart';
 import 'package:logger/logger.dart';
 
 class SubscriptionService {
@@ -151,9 +152,13 @@ class SubscriptionService {
     return response;
   }
 
-  Future<CheckoutSession> startCheckout(PlanTier tier) async {
+  Future<CheckoutSession> startCheckout(
+    PlanTier tier, {
+    BillingInterval billingInterval = BillingInterval.monthly,
+  }) async {
     final response = await _subscriptionApi.createCheckoutSession(
       planType: _planTypeForTier(tier),
+      billingInterval: _intervalKey(billingInterval),
     );
     final url = response['checkout_url'] ?? response['url'];
     if (url is! String || url.isEmpty) {
@@ -170,6 +175,15 @@ class SubscriptionService {
   Future<void> _invalidateSubscriptionCache() async {
     await _cacheStore.invalidate(scope: _scope, key: _subscriptionKey);
     await _cacheStore.invalidate(scope: _scope, key: _historyKey);
+  }
+
+  String _intervalKey(BillingInterval interval) {
+    switch (interval) {
+      case BillingInterval.yearly:
+        return 'yearly';
+      case BillingInterval.monthly:
+        return 'monthly';
+    }
   }
 
   String _planTypeForTier(PlanTier tier) {

@@ -5,14 +5,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
-import 'package:kinder_world/core/network/network_service.dart';
 import 'package:kinder_world/core/providers/app_services.dart';
+import 'package:kinder_world/core/providers/shared_preferences_provider.dart';
 import 'package:kinder_world/core/theme/app_theme.dart';
 import 'package:kinder_world/core/theme/theme_palette.dart';
 import 'package:kinder_world/core/widgets/auth_widgets.dart';
 import 'package:kinder_world/features/app_core/welcome_screen.dart';
 import 'package:kinder_world/features/auth/parent_forgot_password_screen.dart';
 import 'package:kinder_world/features/auth/user_type_selection_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support/test_harness.dart' show TestNetworkService, TestSecureStorage;
 
@@ -99,11 +100,14 @@ Future<GoRouter> _pumpFlowApp(WidgetTester tester, {required String initialLocat
 
   final router = _buildRouter(initialLocation);
   final secureStorage = TestSecureStorage();
+  SharedPreferences.setMockInitialValues(const <String, Object>{});
+  final sharedPreferences = await SharedPreferences.getInstance();
 
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
         secureStorageProvider.overrideWithValue(secureStorage),
+        sharedPreferencesProvider.overrideWithValue(sharedPreferences),
         networkServiceProvider.overrideWithValue(
           _FakeForgotPasswordNetworkService(secureStorage: secureStorage),
         ),

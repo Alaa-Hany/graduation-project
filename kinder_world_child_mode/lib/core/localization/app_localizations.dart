@@ -247,8 +247,12 @@ abstract class AppLocalizations {
   String get bestForFamilies;
   String get planPremiumSubtitle;
   String get planFamilyPlusSubtitle;
-  String get oneTimePurchaseLabel;
-  String get lifetimeAccessLabel;
+  String get billedPerMonthLabel;
+  String get billedPerYearLabel;
+  String get yearlyDiscountLabel;
+  String get billingMonthlyLabel;
+  String get billingYearlyLabel;
+  String get activeSubscriptionLabel;
   String get unlockPremiumLabel;
   String get unlockFamilyPlusLabel;
   String get limitedActivities;

@@ -20,15 +20,22 @@ void main() {
   });
 
 
-  test('redeem buys item directly without parent approval', () {
+  test('redeem buys item directly without parent approval', () async {
     final box = Hive.box<dynamic>('gamification_data');
-    box.put('gam_coins_kid-1', 10);
+    await box.put('gam_coins_kid-1', 10);
     final gamRepo =
         GamificationRepository(gamificationBox: box, logger: Logger());
     final notifier = RewardStoreNotifier(box, 'kid-1', gamRepo);
+    // The constructor kicks off an async _load() (reads coins from gamRepo)
+    // without awaiting it, so state still has the coins:0 default until the
+    // next microtask runs.
+    await Future<void>.delayed(Duration.zero);
     final item = rewardCatalog.firstWhere((reward) => reward.id == 'av_robot');
 
-    final result = notifier.redeem(item);
+    // The real screen calls redeemAsync (reward_store_screen.dart:751); the
+    // sync redeem() is an unused, non-persisting optimistic pre-check that
+    // never mutates state, so it isn't a meaningful thing to assert against.
+    final result = await notifier.redeemAsync(item);
 
     expect(result.outcome, RewardRedeemOutcome.purchased);
     expect(notifier.state.pendingRequests, isEmpty);
@@ -36,9 +43,9 @@ void main() {
     expect(notifier.state.coins, 6);
   });
 
-  test('legacy pending approvals are cleared on load', () {
+  test('legacy pending approvals are cleared on load', () async {
     final box = Hive.box<dynamic>('gamification_data');
-    box.put(
+    await box.put(
       'store_pending_requests_kid-1',
       jsonEncode(<Map<String, dynamic>>[
         <String, dynamic>{
@@ -55,6 +62,7 @@ void main() {
     final gamRepo =
         GamificationRepository(gamificationBox: box, logger: Logger());
     final notifier = RewardStoreNotifier(box, 'kid-1', gamRepo);
+    await Future<void>.delayed(Duration.zero);
 
     expect(notifier.state.pendingRequests, isEmpty);
     expect(box.get('store_pending_requests_kid-1'), '[]');

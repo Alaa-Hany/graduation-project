@@ -130,6 +130,7 @@ class SubscriptionProviderMixin:
         plan: str,
         user: User,
         profile: SubscriptionProfile,
+        billing_interval: str = "monthly",
     ) -> CheckoutSessionResult:
         provider = self._payment_provider()
         try:
@@ -142,7 +143,9 @@ class SubscriptionProviderMixin:
                     "user_id": str(user.id),
                     "profile_id": str(profile.id),
                     "plan_id": plan,
+                    "billing_interval": billing_interval,
                 },
+                billing_interval=billing_interval,
             )
         except PaymentProviderUnavailableError as exc:
             raise HTTPException(status_code=503, detail=str(exc))

@@ -44,12 +44,14 @@ class SubscriptionApi {
   Future<Map<String, dynamic>> createCheckoutSession({
     String? planId,
     String? planType,
+    String? billingInterval,
   }) async {
     final response = await _network.post<Map<String, dynamic>>(
       '/subscription/checkout',
       data: {
         if (planId != null) 'plan_id': planId,
         if (planType != null) 'plan_type': planType,
+        if (billingInterval != null) 'billing_interval': billingInterval,
       },
     );
     return Map<String, dynamic>.from(response.data ?? const {});

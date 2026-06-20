@@ -7,7 +7,13 @@ from core.message_catalog import SubscriptionMessages
 from core.observability import emit_event
 from core.time_utils import db_utc_now, ensure_utc
 from models import PaymentAttempt, SubscriptionProfile, User
-from plan_service import PLAN_FREE, get_plan_catalog, get_user_plan, validate_plan_value
+from plan_service import (
+    PLAN_FREE,
+    get_plan_catalog,
+    get_user_plan,
+    normalize_billing_interval,
+    validate_plan_value,
+)
 from services.notification_service import notification_service
 from services.payment_provider import (
     CheckoutSessionResult,
@@ -63,7 +69,35 @@ class SubscriptionLifecycleMixin:
         user: User,
         source: str = "parent_cancel",
     ) -> dict[str, object]:
-        self._set_free_access(db=db, user=user, source=source)
+        profile = self._ensure_subscription_profile(db=db, user=user)
+        if profile.provider != "internal" and profile.provider_subscription_id:
+            provider = self._payment_provider()
+            try:
+                provider.cancel_subscription(subscription_id=profile.provider_subscription_id)
+            except PaymentProviderUnavailableError as exc:
+                raise HTTPException(status_code=503, detail=str(exc))
+            except PaymentProviderError as exc:
+                raise HTTPException(status_code=502, detail=str(exc))
+            profile.will_renew = False
+            profile.cancel_at = profile.expires_at
+            db.add(profile)
+            self._record_subscription_event(
+                db=db,
+                user=user,
+                profile=profile,
+                event_type="cancel_requested",
+                previous_plan_id=profile.current_plan_id,
+                plan_id=profile.current_plan_id,
+                previous_status=profile.status,
+                status=profile.status,
+                payment_status=profile.last_payment_status,
+                source=source,
+                details_json={"reason": "parent_requested_cancellation"},
+                provider_reference=profile.provider_subscription_id,
+                occurred_at=db_utc_now(),
+            )
+        else:
+            self._set_free_access(db=db, user=user, source=source)
         db.commit()
         db.refresh(user)
         return self.get_subscription(db=db, user=user)
@@ -164,11 +198,13 @@ class SubscriptionLifecycleMixin:
         previous_status = profile.status
         if previous_plan == requested and profile.status == SUBSCRIPTION_STATUS_ACTIVE:
             return self._selection_payload_from_snapshot(self.get_subscription(db=db, user=user))
+        billing_interval = normalize_billing_interval(getattr(payload, "billing_interval", None))
         provider = self._payment_provider()
         profile.selected_plan_id = requested
         profile.status = SUBSCRIPTION_STATUS_PENDING
         profile.last_payment_status = PAYMENT_STATUS_PENDING
         profile.provider = provider.provider_key
+        profile.billing_interval = billing_interval
         profile.cancel_at = None
         profile.will_renew = False
         profile.provider_subscription_id = None
@@ -179,6 +215,7 @@ class SubscriptionLifecycleMixin:
                 plan=requested,
                 user=user,
                 profile=profile,
+                billing_interval=billing_interval,
             )
         except HTTPException as exc:
             emit_event(
@@ -244,7 +281,7 @@ class SubscriptionLifecycleMixin:
                 if self._checkout_is_paid(checkout)
                 else PAYMENT_STATUS_PENDING
             ),
-            amount_cents=self._price_cents_for_plan(requested),
+            amount_cents=self._price_cents_for_plan(requested, billing_interval),
             requested_at=now,
             completed_at=now if self._checkout_is_paid(checkout) else None,
             metadata_json=self._checkout_metadata(checkout=checkout, request_origin="select"),
@@ -570,39 +607,37 @@ class SubscriptionLifecycleMixin:
 
     def manage_subscription(self, *, db: Session, user: User) -> dict[str, object]:
         profile = self._ensure_subscription_profile(db=db, user=user)
-        # One-time purchases (internal provider or completed external one-time) cannot use billing portal
+        # No live external subscription to manage (free plan, or non-Stripe provider).
         if profile.provider == "internal":
             raise HTTPException(
                 status_code=410,
-                detail="Billing portal is disabled for one-time purchases",
+                detail="Billing portal is not available for this account.",
             )
-        # External provider one-time purchase (active with no provider_subscription_id)
         if (
             profile.status == SUBSCRIPTION_STATUS_ACTIVE
             and profile.provider_subscription_id is None
         ):
             raise HTTPException(
                 status_code=410,
-                detail="Billing portal is disabled for one-time purchases",
+                detail="Billing portal is not available for this account.",
             )
         return self._build_billing_portal_response(db=db, user=user, source="subscription_manage")
 
     def billing_portal(self, *, db: Session, user: User) -> dict[str, object]:
         profile = self._ensure_subscription_profile(db=db, user=user)
-        # One-time purchases (internal provider or completed external one-time) cannot use billing portal
+        # No live external subscription to manage (free plan, or non-Stripe provider).
         if profile.provider == "internal":
             raise HTTPException(
                 status_code=410,
-                detail="Billing portal is disabled for one-time purchases",
+                detail="Billing portal is not available for this account.",
             )
-        # External provider one-time purchase (active with no provider_subscription_id)
         if (
             profile.status == SUBSCRIPTION_STATUS_ACTIVE
             and profile.provider_subscription_id is None
         ):
             raise HTTPException(
                 status_code=410,
-                detail="Billing portal is disabled for one-time purchases",
+                detail="Billing portal is not available for this account.",
             )
         return self._build_billing_portal_response(db=db, user=user, source="billing_portal")
 
@@ -932,15 +967,16 @@ class SubscriptionLifecycleMixin:
                 if profile.started_at is None:
                     profile.started_at = ensure_utc(user.updated_at or user.created_at or now)
                     updated = True
-                if profile.expires_at is not None:
-                    profile.expires_at = None
-                    updated = True
-                if profile.cancel_at is not None:
-                    profile.cancel_at = None
-                    updated = True
-                if profile.will_renew:
-                    profile.will_renew = False
-                    updated = True
+                if not profile.provider_subscription_id:
+                    if profile.expires_at is not None:
+                        profile.expires_at = None
+                        updated = True
+                    if profile.cancel_at is not None:
+                        profile.cancel_at = None
+                        updated = True
+                    if profile.will_renew:
+                        profile.will_renew = False
+                        updated = True
                 if profile.last_payment_status == PAYMENT_STATUS_NOT_APPLICABLE:
                     profile.last_payment_status = PAYMENT_STATUS_SUCCEEDED
                     updated = True
@@ -1002,25 +1038,31 @@ class SubscriptionLifecycleMixin:
                 plan_id=plan,
                 attempt_type="purchase",
                 status=PAYMENT_STATUS_SUCCEEDED,
-                amount_cents=self._price_cents_for_plan(plan),
+                amount_cents=self._price_cents_for_plan(plan, profile.billing_interval),
                 requested_at=now,
                 completed_at=now,
                 metadata_json={"request_origin": request_origin, "mode": "internal"},
                 provider_reference=self._mock_session_id(plan=plan, user_id=user.id),
             )
 
+        has_recurring_subscription = False
         if checkout is not None:
             profile.provider = checkout.provider
             profile.provider_customer_id = checkout.customer_id or profile.provider_customer_id
-            profile.provider_subscription_id = None
+            if checkout.subscription_id:
+                profile.provider_subscription_id = checkout.subscription_id
+                has_recurring_subscription = True
+            else:
+                profile.provider_subscription_id = None
 
         profile.selected_plan_id = None
         profile.current_plan_id = plan
         profile.status = SUBSCRIPTION_STATUS_ACTIVE
         profile.started_at = now
-        profile.expires_at = None
         profile.cancel_at = None
-        profile.will_renew = False
+        profile.will_renew = has_recurring_subscription
+        if not has_recurring_subscription:
+            profile.expires_at = None
         profile.last_payment_status = PAYMENT_STATUS_SUCCEEDED
         db.add(profile)
 
@@ -1060,7 +1102,7 @@ class SubscriptionLifecycleMixin:
             profile=profile,
             plan_id=plan,
             transaction_type=transaction_type,
-            amount_cents=self._price_cents_for_plan(plan),
+            amount_cents=self._price_cents_for_plan(plan, profile.billing_interval),
             status="succeeded",
             provider_reference=provider_reference,
             effective_at=now,

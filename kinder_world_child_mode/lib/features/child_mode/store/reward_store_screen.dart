@@ -330,8 +330,17 @@ class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
   String get _ownedKey => 'store_owned_$_childId';
   String get _equippedKey => 'store_equipped_$_childId';
   String get _historyRequestsKey => 'store_history_requests_$_childId';
+  // No longer written by current code (parent-approval requests were
+  // removed - pendingRequests is always empty below), but older app
+  // versions persisted this key. Clear any leftover data on load so it
+  // doesn't linger indefinitely in the Hive box.
+  String get _legacyPendingRequestsKey => 'store_pending_requests_$_childId';
 
   Future<void> _load() async {
+    if (_box.get(_legacyPendingRequestsKey) != null) {
+      await _box.put(_legacyPendingRequestsKey, '[]');
+    }
+
     final coins = await _gamRepo.getCoins(_childId);
 
     final ownedRaw = _box.get(_ownedKey, defaultValue: '[]') as String;

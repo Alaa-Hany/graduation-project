@@ -37,7 +37,9 @@ class FakeStripeProvider:
     def __init__(self) -> None:
         self.state = _FakeProviderState()
 
-    def create_checkout_session(self, *, plan_id, user_email, user_name, customer_id, metadata):
+    def create_checkout_session(
+        self, *, plan_id, user_email, user_name, customer_id, metadata, billing_interval="monthly"
+    ):
         return CheckoutSessionResult(
             provider=self.provider_key,
             session_id=self.state.session_id,
@@ -320,7 +322,7 @@ def test_invoice_paid_and_failed_and_subscription_deleted_webhooks_update_histor
         try:
             paid_response = _post_stripe_event(client, paid_event, secret=secret)
             assert paid_response.status_code == 200
-            assert paid_response.json()["status"] == "ignored"
+            assert paid_response.json()["status"] == "processed"
         finally:
             object.__setattr__(settings, "stripe_price_premium_monthly", original_premium_price)
 
@@ -342,12 +344,12 @@ def test_invoice_paid_and_failed_and_subscription_deleted_webhooks_update_histor
         }
         failed_response = _post_stripe_event(client, failed_event, secret=secret)
         assert failed_response.status_code == 200
-        assert failed_response.json()["status"] == "ignored"
+        assert failed_response.json()["status"] == "processed"
 
         snapshot_after_failed = client.get("/subscription/me", headers=headers)
         assert snapshot_after_failed.status_code == 200
         snapshot_payload = snapshot_after_failed.json()
-        assert snapshot_payload["lifecycle"]["last_payment_status"] == "succeeded"
+        assert snapshot_payload["lifecycle"]["last_payment_status"] == "failed"
         assert snapshot_payload["lifecycle"]["status"] == "active"
 
         deleted_event = {
@@ -367,21 +369,21 @@ def test_invoice_paid_and_failed_and_subscription_deleted_webhooks_update_histor
         }
         deleted_response = _post_stripe_event(client, deleted_event, secret=secret)
         assert deleted_response.status_code == 200
-        assert deleted_response.json()["status"] == "ignored"
+        assert deleted_response.json()["status"] == "processed"
 
         history = client.get("/subscription/history", headers=headers)
         assert history.status_code == 200
         history_payload = history.json()
-        assert not any(item["event_type"] == "invoice_paid" for item in history_payload["events"])
-        assert not any(
-            item["event_type"] == "invoice_payment_failed" for item in history_payload["events"]
+        assert any(item["event_type"] == "renewal" for item in history_payload["events"])
+        assert any(item["event_type"] == "payment_failed" for item in history_payload["events"])
+        assert any(
+            item["event_type"] == "subscription_canceled" for item in history_payload["events"]
         )
-        assert not any(item["event_type"] == "cancel" for item in history_payload["events"])
-        assert not any(
+        assert any(
             item["provider_reference"] == "in_paid_123"
             for item in history_payload["payment_attempts"]
         )
-        assert not any(
+        assert any(
             item["provider_reference"] == "in_failed_123"
             for item in history_payload["payment_attempts"]
         )
@@ -389,8 +391,8 @@ def test_invoice_paid_and_failed_and_subscription_deleted_webhooks_update_histor
         final_snapshot = client.get("/subscription/me", headers=headers)
         assert final_snapshot.status_code == 200
         final_payload = final_snapshot.json()
-        assert final_payload["plan"] == PLAN_PREMIUM
-        assert final_payload["lifecycle"]["status"] == "active"
+        assert final_payload["plan"] == PLAN_FREE
+        assert final_payload["lifecycle"]["status"] == "free"
     finally:
         subscription_service._payment_provider_factory = original_factory
         _restore_webhook_secret(original_secret)

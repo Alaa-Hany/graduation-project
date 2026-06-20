@@ -1,6 +1,8 @@
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/subscription/plan_info.dart';
 
+enum BillingInterval { monthly, yearly }
+
 class SubscriptionPlanCardConfig {
   const SubscriptionPlanCardConfig({
     required this.title,
@@ -22,15 +24,18 @@ class SubscriptionPlanCardConfig {
 }
 
 List<SubscriptionPlanCardConfig> buildSubscriptionPlanCardConfigs(
-  AppLocalizations l10n,
-) {
-  final paidAccessLabel =
-      '${l10n.oneTimePurchaseLabel} • ${l10n.lifetimeAccessLabel}';
+  AppLocalizations l10n, {
+  BillingInterval interval = BillingInterval.monthly,
+}) {
+  final isYearly = interval == BillingInterval.yearly;
+  final priceLabel = isYearly
+      ? '${l10n.billedPerYearLabel} • ${l10n.yearlyDiscountLabel}'
+      : l10n.billedPerMonthLabel;
   return [
     SubscriptionPlanCardConfig(
       title: l10n.planPremium,
-      price: '\$39',
-      priceLabel: paidAccessLabel,
+      price: isYearly ? '\$27' : '\$3',
+      priceLabel: priceLabel,
       subtitle: l10n.planPremiumSubtitle,
       features: [
         l10n.unlimitedActivities,
@@ -42,8 +47,8 @@ List<SubscriptionPlanCardConfig> buildSubscriptionPlanCardConfigs(
     ),
     SubscriptionPlanCardConfig(
       title: l10n.planFamilyPlus,
-      price: '\$69',
-      priceLabel: paidAccessLabel,
+      price: isYearly ? '\$45' : '\$5',
+      priceLabel: priceLabel,
       subtitle: l10n.planFamilyPlusSubtitle,
       features: [
         l10n.unlimitedActivities,
