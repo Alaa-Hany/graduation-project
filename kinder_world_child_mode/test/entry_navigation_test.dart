@@ -1,15 +1,54 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/network/network_service.dart';
+import 'package:kinder_world/core/providers/app_services.dart';
 import 'package:kinder_world/core/theme/app_theme.dart';
 import 'package:kinder_world/core/theme/theme_palette.dart';
 import 'package:kinder_world/core/widgets/auth_widgets.dart';
 import 'package:kinder_world/features/app_core/welcome_screen.dart';
 import 'package:kinder_world/features/auth/parent_forgot_password_screen.dart';
 import 'package:kinder_world/features/auth/user_type_selection_screen.dart';
+
+import 'support/test_harness.dart' show TestNetworkService, TestSecureStorage;
+
+/// Stubs only `/auth/forgot-password` with a fake success response, so this
+/// test doesn't depend on a real backend running at the configured base URL.
+class _FakeForgotPasswordNetworkService extends TestNetworkService {
+  _FakeForgotPasswordNetworkService({required super.secureStorage});
+
+  @override
+  Future<Response<T>> post<T>(
+    String path, {
+    data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+    ProgressCallback? onSendProgress,
+    ProgressCallback? onReceiveProgress,
+  }) async {
+    if (path == '/auth/forgot-password') {
+      return Response<T>(
+        requestOptions: RequestOptions(path: path),
+        statusCode: 200,
+        data: <String, dynamic>{'message': 'ok'} as T,
+      );
+    }
+    return super.post<T>(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+      cancelToken: cancelToken,
+      onSendProgress: onSendProgress,
+      onReceiveProgress: onReceiveProgress,
+    );
+  }
+}
 
 class _RouteMarker extends StatelessWidget {
   const _RouteMarker(this.label);
@@ -59,9 +98,16 @@ Future<GoRouter> _pumpFlowApp(WidgetTester tester, {required String initialLocat
   addTearDown(tester.view.resetDevicePixelRatio);
 
   final router = _buildRouter(initialLocation);
+  final secureStorage = TestSecureStorage();
 
   await tester.pumpWidget(
     ProviderScope(
+      overrides: [
+        secureStorageProvider.overrideWithValue(secureStorage),
+        networkServiceProvider.overrideWithValue(
+          _FakeForgotPasswordNetworkService(secureStorage: secureStorage),
+        ),
+      ],
       child: MaterialApp.router(
         theme: AppTheme.lightTheme(palette: ThemePalettes.defaultPalette),
         routerConfig: router,

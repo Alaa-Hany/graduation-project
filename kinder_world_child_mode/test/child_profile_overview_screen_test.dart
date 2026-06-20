@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
+import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/core/theme/app_theme.dart';
 import 'package:kinder_world/core/theme/theme_palette.dart';
 import 'package:kinder_world/features/child_mode/profile/child_profile_overview_screen.dart';
@@ -38,6 +39,17 @@ void main() {
           currentChildProvider.overrideWithValue(child),
           childLoadingProvider.overrideWithValue(false),
           childErrorProvider.overrideWithValue(null),
+          // currentChildIdProvider normally derives from
+          // childSessionControllerProvider, which constructs a real
+          // ChildRepository backed by a Hive box this minimal test never
+          // opens. Override it directly so the screen's progress providers
+          // below get a stable, real-looking child id without touching Hive.
+          currentChildIdProvider.overrideWithValue(child.id),
+          // Same reasoning for the progress providers the screen reads:
+          // their real implementations go through ProgressController, which
+          // also opens a Hive box directly in its provider definition.
+          currentChildTodayProgressProvider.overrideWith((ref) async => const []),
+          weeklySummaryProvider(child.id).overrideWith((ref) async => const {}),
         ],
         child: MaterialApp(
           locale: const Locale('en'),
