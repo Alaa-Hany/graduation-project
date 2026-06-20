@@ -87,4 +87,85 @@ class AppBootstrap extends StatefulWidget {
 }
 
 class _AppBootstrapState extends State<AppBootstrap> {
-  late final Future<_BootstrapResult> _bootstrap = _initial
+  late final Future<_BootstrapResult> _bootstrap = _initialize();
+
+  Future<_BootstrapResult> _initialize() async {
+    // Initialize Hive for local storage.
+    await Hive.initFlutter();
+
+    // Open the box required by the parent auth flow first; defer the rest.
+    // Boxes store JSON maps (Freezed models don't work with Hive TypeAdapters),
+    // so they are opened untyped and (de)serialized in repositories.
+    await Hive.openBox<dynamic>(startupHiveBox);
+
+    // Run the remaining init concurrently while the splash is visible.
+    final secureStorage = SecureStorage();
+    final sharedPreferencesFuture = SharedPreferences.getInstance();
+    await Future.wait<void>(<Future<void>>[
+      secureStorage.preloadSessionState(),
+      openChildModeBoxes(),
+    ]);
+    final sharedPreferences = await sharedPreferencesFuture;
+
+    return _BootstrapResult(
+      secureStorage: secureStorage,
+      sharedPreferences: sharedPreferences,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<_BootstrapResult>(
+      future: _bootstrap,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done ||
+            !snapshot.hasData) {
+          return const _BootstrapSplash();
+        }
+        final result = snapshot.requireData;
+        return ProviderScope(
+          overrides: [
+            sharedPreferencesProvider
+                .overrideWithValue(result.sharedPreferences),
+            secureStorageProvider.overrideWithValue(result.secureStorage),
+            loggerProvider.overrideWithValue(widget.logger),
+          ],
+          child: const KinderWorldApp(),
+        );
+      },
+    );
+  }
+}
+
+class _BootstrapResult {
+  const _BootstrapResult({
+    required this.secureStorage,
+    required this.sharedPreferences,
+  });
+
+  final SecureStorage secureStorage;
+  final SharedPreferences sharedPreferences;
+}
+
+/// Minimal, provider-free first frame: centered app logo on the brand
+/// background. Shown only while [AppBootstrap] finishes async init.
+class _BootstrapSplash extends StatelessWidget {
+  const _BootstrapSplash();
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        backgroundColor: Color(0xFFF0F4FF),
+        body: Center(
+          child: Image(
+            image: AssetImage('assets/icons/kinderworld-logo.png'),
+            width: 160,
+            height: 160,
+          ),
+        ),
+      ),
+    );
+  }
+}
