@@ -87,7 +87,9 @@
       "Bash(echo \"exit=$? \\(1 = zero matches, good\\)\")",
       "Bash(./.venv/Scripts/python.exe -c \"import jwt; print\\(jwt.__version__\\)\")",
       "Bash(grep '\\\\.py$')",
-      "Bash(grep -iE 'requirements.*\\\\.txt$|pubspec\\\\.\\(yaml|lock\\)$|package\\(-lock\\)?\\\\.json$|Gemfile|pom\\\\.xml|build\\\\.gradle|go\\\\.\\(mod|sum\\)|Pipfile|poetry\\\\.lock|yarn\\\\.lock')"
+      "Bash(grep -iE 'requirements.*\\\\.txt$|pubspec\\\\.\\(yaml|lock\\)$|package\\(-lock\\)?\\\\.json$|Gemfile|pom\\\\.xml|build\\\\.gradle|go\\\\.\\(mod|sum\\)|Pipfile|poetry\\\\.lock|yarn\\\\.lock')",
+      "Bash(git check-ignore *)",
+      "Bash(grep -vE '^\\\\s*#|^\\\\s*$' .env)"
     ]
   }
 }
