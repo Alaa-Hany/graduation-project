@@ -5,7 +5,7 @@ import time
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 
-from jose import JWTError
+from jwt import PyJWTError as JWTError
 from sqlalchemy.orm import Session
 
 from auth import create_token, decode_token, hash_password, verify_password

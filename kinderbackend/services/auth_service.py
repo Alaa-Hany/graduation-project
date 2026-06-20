@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from fastapi import HTTPException
-from jose import JWTError
+from jwt import PyJWTError as JWTError
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 

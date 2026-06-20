@@ -7,7 +7,7 @@ critical ``auth_flows`` modules keep their branches covered.
 from datetime import timedelta
 
 import pytest
-from jose import jwt
+import jwt
 
 import auth
 from admin_auth import (
@@ -138,7 +138,7 @@ def test_create_token_with_extra_claims():
 
 
 def test_decode_token_raises_on_invalid_token():
-    from jose import JWTError
+    from jwt import PyJWTError as JWTError
 
     with pytest.raises(JWTError):
         auth.decode_token("clearly.invalid.token")

@@ -2,7 +2,8 @@ from datetime import timedelta
 from typing import Dict, Optional
 
 import bcrypt
-from jose import JWTError, jwt
+import jwt
+from jwt import PyJWTError as JWTError
 
 from core.settings import settings
 from core.time_utils import utc_now

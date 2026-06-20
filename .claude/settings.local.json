@@ -75,7 +75,17 @@
       "Bash(rm -f _verify_head.db)",
       "Bash(DATABASE_URL=\"sqlite:///_verify_head.db\" python -m alembic upgrade head)",
       "Bash(echo \"alembic exit=$?\")",
-      "Bash(python -m pytest test_reports_endpoints.py test_admin_analytics_cache.py test_notification_events.py test_parent_child_settings_and_demo_flows.py test_public_content_routes.py test_ai_buddy_backend.py -q)"
+      "Bash(python -m pytest test_reports_endpoints.py test_admin_analytics_cache.py test_notification_events.py test_parent_child_settings_and_demo_flows.py test_public_content_routes.py test_ai_buddy_backend.py -q)",
+      "Bash(ls .venv/Scripts/python.exe)",
+      "Bash(ls .venv/bin/python)",
+      "Bash(./.venv/Scripts/python.exe -m pip install -r requirements.txt --upgrade)",
+      "Bash(./.venv/Scripts/python.exe -m pip uninstall -y python-jose ecdsa rsa pyasn1)",
+      "Bash(./.venv/Scripts/python.exe -m pip check)",
+      "Bash(./.venv/Scripts/python.exe -c \"import jwt; print\\('PyJWT', jwt.__version__\\)\")",
+      "Bash(./.venv/Scripts/python.exe -m pytest -q)",
+      "Bash(./.venv/Scripts/python.exe -m pytest tests/test_cms.py::test_read_content_item_by_id \"test_startup_and_cors_regression.py::test_dev_cors_allows_localhost_origin_with_credentials\" -q)",
+      "Bash(echo \"exit=$? \\(1 = zero matches, good\\)\")",
+      "Bash(./.venv/Scripts/python.exe -c \"import jwt; print\\(jwt.__version__\\)\")"
     ]
   }
 }

@@ -5,7 +5,7 @@ from typing import Optional
 
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError
+from jwt import PyJWTError as JWTError
 from sqlalchemy.orm import Session
 
 from admin_auth import ADMIN_TOKEN_TYPE

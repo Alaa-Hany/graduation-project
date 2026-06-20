@@ -10,7 +10,8 @@ This prevents misuse across different auth flows.
 
 from datetime import timedelta
 
-from jose import JWTError, jwt
+import jwt
+from jwt import PyJWTError as JWTError
 
 from auth import ALGORITHM, SECRET_KEY, get_jwt_decode_secrets
 from core.time_utils import utc_now
@@ -81,7 +82,7 @@ def decode_admin_token(token: str) -> dict:
     admin session.
 
     Raises JWTError("Invalid or expired admin token") if the token is invalid
-    or expired under every secret. The original jose exception (e.g. a
+    or expired under every secret. The original PyJWT exception (e.g. a
     signature-expiry message) is intentionally not surfaced to keep one
     stable, generic error contract for callers regardless of which secret
     in the rotation chain rejected the token.
