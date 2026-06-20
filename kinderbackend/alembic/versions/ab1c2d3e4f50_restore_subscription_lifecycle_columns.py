@@ -1,7 +1,7 @@
 """restore subscription_profiles lifecycle columns dropped by a diverged branch
 
 Revision ID: ab1c2d3e4f50
-Revises: aa_add_password_reset_token_20260619
+Revises: aa_add_pw_reset_token_20260619
 Create Date: 2026-06-19 12:00:00.000000
 
 The migration graph contains two independent branches rooted at the initial
@@ -38,7 +38,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "ab1c2d3e4f50"
-down_revision: Union[str, Sequence[str], None] = "aa_add_password_reset_token_20260619"
+down_revision: Union[str, Sequence[str], None] = "aa_add_pw_reset_token_20260619"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
