@@ -89,7 +89,19 @@
       "Bash(grep '\\\\.py$')",
       "Bash(grep -iE 'requirements.*\\\\.txt$|pubspec\\\\.\\(yaml|lock\\)$|package\\(-lock\\)?\\\\.json$|Gemfile|pom\\\\.xml|build\\\\.gradle|go\\\\.\\(mod|sum\\)|Pipfile|poetry\\\\.lock|yarn\\\\.lock')",
       "Bash(git check-ignore *)",
-      "Bash(grep -vE '^\\\\s*#|^\\\\s*$' .env)"
+      "Bash(grep -vE '^\\\\s*#|^\\\\s*$' .env)",
+      "Bash(ls -1 \"C:/Users/الاء/Searches/Desktop/\" 2>/dev/null | grep -i \"GitHub\\\\|pptx\" ; echo \"---ALT---\" ; ls -1 \"C:/Users/الاء/Desktop/\" 2>/dev/null | grep -i \"GitHub\\\\|pptx\")",
+      "Read(//c/Users/الاء/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/fdf1d82b-7466-4c53-9854-1cee6e469410/9b83b673-2811-4351-8106-b60e8acddf09/skills/pptx/**)",
+      "Bash(./extract-text \"C:/Users/الاء/Searches/Desktop/________2___GitHub.pptx\")",
+      "Bash(python scripts/extract-text.py \"C:/Users/الاء/Searches/Desktop/________2___GitHub.pptx\")",
+      "Bash(./extract-text \"C:/Users/الاء/Searches/Desktop/___________GitHub.pptx\")",
+      "Bash(python scripts/extract-text.py \"C:/Users/الاء/Searches/Desktop/___________GitHub.pptx\")",
+      "Bash(python -)",
+      "Bash(export PYTHONIOENCODING=utf-8)",
+      "Bash(cp \"C:/Users/الاء/Searches/Desktop/________2___GitHub.pptx\" /tmp/f1.pptx)",
+      "Bash(cp \"C:/Users/الاء/Searches/Desktop/___________GitHub.pptx\" /tmp/f2.pptx)",
+      "Bash(python __TRACKED_VAR__/scripts/thumbnail.py /tmp/f1.pptx)",
+      "PowerShell($paths = @\\(\"C:\\\\Program Files\\\\LibreOffice\\\\program\\\\soffice.exe\",\"C:\\\\Program Files \\(x86\\)\\\\LibreOffice\\\\program\\\\soffice.exe\"\\); foreach\\($p in $paths\\){ if\\(Test-Path $p\\){ Write-Output \"FOUND: $p\" } }; Write-Output \"PP:\"; \\(Get-Command powerpnt.exe -ErrorAction SilentlyContinue\\).Source)"
     ]
   }
 }
