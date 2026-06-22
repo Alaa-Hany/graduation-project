@@ -862,7 +862,8 @@ void main() {
 
     await tester.tap(find.text(l10n.lessonFinish).last);
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 900));
+    await tester.pump(const Duration(milliseconds: 950));
+    await tester.pump();
 
     expect(find.text('child-home-after-activity'), findsOneWidget);
     expect(progressController.completionCalls, 1);
