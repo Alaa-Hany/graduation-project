@@ -101,7 +101,13 @@
       "Bash(cp \"C:/Users/الاء/Searches/Desktop/________2___GitHub.pptx\" /tmp/f1.pptx)",
       "Bash(cp \"C:/Users/الاء/Searches/Desktop/___________GitHub.pptx\" /tmp/f2.pptx)",
       "Bash(python __TRACKED_VAR__/scripts/thumbnail.py /tmp/f1.pptx)",
-      "PowerShell($paths = @\\(\"C:\\\\Program Files\\\\LibreOffice\\\\program\\\\soffice.exe\",\"C:\\\\Program Files \\(x86\\)\\\\LibreOffice\\\\program\\\\soffice.exe\"\\); foreach\\($p in $paths\\){ if\\(Test-Path $p\\){ Write-Output \"FOUND: $p\" } }; Write-Output \"PP:\"; \\(Get-Command powerpnt.exe -ErrorAction SilentlyContinue\\).Source)"
+      "PowerShell($paths = @\\(\"C:\\\\Program Files\\\\LibreOffice\\\\program\\\\soffice.exe\",\"C:\\\\Program Files \\(x86\\)\\\\LibreOffice\\\\program\\\\soffice.exe\"\\); foreach\\($p in $paths\\){ if\\(Test-Path $p\\){ Write-Output \"FOUND: $p\" } }; Write-Output \"PP:\"; \\(Get-Command powerpnt.exe -ErrorAction SilentlyContinue\\).Source)",
+      "Bash(python -m pip show pytest-cov)",
+      "Bash(\"C:/Graduation Project/.venv/Scripts/python.exe\" -m pytest --version)",
+      "Bash(\"C:/Graduation Project/.venv/Scripts/python.exe\" -m pytest --cov=. --cov-report=html --cov-report=term)",
+      "Bash(awk ' *)",
+      "Bash(awk -F: '/^LF:/{lf+=$2}/^LH:/{lh+=$2}END{printf \"  %d / %d = %.2f%%\\\\n\",lh,lf,lh/lf*100}' coverage/lcov.info)",
+      "Bash(awk -F: '/^LF:/{lf+=$2}/^LH:/{lh+=$2}END{printf \"  %d / %d = %.2f%%\\\\n\",lh,lf,lh/lf*100}' coverage/lcov.clean.info)"
     ]
   }
 }

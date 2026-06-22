@@ -138,7 +138,12 @@ def test_reports_with_recorded_analytics_data(client, db, auth_headers):
     db.commit()
     db.refresh(child)
 
-    start = datetime.now(timezone.utc).replace(microsecond=0)
+    # Anchor to a fixed point safely in the past so all event timestamps stay
+    # within the 7-day report window and never roll into the future near UTC
+    # midnight (otherwise this test is flaky in the ~20 min before midnight).
+    start = datetime.now(timezone.utc).replace(
+        hour=12, minute=0, second=0, microsecond=0
+    ) - timedelta(days=1)
     end = start + timedelta(minutes=20)
 
     session_resp = client.post(
