@@ -43,6 +43,8 @@ class ChildProfileScreen extends ConsumerWidget {
       return const _ChildProfileEmptyState();
     }
 
+    final liveLevel = ref.watch(currentLevelProvider);
+    final liveXp = ref.watch(currentXPProvider);
     final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     final childTheme = context.childTheme;
@@ -96,8 +98,8 @@ class ChildProfileScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 24),
               _ChildProfileLevelsSection(
-                currentLevel: child.level,
-                coins: child.xp,
+                currentLevel: liveLevel,
+                coins: liveXp,
               ),
               const SizedBox(height: 24),
               const GamificationSummaryBar(),
