@@ -1752,6 +1752,12 @@ abstract class AppLocalizations {
   String get adminCmsUnpublishAction;
   String get adminCmsPublishAction;
   String get adminCmsAddQuiz;
+  String get adminCmsImportFromYoutube;
+  String get adminCmsYoutubeChannelLabel;
+  String get adminCmsYoutubeFetchAction;
+  String get adminCmsYoutubeImportSelectedAction;
+  String get adminCmsYoutubeNoVideosFound;
+  String adminCmsYoutubeImportSuccess(int count);
   String get adminCmsQuestionsLabel;
   String get adminCmsDeleteContentTitle;
   String get adminCmsDeleteContentConfirm;

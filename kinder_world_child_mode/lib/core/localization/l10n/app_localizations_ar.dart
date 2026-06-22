@@ -1932,6 +1932,19 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get adminCmsAddQuiz => 'إضافة اختبار';
   @override
+  String get adminCmsImportFromYoutube => 'استيراد من يوتيوب';
+  @override
+  String get adminCmsYoutubeChannelLabel => 'قناة يوتيوب (المعرف أو الرابط)';
+  @override
+  String get adminCmsYoutubeFetchAction => 'جلب الفيديوهات';
+  @override
+  String get adminCmsYoutubeImportSelectedAction => 'استيراد المحدد';
+  @override
+  String get adminCmsYoutubeNoVideosFound => 'لا توجد فيديوهات';
+  @override
+  String adminCmsYoutubeImportSuccess(int count) =>
+      'تم استيراد $count فيديو';
+  @override
   String get adminCmsAgeGroupLabel => 'الفئة العمرية';
   @override
   String get adminCmsAllCategories => 'كل الفئات';

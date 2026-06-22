@@ -132,6 +132,7 @@ class Settings:
     ai_max_tokens: int
     ai_temperature: float
     sentry_dsn: str | None
+    youtube_api_key: str | None
 
     @property
     def is_production(self) -> bool:
@@ -239,6 +240,7 @@ class Settings:
         ai_max_tokens = max(_as_int(os.getenv("AI_MAX_TOKENS"), 500), 64)
         ai_temperature = min(max(_as_float(os.getenv("AI_TEMPERATURE"), 0.7), 0.0), 2.0)
         sentry_dsn = (os.getenv("SENTRY_DSN") or "").strip() or None
+        youtube_api_key = (os.getenv("YOUTUBE_API_KEY") or "").strip() or None
 
         if not jwt_active_secret:
             raise ValueError(
@@ -392,6 +394,7 @@ class Settings:
             ai_max_tokens=ai_max_tokens,
             ai_temperature=ai_temperature,
             sentry_dsn=sentry_dsn,
+            youtube_api_key=youtube_api_key,
         )
 
 
