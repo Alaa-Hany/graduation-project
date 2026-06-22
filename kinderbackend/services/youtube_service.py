@@ -38,9 +38,7 @@ class YouTubeVideo:
 
 def _require_api_key() -> str:
     if not settings.youtube_api_key:
-        raise YouTubeServiceError(
-            "YOUTUBE_API_KEY is not configured on the server."
-        )
+        raise YouTubeServiceError("YOUTUBE_API_KEY is not configured on the server.")
     return settings.youtube_api_key
 
 
@@ -113,9 +111,7 @@ def list_channel_videos(
             video_id=item["snippet"]["resourceId"]["videoId"],
             title=item["snippet"].get("title", ""),
             description=item["snippet"].get("description", ""),
-            thumbnail_url=(item["snippet"].get("thumbnails") or {})
-            .get("high", {})
-            .get("url"),
+            thumbnail_url=(item["snippet"].get("thumbnails") or {}).get("high", {}).get("url"),
             published_at=item["snippet"].get("publishedAt"),
         )
         for item in data.get("items") or []
