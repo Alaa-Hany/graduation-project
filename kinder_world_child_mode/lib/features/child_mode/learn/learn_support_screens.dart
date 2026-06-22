@@ -1,14 +1,15 @@
 ﻿// ignore_for_file: prefer_const_constructors, unused_element, unused_element_parameter
 part of 'learn_screen.dart';
 
-class EntertainingScreen extends StatelessWidget {
+class EntertainingScreen extends ConsumerWidget {
   const EntertainingScreen({super.key});
 
   List<Map<String, dynamic>> get _items => entertainingItems;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final categoriesState = ref.watch(publicContentCategoriesProvider);
     return Scaffold(
       backgroundColor: Color(0xFFF3E5F5),
       appBar: AppBar(
@@ -51,24 +52,28 @@ class EntertainingScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Expanded(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 0.9,
+              child: _CmsAxisCategoryGrid(
+                categoriesState: categoriesState,
+                axisKey: 'entertaining',
+                fallbackBuilder: (_) => GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 0.9,
+                  ),
+                  itemCount: _items.length,
+                  itemBuilder: (context, index) {
+                    final item = _items[index];
+                    return _buildFunCard(
+                      context,
+                      item['title'],
+                      item['image'],
+                      item['color'],
+                      l10n,
+                    );
+                  },
                 ),
-                itemCount: _items.length,
-                itemBuilder: (context, index) {
-                  final item = _items[index];
-                  return _buildFunCard(
-                    context,
-                    item['title'],
-                    item['image'],
-                    item['color'],
-                    l10n,
-                  );
-                },
               ),
             ),
           ],
@@ -4120,14 +4125,15 @@ class _MemoryCardData {
 }
 
 /// 2. UPDATED Behavioral Screen (Changed to Grid Layout)
-class BehavioralScreen extends StatelessWidget {
+class BehavioralScreen extends ConsumerWidget {
   const BehavioralScreen({super.key});
 
   List<Map<String, dynamic>> get _values => behavioralValues;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final categoriesState = ref.watch(publicContentCategoriesProvider);
     return Scaffold(
       backgroundColor: Color(0xFFE8F5E9),
       appBar: AppBar(
@@ -4153,21 +4159,24 @@ class BehavioralScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            // CHANGED TO GRID (2 Columns)
             Expanded(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 0.9,
+              child: _CmsAxisCategoryGrid(
+                categoriesState: categoriesState,
+                axisKey: 'behavioral',
+                fallbackBuilder: (_) => GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 0.9,
+                  ),
+                  itemCount: _values.length,
+                  itemBuilder: (context, index) {
+                    final value = _values[index];
+                    return _buildValueCard(
+                        context, value['title'], value['image']);
+                  },
                 ),
-                itemCount: _values.length,
-                itemBuilder: (context, index) {
-                  final value = _values[index];
-                  return _buildValueCard(
-                      context, value['title'], value['image']);
-                },
               ),
             ),
           ],
@@ -4808,14 +4817,15 @@ class _BehavioralContentDetailScreenState
 }
 
 /// 3. UPDATED Skillful Screen (Vertical List with New Categories)
-class SkillfulScreen extends StatelessWidget {
+class SkillfulScreen extends ConsumerWidget {
   const SkillfulScreen({super.key});
 
   List<Map<String, dynamic>> get _skills => skillCatalog;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final categoriesState = ref.watch(publicContentCategoriesProvider);
     return Scaffold(
       backgroundColor: Color(0xFFFFF3E0),
       appBar: AppBar(
@@ -4842,13 +4852,17 @@ class SkillfulScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Expanded(
-              child: ListView.separated(
-                itemCount: _skills.length,
-                separatorBuilder: (ctx, index) => const SizedBox(height: 16),
-                itemBuilder: (context, index) {
-                  final skill = _skills[index];
-                  return _buildSkillCard(context, skill);
-                },
+              child: _CmsAxisCategoryList(
+                categoriesState: categoriesState,
+                axisKey: 'skillful',
+                fallbackBuilder: (_) => ListView.separated(
+                  itemCount: _skills.length,
+                  separatorBuilder: (ctx, index) => const SizedBox(height: 16),
+                  itemBuilder: (context, index) {
+                    final skill = _skills[index];
+                    return _buildSkillCard(context, skill);
+                  },
+                ),
               ),
             ),
           ],
@@ -5727,13 +5741,15 @@ Future<void> _launchSkillCmsVideo(BuildContext context, String rawUrl) async {
 }
 
 /// 4. Educational Screen
-class EducationalScreen extends StatelessWidget {
+class EducationalScreen extends ConsumerWidget {
   const EducationalScreen({super.key});
 
   List<Map<String, dynamic>> get _subjects => educationalSubjects;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final categoriesState = ref.watch(publicContentCategoriesProvider);
     return Scaffold(
       backgroundColor: Color(0xFFE3F2FD),
       appBar: AppBar(
@@ -5756,41 +5772,40 @@ class EducationalScreen extends StatelessWidget {
                 color: Colors.white.withValuesCompat(alpha: 0.8),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Builder(
-                builder: (ctx) {
-                  final l10n = AppLocalizations.of(ctx)!;
-                  return Row(
-                    children: [
-                      const Icon(Icons.lightbulb,
-                          color: AppColors.educational, size: 32),
-                      const SizedBox(width: 16),
-                      Text(
-                        l10n.letsLearnSomethingNew,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.educational,
-                        ),
-                      ),
-                    ],
-                  );
-                },
+              child: Row(
+                children: [
+                  const Icon(Icons.lightbulb,
+                      color: AppColors.educational, size: 32),
+                  const SizedBox(width: 16),
+                  Text(
+                    l10n.letsLearnSomethingNew,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.educational,
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 32),
             Expanded(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 20,
-                  mainAxisSpacing: 20,
-                  childAspectRatio: 1.0,
+              child: _CmsAxisCategoryGrid(
+                categoriesState: categoriesState,
+                axisKey: 'educational',
+                fallbackBuilder: (_) => GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 20,
+                    mainAxisSpacing: 20,
+                    childAspectRatio: 1.0,
+                  ),
+                  itemCount: _subjects.length,
+                  itemBuilder: (context, index) {
+                    final subject = _subjects[index];
+                    return _buildSubjectCard(context, subject);
+                  },
                 ),
-                itemCount: _subjects.length,
-                itemBuilder: (context, index) {
-                  final subject = _subjects[index];
-                  return _buildSubjectCard(context, subject);
-                },
               ),
             ),
           ],
