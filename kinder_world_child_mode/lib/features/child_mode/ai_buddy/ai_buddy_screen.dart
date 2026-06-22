@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:intl/intl.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
@@ -45,6 +46,8 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
 
   final TextEditingController _textCtrl = TextEditingController();
   final ScrollController _scrollCtrl = ScrollController();
+  final FlutterTts _tts = FlutterTts();
+  int? _playingMessageId;
 
   AiBuddyConversation? _conversation;
   bool _isLoading = true;
@@ -67,13 +70,39 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
       CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
     );
 
+    _initTts();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadConversation();
     });
   }
 
+  void _initTts() {
+    final langCode = ref.read(localeProvider).languageCode;
+    _tts.setLanguage(langCode == 'ar' ? 'ar-SA' : 'en-US');
+    _tts.setSpeechRate(0.45);
+    _tts.setPitch(1.1);
+    _tts.setCompletionHandler(() {
+      if (mounted) setState(() => _playingMessageId = null);
+    });
+    _tts.setCancelHandler(() {
+      if (mounted) setState(() => _playingMessageId = null);
+    });
+  }
+
+  Future<void> _speakMessage(int messageId, String text) async {
+    if (_playingMessageId == messageId) {
+      await _tts.stop();
+      setState(() => _playingMessageId = null);
+      return;
+    }
+    await _tts.stop();
+    setState(() => _playingMessageId = messageId);
+    await _tts.speak(text);
+  }
+
   @override
   void dispose() {
+    _tts.stop();
     _pulseCtrl.dispose();
     _textCtrl.dispose();
     _scrollCtrl.dispose();
@@ -632,6 +661,8 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
                 colors: colors,
                 text: message.content,
                 timeLabel: _formatTime(message.createdAt),
+                isPlaying: _playingMessageId == message.id,
+                onSpeak: () => _speakMessage(message.id, message.content),
               );
       },
     );
@@ -737,11 +768,15 @@ class _BuddyBubble extends StatelessWidget {
     required this.colors,
     required this.text,
     required this.timeLabel,
+    required this.isPlaying,
+    required this.onSpeak,
   });
 
   final ColorScheme colors;
   final String text;
   final String timeLabel;
+  final bool isPlaying;
+  final VoidCallback onSpeak;
 
   @override
   Widget build(BuildContext context) {
@@ -792,15 +827,43 @@ class _BuddyBubble extends StatelessWidget {
                       height: 1.4,
                     ),
                   ),
-                  if (timeLabel.isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    Text(
-                      timeLabel,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: colors.onSurfaceVariant,
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      if (timeLabel.isNotEmpty)
+                        Text(
+                          timeLabel,
+                          style:
+                              Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: colors.onSurfaceVariant,
+                                  ),
+                        ),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: onSpeak,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: isPlaying
+                                ? context.childTheme.buddyStart
+                                    .withValuesCompat(alpha: 0.15)
+                                : colors.surfaceContainerHighest,
+                            shape: BoxShape.circle,
                           ),
-                    ),
-                  ],
+                          child: Icon(
+                            isPlaying
+                                ? Icons.stop_rounded
+                                : Icons.volume_up_rounded,
+                            size: 16,
+                            color: isPlaying
+                                ? context.childTheme.buddyStart
+                                : colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
