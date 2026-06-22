@@ -26,8 +26,8 @@ def _default_account_controls(user_id: int) -> ParentalControl:
         block_educational=False,
         require_approval=False,
         sleep_mode=True,
-        bedtime="8:00 PM",
-        wake_time="7:00 AM",
+        bedtime="20:00",
+        wake_time="07:00",
         emergency_lock=False,
     )
 

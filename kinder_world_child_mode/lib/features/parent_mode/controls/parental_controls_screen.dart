@@ -22,9 +22,13 @@ class ParentalControlsScreen extends ConsumerStatefulWidget {
 class _ParentalControlsScreenState
     extends ConsumerState<ParentalControlsScreen> {
   bool _sleepMode = true;
-  String _bedtime = '8:00 PM';
-  String _wakeTime = '7:00 AM';
+  String _bedtime = '20:00';
+  String _wakeTime = '07:00';
   bool _isLoading = true;
+
+  // Full settings map loaded from the backend. Preserved on save so we never
+  // drop required fields (daily_limit_enabled, hours_per_day, ...).
+  Map<String, dynamic> _settings = <String, dynamic>{};
 
   @override
   void initState() {
@@ -40,9 +44,10 @@ class _ParentalControlsScreenState
       final data = response.data?['settings'];
       if (data is Map) {
         setState(() {
+          _settings = Map<String, dynamic>.from(data);
           _sleepMode = data['sleep_mode'] == true;
-          _bedtime = data['bedtime']?.toString() ?? _bedtime;
-          _wakeTime = data['wake_time']?.toString() ?? _wakeTime;
+          _bedtime = _normalizeTime(data['bedtime']?.toString() ?? _bedtime);
+          _wakeTime = _normalizeTime(data['wake_time']?.toString() ?? _wakeTime);
         });
       }
     } catch (_) {
@@ -61,7 +66,10 @@ class _ParentalControlsScreenState
     try {
       await ref.read(networkServiceProvider).put<Map<String, dynamic>>(
         '/parental-controls/settings',
+        // Merge the edited fields into the full settings map so required
+        // fields (daily_limit_enabled, hours_per_day, ...) are kept intact.
         data: {
+          ..._settings,
           'sleep_mode': _sleepMode,
           'bedtime': _bedtime,
           'wake_time': _wakeTime,
@@ -312,10 +320,46 @@ class _ParentalControlsScreenState
     );
   }
 
+  /// Every half hour across the full 24-hour day, formatted as "HH:MM".
+  static List<String> _timeOptions() {
+    final options = <String>[];
+    for (var hour = 0; hour < 24; hour++) {
+      for (final minute in const [0, 30]) {
+        options.add(
+          '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}',
+        );
+      }
+    }
+    return options;
+  }
+
+  /// Normalizes a stored time into 24-hour "HH:MM". Accepts both 24-hour
+  /// values and legacy 12-hour values like "8:00 PM".
+  static String _normalizeTime(String value) {
+    final text = value.trim();
+    final ampm =
+        RegExp(r'^(\d{1,2}):(\d{2})\s*([AaPp][Mm])$').firstMatch(text);
+    if (ampm != null) {
+      var hour = int.parse(ampm.group(1)!);
+      final minute = int.parse(ampm.group(2)!);
+      final isPm = ampm.group(3)!.toUpperCase() == 'PM';
+      if (hour == 12) hour = 0;
+      if (isPm) hour += 12;
+      return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+    }
+    final hhmm = RegExp(r'^(\d{1,2}):(\d{2})$').firstMatch(text);
+    if (hhmm != null) {
+      final hour = int.parse(hhmm.group(1)!);
+      final minute = int.parse(hhmm.group(2)!);
+      return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+    }
+    return text;
+  }
+
   void _showTimePicker(bool isBedtime, ValueChanged<String> onSelected) {
-    final options = isBedtime
-        ? const ['7:00 PM', '7:30 PM', '8:00 PM', '8:30 PM', '9:00 PM']
-        : const ['6:00 AM', '6:30 AM', '7:00 AM', '7:30 AM', '8:00 AM'];
+    final options = _timeOptions();
+    final current = isBedtime ? _bedtime : _wakeTime;
+    final selectedIndex = options.indexOf(current);
 
     showModalBottomSheet<void>(
       context: context,
@@ -324,15 +368,25 @@ class _ParentalControlsScreenState
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) {
+        final colors = Theme.of(context).colorScheme;
         return SafeArea(
           child: ListView.separated(
             padding: const EdgeInsets.all(16),
+            // Scroll so the current selection is roughly centered on open.
+            controller: ScrollController(
+              initialScrollOffset:
+                  selectedIndex > 2 ? (selectedIndex - 2) * 64.0 : 0,
+            ),
             itemCount: options.length,
             separatorBuilder: (context, index) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
               final value = options[index];
+              final isSelected = value == current;
               return ListTile(
                 title: Text(value),
+                trailing: isSelected
+                    ? Icon(Icons.check, color: colors.primary)
+                    : null,
                 onTap: () {
                   onSelected(value);
                   Navigator.of(context).pop();
