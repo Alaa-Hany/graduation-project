@@ -14,8 +14,9 @@ part 'auth_repository_child.dart';
 
 class ChildLoginException implements Exception {
   final int? statusCode;
+  final String? detailCode;
 
-  const ChildLoginException({this.statusCode});
+  const ChildLoginException({this.statusCode, this.detailCode});
 }
 
 class ChildRegisterException implements Exception {

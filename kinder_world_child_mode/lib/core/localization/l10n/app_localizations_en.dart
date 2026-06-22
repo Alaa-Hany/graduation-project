@@ -1379,6 +1379,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get childLoginIncorrectPictures => 'Incorrect login pictures';
 
   @override
+  String get childLoginInvalidName => 'The name is incorrect';
+
+  @override
   String get childLoginMissingData => 'Complete the required data';
 
   @override

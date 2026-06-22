@@ -213,6 +213,8 @@ class _CreateChildProfileScreenState
     switch (error) {
       case 'child_login_404':
         return l10n.childLoginNotFound;
+      case 'child_login_invalid_name':
+        return l10n.childLoginInvalidName;
       case 'child_login_401':
         return l10n.childLoginIncorrectPictures;
       case 'child_login_422':

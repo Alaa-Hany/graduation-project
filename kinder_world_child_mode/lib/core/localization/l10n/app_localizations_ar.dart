@@ -2492,6 +2492,8 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get childLoginIncorrectPictures => 'صور تسجيل الدخول غير صحيحة';
   @override
+  String get childLoginInvalidName => 'الاسم غير صحيح';
+  @override
   String get childLoginMissingData => 'أكمل البيانات المطلوبة';
   @override
   String get childLoginNotFound => 'الطفل غير موجود';

@@ -53,6 +53,33 @@ def _create_child(
     return child
 
 
+def test_child_login_wrong_name_and_wrong_pictures_return_distinct_codes(client, db):
+    parent = _create_parent(db, email="child.codes.parent@example.com")
+    child = _create_child(db, parent_id=parent.id, name="CodeKid")
+
+    wrong_name = client.post(
+        "/auth/child/login",
+        json={
+            "child_id": child.id,
+            "name": "NotCodeKid",
+            "picture_password": ["cat", "dog", "apple"],
+        },
+    )
+    assert wrong_name.status_code == 401
+    assert wrong_name.json()["detail"]["code"] == "CHILD_INVALID_NAME"
+
+    wrong_pictures = client.post(
+        "/auth/child/login",
+        json={
+            "child_id": child.id,
+            "name": child.name,
+            "picture_password": ["wrong", "wrong", "wrong"],
+        },
+    )
+    assert wrong_pictures.status_code == 401
+    assert wrong_pictures.json()["detail"]["code"] == "CHILD_INVALID_PICTURE"
+
+
 def test_child_login_returns_expiring_session_token(client, db):
     parent = _create_parent(db)
     child = _create_child(db, parent_id=parent.id)

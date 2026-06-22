@@ -52,7 +52,10 @@ mixin _AuthRepositoryChildMixin on _AuthRepositorySupportMixin {
       _logger.e(
         'Child login error: ${e.response?.statusCode} - ${e.response?.data}',
       );
-      throw ChildLoginException(statusCode: e.response?.statusCode);
+      throw ChildLoginException(
+        statusCode: e.response?.statusCode,
+        detailCode: _extractErrorDetailCode(e),
+      );
     } catch (e) {
       _logger.e('Child login error: $e');
       throw const ChildLoginException();

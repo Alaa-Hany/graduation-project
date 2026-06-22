@@ -438,6 +438,7 @@ abstract class AppLocalizations {
   String get incorrectPicturePassword;
   String get childLoginNotFound;
   String get childLoginIncorrectPictures;
+  String get childLoginInvalidName;
   String get childLoginMissingData;
   String get createChildProfile;
   String get childProfileBasicInfoTitle;

@@ -507,7 +507,11 @@ class ChildService:
                 user_agent=user_agent,
                 device_id=device_id,
             )
-            raise unauthorized("Invalid credentials")
+            raise http_error(
+                status_code=401,
+                message="Invalid credentials",
+                code="CHILD_INVALID_NAME",
+            )
 
         stored_password = child.picture_password or []
         if not self._verify_picture_password(
@@ -521,7 +525,11 @@ class ChildService:
                 user_agent=user_agent,
                 device_id=device_id,
             )
-            raise unauthorized("Invalid picture password")
+            raise http_error(
+                status_code=401,
+                message="Invalid picture password",
+                code="CHILD_INVALID_PICTURE",
+            )
 
         self._bind_or_validate_device(
             child_id=child.id,

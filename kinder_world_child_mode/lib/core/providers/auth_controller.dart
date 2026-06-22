@@ -365,7 +365,7 @@ class AuthController extends StateNotifier<AuthState> {
     } on ChildLoginException catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: _childLoginErrorForStatus(e.statusCode),
+        error: _childLoginErrorForStatus(e.statusCode, e.detailCode),
       );
       return false;
     } catch (e) {
@@ -516,9 +516,12 @@ class AuthController extends StateNotifier<AuthState> {
     );
   }
 
-  String _childLoginErrorForStatus(int? statusCode) {
+  String _childLoginErrorForStatus(int? statusCode, [String? detailCode]) {
     switch (statusCode) {
       case 401:
+        if (detailCode == 'CHILD_INVALID_NAME') {
+          return 'child_login_invalid_name';
+        }
         return 'child_login_401';
       case 404:
         return 'child_login_404';
