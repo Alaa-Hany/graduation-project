@@ -5,8 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/models/achievement.dart';
+import 'package:kinder_world/core/models/progress_record.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/providers/gamification_provider.dart';
+import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/core/services/gamification_service.dart';
 import 'package:kinder_world/core/utils/color_serialization.dart';
 import 'package:kinder_world/features/child_mode/learn/coloring_progress_storage.dart';
@@ -154,12 +157,31 @@ class _ColoringPageScreenState extends ConsumerState<ColoringPageScreen> {
   Future<void> _awardColoringXp() async {
     final child = ref.read(currentChildProvider);
     if (child == null) return;
+
+    final activityId = 'coloring_${widget.svgAssetPath}';
+
+    // Record the completion as a progress entry first — this adds XP,
+    // increments the activity/time counters, updates the streak, and surfaces
+    // the coloring in history and parent reports. Mirrors how lessons and
+    // games complete (see lesson_flow_screen / memory_match_game).
+    await ref.read(progressControllerProvider.notifier).recordActivityCompletion(
+          childId: child.id,
+          activityId: activityId,
+          score: 100,
+          duration: 1,
+          xpEarned: XPRewards.coloringPage,
+          notes: widget.title.isEmpty ? 'Coloring' : widget.title,
+          completionStatus: CompletionStatus.completed,
+        );
+
+    // Coins + achievements only — XP was already awarded above, so awardXp is
+    // false here to avoid double-counting.
     await ref.read(gamificationStateProvider.notifier).recordActivity(
           childId: child.id,
           type: ActivityType.coloring,
           category: 'skillful',
-          awardXp: true,
-          activityId: 'coloring_${widget.svgAssetPath}',
+          awardXp: false,
+          activityId: activityId,
         );
   }
 
