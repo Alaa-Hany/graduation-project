@@ -516,7 +516,11 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
     final childTheme = context.childTheme;
     final firstName = child.name.split(' ').first;
     final greeting = childTimeGreeting();
-    final currentXpInLevel = child.xp % 1000;
+    final liveXp = ref.watch(currentXPProvider);
+    final liveLevel = ref.watch(currentLevelProvider);
+    final liveStreak = ref.watch(currentStreakProvider);
+    final liveProgress = ref.watch(levelProgressProvider);
+    final currentXpInLevel = liveXp % 1000;
 
     return KinderCard(
       padding: const EdgeInsets.all(24),
@@ -561,7 +565,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                     _buildBadgesRow(colors),
                     const SizedBox(height: 4),
                     Text(
-                      _motivationalLine(child, l10n),
+                      _motivationalLine(child, l10n, liveStreak),
                       style: textTheme.bodyMedium?.copyWith(
                         fontSize: 14,
                         color: colors.onPrimary.withValuesCompat(alpha: 0.85),
@@ -571,7 +575,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                   ],
                 ),
               ),
-              ChildStreakBadge(streak: child.streak),
+              ChildStreakBadge(streak: liveStreak),
             ],
           ),
 
@@ -581,7 +585,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
           Row(
             children: [
               Text(
-                l10n.levelBubble(child.level),
+                l10n.levelBubble(liveLevel),
                 style: textTheme.labelLarge?.copyWith(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
@@ -593,7 +597,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: LinearProgressIndicator(
-                    value: child.xpProgress.clamp(0.0, 1.0),
+                    value: liveProgress.clamp(0.0, 1.0),
                     backgroundColor:
                         colors.onPrimary.withValuesCompat(alpha: 0.25),
                     valueColor: AlwaysStoppedAnimation<Color>(
@@ -619,9 +623,9 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
     );
   }
 
-  String _motivationalLine(ChildProfile child, AppLocalizations l10n) {
-    if (child.streak >= 7) return l10n.streakOnFire(child.streak);
-    if (child.streak >= 3) return l10n.streakDaysStrong(child.streak);
+  String _motivationalLine(ChildProfile child, AppLocalizations l10n, int streak) {
+    if (streak >= 7) return l10n.streakOnFire(streak);
+    if (streak >= 3) return l10n.streakDaysStrong(streak);
     if (child.activitiesCompleted >= 10) {
       return l10n.activitiesCompletedAmazing(child.activitiesCompleted);
     }
@@ -633,28 +637,31 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
   Widget _buildStatsRow(ChildProfile child) {
     final l10n = AppLocalizations.of(context)!;
     final childTheme = context.childTheme;
-    final currentXpInLevel = child.xp % 1000;
+    final liveXp = ref.watch(currentXPProvider);
+    final liveLevel = ref.watch(currentLevelProvider);
+    final liveStreak = ref.watch(currentStreakProvider);
+    final currentXpInLevel = liveXp % 1000;
     return KinderCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           ChildStatBubble(
-            value: l10n.levelBubble(child.level),
+            value: l10n.levelBubble(liveLevel),
             label: l10n.level,
             icon: Icons.star_rounded,
             color: childTheme.xp,
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (_) => ChildLevelsScreen(
-                  currentLevel: child.level,
+                  currentLevel: liveLevel,
                   coins: currentXpInLevel,
                 ),
               ),
             ),
           ),
           ChildStatBubble(
-            value: '${child.streak}',
+            value: '$liveStreak',
             label: l10n.streak,
             icon: Icons.local_fire_department_rounded,
             color: childTheme.streak,

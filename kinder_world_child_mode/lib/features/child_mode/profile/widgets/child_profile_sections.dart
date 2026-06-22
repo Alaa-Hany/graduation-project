@@ -47,7 +47,7 @@ class _ChildProfileEmptyState extends StatelessWidget {
   }
 }
 
-class _ChildProfileHeroSection extends StatelessWidget {
+class _ChildProfileHeroSection extends ConsumerWidget {
   const _ChildProfileHeroSection({
     required this.child,
     required this.childName,
@@ -59,12 +59,13 @@ class _ChildProfileHeroSection extends StatelessWidget {
   final VoidCallback onCustomizeAvatar;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final textTheme = theme.textTheme;
     final childTheme = context.childTheme;
+    final liveLevel = ref.watch(currentLevelProvider);
 
     return Column(
       children: [
@@ -132,7 +133,7 @@ class _ChildProfileHeroSection extends StatelessWidget {
                     ],
                   ),
                   child: Text(
-                    l10n.levelLabel(child.level),
+                    l10n.levelLabel(liveLevel),
                     style: textTheme.labelMedium?.copyWith(
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
@@ -155,7 +156,7 @@ class _ChildProfileHeroSection extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          l10n.levelExplorer(child.level),
+          l10n.levelExplorer(liveLevel),
           style: textTheme.bodyMedium?.copyWith(
             fontSize: AppConstants.fontSize,
             color: colors.onSurfaceVariant,
@@ -175,7 +176,7 @@ class _ChildProfileHeroSection extends StatelessWidget {
   }
 }
 
-class _ChildProfileStatsSection extends StatelessWidget {
+class _ChildProfileStatsSection extends ConsumerWidget {
   const _ChildProfileStatsSection({
     required this.child,
   });
@@ -183,21 +184,23 @@ class _ChildProfileStatsSection extends StatelessWidget {
   final dynamic child;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final childTheme = context.childTheme;
+    final liveXp = ref.watch(currentXPProvider);
+    final liveStreak = ref.watch(currentStreakProvider);
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         ChildStatBubble(
-          value: '${child.xp % 1000}',
+          value: '${liveXp % 1000}',
           label: l10n.xp,
           icon: Icons.star_rounded,
           color: childTheme.xp,
         ),
         ChildStatBubble(
-          value: '${child.streak}',
+          value: '$liveStreak',
           label: l10n.streak,
           icon: Icons.local_fire_department_rounded,
           color: childTheme.streak,
@@ -232,6 +235,8 @@ class _ChildProfileProgressSection extends ConsumerWidget {
     final childId = ref.watch(currentChildIdProvider) ?? '';
     final todayAsync = ref.watch(currentChildTodayProgressProvider);
     final weeklyAsync = ref.watch(weeklySummaryProvider(childId));
+    final liveXp = ref.watch(currentXPProvider);
+    final liveProgress = ref.watch(levelProgressProvider);
 
     final todayDone = todayAsync.valueOrNull?.length ?? 0;
     final weeklyDone =
@@ -247,8 +252,8 @@ class _ChildProfileProgressSection extends ConsumerWidget {
           ChildSectionHeader(title: l10n.yourProgress),
           const SizedBox(height: 20),
           ChildXpProgressBar(
-            progress: child.xpProgress.clamp(0.0, 1.0),
-            currentXp: child.xp % 1000,
+            progress: liveProgress.clamp(0.0, 1.0),
+            currentXp: liveXp % 1000,
             nextLevelXp: 1000,
           ),
           const SizedBox(height: 16),
