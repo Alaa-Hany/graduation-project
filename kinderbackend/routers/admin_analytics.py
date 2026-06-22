@@ -339,7 +339,7 @@ def _build_analytics_usage_payload(*, db: Session, range_name: str) -> dict[str,
         .group_by(func.date(User.created_at))
         .all()
     ):
-        buckets[date.fromisoformat(created_at)]["users"] = count
+        buckets[date.fromisoformat(str(created_at))]["users"] = count
 
     for created_at, count in (
         db.query(func.date(ChildProfile.created_at), func.count(ChildProfile.id))
@@ -350,7 +350,7 @@ def _build_analytics_usage_payload(*, db: Session, range_name: str) -> dict[str,
         .group_by(func.date(ChildProfile.created_at))
         .all()
     ):
-        buckets[date.fromisoformat(created_at)]["children"] = count
+        buckets[date.fromisoformat(str(created_at))]["children"] = count
 
     for created_at, count in (
         db.query(func.date(Notification.created_at), func.count(Notification.id))
@@ -358,7 +358,7 @@ def _build_analytics_usage_payload(*, db: Session, range_name: str) -> dict[str,
         .group_by(func.date(Notification.created_at))
         .all()
     ):
-        buckets[date.fromisoformat(created_at)]["activities"] = count
+        buckets[date.fromisoformat(str(created_at))]["activities"] = count
 
     for created_at, count in (
         db.query(func.date(SupportTicket.created_at), func.count(SupportTicket.id))
@@ -369,7 +369,7 @@ def _build_analytics_usage_payload(*, db: Session, range_name: str) -> dict[str,
         .group_by(func.date(SupportTicket.created_at))
         .all()
     ):
-        buckets[date.fromisoformat(created_at)]["tickets"] = count
+        buckets[date.fromisoformat(str(created_at))]["tickets"] = count
 
     points = []
     for offset in range(total_days):
