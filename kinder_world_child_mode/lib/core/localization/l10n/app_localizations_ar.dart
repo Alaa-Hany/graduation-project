@@ -3255,6 +3255,8 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get xpEarned => 'نقاط الخبرة المكتسبة';
   @override
+  String xpGainedToast(int xp) => '⭐ +$xp نقطة خبرة!';
+  @override
   String get xpProgress => 'تقدم نقاط الخبرة';
   @override
   String get xpReward => 'مكافأة الخبرة';

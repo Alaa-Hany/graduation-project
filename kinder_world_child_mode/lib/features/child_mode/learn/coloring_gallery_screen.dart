@@ -162,7 +162,7 @@ class _ColoringGalleryScreenState extends ConsumerState<ColoringGalleryScreen> {
           style: TextStyle(
             color: colors.onSurface,
             fontWeight: FontWeight.w900,
-            fontFamily: 'Comic Sans MS',
+            fontFamily: 'Cairo',
           ),
         ),
       ),
@@ -226,7 +226,7 @@ class _ColoringGalleryScreenState extends ConsumerState<ColoringGalleryScreen> {
                                               : level,
                               style: TextStyle(
                                 fontWeight: FontWeight.w800,
-                                fontFamily: 'Comic Sans MS',
+                                fontFamily: 'Cairo',
                                 color: selected
                                     ? child.kindness.onColor
                                     : colors.onSurface,
@@ -269,7 +269,7 @@ class _ColoringGalleryScreenState extends ConsumerState<ColoringGalleryScreen> {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w900,
-                              fontFamily: 'Comic Sans MS',
+                              fontFamily: 'Cairo',
                               color: colors.onSurface,
                             ),
                           ),
@@ -382,7 +382,7 @@ class _CmsColoringVideoCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: compact ? 17 : 18,
                           fontWeight: FontWeight.w900,
-                          fontFamily: 'Comic Sans MS',
+                          fontFamily: 'Cairo',
                           color: const Color(0xFF0B4A75),
                         ),
                       ),
@@ -422,7 +422,7 @@ class _CmsColoringVideoCard extends StatelessWidget {
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w800,
-                            fontFamily: 'Comic Sans MS',
+                            fontFamily: 'Cairo',
                             fontSize: 12,
                           ),
                         ),
@@ -502,7 +502,7 @@ class _ColoringVideoPlayerScreen extends StatelessWidget {
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF9C27B0),
-                        fontFamily: 'Comic Sans MS',
+                        fontFamily: 'Cairo',
                       ),
                     ),
                   ),
@@ -822,7 +822,7 @@ class _ColoringItemCardState extends State<_ColoringItemCard> {
                                 style: TextStyle(
                                   fontSize: compact ? 15 : 17,
                                   fontWeight: FontWeight.w900,
-                                  fontFamily: 'Comic Sans MS',
+                                  fontFamily: 'Cairo',
                                   color: const Color(0xFF0B4A75),
                                   height: 1.05,
                                 ),
@@ -851,7 +851,7 @@ class _ColoringItemCardState extends State<_ColoringItemCard> {
                                       fontSize: compact ? 12 : 13,
                                       fontWeight: FontWeight.w800,
                                       color: const Color(0xFF2E7D32),
-                                      fontFamily: 'Comic Sans MS',
+                                      fontFamily: 'Cairo',
                                     ),
                                   ),
                                 ],
@@ -886,7 +886,7 @@ class _ColoringItemCardState extends State<_ColoringItemCard> {
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w800,
-                                  fontFamily: 'Comic Sans MS',
+                                  fontFamily: 'Cairo',
                                   fontSize: 12,
                                 ),
                               );

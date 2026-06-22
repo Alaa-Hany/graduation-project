@@ -12,6 +12,7 @@ import 'package:kinder_world/core/providers/gamification_provider.dart';
 import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/core/services/gamification_service.dart';
 import 'package:kinder_world/core/utils/color_serialization.dart';
+import 'package:kinder_world/core/widgets/child_safe_ui.dart';
 import 'package:kinder_world/features/child_mode/learn/coloring_progress_storage.dart';
 import 'package:path_drawing/path_drawing.dart';
 import 'package:xml/xml.dart';
@@ -141,7 +142,7 @@ class _ColoringPageScreenState extends ConsumerState<ColoringPageScreen> {
 
     if (becameCompleted && !_completionRewardShown) {
       _completionRewardShown = true;
-      _showCompletionReward();
+      unawaited(_showCompletionReward());
     }
 
     _saveDebounce?.cancel();
@@ -185,9 +186,10 @@ class _ColoringPageScreenState extends ConsumerState<ColoringPageScreen> {
         );
   }
 
-  void _showCompletionReward() {
+  Future<void> _showCompletionReward() async {
+    await _awardColoringXp();
     if (!mounted) return;
-    _awardColoringXp();
+    showXpGainPopup(context, xp: XPRewards.coloringPage);
     showDialog<void>(
       context: context,
       barrierDismissible: true,
@@ -215,7 +217,7 @@ class _ColoringPageScreenState extends ConsumerState<ColoringPageScreen> {
         title: Text(
           widget.title.isEmpty ? l10n.coloringTitle : widget.title,
           style: TextStyle(
-            fontFamily: 'Comic Sans MS',
+            fontFamily: 'Cairo',
             fontWeight: FontWeight.w900,
             color: colors.onSurface,
           ),
@@ -257,7 +259,7 @@ class _ColoringPageScreenState extends ConsumerState<ColoringPageScreen> {
                         child: Text(
                           l10n.tapShapeToFill,
                           style: TextStyle(
-                            fontFamily: 'Comic Sans MS',
+                            fontFamily: 'Cairo',
                             fontWeight: FontWeight.w700,
                             color: colors.onSurface,
                           ),
@@ -1033,7 +1035,7 @@ class _ControlButton extends StatelessWidget {
                     style: TextStyle(
                       color: fg,
                       fontWeight: FontWeight.w800,
-                      fontFamily: 'Comic Sans MS',
+                      fontFamily: 'Cairo',
                       fontSize: compact ? 12 : 13,
                     ),
                   ),
@@ -1195,7 +1197,7 @@ class _CompletionRewardBadge extends StatelessWidget {
         Text(
           l10n.awesomeColoring,
           style: const TextStyle(
-            fontFamily: 'Comic Sans MS',
+            fontFamily: 'Cairo',
             fontWeight: FontWeight.w900,
             color: Color(0xFF18578C),
           ),

@@ -124,6 +124,12 @@ class AppTheme {
 
     final base = ThemeData(
       useMaterial3: true,
+      // Bundle an Arabic-capable font as the app default so text never depends
+      // on CanvasKit downloading Noto from a CDN at runtime (which fails when
+      // offline/blocked and renders Arabic as garbage glyphs). Cairo covers
+      // both Arabic and Latin; Poppins stays as a Latin fallback.
+      fontFamily: 'Cairo',
+      fontFamilyFallback: const ['Poppins'],
       colorScheme: scheme,
       scaffoldBackgroundColor: background,
       canvasColor: scheme.surface,
@@ -512,6 +518,8 @@ class AppTheme {
 
     return ThemeData(
       useMaterial3: true,
+      fontFamily: 'Cairo',
+      fontFamilyFallback: const ['Poppins'],
       colorScheme: scheme,
       scaffoldBackgroundColor: background,
       textTheme: textTheme,

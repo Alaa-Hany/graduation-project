@@ -114,6 +114,11 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
     unawaited(HapticFeedback.lightImpact());
 
     if (mounted) {
+      showXpGainPopup(context, xp: lesson.xpReward);
+      await Future<void>.delayed(const Duration(milliseconds: 900));
+    }
+
+    if (mounted) {
       context.go('/child/home');
     }
   }

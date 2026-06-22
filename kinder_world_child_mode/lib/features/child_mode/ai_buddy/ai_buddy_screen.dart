@@ -13,6 +13,7 @@ import 'package:kinder_world/core/services/gamification_service.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
+import 'package:kinder_world/core/widgets/child_safe_ui.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
 
 class _QuickAction {
@@ -235,13 +236,17 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
           final today = DateTime.now();
           final dayKey =
               'ai_buddy_${today.year}_${today.month}_${today.day}';
-          await ref.read(gamificationStateProvider.notifier).recordActivity(
+          final reward =
+              await ref.read(gamificationStateProvider.notifier).recordActivity(
                 childId: currentChild.id,
                 type: ActivityType.aiBuddy,
                 category: 'educational',
                 awardXp: true,
                 activityId: dayKey,
               );
+          if (mounted && reward.xpAwarded > 0) {
+            showXpGainPopup(context, xp: reward.xpAwarded);
+          }
         }
       } catch (e) {
         ref.read(loggerProvider).w('AI buddy gamification reward failed: $e');

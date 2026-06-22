@@ -1,5 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
+
+/// Shows a small floating "+xp" toast after a child earns experience points.
+/// Used after every activity that awards XP (lesson, quiz, game, coloring
+/// page, AI buddy session, daily streak, etc.) so the gain is always visible,
+/// not just reflected silently in the profile totals.
+void showXpGainPopup(BuildContext context, {required int xp, int coins = 0}) {
+  if (xp <= 0) return;
+  final l10n = AppLocalizations.of(context)!;
+  final theme = Theme.of(context);
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      behavior: SnackBarBehavior.floating,
+      margin: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 16),
+      duration: const Duration(seconds: 2),
+      backgroundColor: context.childTheme.xp,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      content: Row(
+        children: [
+          const Icon(Icons.star_rounded, color: Colors.white),
+          const SizedBox(width: 8),
+          Text(
+            l10n.xpGainedToast(xp),
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 
 void showChildFeedbackSnackBar(
   BuildContext context,

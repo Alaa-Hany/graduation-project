@@ -809,11 +809,13 @@ class _ShufflePuzzleScreenState
 
   Future<void> _showSolvedDialog() async {
     final earnedStars = _calculateStars();
+    final earnedXp = (earnedStars * 20) + (_boardSize * 6);
     await _saveProgressIfNeeded(earnedStars);
     await _recordCompletion(earnedStars);
     if (!mounted) {
       return;
     }
+    showXpGainPopup(context, xp: earnedXp);
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(

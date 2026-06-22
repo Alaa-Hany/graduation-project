@@ -3298,6 +3298,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get xpEarned => 'XP Earned';
 
   @override
+  String xpGainedToast(int xp) => '⭐ +$xp XP!';
+
+  @override
   String get daysLabel => 'days';
 
   @override

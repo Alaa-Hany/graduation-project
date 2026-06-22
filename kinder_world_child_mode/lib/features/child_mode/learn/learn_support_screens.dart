@@ -1613,11 +1613,13 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
 
   Future<void> _showSolvedDialog() async {
     final earnedStars = _calculateStars();
+    final earnedXp = (earnedStars * 20) + (_selectedLevel.size * 5);
     await _saveProgressIfNeeded(earnedStars);
     await _recordPuzzleCompletion(earnedStars);
     if (!mounted) return;
     unawaited(_audio.playEffect('sounds/games/memory_win.mp3',
         fallback: SystemSoundType.alert));
+    showXpGainPopup(context, xp: earnedXp);
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(

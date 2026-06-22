@@ -1166,6 +1166,7 @@ abstract class AppLocalizations {
   String get youCompletedLesson;
   String get correct;
   String get xpEarned;
+  String xpGainedToast(int xp);
   String get daysLabel;
   String get xpReward;
   String get difficulty;
