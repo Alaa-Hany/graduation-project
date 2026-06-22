@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 import pytest
 from fastapi import HTTPException
 
-from models import PaymentWebhookEvent, SubscriptionProfile
+from models import PaymentWebhookEvent
 from plan_service import PLAN_FREE, PLAN_PREMIUM
 from services.payment_webhook_service import PaymentWebhookService
 from services.payment_webhook_verifier import WebhookVerificationError

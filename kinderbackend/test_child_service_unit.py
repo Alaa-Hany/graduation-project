@@ -8,7 +8,6 @@ The autouse conftest fixtures mock Redis; several tests here monkeypatch
 ``get_redis_client`` to ``None`` to exercise the in-memory fallback paths.
 """
 
-from types import SimpleNamespace
 
 import pytest
 from fastapi import HTTPException
