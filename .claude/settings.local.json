@@ -107,7 +107,10 @@
       "Bash(\"C:/Graduation Project/.venv/Scripts/python.exe\" -m pytest --cov=. --cov-report=html --cov-report=term)",
       "Bash(awk ' *)",
       "Bash(awk -F: '/^LF:/{lf+=$2}/^LH:/{lh+=$2}END{printf \"  %d / %d = %.2f%%\\\\n\",lh,lf,lh/lf*100}' coverage/lcov.info)",
-      "Bash(awk -F: '/^LF:/{lf+=$2}/^LH:/{lh+=$2}END{printf \"  %d / %d = %.2f%%\\\\n\",lh,lf,lh/lf*100}' coverage/lcov.clean.info)"
-    ]
+      "Bash(awk -F: '/^LF:/{lf+=$2}/^LH:/{lh+=$2}END{printf \"  %d / %d = %.2f%%\\\\n\",lh,lf,lh/lf*100}' coverage/lcov.clean.info)",
+      "Bash(flutter pub *)",
+      "Read(//c/Graduation Project/**)",
+      "Bash(./.venv/Scripts/python.exe -m pip install -q \"pillow==12.2.0\" \"python-dotenv==1.2.2\")",
+      "Bash(./.venv/Scripts/python.exe -c \"import PIL, dotenv; print\\('PIL', PIL.__version__\\); import importlib.metadata as m; print\\('dotenv', m.version\\('python-dotenv'\\)\\)\")"    ]
   }
 }
