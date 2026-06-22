@@ -92,32 +92,102 @@ const entertainingItems = <Map<String, dynamic>>[
 ];
 
 const behavioralValues = <Map<String, dynamic>>[
-  {'title': 'Giving', 'image': 'assets/images/behavior_giving.png'},
-  {'title': 'Respect', 'image': 'assets/images/behavior_respect.png'},
-  {'title': 'Tolerance', 'image': 'assets/images/behavior_tolerance.png'},
-  {'title': 'Kindness', 'image': 'assets/images/behavior_kindness.png'},
-  {'title': 'Cooperation', 'image': 'assets/images/behavior_cooperation.png'},
+  {
+    'title': 'Giving',
+    'title_ar': 'العطاء',
+    'image': 'assets/images/behavior_giving.png',
+  },
+  {
+    'title': 'Respect',
+    'title_ar': 'الاحترام',
+    'image': 'assets/images/behavior_respect.png',
+  },
+  {
+    'title': 'Tolerance',
+    'title_ar': 'التسامح',
+    'image': 'assets/images/behavior_tolerance.png',
+  },
+  {
+    'title': 'Kindness',
+    'title_ar': 'اللطف',
+    'image': 'assets/images/behavior_kindness.png',
+  },
+  {
+    'title': 'Cooperation',
+    'title_ar': 'التعاون',
+    'image': 'assets/images/behavior_cooperation.png',
+  },
   {
     'title': 'Responsibility',
+    'title_ar': 'المسؤولية',
     'image': 'assets/images/behavior_responsibility.png',
   },
-  {'title': 'Honesty', 'image': 'assets/images/behavior_honesty.png'},
-  {'title': 'Patience', 'image': 'assets/images/behavior_patience.png'},
-  {'title': 'Courage', 'image': 'assets/images/behavior_courage.png'},
-  {'title': 'Gratitude', 'image': 'assets/images/behavior_gratitude.png'},
-  {'title': 'Peace', 'image': 'assets/images/behavior_peace.png'},
-  {'title': 'Love', 'image': 'assets/images/behavior_love.png'},
+  {
+    'title': 'Honesty',
+    'title_ar': 'الأمانة',
+    'image': 'assets/images/behavior_honesty.png',
+  },
+  {
+    'title': 'Patience',
+    'title_ar': 'الصبر',
+    'image': 'assets/images/behavior_patience.png',
+  },
+  {
+    'title': 'Courage',
+    'title_ar': 'الشجاعة',
+    'image': 'assets/images/behavior_courage.png',
+  },
+  {
+    'title': 'Gratitude',
+    'title_ar': 'الامتنان',
+    'image': 'assets/images/behavior_gratitude.png',
+  },
+  {
+    'title': 'Peace',
+    'title_ar': 'السلام',
+    'image': 'assets/images/behavior_peace.png',
+  },
+  {
+    'title': 'Love',
+    'title_ar': 'الحب',
+    'image': 'assets/images/behavior_love.png',
+  },
 ];
 
 const behavioralMethods = <Map<String, dynamic>>[
-  {'title': 'Relaxation', 'image': 'assets/images/method_relaxation.png'},
-  {'title': 'Imagination', 'image': 'assets/images/method_imagination.png'},
-  {'title': 'Meditation', 'image': 'assets/images/method_meditation.png'},
-  {'title': 'Art Expression', 'image': 'assets/images/method_art.png'},
-  {'title': 'Social Bonding', 'image': 'assets/images/method_social.png'},
-  {'title': 'Self Development', 'image': 'assets/images/method_self_dev.png'},
+  {
+    'title': 'Relaxation',
+    'title_ar': 'الاسترخاء',
+    'image': 'assets/images/method_relaxation.png',
+  },
+  {
+    'title': 'Imagination',
+    'title_ar': 'الخيال',
+    'image': 'assets/images/method_imagination.png',
+  },
+  {
+    'title': 'Meditation',
+    'title_ar': 'التأمل',
+    'image': 'assets/images/method_meditation.png',
+  },
+  {
+    'title': 'Art Expression',
+    'title_ar': 'التعبير الفني',
+    'image': 'assets/images/method_art.png',
+  },
+  {
+    'title': 'Social Bonding',
+    'title_ar': 'الترابط الاجتماعي',
+    'image': 'assets/images/method_social.png',
+  },
+  {
+    'title': 'Self Development',
+    'title_ar': 'تطوير الذات',
+    'image': 'assets/images/method_self_dev.png',
+  },
   {
     'title': 'Social Justice Focus',
+    'title_ar': 'التركيز على العدالة الاجتماعية',
     'image': 'assets/images/method_justice.png',
   },
 ];
