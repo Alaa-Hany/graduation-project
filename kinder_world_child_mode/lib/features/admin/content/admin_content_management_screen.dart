@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/admin_cms_models.dart';
-import 'package:kinder_world/core/utils/video_url_utils.dart';
 import 'package:kinder_world/core/widgets/cloudinary_video_player_view.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/management/admin_management_repository.dart';
@@ -504,9 +503,6 @@ class _AdminContentManagementScreenState
     String selectedBehavioralMethod =
         metadataMap['behavioral_method']?.toString() ?? '';
     bool featured = metadataMap['featured'] == true;
-    if (selectedType == 'video' && videoProvider.text.trim().isEmpty) {
-      videoProvider.text = 'youtube';
-    }
     final isArabic =
         Localizations.localeOf(context).languageCode.toLowerCase() == 'ar';
     List<AdminCmsCategory> categoriesForAxis() {
@@ -737,10 +733,6 @@ class _AdminContentManagementScreenState
                             items: _contentTypeItems(l10n),
                             onChanged: (value) => setStateDialog(() {
                               selectedType = value ?? 'lesson';
-                              if (selectedType == 'video' &&
-                                  videoProvider.text.trim().isEmpty) {
-                                videoProvider.text = 'youtube';
-                              }
                             }),
                           ),
                         ),
@@ -896,17 +888,6 @@ class _AdminContentManagementScreenState
                         decoration: InputDecoration(
                           labelText: l10n.adminCmsVideoUrlLabel,
                         ),
-                        onChanged: (value) => setStateDialog(() {
-                          final youtubeThumbnail = youtubeThumbnailUrl(value);
-                          if (youtubeThumbnail != null &&
-                              thumb.text.trim().isEmpty) {
-                            thumb.text = youtubeThumbnail;
-                          }
-                          if (value.trim().isNotEmpty &&
-                              extractYouTubeVideoId(value) != null) {
-                            videoProvider.text = 'youtube';
-                          }
-                        }),
                       ),
                       const SizedBox(height: 12),
                       TextField(
@@ -1071,12 +1052,8 @@ class _AdminContentManagementScreenState
     final thumbValue = thumb.text.trim();
     final videoUrlValue = videoUrl.text.trim();
     final videoPreviewUrlValue = videoPreviewUrl.text.trim();
-    final youtubeId = extractYouTubeVideoId(videoUrlValue);
-    final normalizedVideoProvider = videoUrlValue.isEmpty
-        ? videoProvider.text.trim()
-        : (youtubeId != null ? 'youtube' : videoProvider.text.trim());
-    final derivedThumbnailUrl =
-        thumbValue.isNotEmpty ? thumbValue : youtubeThumbnailUrl(videoUrlValue);
+    final normalizedVideoProvider = videoProvider.text.trim();
+    final derivedThumbnailUrl = thumbValue.isNotEmpty ? thumbValue : null;
     if (selectedType == 'video' &&
         selectedStatus == 'published' &&
         videoUrlValue.isEmpty) {
@@ -2142,181 +2119,6 @@ class _AdminContentManagementScreenState
     });
   }
 
-  Future<void> _importFromYouTube() async {
-    final l10n = AppLocalizations.of(context)!;
-    final repo = ref.read(adminManagementRepositoryProvider);
-    final channelController = TextEditingController();
-    List<AdminYouTubeVideo> videos = const [];
-    final selected = <String>{};
-    final categoryByVideo = <String, int>{};
-    bool loading = false;
-    String? error;
-
-    final categoryOptions = _categories
-        .map(
-          (category) => DropdownMenuItem<int>(
-            value: category.id,
-            child: Text('${category.axisKey} · ${category.titleEn}'),
-          ),
-        )
-        .toList();
-
-    await showDialog<void>(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setStateDialog) {
-          Future<void> fetchVideos() async {
-            final channel = channelController.text.trim();
-            if (channel.isEmpty) return;
-            setStateDialog(() {
-              loading = true;
-              error = null;
-            });
-            try {
-              final preview = await repo.fetchYouTubeChannelVideos(
-                channel: channel,
-              );
-              setStateDialog(() {
-                videos = preview.items;
-                loading = false;
-              });
-            } catch (e) {
-              setStateDialog(() {
-                error = e.toString();
-                loading = false;
-              });
-            }
-          }
-
-          Future<void> importSelected() async {
-            final items = videos
-                .where((video) => selected.contains(video.videoId))
-                .map((video) {
-                  final categoryId = categoryByVideo[video.videoId] ??
-                      (_categories.isNotEmpty ? _categories.first.id : null);
-                  return {
-                    'video_id': video.videoId,
-                    'category_id': categoryId,
-                    'title_en': video.title,
-                    'title_ar': video.title,
-                    'description_en': video.description,
-                    'thumbnail_url': video.thumbnailUrl,
-                  };
-                })
-                .toList();
-            if (items.isEmpty || _categories.isEmpty) return;
-            setStateDialog(() {
-              loading = true;
-              error = null;
-            });
-            try {
-              final created = await repo.importYouTubeVideos(items);
-              if (!context.mounted) return;
-              Navigator.of(context).pop();
-              await _loadAll();
-              _showFeedback(l10n.adminCmsYoutubeImportSuccess(created.length));
-            } catch (e) {
-              setStateDialog(() {
-                error = e.toString();
-                loading = false;
-              });
-            }
-          }
-
-          return AlertDialog(
-            insetPadding: EdgeInsets.symmetric(
-              horizontal: MediaQuery.sizeOf(context).width < 600 ? 16 : 40,
-              vertical: 24,
-            ),
-            title: Text(l10n.adminCmsImportFromYoutube),
-            content: SizedBox(
-              width: adminResponsiveDialogWidth(context, preferredWidth: 640),
-              height: 480,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: channelController,
-                          decoration: InputDecoration(
-                            labelText: l10n.adminCmsYoutubeChannelLabel,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      FilledButton(
-                        onPressed: loading ? null : fetchVideos,
-                        child: Text(l10n.adminCmsYoutubeFetchAction),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  if (error != null)
-                    Text(error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-                  if (loading) const LinearProgressIndicator(),
-                  Expanded(
-                    child: videos.isEmpty
-                        ? Center(child: Text(l10n.adminCmsYoutubeNoVideosFound))
-                        : ListView.builder(
-                            itemCount: videos.length,
-                            itemBuilder: (context, index) {
-                              final video = videos[index];
-                              final isSelected =
-                                  selected.contains(video.videoId);
-                              return CheckboxListTile(
-                                value: isSelected,
-                                onChanged: (value) => setStateDialog(() {
-                                  if (value ?? false) {
-                                    selected.add(video.videoId);
-                                  } else {
-                                    selected.remove(video.videoId);
-                                  }
-                                }),
-                                title: Text(video.title),
-                                subtitle: categoryOptions.isEmpty
-                                    ? null
-                                    : DropdownButtonFormFieldCompat<int>(
-                                        initialValue:
-                                            categoryByVideo[video.videoId] ??
-                                                _categories.first.id,
-                                        items: categoryOptions,
-                                        decoration: InputDecoration(
-                                          labelText: l10n.adminCmsCategoryLabel,
-                                        ),
-                                        onChanged: (value) => setStateDialog(
-                                          () => categoryByVideo[
-                                              video.videoId] = value ??
-                                              categoryByVideo[video.videoId] ??
-                                              0,
-                                        ),
-                                      ),
-                              );
-                            },
-                          ),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(l10n.cancel),
-              ),
-              FilledButton(
-                onPressed: (loading || selected.isEmpty)
-                    ? null
-                    : importSelected,
-                child: Text(l10n.adminCmsYoutubeImportSelectedAction),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
   Widget _buildAxisWorkspace(
     BuildContext context,
     AppLocalizations l10n,
@@ -2399,11 +2201,6 @@ class _AdminContentManagementScreenState
                       onPressed: canCreate ? () => _saveQuiz() : null,
                       icon: const Icon(Icons.quiz_outlined),
                       label: Text(l10n.adminCmsAddQuiz),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: canCreate ? () => _importFromYouTube() : null,
-                      icon: const Icon(Icons.smart_display_outlined),
-                      label: Text(l10n.adminCmsImportFromYoutube),
                     ),
                   ],
                 ),
