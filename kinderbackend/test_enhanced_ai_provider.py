@@ -189,9 +189,7 @@ def test_generate_returns_response(provider):
     fake = _FakeClient(_fake_completion(content="Hello kiddo", total_tokens=22))
     provider._client = fake
 
-    result = provider.generate(
-        child_name="Sam", message="hi", quick_action="tell_story"
-    )
+    result = provider.generate(child_name="Sam", message="hi", quick_action="tell_story")
 
     assert isinstance(result, EnhancedAIResponse)
     assert result.content == "Hello kiddo"

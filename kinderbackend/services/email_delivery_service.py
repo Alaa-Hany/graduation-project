@@ -28,14 +28,18 @@ class EmailDeliveryService:
         # Never let a blocked port hang the request forever; fail fast instead.
         self.timeout = float(os.getenv("EMAIL_TIMEOUT_SECONDS", "10"))
 
-    def send_email(self, *, to_email: str, subject: str, body: str, html_body: str | None = None) -> None:
+    def send_email(
+        self, *, to_email: str, subject: str, body: str, html_body: str | None = None
+    ) -> None:
         if self.brevo_api_key:
             self._send_via_brevo(to_email=to_email, subject=subject, body=body, html_body=html_body)
             return
 
         self._send_via_smtp(to_email=to_email, subject=subject, body=body, html_body=html_body)
 
-    def _send_via_brevo(self, *, to_email: str, subject: str, body: str, html_body: str | None) -> None:
+    def _send_via_brevo(
+        self, *, to_email: str, subject: str, body: str, html_body: str | None
+    ) -> None:
         if not self.from_email:
             raise RuntimeError(
                 "Brevo sender is not configured; set SMTP_FROM_EMAIL to a verified Brevo sender"
@@ -64,7 +68,9 @@ class EmailDeliveryService:
                 f"Brevo API rejected the email (status={response.status_code}): {response.text}"
             )
 
-    def _send_via_smtp(self, *, to_email: str, subject: str, body: str, html_body: str | None) -> None:
+    def _send_via_smtp(
+        self, *, to_email: str, subject: str, body: str, html_body: str | None
+    ) -> None:
         if not self.username or not self.password or not self.from_email:
             raise RuntimeError("SMTP credentials are not configured")
 

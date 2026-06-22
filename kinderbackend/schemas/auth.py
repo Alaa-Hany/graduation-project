@@ -335,9 +335,7 @@ class CurrentUserResponse(BaseModel):
 class ForgotPasswordIn(AuthSchemaBase):
     email: EmailStr
 
-    model_config = ConfigDict(
-        json_schema_extra={"example": {"email": "parent@example.com"}}
-    )
+    model_config = ConfigDict(json_schema_extra={"example": {"email": "parent@example.com"}})
 
 
 class ResetPasswordIn(AuthSchemaBase):

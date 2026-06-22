@@ -34,9 +34,7 @@ def test_record_activity_event_delegates(monkeypatch):
         "record_activity_event",
         _recorder(calls, {"ok": True}),
     )
-    result = analytics_module.record_activity_event(
-        db="DB", parent="PARENT", payload="PAYLOAD"
-    )
+    result = analytics_module.record_activity_event(db="DB", parent="PARENT", payload="PAYLOAD")
     assert result == {"ok": True}
     assert calls["args"] == {"db": "DB", "parent": "PARENT", "payload": "PAYLOAD"}
 
@@ -48,9 +46,7 @@ def test_record_session_log_delegates(monkeypatch):
         "record_session_log",
         _recorder(calls, {"ok": True}),
     )
-    result = analytics_module.record_session_log(
-        db="DB", parent="PARENT", payload="PAYLOAD"
-    )
+    result = analytics_module.record_session_log(db="DB", parent="PARENT", payload="PAYLOAD")
     assert result == {"ok": True}
     assert calls["args"] == {"db": "DB", "parent": "PARENT", "payload": "PAYLOAD"}
 

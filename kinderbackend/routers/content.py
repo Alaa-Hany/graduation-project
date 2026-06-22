@@ -452,7 +452,9 @@ def list_child_content_items(
     page_items = items[start : start + limit]
 
     return {
-        "items": [_serialize_public_content_item(item, include_quizzes=True) for item in page_items],
+        "items": [
+            _serialize_public_content_item(item, include_quizzes=True) for item in page_items
+        ],
         "page": page,
         "limit": limit,
         "total": total,

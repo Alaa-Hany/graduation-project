@@ -29,7 +29,15 @@ from models import SupportTicket, User
 from plan_service import PLAN_FREE
 import secrets
 
-from schemas.auth import ForgotPasswordIn, LoginIn, RefreshIn, RegisterIn, ResendEmailOtpIn, ResetPasswordIn, VerifyEmailOtpIn
+from schemas.auth import (
+    ForgotPasswordIn,
+    LoginIn,
+    RefreshIn,
+    RegisterIn,
+    ResendEmailOtpIn,
+    ResetPasswordIn,
+    VerifyEmailOtpIn,
+)
 from serializers import user_to_json
 from services.email_delivery_service import email_delivery_service
 from services.two_factor_service import two_factor_service
@@ -174,7 +182,9 @@ class AuthService:
   </table>
 </body>
 </html>"""
-        email_delivery_service.send_email(to_email=email, subject=subject, body=body, html_body=html_body)
+        email_delivery_service.send_email(
+            to_email=email, subject=subject, body=body, html_body=html_body
+        )
 
     def _parent_login_attempt_key(self, *, email: str) -> str:
         return email.strip().lower()
@@ -877,11 +887,7 @@ class AuthService:
         if not is_valid:
             raise HTTPException(status_code=422, detail=error_msg)
 
-        user = (
-            db.query(User)
-            .filter(User.password_reset_token_hash.isnot(None))
-            .all()
-        )
+        user = db.query(User).filter(User.password_reset_token_hash.isnot(None)).all()
         matching_user: User | None = None
         for u in user:
             token_hash = getattr(u, "password_reset_token_hash", None)
@@ -890,9 +896,7 @@ class AuthService:
                 break
 
         if matching_user is None or self._password_reset_token_expired(matching_user):
-            raise HTTPException(
-                status_code=400, detail=AuthMessages.INVALID_OR_EXPIRED_RESET_TOKEN
-            )
+            raise HTTPException(status_code=400, detail=AuthMessages.INVALID_OR_EXPIRED_RESET_TOKEN)
 
         matching_user.password_hash = hash_password(payload.new_password)
         matching_user.token_version = (matching_user.token_version or 0) + 1

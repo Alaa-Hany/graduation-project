@@ -66,9 +66,7 @@ async def get_basic_reports(
     db: Session = Depends(get_db),
 ):
     logger.info("Basic reports requested by user %s", user.id)
-    cache_key = report_cache_key(
-        user_id=user.id, child_id=child_id, report_type="basic", days=days
-    )
+    cache_key = report_cache_key(user_id=user.id, child_id=child_id, report_type="basic", days=days)
     cached = get_cached_report(cache_key)
     if cached is not None:
         return cached

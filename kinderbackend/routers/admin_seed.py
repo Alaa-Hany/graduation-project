@@ -29,6 +29,7 @@ router = APIRouter(prefix="/admin", tags=["Admin Seed"])
 class SeedRequest(BaseModel):
     secret: str
 
+
 SEED_ENABLED = os.getenv("ENABLE_ADMIN_SEED_ENDPOINT", "").strip().lower() in {
     "1",
     "true",

@@ -214,9 +214,7 @@ def test_send_via_smtp_ssl(monkeypatch):
     _FakeSMTP.instances.clear()
     monkeypatch.setattr(email_module.smtplib, "SMTP_SSL", _FakeSMTP)
 
-    service.send_email(
-        to_email="kid@home.com", subject="Hi", body="Body", html_body="<i>x</i>"
-    )
+    service.send_email(to_email="kid@home.com", subject="Hi", body="Body", html_body="<i>x</i>")
 
     sent = _FakeSMTP.instances[-1]
     assert sent.logged_in == ("user@gmail.com", "app-pass")

@@ -94,9 +94,7 @@ def test_thumbnail_url_with_and_without_version(configured):
 
 
 def test_upload_url_includes_cloud_name(configured):
-    assert configured._upload_url() == (
-        "https://api.cloudinary.com/v1_1/demo-cloud/video/upload"
-    )
+    assert configured._upload_url() == ("https://api.cloudinary.com/v1_1/demo-cloud/video/upload")
 
 
 # ---------------------------------------------------------------------------

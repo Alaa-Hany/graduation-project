@@ -223,9 +223,7 @@ def user_rate_limit(
 
 def auth_rate_limit():
     """Stricter rate limiting for authentication endpoints."""
-    return rate_limit(
-        max_requests=5, window_seconds=300, scope="authentication", fail_open=False
-    )
+    return rate_limit(max_requests=5, window_seconds=300, scope="authentication", fail_open=False)
 
 
 def api_rate_limit():

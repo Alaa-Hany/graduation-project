@@ -40,8 +40,9 @@ def _method_ref(method_id="pm_card", *, is_default=True):
 
 
 class FakeProvider:
-    def __init__(self, *, is_external=True, provider_key="stripe", raise_on=None, error=None,
-                 methods=None):
+    def __init__(
+        self, *, is_external=True, provider_key="stripe", raise_on=None, error=None, methods=None
+    ):
         self.is_external = is_external
         self.provider_key = provider_key
         self.raise_on = raise_on or set()
@@ -282,7 +283,9 @@ def test_billing_portal_action_required(db, create_parent, use_provider):
     parent = create_parent(email="portal-501@example.com", plan=PLAN_PREMIUM)
     _stripe_profile(db, parent, sub_id="sub_x")
     use_provider(
-        FakeProvider(raise_on={"portal"}, error=PaymentProviderActionRequiredError("not configured"))
+        FakeProvider(
+            raise_on={"portal"}, error=PaymentProviderActionRequiredError("not configured")
+        )
     )
     with pytest.raises(HTTPException) as exc:
         subscription_service.billing_portal(db=db, user=parent)

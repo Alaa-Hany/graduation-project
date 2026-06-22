@@ -262,7 +262,9 @@ class PaymentWebhookService:
         billing_interval = self._metadata_from_object(obj).get("billing_interval")
         profile.provider = "stripe"
         profile.provider_customer_id = checkout.customer_id or profile.provider_customer_id
-        profile.provider_subscription_id = checkout.subscription_id or profile.provider_subscription_id
+        profile.provider_subscription_id = (
+            checkout.subscription_id or profile.provider_subscription_id
+        )
         if billing_interval:
             profile.billing_interval = str(billing_interval).strip().lower()
         profile.will_renew = bool(checkout.subscription_id)
@@ -465,7 +467,9 @@ class PaymentWebhookService:
         current_period_end = self._timestamp_to_utc(obj.get("current_period_end"))
         cancel_at = self._timestamp_to_utc(obj.get("cancel_at"))
 
-        profile.provider_subscription_id = self._as_str(obj.get("id")) or profile.provider_subscription_id
+        profile.provider_subscription_id = (
+            self._as_str(obj.get("id")) or profile.provider_subscription_id
+        )
         profile.will_renew = not cancel_at_period_end and stripe_status in {"active", "trialing"}
         profile.cancel_at = cancel_at if cancel_at_period_end else None
         profile.expires_at = current_period_end or profile.expires_at
@@ -766,7 +770,10 @@ class PaymentWebhookService:
             return None
         from core.settings import settings
 
-        if price_id in {settings.stripe_price_premium_monthly, settings.stripe_price_premium_yearly}:
+        if price_id in {
+            settings.stripe_price_premium_monthly,
+            settings.stripe_price_premium_yearly,
+        }:
             return "PREMIUM"
         if price_id in {
             settings.stripe_price_family_plus_monthly,

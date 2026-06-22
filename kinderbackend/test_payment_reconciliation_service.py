@@ -94,9 +94,7 @@ def _stripe_profile(db, parent, *, plan=PLAN_PREMIUM, status="active", will_rene
     ],
 )
 def test_payment_status_from_invoice(invoice_status, expected):
-    assert (
-        PaymentReconciliationService._payment_status_from_invoice(invoice_status) == expected
-    )
+    assert PaymentReconciliationService._payment_status_from_invoice(invoice_status) == expected
 
 
 def test_normalize_dt():
@@ -129,9 +127,7 @@ def test_serialize_changes_handles_datetimes():
 )
 def test_map_provider_snapshot_status(db, create_parent, status, expected_status):
     parent = create_parent(email=f"map-{status}@example.com", plan=PLAN_PREMIUM)
-    profile = SubscriptionProfile(
-        user_id=parent.id, current_plan_id=PLAN_PREMIUM, status="active"
-    )
+    profile = SubscriptionProfile(user_id=parent.id, current_plan_id=PLAN_PREMIUM, status="active")
     mapped = PaymentReconciliationService._map_provider_snapshot(
         _snapshot(status=status, latest_invoice_status="paid"), profile=profile
     )
@@ -140,9 +136,7 @@ def test_map_provider_snapshot_status(db, create_parent, status, expected_status
 
 def test_map_provider_snapshot_canceled_forces_free_plan(create_parent, db):
     parent = create_parent(email="map-cancel@example.com", plan=PLAN_PREMIUM)
-    profile = SubscriptionProfile(
-        user_id=parent.id, current_plan_id=PLAN_PREMIUM, status="active"
-    )
+    profile = SubscriptionProfile(user_id=parent.id, current_plan_id=PLAN_PREMIUM, status="active")
     mapped = PaymentReconciliationService._map_provider_snapshot(
         _snapshot(status="canceled"), profile=profile
     )
@@ -295,9 +289,7 @@ def test_reconcile_all_excludes_pending_when_requested(db, create_parent):
     db.add(profile)
     db.commit()
     snapshot = _snapshot(status="active")
-    result = _service(snapshot=snapshot).reconcile_all(
-        db=db, limit=10, include_pending=False
-    )
+    result = _service(snapshot=snapshot).reconcile_all(db=db, limit=10, include_pending=False)
     # The only profile is pending and therefore filtered out of the scan.
     assert result.scanned == 0
 

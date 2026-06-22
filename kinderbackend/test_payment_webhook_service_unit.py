@@ -94,7 +94,9 @@ def test_timestamp_to_utc(svc):
 
 def test_subscription_id_from_object(svc):
     assert svc._subscription_id_from_object({"object": "subscription", "id": "sub_1"}) == "sub_1"
-    assert svc._subscription_id_from_object({"object": "invoice", "subscription": "sub_2"}) == "sub_2"
+    assert (
+        svc._subscription_id_from_object({"object": "invoice", "subscription": "sub_2"}) == "sub_2"
+    )
     assert svc._subscription_id_from_object({"object": "invoice"}) is None
 
 
@@ -134,8 +136,12 @@ def test_invoice_period_end_fallback_to_current_period_end(svc):
 
 
 def test_price_id_from_object_lines_and_items(svc):
-    assert svc._price_id_from_object({"lines": {"data": [{"price": {"id": "price_a"}}]}}) == "price_a"
-    assert svc._price_id_from_object({"items": {"data": [{"price": {"id": "price_b"}}]}}) == "price_b"
+    assert (
+        svc._price_id_from_object({"lines": {"data": [{"price": {"id": "price_a"}}]}}) == "price_a"
+    )
+    assert (
+        svc._price_id_from_object({"items": {"data": [{"price": {"id": "price_b"}}]}}) == "price_b"
+    )
     assert svc._price_id_from_object({"lines": {"data": [{"no_price": True}]}}) is None
     assert svc._price_id_from_object({}) is None
 

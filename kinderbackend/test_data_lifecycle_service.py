@@ -94,17 +94,13 @@ def test_apply_tracking_retention_archives_only_old_rows(
     old_session = ChildSessionLog(
         child_id=child.id, started_at=old, ended_at=old, duration_seconds=60
     )
-    old_activity = ActivitySession(
-        child_id=child.id, activity_type="game", started_at=old
-    )
+    old_activity = ActivitySession(child_id=child.id, activity_type="game", started_at=old)
     old_screen = ScreenTimeLog(
         child_id=child.id, usage_date=old.date(), minutes_used=30, logged_at=old
     )
     old_ai = AiInteraction(child_id=child.id, interaction_type="chat", occurred_at=old)
 
-    db.add_all(
-        [old_event, recent_event, old_session, old_activity, old_screen, old_ai]
-    )
+    db.add_all([old_event, recent_event, old_session, old_activity, old_screen, old_ai])
     db.commit()
 
     result = dls.apply_tracking_retention(db, now=now)
@@ -121,9 +117,7 @@ def test_apply_tracking_retention_archives_only_old_rows(
     assert recent_event.archived_at is None
 
 
-def test_apply_tracking_retention_archives_expired_ai_buddy_rows(
-    db, create_parent, create_child
-):
+def test_apply_tracking_retention_archives_expired_ai_buddy_rows(db, create_parent, create_child):
     parent, child = _make_child(create_parent, create_child)
     now = utc_now()
 
@@ -163,9 +157,7 @@ def test_apply_tracking_retention_archives_expired_ai_buddy_rows(
     assert fresh_message.archived_at is None
 
 
-def test_apply_tracking_retention_archives_old_daily_summaries(
-    db, create_parent, create_child
-):
+def test_apply_tracking_retention_archives_old_daily_summaries(db, create_parent, create_child):
     _, child = _make_child(create_parent, create_child)
 
     old_summary = ChildDailyActivitySummary(
@@ -196,9 +188,7 @@ def test_apply_tracking_retention_noop_on_empty_db(db):
 # ---------------------------------------------------------------------------
 
 
-def test_rebuild_daily_summary_aggregates_sessions_and_events(
-    db, create_parent, create_child
-):
+def test_rebuild_daily_summary_aggregates_sessions_and_events(db, create_parent, create_child):
     _, child = _make_child(create_parent, create_child)
 
     day = utc_today() - timedelta(days=1)
@@ -278,9 +268,7 @@ def test_rebuild_daily_summary_updates_existing_row(db, create_parent, create_ch
     )
     db.commit()
 
-    result = dls.rebuild_daily_summary_for_child(
-        db, child_id=child.id, day=day, source="manual"
-    )
+    result = dls.rebuild_daily_summary_for_child(db, child_id=child.id, day=day, source="manual")
 
     assert result["activities_completed"] == 1
     assert result["data_source"] == "manual"
@@ -300,9 +288,7 @@ def test_rebuild_daily_summary_unknown_child_raises(db):
         dls.rebuild_daily_summary_for_child(db, child_id=999999, day=utc_today())
 
 
-def test_rebuild_daily_summary_no_activity_yields_zeroes(
-    db, create_parent, create_child
-):
+def test_rebuild_daily_summary_no_activity_yields_zeroes(db, create_parent, create_child):
     _, child = _make_child(create_parent, create_child)
     day = utc_today()
 

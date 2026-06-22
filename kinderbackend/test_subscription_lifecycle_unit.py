@@ -252,9 +252,7 @@ def test_activate_missing_session_id(db, create_parent, use_provider):
 
 def test_activate_provider_unavailable(db, create_parent, use_provider):
     parent = create_parent(email="act-503@example.com", plan=PLAN_FREE)
-    use_provider(
-        FakeProvider(raise_on={"retrieve"}, error=PaymentProviderUnavailableError("down"))
-    )
+    use_provider(FakeProvider(raise_on={"retrieve"}, error=PaymentProviderUnavailableError("down")))
     with pytest.raises(HTTPException) as exc:
         subscription_service.activate_subscription(
             payload=_select_payload(PLAN_PREMIUM, session_id="cs_x"), db=db, user=parent

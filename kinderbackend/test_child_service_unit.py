@@ -8,7 +8,6 @@ The autouse conftest fixtures mock Redis; several tests here monkeypatch
 ``get_redis_client`` to ``None`` to exercise the in-memory fallback paths.
 """
 
-
 import pytest
 from fastapi import HTTPException
 
@@ -61,11 +60,15 @@ def test_picture_password_length_non_dict(service):
 def test_verify_picture_password_roundtrip(service):
     envelope = service._hash_picture_password(PW)
     assert service._verify_picture_password(stored_password=envelope, provided_password=PW) is True
-    assert service._verify_picture_password(stored_password=envelope, provided_password=PW2) is False
+    assert (
+        service._verify_picture_password(stored_password=envelope, provided_password=PW2) is False
+    )
 
 
 def test_verify_picture_password_rejects_non_dict(service):
-    assert service._verify_picture_password(stored_password=["plain"], provided_password=PW) is False
+    assert (
+        service._verify_picture_password(stored_password=["plain"], provided_password=PW) is False
+    )
 
 
 def test_ensure_parent_email_match_and_none(service, create_parent):
@@ -78,7 +81,9 @@ def test_ensure_parent_email_match_and_none(service, create_parent):
 def test_ensure_parent_email_mismatch_forbidden(service, create_parent):
     parent = create_parent(email="real@example.com")
     with pytest.raises(HTTPException) as exc:
-        service._ensure_parent_matches_payload_email(parent=parent, parent_email="other@example.com")
+        service._ensure_parent_matches_payload_email(
+            parent=parent, parent_email="other@example.com"
+        )
     assert exc.value.status_code == 403
 
 
@@ -106,7 +111,9 @@ def test_create_child_profile_duplicate_name(service, db, create_parent):
     _make_child(service, db, parent, name="Twin")
     with pytest.raises(HTTPException) as exc:
         service.create_child_profile(
-            payload=ChildCreate(name="Twin", picture_password=PW2, age=6, parent_email=parent.email),
+            payload=ChildCreate(
+                name="Twin", picture_password=PW2, age=6, parent_email=parent.email
+            ),
             parent=parent,
             db=db,
         )
@@ -119,7 +126,9 @@ def test_create_child_profile_limit_reached(service, db, create_parent):
     _make_child(service, db, parent, name="First")
     with pytest.raises(HTTPException) as exc:
         service.create_child_profile(
-            payload=ChildCreate(name="Second", picture_password=PW2, age=6, parent_email=parent.email),
+            payload=ChildCreate(
+                name="Second", picture_password=PW2, age=6, parent_email=parent.email
+            ),
             parent=parent,
             db=db,
         )
@@ -165,9 +174,7 @@ def test_update_child_profile_all_fields(service, db, create_parent):
         age=8,
         avatar="assets/images/avatars/av2.png",
     )
-    result = service.update_child_profile(
-        child_id=child.id, payload=payload, parent=parent, db=db
-    )
+    result = service.update_child_profile(child_id=child.id, payload=payload, parent=parent, db=db)
     assert result["child"]["name"] == "After"
 
 
@@ -331,9 +338,7 @@ def test_validate_child_session_wrong_token_type(service, db, create_parent):
     child = _make_child(service, db, parent, name="TypeKid")
     token = create_token(str(child.id), minutes=60, extra_claims={"token_type": "access"})
     with pytest.raises(HTTPException) as exc:
-        service.validate_child_session(
-            payload=ChildSessionValidateIn(session_token=token), db=db
-        )
+        service.validate_child_session(payload=ChildSessionValidateIn(session_token=token), db=db)
     assert exc.value.status_code == 401
 
 
@@ -344,9 +349,7 @@ def test_validate_child_session_child_not_found(service, db):
         extra_claims={"token_type": "child_session", "child_id": 424242},
     )
     with pytest.raises(HTTPException) as exc:
-        service.validate_child_session(
-            payload=ChildSessionValidateIn(session_token=token), db=db
-        )
+        service.validate_child_session(payload=ChildSessionValidateIn(session_token=token), db=db)
     assert exc.value.status_code == 404
 
 
@@ -463,7 +466,9 @@ def test_module_wrappers_delegate(monkeypatch):
         monkeypatch.setattr(child_module.child_service, name, stub(name))
 
     assert child_module.enforce_child_limit("p", "db") == {"stub": "enforce_child_limit"}
-    assert child_module.ensure_unique_child_name("p", "n", "db")["stub"] == "ensure_unique_child_name"
+    assert (
+        child_module.ensure_unique_child_name("p", "n", "db")["stub"] == "ensure_unique_child_name"
+    )
     assert child_module.create_child_profile("pl", "p", "db")["stub"] == "create_child_profile"
     assert child_module.list_parent_children("p", "db")["stub"] == "list_parent_children"
     assert child_module.delete_child_profile(1, "p", "db")["stub"] == "delete_child_profile"

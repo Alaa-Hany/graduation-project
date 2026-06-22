@@ -3,7 +3,12 @@ from sqlalchemy.orm import Session
 
 from deps import get_current_user, get_db
 from models import User
-from rate_limit import auth_rate_limit, email_otp_resend_rate_limit, email_otp_verify_rate_limit, password_reset_rate_limit
+from rate_limit import (
+    auth_rate_limit,
+    email_otp_resend_rate_limit,
+    email_otp_verify_rate_limit,
+    password_reset_rate_limit,
+)
 from schemas.auth import (
     AccessTokenResponse,
     AuthTokenResponse,

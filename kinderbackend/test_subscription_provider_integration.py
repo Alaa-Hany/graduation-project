@@ -234,7 +234,10 @@ def test_external_provider_recurring_purchase_unlocks_access_and_supports_refund
             snapshot_payload["lifecycle"]["provider_customer_id"] == fake_provider.state.customer_id
         )
         assert snapshot_payload["lifecycle"]["has_paid_access"] is True
-        assert snapshot_payload["lifecycle"]["provider_subscription_id"] == fake_provider.state.subscription_id
+        assert (
+            snapshot_payload["lifecycle"]["provider_subscription_id"]
+            == fake_provider.state.subscription_id
+        )
         assert snapshot_payload["lifecycle"]["will_renew"] is True
         assert any(
             item["provider_reference"] == fake_provider.state.session_id

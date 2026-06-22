@@ -156,9 +156,7 @@ def test_synthesize_uses_custom_voice_and_speed():
     recorder: dict = {}
     service._client = _FakeClient(recorder)
 
-    result = asyncio.run(
-        service.synthesize(text="hi", voice="echo", speed=1.5)
-    )
+    result = asyncio.run(service.synthesize(text="hi", voice="echo", speed=1.5))
 
     assert recorder["speech_kwargs"]["voice"] == "echo"
     assert recorder["speech_kwargs"]["speed"] == 1.5

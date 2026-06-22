@@ -106,7 +106,9 @@ def test_register_parent_existing_unverified_overwrites(service, db, create_pare
 
 def test_register_parent_otp_send_failure(service, db, monkeypatch):
     monkeypatch.setattr(
-        service, "_send_email_otp", lambda **kwargs: (_ for _ in ()).throw(RuntimeError("smtp down"))
+        service,
+        "_send_email_otp",
+        lambda **kwargs: (_ for _ in ()).throw(RuntimeError("smtp down")),
     )
     payload = RegisterIn(
         name="P",
@@ -578,9 +580,7 @@ def test_request_password_reset_send_failure(service, db, create_parent, monkeyp
 
 
 def test_confirm_password_reset_password_mismatch(service, db):
-    payload = ResetPasswordIn(
-        token="tok", new_password=NEW_PASSWORD, confirm_password="Other123!"
-    )
+    payload = ResetPasswordIn(token="tok", new_password=NEW_PASSWORD, confirm_password="Other123!")
     with pytest.raises(HTTPException) as exc:
         service.confirm_password_reset(payload, db)
     assert exc.value.status_code == 400
@@ -682,14 +682,20 @@ def test_module_wrappers_delegate(monkeypatch):
     ):
         monkeypatch.setattr(auth_module.auth_service, name, stub(name))
 
-    assert auth_module.refresh_parent_access_token("p", "db") == {"stub": "refresh_parent_access_token"}
+    assert auth_module.refresh_parent_access_token("p", "db") == {
+        "stub": "refresh_parent_access_token"
+    }
     assert auth_module.update_profile(payload="p", db="db", user="u")["stub"] == "update_profile"
     assert auth_module.change_password(payload="p", db="db", user="u")["stub"] == "change_password"
     assert auth_module.logout(db="db", user="u")["stub"] == "logout"
     assert auth_module.get_parent_pin_status(user="u")["stub"] == "get_parent_pin_status"
     assert auth_module.set_parent_pin(payload="p", db="db", user="u")["stub"] == "set_parent_pin"
-    assert auth_module.verify_parent_pin(payload="p", db="db", user="u")["stub"] == "verify_parent_pin"
-    assert auth_module.change_parent_pin(payload="p", db="db", user="u")["stub"] == "change_parent_pin"
+    assert (
+        auth_module.verify_parent_pin(payload="p", db="db", user="u")["stub"] == "verify_parent_pin"
+    )
+    assert (
+        auth_module.change_parent_pin(payload="p", db="db", user="u")["stub"] == "change_parent_pin"
+    )
     assert (
         auth_module.request_parent_pin_reset(payload="p", db="db", user="u")["stub"]
         == "request_parent_pin_reset"
