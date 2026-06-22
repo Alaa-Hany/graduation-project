@@ -60,57 +60,35 @@ class DropdownButtonFormFieldCompat<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final namedArguments = <Symbol, dynamic>{
-      if (key != null) #key: key,
-      #items: items,
-      if (selectedItemBuilder != null) #selectedItemBuilder: selectedItemBuilder,
-      if (onChanged != null) #onChanged: onChanged,
-      if (onSaved != null) #onSaved: onSaved,
-      if (validator != null) #validator: validator,
-      if (decoration != null) #decoration: decoration,
-      if (hint != null) #hint: hint,
-      if (disabledHint != null) #disabledHint: disabledHint,
-      #isDense: isDense,
-      #isExpanded: isExpanded,
-      #autofocus: autofocus,
-      if (focusNode != null) #focusNode: focusNode,
-      if (icon != null) #icon: icon,
-      if (iconDisabledColor != null) #iconDisabledColor: iconDisabledColor,
-      if (iconEnabledColor != null) #iconEnabledColor: iconEnabledColor,
-      #iconSize: iconSize,
-      if (itemHeight != null) #itemHeight: itemHeight,
-      if (style != null) #style: style,
-      if (dropdownColor != null) #dropdownColor: dropdownColor,
-      if (menuMaxHeight != null) #menuMaxHeight: menuMaxHeight,
-      #alignment: alignment,
-      if (borderRadius != null) #borderRadius: borderRadius,
-      if (padding != null) #padding: padding,
-      if (enableFeedback != null) #enableFeedback: enableFeedback,
-      if (barrierDismissible != null)
-        #barrierDismissible: barrierDismissible,
-    };
-
-    try {
-      return Function.apply(
-            DropdownButtonFormField<T>.new,
-            const [],
-            <Symbol, dynamic>{
-              ...namedArguments,
-              #initialValue: initialValue,
-            },
-          )
-          as Widget;
-    } on NoSuchMethodError {
-      return Function.apply(
-            DropdownButtonFormField<T>.new,
-            const [],
-            <Symbol, dynamic>{
-              ...namedArguments,
-              #value: initialValue,
-            },
-          )
-          as Widget;
-    }
+    return DropdownButtonFormField<T>(
+      key: key,
+      initialValue: initialValue,
+      items: items,
+      selectedItemBuilder: selectedItemBuilder,
+      onChanged: onChanged,
+      onSaved: onSaved,
+      validator: validator,
+      decoration: decoration,
+      hint: hint,
+      disabledHint: disabledHint,
+      isDense: isDense,
+      isExpanded: isExpanded,
+      autofocus: autofocus,
+      focusNode: focusNode,
+      icon: icon,
+      iconDisabledColor: iconDisabledColor,
+      iconEnabledColor: iconEnabledColor,
+      iconSize: iconSize,
+      itemHeight: itemHeight,
+      style: style,
+      dropdownColor: dropdownColor,
+      menuMaxHeight: menuMaxHeight,
+      alignment: alignment,
+      borderRadius: borderRadius,
+      padding: padding,
+      enableFeedback: enableFeedback,
+      barrierDismissible: barrierDismissible ?? true,
+    );
   }
 }
 
@@ -136,36 +114,15 @@ class SwitchListTileCompat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final namedArguments = <Symbol, dynamic>{
-      if (key != null) #key: key,
-      if (contentPadding != null) #contentPadding: contentPadding,
-      if (secondary != null) #secondary: secondary,
-      if (title != null) #title: title,
-      if (subtitle != null) #subtitle: subtitle,
-      #value: value,
-      #onChanged: onChanged,
-    };
-
-    try {
-      return Function.apply(
-            SwitchListTile.new,
-            const [],
-            <Symbol, dynamic>{
-              ...namedArguments,
-              if (activeThumbColor != null) #activeThumbColor: activeThumbColor,
-            },
-          )
-          as Widget;
-    } on NoSuchMethodError {
-      return Function.apply(
-            SwitchListTile.new,
-            const [],
-            <Symbol, dynamic>{
-              ...namedArguments,
-              if (activeThumbColor != null) #activeColor: activeThumbColor,
-            },
-          )
-          as Widget;
-    }
+    return SwitchListTile(
+      key: key,
+      contentPadding: contentPadding,
+      secondary: secondary,
+      title: title,
+      subtitle: subtitle,
+      value: value,
+      onChanged: onChanged,
+      activeThumbColor: activeThumbColor,
+    );
   }
 }
