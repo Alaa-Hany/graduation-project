@@ -56,36 +56,43 @@ const learnSearchItems = <Map<String, String>>[
 const entertainingItems = <Map<String, dynamic>>[
   {
     'title': 'Puppet Show',
+    'title_ar': 'عروض الدمى',
     'image': 'assets/images/ent_puppet_show.png',
     'color': Colors.orange,
   },
   {
     'title': 'Interactive Stories',
+    'title_ar': 'قصص تفاعلية',
     'image': 'assets/images/ent_stories.png',
     'color': Colors.purple,
   },
   {
     'title': 'Songs & Music',
+    'title_ar': 'أغاني وموسيقى',
     'image': 'assets/images/ent_music.png',
     'color': Colors.pink,
   },
   {
     'title': 'Funny Clips',
+    'title_ar': 'مقاطع مضحكة',
     'image': 'assets/images/ent_clips.png',
     'color': Colors.yellow,
   },
   {
     'title': 'Brain Teasers',
+    'title_ar': 'ألغاز ذهنية',
     'image': 'assets/images/ent_teasers.png',
     'color': Colors.teal,
   },
   {
     'title': 'Games',
+    'title_ar': 'ألعاب',
     'image': 'assets/images/ent_games.png',
     'color': Colors.blue,
   },
   {
     'title': 'Cartoons',
+    'title_ar': 'رسوم متحركة',
     'image': 'assets/images/ent_cartoons.png',
     'color': Colors.indigo,
   },
@@ -195,36 +202,43 @@ const behavioralMethods = <Map<String, dynamic>>[
 const skillCatalog = <Map<String, dynamic>>[
   {
     'title': 'Cooking',
+    'title_ar': 'الطبخ',
     'image': 'assets/images/skill_cooking.png',
     'desc': 'Yummy food',
   },
   {
     'title': 'Drawing',
+    'title_ar': 'الرسم',
     'image': 'assets/images/skill_drawing.png',
     'desc': 'Express art',
   },
   {
     'title': 'Coloring',
+    'title_ar': 'التلوين',
     'image': 'assets/images/skill_coloring.png',
     'desc': 'Use colors',
   },
   {
     'title': 'Music',
+    'title_ar': 'الموسيقى',
     'image': 'assets/images/skill_music.png',
     'desc': 'Play instruments',
   },
   {
     'title': 'Singing',
+    'title_ar': 'الغناء',
     'image': 'assets/images/skill_singing.png',
     'desc': 'Learn songs',
   },
   {
     'title': 'Handcrafts',
+    'title_ar': 'الأشغال اليدوية',
     'image': 'assets/images/skill_handcrafts.png',
     'desc': 'Cut & Paste',
   },
   {
     'title': 'Sports',
+    'title_ar': 'الرياضة',
     'image': 'assets/images/skill_sports.png',
     'desc': 'Stay fit',
   },
@@ -233,41 +247,49 @@ const skillCatalog = <Map<String, dynamic>>[
 const educationalSubjects = <Map<String, dynamic>>[
   {
     'title': 'English',
+    'title_ar': 'الإنجليزية',
     'image': 'assets/images/edu_english.png',
     'color': Colors.blueAccent,
   },
   {
     'title': 'Arabic',
+    'title_ar': 'العربية',
     'image': 'assets/images/edu_arabic.png',
     'color': Colors.green,
   },
   {
     'title': 'Geography',
+    'title_ar': 'الجغرافيا',
     'image': 'assets/images/edu_geography.png',
     'color': Colors.orange,
   },
   {
     'title': 'History',
+    'title_ar': 'التاريخ',
     'image': 'assets/images/edu_history.png',
     'color': Colors.brown,
   },
   {
     'title': 'Science',
+    'title_ar': 'العلوم',
     'image': 'assets/images/edu_science.png',
     'color': Colors.purple,
   },
   {
     'title': 'Math',
+    'title_ar': 'الرياضيات',
     'image': 'assets/images/edu_math.png',
     'color': Colors.red,
   },
   {
     'title': 'Animals',
+    'title_ar': 'الحيوانات',
     'image': 'assets/images/edu_animals.png',
     'color': Colors.teal,
   },
   {
     'title': 'Plants',
+    'title_ar': 'النباتات',
     'image': 'assets/images/edu_plants.png',
     'color': Colors.lightGreen,
   },

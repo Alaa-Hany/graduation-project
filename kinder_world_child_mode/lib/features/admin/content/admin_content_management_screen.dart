@@ -154,6 +154,29 @@ class _AdminContentManagementScreenState
         .toList();
   }
 
+  List<({String titleEn, String titleAr})> _axisQuickFillItems(String axisKey) {
+    List<Map<String, dynamic>> source;
+    switch (axisKey) {
+      case 'behavioral':
+        source = behavioralValues.cast();
+      case 'educational':
+        source = educationalSubjects.cast();
+      case 'skillful':
+        source = skillCatalog.cast();
+      case 'entertaining':
+        source = entertainingItems.cast();
+      default:
+        return [];
+    }
+    return source
+        .map((item) => (
+              titleEn: item['title']?.toString() ?? '',
+              titleAr: item['title_ar']?.toString() ?? '',
+            ))
+        .where((item) => item.titleEn.isNotEmpty)
+        .toList();
+  }
+
   String _axisTitle(BuildContext context, String? axisKey) {
     if ((axisKey ?? '').isEmpty) {
       return '';
@@ -289,29 +312,13 @@ class _AdminContentManagementScreenState
         initialAxisKey ??
         _selectedAxisSummary?.key ??
         _selectedAxisKey;
-    String behavioralQuickValue = '';
-    String behavioralQuickMethod = '';
+    String quickFillValue = '';
 
     String makeSlug(String en) => en
         .trim()
         .toLowerCase()
         .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
         .replaceAll(RegExp(r'^-+|-+$'), '');
-
-    void applyBehavioralFill(String value, String method) {
-      final valueEntry = behavioralValues.cast<Map<String, dynamic>>().where((v) => v['title'] == value).firstOrNull;
-      final methodEntry = behavioralMethods.cast<Map<String, dynamic>>().where((m) => m['title'] == method).firstOrNull;
-      final enParts = [if (value.isNotEmpty) value, if (method.isNotEmpty) method];
-      final arParts = [
-        if (value.isNotEmpty && valueEntry != null) valueEntry['title_ar']!.toString(),
-        if (method.isNotEmpty && methodEntry != null) methodEntry['title_ar']!.toString(),
-      ];
-      if (enParts.isNotEmpty) {
-        titleEn.text = enParts.join(' - ');
-        titleAr.text = arParts.join(' - ');
-        slug.text = makeSlug(enParts.join(' '));
-      }
-    }
 
     final confirmed = await showDialog<bool>(
           context: context,
@@ -348,69 +355,64 @@ class _AdminContentManagementScreenState
                             .toList(),
                         onChanged: (value) => setStateDialog(() {
                           selectedAxisKey = value ?? selectedAxisKey;
-                          if (selectedAxisKey != 'behavioral') {
-                            behavioralQuickValue = '';
-                            behavioralQuickMethod = '';
-                          }
+                          quickFillValue = '';
                         }),
                       ),
-                      if (selectedAxisKey == 'behavioral') ...[
-                        const SizedBox(height: 16),
-                        Align(
-                          alignment: AlignmentDirectional.centerStart,
-                          child: Text(
-                            l10n.adminCmsBehavioralPlacementTitle,
-                            style: Theme.of(context).textTheme.titleSmall,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(children: [
-                          Expanded(
-                            child: DropdownButtonFormFieldCompat<String>(
-                              initialValue: behavioralQuickValue.isEmpty
+                      Builder(builder: (context) {
+                        final catalogItems =
+                            _axisQuickFillItems(selectedAxisKey);
+                        if (catalogItems.isEmpty) return const SizedBox.shrink();
+                        final dropdownLabel = switch (selectedAxisKey) {
+                          'behavioral' => l10n.adminCmsBehavioralValueLabel,
+                          'educational' => 'Subject',
+                          'skillful' => 'Skill',
+                          'entertaining' => 'Entertainment type',
+                          _ => 'Quick fill',
+                        };
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(height: 16),
+                            Align(
+                              alignment: AlignmentDirectional.centerStart,
+                              child: Text(
+                                dropdownLabel,
+                                style: Theme.of(context).textTheme.titleSmall,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            DropdownButtonFormFieldCompat<String>(
+                              key: ValueKey(selectedAxisKey),
+                              initialValue: quickFillValue.isEmpty
                                   ? null
-                                  : behavioralQuickValue,
-                              decoration: InputDecoration(
-                                  labelText: l10n.adminCmsBehavioralValueLabel),
-                              items: behavioralValues
-                                  .map((v) => DropdownMenuItem<String>(
-                                        value: v['title']!.toString(),
-                                        child: Text(v['title']!.toString()),
+                                  : quickFillValue,
+                              decoration:
+                                  InputDecoration(labelText: dropdownLabel),
+                              items: catalogItems
+                                  .map((item) => DropdownMenuItem<String>(
+                                        value: item.titleEn,
+                                        child: Text(item.titleEn),
                                       ))
                                   .toList(),
                               onChanged: (value) => setStateDialog(() {
-                                behavioralQuickValue = value ?? '';
-                                applyBehavioralFill(
-                                    behavioralQuickValue, behavioralQuickMethod);
+                                quickFillValue = value ?? '';
+                                if (quickFillValue.isNotEmpty) {
+                                  final entry = catalogItems
+                                      .where((i) => i.titleEn == quickFillValue)
+                                      .firstOrNull;
+                                  if (entry != null) {
+                                    titleEn.text = entry.titleEn;
+                                    titleAr.text = entry.titleAr;
+                                    slug.text = makeSlug(entry.titleEn);
+                                  }
+                                }
                               }),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: DropdownButtonFormFieldCompat<String>(
-                              initialValue: behavioralQuickMethod.isEmpty
-                                  ? null
-                                  : behavioralQuickMethod,
-                              decoration: InputDecoration(
-                                  labelText:
-                                      l10n.adminCmsBehavioralMethodLabel),
-                              items: behavioralMethods
-                                  .map((m) => DropdownMenuItem<String>(
-                                        value: m['title']!.toString(),
-                                        child: Text(m['title']!.toString()),
-                                      ))
-                                  .toList(),
-                              onChanged: (method) => setStateDialog(() {
-                                behavioralQuickMethod = method ?? '';
-                                applyBehavioralFill(
-                                    behavioralQuickValue, behavioralQuickMethod);
-                              }),
-                            ),
-                          ),
-                        ]),
-                        const SizedBox(height: 12),
-                        const Divider(),
-                      ],
+                            const SizedBox(height: 12),
+                            const Divider(),
+                          ],
+                        );
+                      }),
                       const SizedBox(height: 12),
                       TextField(
                           controller: slug,
