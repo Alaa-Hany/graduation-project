@@ -11,10 +11,10 @@ import pytest
 
 from core.time_utils import utc_now, utc_start_of_day, utc_today
 from models import (
+    ActivitySession,
     AiBuddyMessage,
     AiBuddySession,
     AiInteraction,
-    ActivitySession,
     ChildActivityEvent,
     ChildDailyActivitySummary,
     ChildSessionLog,

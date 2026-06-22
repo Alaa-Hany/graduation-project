@@ -6,8 +6,8 @@ critical ``auth_flows`` modules keep their branches covered.
 
 from datetime import timedelta
 
-import pytest
 import jwt
+import pytest
 
 import auth
 from admin_auth import (

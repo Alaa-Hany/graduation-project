@@ -9,11 +9,7 @@ from types import SimpleNamespace
 import pytest
 
 import services.media_service as media_module
-from services.media_service import (
-    MediaService,
-    MediaServiceError,
-    UploadedVideoAsset,
-)
+from services.media_service import MediaService, MediaServiceError, UploadedVideoAsset
 
 
 def _configured_settings():

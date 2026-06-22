@@ -1,6 +1,7 @@
 import logging
 import os
 import random
+import secrets
 import time
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
@@ -27,8 +28,6 @@ from core.validators import validate_password_policy as core_validate_password_p
 from core.validators import validate_pin_format
 from models import SupportTicket, User
 from plan_service import PLAN_FREE
-import secrets
-
 from schemas.auth import (
     ForgotPasswordIn,
     LoginIn,

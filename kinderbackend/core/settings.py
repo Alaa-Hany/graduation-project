@@ -3,9 +3,8 @@ from __future__ import annotations
 import os
 import re
 from dataclasses import dataclass
-from urllib.parse import urlparse
-
 from pathlib import Path
+from urllib.parse import urlparse
 
 from dotenv import load_dotenv
 

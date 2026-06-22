@@ -3,12 +3,7 @@ from __future__ import annotations
 from datetime import timedelta
 
 from core.settings import settings
-from plan_service import (
-    PLAN_FREE,
-    get_plan_catalog,
-    get_plan_features,
-    get_plan_price,
-)
+from plan_service import PLAN_FREE, get_plan_catalog, get_plan_features, get_plan_price
 
 
 class SubscriptionPlansMixin:

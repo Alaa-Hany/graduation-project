@@ -24,7 +24,6 @@ from services.payment_provider import (
 )
 from services.subscription_service import subscription_service
 
-
 # ---------------------------------------------------------------------------
 # Fake external provider
 # ---------------------------------------------------------------------------
