@@ -191,15 +191,6 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
                         // Open chat
                       },
                     ),
-                    const SizedBox(height: 16),
-                    _ContactOption(
-                      icon: Icons.phone,
-                      title: l10n.phoneSupport,
-                      subtitle: l10n.contactPhoneValue,
-                      onTap: () {
-                        // Make phone call
-                      },
-                    ),
                   ],
                 ),
               ),

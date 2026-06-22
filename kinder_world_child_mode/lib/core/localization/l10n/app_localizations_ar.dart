@@ -1061,11 +1061,7 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get contactEmailLabel => 'البريد الإلكتروني';
   @override
-  String get contactEmailValue => 'support@kinderworld.app';
-  @override
-  String get contactPhoneLabel => 'الهاتف';
-  @override
-  String get contactPhoneValue => '+1 (800) 123-4567';
+  String get contactEmailValue => 'kinderworld.app@gmail.com';
   @override
   String get contactHoursLabel => 'ساعات العمل';
   @override
@@ -2884,10 +2880,6 @@ class AppLocalizationsAr extends AppLocalizationsEn {
       'احصل على اقتراحات محتوى مخصصة';
   @override
   String get personalizedRecommendationsTitle => 'توصيات مخصصة';
-  @override
-  String get phoneNumber => '1-800-KINDER';
-  @override
-  String get phoneSupport => 'الدعم الهاتفي';
   @override
   String get playEducationalGames => 'ألعاب تعليمية';
   @override

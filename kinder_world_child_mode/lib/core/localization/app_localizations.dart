@@ -187,8 +187,6 @@ abstract class AppLocalizations {
   String get contactUsIntro;
   String get contactEmailLabel;
   String get contactEmailValue;
-  String get contactPhoneLabel;
-  String get contactPhoneValue;
   String get contactHoursLabel;
   String get contactHoursValue;
   String get sendMessageTitle;
@@ -1099,8 +1097,6 @@ abstract class AppLocalizations {
   String get emailSupport;
   String get liveChat;
   String get available247;
-  String get phoneSupport;
-  String get phoneNumber;
   String get additionalResources;
   String get privacyPolicyResource;
   String get termsOfServiceResource;

@@ -1761,9 +1761,10 @@ class SettingsAboutUsScreen extends StatelessWidget {
                 style: theme.textTheme.titleLarge
                     ?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
-            _buildContactRow(Icons.email, "support@kinderworld.com"),
+            _buildContactRow(Icons.email, "kinderworld.app@gmail.com"),
             const SizedBox(height: 10),
-            _buildContactRow(Icons.language, "www.kinderworld.com"),
+            _buildContactRow(
+                Icons.language, "https://kinder-world-bd9e3.web.app/"),
           ],
         ),
       ),
