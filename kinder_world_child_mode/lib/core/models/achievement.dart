@@ -51,15 +51,15 @@ class LevelThresholds {
 
   static const List<int> thresholds = [
     0, // Level 1
-    200, // Level 2
-    500, // Level 3
-    1000, // Level 4
-    2000, // Level 5
-    4000, // Level 6
-    8000, // Level 7
-    15000, // Level 8
-    25000, // Level 9
-    40000, // Level 10
+    1000, // Level 2
+    2000, // Level 3
+    3000, // Level 4
+    4000, // Level 5
+    5000, // Level 6
+    6000, // Level 7
+    7000, // Level 8
+    8000, // Level 9
+    9000, // Level 10
   ];
 
   static const int maxLevel = 10;
