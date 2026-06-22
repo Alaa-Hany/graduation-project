@@ -1,6 +1,6 @@
 part of 'child_profile_screen.dart';
 
-class ChildLevelsScreen extends StatelessWidget {
+class ChildLevelsScreen extends ConsumerWidget {
   const ChildLevelsScreen({
     super.key,
     required this.currentLevel,
@@ -10,7 +10,7 @@ class ChildLevelsScreen extends StatelessWidget {
   final int currentLevel;
   final int coins;
 
-  List<_LevelNode> _buildLevels() {
+  List<_LevelNode> _buildLevels(int currentLevel) {
     final levels = <_LevelNode>[];
     for (var level = 1; level <= 50; level += 1) {
       final isCurrent = level == currentLevel;
@@ -29,8 +29,20 @@ class ChildLevelsScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final levels = _buildLevels();
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Live values from the gamification providers so this screen updates
+    // instantly as XP is awarded elsewhere in the app, instead of staying
+    // frozen at the snapshot passed in when the route was pushed.
+    final liveLevel = ref.watch(currentLevelProvider);
+    final liveXp = ref.watch(currentXPProvider);
+    final progress = ref.watch(levelProgressProvider);
+    final level = liveXp > 0 || liveLevel > 1 ? liveLevel : currentLevel;
+    final xpFloor = LevelThresholds.xpForCurrentLevel(liveXp);
+    final xpCeiling = LevelThresholds.xpForNextLevel(liveXp);
+    final xpInLevel = liveXp - xpFloor;
+    final xpForLevel = xpCeiling - xpFloor;
+
+    final levels = _buildLevels(level);
     final displayLevels = levels.reversed.toList();
 
     return Scaffold(
@@ -67,14 +79,14 @@ class ChildLevelsScreen extends StatelessWidget {
                     _buildStatPill(
                       icon: Icons.emoji_events,
                       label: AppLocalizations.of(context)!.level,
-                      value: '$currentLevel',
+                      value: '$level',
                       color: const Color(0xFFFFC34A),
                     ),
                     const SizedBox(width: 12),
                     _buildStatPill(
                       icon: Icons.star,
                       label: AppLocalizations.of(context)!.xp,
-                      value: '$coins/1000',
+                      value: '$xpInLevel/$xpForLevel',
                       color: const Color(0xFF7AE3FF),
                     ),
                   ],
@@ -104,7 +116,11 @@ class ChildLevelsScreen extends StatelessWidget {
                           children: [
                             CustomPaint(
                               size: Size(width, height),
-                              painter: _PathPainter(points: points),
+                              painter: _PathPainter(
+                                points: points,
+                                nodes: displayLevels,
+                                progress: progress,
+                              ),
                             ),
                             ...List.generate(displayLevels.length, (index) {
                               final node = displayLevels[index];
@@ -344,34 +360,72 @@ class _LevelBadge extends StatelessWidget {
 }
 
 class _PathPainter extends CustomPainter {
-  _PathPainter({required this.points});
+  _PathPainter({
+    required this.points,
+    required this.nodes,
+    required this.progress,
+  });
 
   final List<Offset> points;
+  final List<_LevelNode> nodes;
+  final double progress;
 
   @override
   void paint(Canvas canvas, Size size) {
     if (points.length < 2) return;
-    final paint = Paint()
+    final basePaint = Paint()
       ..color = Colors.white.withValuesCompat(alpha: 0.4)
       ..strokeWidth = 20
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
-    final path = Path()..moveTo(points.first.dx, points.first.dy);
+    final filledPaint = Paint()
+      ..shader = const LinearGradient(
+        colors: [Color(0xFFFFD36A), Color(0xFFD53DF2)],
+      ).createShader(Rect.fromPoints(points.first, points.last))
+      ..strokeWidth = 20
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final clampedProgress = progress.clamp(0.0, 1.0);
+
     for (var i = 1; i < points.length; i++) {
       final prev = points[i - 1];
       final current = points[i];
       final mid =
           Offset((prev.dx + current.dx) / 2, (prev.dy + current.dy) / 2);
-      path.quadraticBezierTo(prev.dx, mid.dy, mid.dx, mid.dy);
-      path.quadraticBezierTo(current.dx, mid.dy, current.dx, current.dy);
+      final segment = Path()..moveTo(prev.dx, prev.dy);
+      segment.quadraticBezierTo(prev.dx, mid.dy, mid.dx, mid.dy);
+      segment.quadraticBezierTo(current.dx, mid.dy, current.dx, current.dy);
+
+      canvas.drawPath(segment, basePaint);
+
+      // points[i] sits one level below points[i-1] in the reversed list, so
+      // when points[i]'s node is the active level, this segment is the one
+      // climbing from the current level toward the next.
+      final isActiveSegment = nodes[i].isCurrent;
+      final bothUnlocked = nodes[i - 1].isUnlocked && nodes[i].isUnlocked;
+
+      if (isActiveSegment) {
+        if (clampedProgress <= 0) continue;
+        for (final metric in segment.computeMetrics()) {
+          final length = metric.length;
+          canvas.drawPath(
+            metric.extractPath(length * (1 - clampedProgress), length),
+            filledPaint,
+          );
+        }
+      } else if (bothUnlocked) {
+        canvas.drawPath(segment, filledPaint);
+      }
     }
-    canvas.drawPath(path, paint);
   }
 
   @override
   bool shouldRepaint(covariant _PathPainter oldDelegate) {
-    return oldDelegate.points != points;
+    return oldDelegate.points != points ||
+        oldDelegate.nodes != nodes ||
+        oldDelegate.progress != progress;
   }
 }
 
