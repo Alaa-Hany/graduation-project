@@ -581,14 +581,21 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                                 spacing: 8,
                                 runSpacing: 8,
                                 children: childAvatarOptions.map((option) {
+                                  // New children start at level 1, so avatars
+                                  // are gated the same way the child sees them
+                                  // in the profile customization screen.
+                                  final isUnlocked =
+                                      option.isUnlockedForLevel(1);
                                   final isSelected =
                                       selectedAvatar == option.id;
                                   return InkWell(
-                                    onTap: () {
-                                      setDialogState(() {
-                                        selectedAvatar = option.id;
-                                      });
-                                    },
+                                    onTap: isUnlocked
+                                        ? () {
+                                            setDialogState(() {
+                                              selectedAvatar = option.id;
+                                            });
+                                          }
+                                        : null,
                                     borderRadius: BorderRadius.circular(12),
                                     child: Container(
                                       width: 64,
@@ -611,7 +618,39 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                                         ),
                                       ),
                                       child: Center(
-                                        child: _buildAvatarOption(option),
+                                        child: isUnlocked
+                                            ? _buildAvatarOption(option)
+                                            : Stack(
+                                                alignment: Alignment.center,
+                                                children: [
+                                                  Opacity(
+                                                    opacity: 0.35,
+                                                    child: _buildAvatarOption(
+                                                        option),
+                                                  ),
+                                                  Column(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      const Icon(
+                                                        Icons.lock_rounded,
+                                                        size: 18,
+                                                      ),
+                                                      if (option.unlockLevel !=
+                                                          null)
+                                                        Text(
+                                                          'LV${option.unlockLevel}',
+                                                          style:
+                                                              const TextStyle(
+                                                            fontSize: 9,
+                                                            fontWeight:
+                                                                FontWeight.w800,
+                                                          ),
+                                                        ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
                                       ),
                                     ),
                                   );
