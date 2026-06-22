@@ -190,7 +190,7 @@ class _ColoringPageScreenState extends ConsumerState<ColoringPageScreen> {
     await _awardColoringXp();
     if (!mounted) return;
     showXpGainPopup(context, xp: XPRewards.coloringPage);
-    showDialog<void>(
+    await showDialog<void>(
       context: context,
       barrierDismissible: true,
       builder: (context) {
