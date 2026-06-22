@@ -34,6 +34,45 @@ class AdminCmsCatalogResponse {
   final List<AdminCmsAxisSummary> axes;
 }
 
+class AdminYouTubeVideo {
+  const AdminYouTubeVideo({
+    required this.videoId,
+    required this.title,
+    required this.description,
+    this.thumbnailUrl,
+    this.publishedAt,
+    required this.url,
+  });
+
+  final String videoId;
+  final String title;
+  final String description;
+  final String? thumbnailUrl;
+  final String? publishedAt;
+  final String url;
+
+  factory AdminYouTubeVideo.fromJson(Map<String, dynamic> json) {
+    return AdminYouTubeVideo(
+      videoId: json['video_id']?.toString() ?? '',
+      title: json['title']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      thumbnailUrl: json['thumbnail_url']?.toString(),
+      publishedAt: json['published_at']?.toString(),
+      url: json['url']?.toString() ?? '',
+    );
+  }
+}
+
+class AdminYouTubeChannelPreview {
+  const AdminYouTubeChannelPreview({
+    required this.items,
+    this.nextPageToken,
+  });
+
+  final List<AdminYouTubeVideo> items;
+  final String? nextPageToken;
+}
+
 class AdminManagementRepository {
   AdminManagementRepository({
     required NetworkService network,
@@ -613,6 +652,48 @@ class AdminManagementRepository {
     return AdminUploadedVideoAsset.fromJson(
       Map<String, dynamic>.from(body['item'] as Map),
     );
+  }
+
+  Future<AdminYouTubeChannelPreview> fetchYouTubeChannelVideos({
+    required String channel,
+    String pageToken = '',
+  }) async {
+    final response = await _sendWithFreshAdminToken(
+      (options) => _network.get(
+        '/admin/content/youtube/videos',
+        queryParameters: {
+          'channel': channel,
+          if (pageToken.isNotEmpty) 'page_token': pageToken,
+        },
+        options: options,
+      ),
+    );
+    final body = Map<String, dynamic>.from(response.data as Map);
+    final items = (body['items'] as List<dynamic>? ?? const [])
+        .map((item) =>
+            AdminYouTubeVideo.fromJson(Map<String, dynamic>.from(item as Map)))
+        .toList();
+    return AdminYouTubeChannelPreview(
+      items: items,
+      nextPageToken: body['next_page_token'] as String?,
+    );
+  }
+
+  Future<List<AdminCmsContent>> importYouTubeVideos(
+    List<Map<String, dynamic>> items,
+  ) async {
+    final response = await _sendWithFreshAdminToken(
+      (options) => _network.post(
+        '/admin/content/youtube/import',
+        data: {'items': items},
+        options: options,
+      ),
+    );
+    final body = Map<String, dynamic>.from(response.data as Map);
+    return (body['items'] as List<dynamic>? ?? const [])
+        .map((item) =>
+            AdminCmsContent.fromJson(Map<String, dynamic>.from(item as Map)))
+        .toList();
   }
 
   Future<AdminCmsContent> createContent(Map<String, dynamic> payload) async {

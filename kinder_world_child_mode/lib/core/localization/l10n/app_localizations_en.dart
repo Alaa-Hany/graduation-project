@@ -4535,6 +4535,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminCmsAddQuiz => 'Add quiz';
 
   @override
+  String get adminCmsImportFromYoutube => 'Import from YouTube';
+
+  @override
+  String get adminCmsYoutubeChannelLabel =>
+      'YouTube channel (handle, URL, or ID)';
+
+  @override
+  String get adminCmsYoutubeFetchAction => 'Fetch videos';
+
+  @override
+  String get adminCmsYoutubeImportSelectedAction => 'Import selected';
+
+  @override
+  String get adminCmsYoutubeNoVideosFound => 'No videos found';
+
+  @override
+  String adminCmsYoutubeImportSuccess(int count) =>
+      'Imported $count video${count == 1 ? '' : 's'}';
+
+  @override
   String get adminCmsCategoryCreateTitle => 'Create category';
 
   @override

@@ -27,6 +27,7 @@ from core.time_utils import db_utc_now
 from deps import get_db
 from models import ContentCategory, ContentItem, Quiz
 from services.media_service import MediaServiceError, media_service
+from services.youtube_service import YouTubeServiceError, list_channel_videos
 
 router = APIRouter(tags=["Admin CMS"])
 
@@ -94,6 +95,22 @@ class ContentUpdateRequest(BaseModel):
     video_duration_seconds: Optional[int] = None
     age_group: Optional[str] = None
     metadata_json: Optional[dict[str, Any]] = None
+
+
+class YouTubeImportItem(BaseModel):
+    video_id: str
+    category_id: int
+    title_en: str
+    title_ar: str
+    description_en: Optional[str] = None
+    description_ar: Optional[str] = None
+    thumbnail_url: Optional[str] = None
+    content_type: str = "video"
+    status: str = "draft"
+
+
+class YouTubeImportRequest(BaseModel):
+    items: list[YouTubeImportItem] = Field(default_factory=list)
 
 
 class QuizCreateRequest(BaseModel):
@@ -857,6 +874,108 @@ def create_content(
     db.commit()
     content = _get_content_or_404(content.id, db)
     return {"success": True, "item": serialize_content_item(content, include_quizzes=True)}
+
+
+@router.get("/admin/content/youtube/videos")
+def preview_youtube_channel_videos(
+    channel: str = Query(...),
+    page_token: str = Query(""),
+    admin=Depends(require_permission("admin.content.view")),
+):
+    try:
+        videos, next_page_token = list_channel_videos(
+            channel_identifier=channel,
+            page_token=page_token.strip() or None,
+        )
+    except YouTubeServiceError as exc:
+        raise _error(str(exc), status_code=502)
+    return {
+        "items": [video.to_payload() for video in videos],
+        "next_page_token": next_page_token,
+    }
+
+
+@router.post("/admin/content/youtube/import")
+def import_youtube_videos(
+    payload: YouTubeImportRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    admin=Depends(require_permission("admin.content.create")),
+):
+    if not payload.items:
+        raise _error("At least one video must be selected")
+
+    created_items = []
+    for entry in payload.items:
+        _ensure_category_exists(entry.category_id, db)
+        content_type = _normalize_content_type(entry.content_type)
+        status_value = _normalize_status(entry.status)
+        title_en = _require_text(entry.title_en, "English title")
+        title_ar = _require_text(entry.title_ar, "Arabic title")
+        slug = _slugify(f"{title_en}-{entry.video_id}")
+        if not slug:
+            raise _error("Content slug is required")
+        _ensure_content_slug_available(slug=slug, db=db)
+
+        video_url = f"https://www.youtube.com/watch?v={entry.video_id}"
+        (
+            video_url,
+            video_provider,
+            video_public_id,
+            video_duration_seconds,
+            metadata_json,
+        ) = _normalized_content_media_payload(
+            video_url=video_url,
+            video_provider="youtube",
+            video_public_id=entry.video_id,
+            video_duration_seconds=None,
+            metadata_json={},
+        )
+
+        content = ContentItem(
+            category_id=entry.category_id,
+            slug=slug,
+            content_type=content_type or "video",
+            status=status_value,
+            title_en=title_en,
+            title_ar=title_ar,
+            description_en=_trim_or_none(entry.description_en),
+            description_ar=_trim_or_none(entry.description_ar),
+            thumbnail_url=_validate_thumbnail_url(entry.thumbnail_url),
+            video_url=video_url,
+            video_provider=video_provider,
+            video_public_id=video_public_id,
+            video_duration_seconds=video_duration_seconds,
+            metadata_json=metadata_json,
+            created_by=admin.id,
+            updated_by=admin.id,
+            created_at=db_utc_now(),
+            updated_at=db_utc_now(),
+            published_at=db_utc_now() if status_value == PUBLISHED_STATUS else None,
+        )
+        db.add(content)
+        db.flush()
+        created_items.append(content)
+
+    for content in created_items:
+        write_audit_log(
+            db=db,
+            request=request,
+            admin=admin,
+            action="content.create",
+            entity_type="content",
+            entity_id=content.id,
+            after_json=serialize_content_item(content, include_quizzes=True),
+        )
+    db.commit()
+
+    return {
+        "success": True,
+        "items": [
+            serialize_content_item(_get_content_or_404(content.id, db), include_quizzes=True)
+            for content in created_items
+        ],
+    }
 
 
 @router.patch("/admin/contents/{content_id}")
