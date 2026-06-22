@@ -15,6 +15,7 @@ import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
 import 'package:kinder_world/core/widgets/child_safe_ui.dart';
+import 'package:kinder_world/core/providers/locale_provider.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
 
 class _QuickAction {
