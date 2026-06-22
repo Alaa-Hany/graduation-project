@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
+import 'package:kinder_world/core/models/achievement.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
@@ -257,7 +258,7 @@ class ChildProfileOverviewScreen extends ConsumerWidget {
                     children: [
                       _ProfileStatCard(
                         width: tileWidth,
-                        value: '${child.xp % 1000}',
+                        value: '${LevelThresholds.xpInCurrentLevel(child.xp)}',
                         label: l10n.xp,
                         icon: Icons.star_rounded,
                         color: childTheme.xp,
@@ -289,8 +290,8 @@ class ChildProfileOverviewScreen extends ConsumerWidget {
                     const SizedBox(height: 20),
                     ChildXpProgressBar(
                       progress: child.xpProgress.clamp(0.0, 1.0),
-                      currentXp: child.xp % 1000,
-                      nextLevelXp: 1000,
+                      currentXp: LevelThresholds.xpInCurrentLevel(child.xp),
+                      nextLevelXp: LevelThresholds.xpRangeForCurrentLevel(child.xp),
                     ),
                     const SizedBox(height: 16),
                     _ProgressRow(

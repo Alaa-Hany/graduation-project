@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/app.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
+import 'package:kinder_world/core/models/achievement.dart';
 import 'package:kinder_world/core/models/activity.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/models/progress_record.dart';
@@ -520,7 +521,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
     final liveLevel = ref.watch(currentLevelProvider);
     final liveStreak = ref.watch(currentStreakProvider);
     final liveProgress = ref.watch(levelProgressProvider);
-    final currentXpInLevel = liveXp % 1000;
+    final currentXpInLevel = LevelThresholds.xpInCurrentLevel(liveXp);
 
     return KinderCard(
       padding: const EdgeInsets.all(24),
@@ -640,7 +641,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
     final liveXp = ref.watch(currentXPProvider);
     final liveLevel = ref.watch(currentLevelProvider);
     final liveStreak = ref.watch(currentStreakProvider);
-    final currentXpInLevel = liveXp % 1000;
+    final currentXpInLevel = LevelThresholds.xpInCurrentLevel(liveXp);
     return KinderCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       child: Row(

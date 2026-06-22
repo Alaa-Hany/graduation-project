@@ -291,6 +291,12 @@ class _SmokeGamificationNotifier extends GamificationNotifier {
               logger: Logger(),
             ),
             childRepository: childRepository,
+            childrenApi: ChildrenApi(
+              TestNetworkService(
+                secureStorage: TestSecureStorage(),
+                logger: Logger(),
+              ),
+            ),
             logger: Logger(),
           ),
         );

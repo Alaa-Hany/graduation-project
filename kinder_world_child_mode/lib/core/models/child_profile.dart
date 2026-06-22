@@ -4,6 +4,7 @@
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
+import 'package:kinder_world/core/models/achievement.dart';
 
 part 'child_profile.freezed.dart';
 part 'child_profile.g.dart';
@@ -43,8 +44,8 @@ class ChildProfile with _$ChildProfile {
       _$ChildProfileFromJson(json);
 
   // Helper methods
-  int get nextLevelXP => level * 1000;
-  double get xpProgress => (xp % 1000) / 1000.0;
+  int get nextLevelXP => LevelThresholds.xpForNextLevel(xp);
+  double get xpProgress => LevelThresholds.progressInLevel(xp);
   String get displayAge => age <= 0 ? '—' : age.toString();
 
   bool get hasStreak => streak > 0;

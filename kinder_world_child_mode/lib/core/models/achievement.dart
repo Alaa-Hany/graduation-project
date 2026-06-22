@@ -107,6 +107,16 @@ class LevelThresholds {
     return ((xp - floor) / (ceiling - floor)).clamp(0.0, 1.0);
   }
 
+  /// XP earned within the current level (0 … xpRangeForCurrentLevel-1).
+  static int xpInCurrentLevel(int xp) => xp - xpForCurrentLevel(xp);
+
+  /// Total XP span of the current level (ceiling - floor).
+  static int xpRangeForCurrentLevel(int xp) {
+    final level = levelForXP(xp);
+    if (level >= maxLevel) return 1;
+    return thresholds[level] - thresholds[level - 1];
+  }
+
   /// Human-readable title for a level.
   static String titleForLevel(int level) {
     const titles = [

@@ -6,6 +6,7 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
+import 'package:kinder_world/core/api/api_providers.dart';
 import 'package:kinder_world/core/providers/app_services.dart';
 import 'package:kinder_world/core/models/achievement.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
@@ -37,10 +38,12 @@ final gamificationRepositoryProvider = Provider<GamificationRepository>((ref) {
 final gamificationServiceProvider = Provider<GamificationService>((ref) {
   final gamificationRepo = ref.watch(gamificationRepositoryProvider);
   final childRepo = ref.watch(childRepositoryProvider);
+  final childrenApi = ref.watch(childrenApiProvider);
   final logger = ref.watch(loggerProvider);
   return GamificationService(
     gamificationRepository: gamificationRepo,
     childRepository: childRepo,
+    childrenApi: childrenApi,
     logger: logger,
   );
 });

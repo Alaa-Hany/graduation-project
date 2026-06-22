@@ -194,7 +194,7 @@ class _ChildProfileStatsSection extends ConsumerWidget {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         ChildStatBubble(
-          value: '${liveXp % 1000}',
+          value: '${LevelThresholds.xpInCurrentLevel(liveXp)}',
           label: l10n.xp,
           icon: Icons.star_rounded,
           color: childTheme.xp,
@@ -253,8 +253,8 @@ class _ChildProfileProgressSection extends ConsumerWidget {
           const SizedBox(height: 20),
           ChildXpProgressBar(
             progress: liveProgress.clamp(0.0, 1.0),
-            currentXp: liveXp % 1000,
-            nextLevelXp: 1000,
+            currentXp: LevelThresholds.xpInCurrentLevel(liveXp),
+            nextLevelXp: LevelThresholds.xpRangeForCurrentLevel(liveXp),
           ),
           const SizedBox(height: 16),
           _ChildProfileProgressMetric(

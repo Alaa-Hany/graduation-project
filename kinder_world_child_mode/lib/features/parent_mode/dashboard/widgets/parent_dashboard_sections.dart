@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/models/achievement.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/models/progress_record.dart';
 import 'package:kinder_world/core/subscription/plan_info.dart';
@@ -620,7 +621,7 @@ class ParentDashboardChildCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  l10n.xpProgressDisplay(child.xp % 1000, 1000),
+                  l10n.xpProgressDisplay(LevelThresholds.xpInCurrentLevel(child.xp), LevelThresholds.xpRangeForCurrentLevel(child.xp)),
                   style: textTheme.labelSmall?.copyWith(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,

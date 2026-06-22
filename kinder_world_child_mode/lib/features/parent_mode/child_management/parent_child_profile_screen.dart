@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/models/achievement.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
@@ -324,7 +325,7 @@ class _ParentChildProfileScreenState
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          l10n.xpValue(child.xp % 1000),
+                          l10n.xpValue(LevelThresholds.xpInCurrentLevel(child.xp)),
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
@@ -332,7 +333,7 @@ class _ParentChildProfileScreenState
                           ),
                         ),
                         Text(
-                          l10n.xpToNextLevel(1000 - (child.xp % 1000)),
+                          l10n.xpToNextLevel(LevelThresholds.xpToNextLevel(child.xp)),
                           style: TextStyle(
                             fontSize: 12,
                             color: colors.onSurfaceVariant,

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:hive/hive.dart';
+import 'package:kinder_world/core/models/achievement.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:logger/logger.dart';
 
@@ -175,7 +176,7 @@ class ChildRepository {
       if (child == null) return null;
 
       final newXP = child.xp + xpAmount;
-      final newLevel = (newXP / 1000).floor() + 1;
+      final newLevel = LevelThresholds.levelForXP(newXP);
 
       final updated = child.copyWith(
         xp: newXP,
@@ -250,7 +251,7 @@ class ChildRepository {
       );
 
       // Check for level up
-      final newLevel = (updated.xp / 1000).floor() + 1;
+      final newLevel = LevelThresholds.levelForXP(updated.xp);
       final finalUpdated = updated.copyWith(
         level: newLevel > updated.level ? newLevel : updated.level,
       );

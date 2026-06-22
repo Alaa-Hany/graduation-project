@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart' show Color;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kinder_world/core/api/children_api.dart';
 import 'package:kinder_world/core/models/achievement.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/repositories/child_repository.dart';
@@ -152,6 +153,15 @@ ChildProfile _child({int xp = 0, int level = 1, int streak = 0}) {
   );
 }
 
+class _FakeChildrenApi extends Fake implements ChildrenApi {
+  @override
+  Future<Map<String, dynamic>> updateChild({
+    required String childId,
+    required Map<String, dynamic> payload,
+  }) async =>
+      const {};
+}
+
 void main() {
   late _FakeChildRepository childRepo;
   late _FakeGamificationRepository gamiRepo;
@@ -163,6 +173,7 @@ void main() {
     service = GamificationService(
       gamificationRepository: gamiRepo,
       childRepository: childRepo,
+      childrenApi: _FakeChildrenApi(),
       logger: Logger(level: Level.off),
     );
   });

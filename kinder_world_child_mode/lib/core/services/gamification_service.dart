@@ -7,6 +7,7 @@
 // Called by: GamificationProvider (Riverpod) and directly from
 //            learn/play/coloring flows via the provider.
 
+import 'package:kinder_world/core/api/children_api.dart';
 import 'package:kinder_world/core/models/achievement.dart';
 import 'package:kinder_world/core/repositories/child_repository.dart';
 import 'package:kinder_world/core/repositories/gamification_repository.dart';
@@ -105,14 +106,17 @@ enum ActivityType {
 class GamificationService {
   final GamificationRepository _gamificationRepo;
   final ChildRepository _childRepo;
+  final ChildrenApi _childrenApi;
   final Logger _logger;
 
   GamificationService({
     required GamificationRepository gamificationRepository,
     required ChildRepository childRepository,
+    required ChildrenApi childrenApi,
     required Logger logger,
   })  : _gamificationRepo = gamificationRepository,
         _childRepo = childRepository,
+        _childrenApi = childrenApi,
         _logger = logger;
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -189,9 +193,11 @@ class GamificationService {
       final leveledUp = newLevel > oldLevel;
       final levelsGained = (newLevel - oldLevel).clamp(0, 9);
 
-      // 6. Persist XP + level + streak to ChildProfile
+      // 6. Persist XP + level + streak to ChildProfile (local + backend)
       if (awardXp && totalXPToAward > 0) {
         await _childRepo.addXP(childId, totalXPToAward);
+        // Push to backend so other devices can sync the new XP/level.
+        _pushXpToBackend(childId, newXP, newLevel);
       }
       if (awardXp && streakResult.streakUpdated) {
         await _childRepo.updateStreak(childId);
@@ -477,6 +483,12 @@ class GamificationService {
   /// Resets all gamification data for a child (used in profile reset).
   Future<void> resetChild(String childId) async {
     await _gamificationRepo.resetForChild(childId);
+  }
+
+  void _pushXpToBackend(String childId, int xp, int level) {
+    _childrenApi
+        .updateChild(childId: childId, payload: {'xp': xp, 'level': level})
+        .catchError((_) => <String, dynamic>{});
   }
 }
 
