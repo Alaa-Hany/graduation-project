@@ -95,6 +95,25 @@ class NotificationService:
             body=body,
         )
 
+    def notify_subscription_payment_failed(
+        self,
+        db: Session,
+        *,
+        user: User,
+        plan: str,
+        source: str,
+    ) -> Notification | None:
+        return self.create_notification(
+            db,
+            user_id=user.id,
+            type="SUBSCRIPTION_UPDATED",
+            title="Subscription payment failed",
+            body=(
+                f"We could not process your payment for the {plan} plan. "
+                "Your plan was not changed. Please try again."
+            ),
+        )
+
     def list_notifications(
         self,
         *,
@@ -147,6 +166,7 @@ notification_service = NotificationService()
 create_notification = notification_service.create_notification
 notify_support_ticket_updated = notification_service.notify_support_ticket_updated
 notify_subscription_changed = notification_service.notify_subscription_changed
+notify_subscription_payment_failed = notification_service.notify_subscription_payment_failed
 
 __all__ = [
     "NotificationService",
@@ -154,4 +174,5 @@ __all__ = [
     "create_notification",
     "notify_support_ticket_updated",
     "notify_subscription_changed",
+    "notify_subscription_payment_failed",
 ]

@@ -252,6 +252,78 @@ def test_checkout_completed_webhook_updates_lifecycle_and_deduplicates(
         _restore_webhook_secret(original_secret)
 
 
+@pytest.mark.parametrize(
+    "event_type,expected_payment_status,expected_event",
+    [
+        ("checkout.session.expired", "canceled", "checkout_expired"),
+        ("checkout.session.async_payment_failed", "failed", "checkout_payment_failed"),
+    ],
+)
+def test_abandoned_or_failed_checkout_rolls_back_and_notifies(
+    client,
+    create_parent,
+    auth_headers,
+    db,
+    event_type,
+    expected_payment_status,
+    expected_event,
+):
+    from models import Notification
+
+    secret = "whsec_checkout_failed"
+    original_secret = _with_webhook_secret(secret)
+    fake_provider = FakeStripeProvider()
+    original_factory = subscription_service._payment_provider_factory
+    subscription_service._payment_provider_factory = lambda: fake_provider
+    try:
+        parent = create_parent(email=f"abandon.{expected_event}@example.com", plan=PLAN_FREE)
+        headers = auth_headers(parent)
+
+        checkout = client.post(
+            "/subscription/checkout", json={"plan_type": "premium"}, headers=headers
+        )
+        assert checkout.status_code == 200
+
+        # Before any webhook resolves, the selection is pending and the parent
+        # has NOT been notified yet.
+        pending_snapshot = client.get("/subscription/me", headers=headers).json()
+        assert pending_snapshot["lifecycle"]["status"] == "pending_activation"
+        assert db.query(Notification).filter(Notification.user_id == parent.id).count() == 0
+
+        event_payload = {
+            "id": f"evt_{expected_event}",
+            "type": event_type,
+            "data": {
+                "object": {
+                    "id": fake_provider.state.session_id,
+                    "object": "checkout.session",
+                    "status": "expired",
+                    "payment_status": "unpaid",
+                    "customer": fake_provider.state.customer_id,
+                    "metadata": {"user_id": str(parent.id), "plan_id": PLAN_PREMIUM},
+                }
+            },
+        }
+        response = _post_stripe_event(client, event_payload, secret=secret)
+        assert response.status_code == 200
+        assert response.json()["status"] == "processed"
+
+        snapshot = client.get("/subscription/me", headers=headers).json()
+        assert snapshot["plan"] == PLAN_FREE
+        assert snapshot["lifecycle"]["status"] == "free"
+        assert snapshot["lifecycle"]["last_payment_status"] == expected_payment_status
+
+        history = client.get("/subscription/history", headers=headers).json()
+        assert any(item["event_type"] == expected_event for item in history["events"])
+
+        notifications = db.query(Notification).filter(Notification.user_id == parent.id).all()
+        assert len(notifications) == 1
+        assert notifications[0].title == "Subscription payment failed"
+    finally:
+        subscription_service._payment_provider_factory = original_factory
+        _restore_webhook_secret(original_secret)
+
+
 def test_invoice_paid_and_failed_and_subscription_deleted_webhooks_update_history(
     client,
     create_parent,

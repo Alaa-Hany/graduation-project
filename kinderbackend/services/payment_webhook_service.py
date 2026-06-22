@@ -16,9 +16,11 @@ from plan_service import PLAN_FREE
 from services.notification_service import notification_service
 from services.payment_webhook_verifier import WebhookVerificationError, stripe_webhook_verifier
 from services.subscription_service import (
+    PAYMENT_STATUS_CANCELED,
     PAYMENT_STATUS_FAILED,
     PAYMENT_STATUS_SUCCEEDED,
     SUBSCRIPTION_STATUS_ACTIVE,
+    SUBSCRIPTION_STATUS_FREE,
     SUBSCRIPTION_STATUS_PENDING,
     SubscriptionService,
     subscription_service,
@@ -231,6 +233,10 @@ class PaymentWebhookService:
         data_object = self._event_object(event)
         if event_type == "checkout.session.completed":
             return self._handle_checkout_session_completed(db=db, obj=data_object)
+        if event_type == "checkout.session.expired":
+            return self._handle_checkout_failed(db=db, obj=data_object, event_type=event_type)
+        if event_type == "checkout.session.async_payment_failed":
+            return self._handle_checkout_failed(db=db, obj=data_object, event_type=event_type)
         if event_type == "invoice.paid":
             return self._handle_invoice_paid(db=db, obj=data_object)
         if event_type == "invoice.payment_failed":
@@ -333,6 +339,88 @@ class PaymentWebhookService:
             "provider_subscription_id": profile.provider_subscription_id,
             "provider_invoice_id": None,
             "provider_session_id": checkout.session_id,
+            "subscription_profile_id": profile.id,
+        }
+
+    def _handle_checkout_failed(
+        self, *, db: Session, obj: dict[str, Any], event_type: str
+    ) -> dict[str, Any]:
+        """Handle an abandoned/expired or asynchronously failed checkout session.
+
+        The parent opened the payment page but it never resulted in a successful
+        payment, so the pending plan selection is rolled back and the parent is
+        notified that the change was rejected.
+        """
+        user, profile = self._resolve_profile_context(db=db, obj=obj)
+        if user is None or profile is None:
+            return self._ignored_result(obj=obj, event_type=event_type)
+
+        # Only roll back a selection that is still waiting for payment. If the
+        # subscription is already active (e.g. a later event won the race) leave
+        # it untouched.
+        if profile.status != SUBSCRIPTION_STATUS_PENDING:
+            return self._ignored_result(obj=obj, event_type=event_type)
+
+        now = db_utc_now()
+        plan_id = self._infer_plan_id(obj=obj, profile=profile)
+        attempted_plan = plan_id or profile.selected_plan_id or profile.current_plan_id
+        previous_status = profile.status
+        expired = event_type == "checkout.session.expired"
+
+        profile.last_payment_status = PAYMENT_STATUS_CANCELED if expired else PAYMENT_STATUS_FAILED
+        profile.selected_plan_id = None
+        # Revert to whatever access the parent had before this attempt.
+        if profile.current_plan_id and profile.current_plan_id != PLAN_FREE:
+            profile.status = SUBSCRIPTION_STATUS_ACTIVE
+        else:
+            profile.status = SUBSCRIPTION_STATUS_FREE
+        db.add(profile)
+
+        self._upsert_payment_attempt(
+            db=db,
+            user=user,
+            profile=profile,
+            provider_reference=self._as_str(obj.get("id")),
+            plan_id=attempted_plan,
+            attempt_type="checkout",
+            status=profile.last_payment_status,
+            amount_cents=self._amount_cents_from_object(obj=obj, fallback_plan=plan_id),
+            completed=False,
+            metadata_json=self._checkout_attempt_metadata(self._checkout_result_from_object(obj)),
+            failure_message=(
+                "Checkout session expired before payment"
+                if expired
+                else "Provider reported a failed checkout payment"
+            ),
+        )
+
+        self._subscription_service._record_subscription_event(  # noqa: SLF001
+            db=db,
+            user=user,
+            profile=profile,
+            event_type="checkout_expired" if expired else "checkout_payment_failed",
+            previous_plan_id=profile.current_plan_id,
+            plan_id=attempted_plan,
+            previous_status=previous_status,
+            status=profile.status,
+            payment_status=profile.last_payment_status,
+            source=f"webhook_{event_type.replace('.', '_')}",
+            details_json={"session_id": self._as_str(obj.get("id"))},
+            provider_reference=self._as_str(obj.get("id")),
+            occurred_at=now,
+        )
+        notification_service.notify_subscription_payment_failed(
+            db,
+            user=user,
+            plan=attempted_plan,
+            source=f"webhook_{event_type.replace('.', '_')}",
+        )
+        return {
+            "status": "processed",
+            "provider_customer_id": profile.provider_customer_id,
+            "provider_subscription_id": profile.provider_subscription_id,
+            "provider_invoice_id": None,
+            "provider_session_id": self._as_str(obj.get("id")),
             "subscription_profile_id": profile.id,
         }
 
@@ -445,6 +533,12 @@ class PaymentWebhookService:
             details_json={"invoice_id": obj.get("id"), "payment_attempt_id": attempt.id},
             provider_reference=self._subscription_id_from_object(obj),
             occurred_at=now,
+        )
+        notification_service.notify_subscription_payment_failed(
+            db,
+            user=user,
+            plan=plan_id or profile.current_plan_id,
+            source="webhook_invoice_payment_failed",
         )
         return {
             "status": "processed",

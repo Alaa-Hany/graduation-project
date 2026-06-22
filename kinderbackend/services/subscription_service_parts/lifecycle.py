@@ -306,16 +306,9 @@ class SubscriptionLifecycleMixin:
             occurred_at=now,
         )
 
-        if not self._checkout_is_paid(checkout):
-            notification_service.notify_subscription_changed(
-                db,
-                user=user,
-                old_plan=previous_plan,
-                new_plan=requested,
-                source="parent_select",
-                activated=False,
-            )
-
+        # No notification is emitted at selection time. The parent only finds
+        # out the result (accepted or rejected) after the payment page resolves:
+        # acceptance fires via _activate_plan, rejection via the payment webhook.
         if self._checkout_is_paid(checkout):
             logger.info(
                 "checkout_completed user_id=%s plan=%s provider=%s session_id=%s",

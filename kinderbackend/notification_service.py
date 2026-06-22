@@ -9,6 +9,7 @@ from services.notification_service import (
     create_notification,
     notification_service,
     notify_subscription_changed,
+    notify_subscription_payment_failed,
     notify_support_ticket_updated,
 )
 
@@ -17,4 +18,5 @@ __all__ = [
     "create_notification",
     "notify_support_ticket_updated",
     "notify_subscription_changed",
+    "notify_subscription_payment_failed",
 ]

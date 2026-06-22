@@ -72,12 +72,15 @@ def test_subscription_changes_create_notifications_and_are_listed(
     listed = client.get("/notifications", headers=headers)
     assert listed.status_code == 200
     payload = listed.json()
-    assert payload["summary"]["unread_count"] == 2
+    # Selecting a plan no longer emits a "pending" notification at button-click
+    # time; the parent is only notified once the payment is accepted or rejected.
+    # Here only the admin override produces a notification.
+    assert payload["summary"]["unread_count"] == 1
     assert payload["notifications"][0]["type"] == "SUBSCRIPTION_UPDATED"
     assert payload["notifications"][0]["child_id"] is None
     remote_titles = [item["title"] for item in payload["notifications"]]
     remote_bodies = [item["body"] for item in payload["notifications"]]
-    assert "Subscription change pending" in remote_titles
+    assert "Subscription change pending" not in remote_titles
     assert "Subscription updated" in remote_titles
-    assert any("waiting for activation" in body for body in remote_bodies)
+    assert all("waiting for activation" not in body for body in remote_bodies)
     assert all("via parent_select" not in body for body in remote_bodies)
