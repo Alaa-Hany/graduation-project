@@ -88,6 +88,18 @@ class _FunArcadeGameScreenState extends State<_FunArcadeGameScreen> {
   void initState() {
     super.initState();
     unawaited(_audio.startBackground('sounds/games/memory_bg.mp3'));
+    unawaited(_loadUnlockedIndex());
+  }
+
+  Future<void> _loadUnlockedIndex() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved =
+        prefs.getInt('arcade_unlocked_${widget.config.kind.name}') ?? 0;
+    if (!mounted) return;
+    setState(() {
+      _unlockedIndex = saved;
+      _levelIndex = saved;
+    });
     _startLevel();
   }
 
@@ -213,6 +225,10 @@ class _FunArcadeGameScreenState extends State<_FunArcadeGameScreen> {
     _timer?.cancel();
     if (won) {
       _unlockedIndex = math.max(_unlockedIndex, (_levelIndex + 1).clamp(0, 4));
+      unawaited(SharedPreferences.getInstance().then((prefs) => prefs.setInt(
+            'arcade_unlocked_${widget.config.kind.name}',
+            _unlockedIndex,
+          )));
       unawaited(_audio.playEffect('sounds/games/puzzle_win.mp3',
           fallback: SystemSoundType.alert));
     } else {
