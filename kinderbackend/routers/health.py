@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import time
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -14,16 +15,21 @@ from services.payment_provider import get_payment_provider
 
 router = APIRouter(prefix="/health", tags=["Health"])
 
+logger = logging.getLogger(__name__)
+
 
 def _check_db(db: Session) -> dict[str, object]:
     started = time.perf_counter()
     try:
         db.execute(text("SELECT 1"))
-    except Exception as exc:
+    except Exception:
+        # Log the underlying error server-side; never expose the raw
+        # exception detail to the caller (avoids information disclosure).
+        logger.exception("Database health check failed")
         return {
             "status": "fail",
             "latency_ms": int((time.perf_counter() - started) * 1000),
-            "error": str(exc),
+            "error": "database unavailable",
         }
     return {
         "status": "ok",

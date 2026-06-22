@@ -11,6 +11,9 @@ on:
       - ".github/workflows/flutter-ci.yml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: flutter-ci-${{ github.ref }}
   cancel-in-progress: true
