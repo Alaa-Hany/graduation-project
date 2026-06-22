@@ -465,7 +465,12 @@ class _ChildSettingsScreenState extends ConsumerState<ChildSettingsScreen> {
 
     final sections = <Widget>[];
 
-    if (match('account') || match('edit profile') || match('change avatar')) {
+    if (match('account') ||
+        match('edit profile') ||
+        match('change avatar') ||
+        match(l10n.accountSection) ||
+        match(l10n.editProfile) ||
+        match(l10n.changeAvatar)) {
       sections.add(_buildSectionHeader(context, l10n.accountSection));
       sections.add(const SizedBox(height: 10));
       sections.add(_buildSettingsCard(
@@ -493,7 +498,12 @@ class _ChildSettingsScreenState extends ConsumerState<ChildSettingsScreen> {
       sections.add(const SizedBox(height: 30));
     }
 
-    if (match('preferences') || match('sound') || match('music')) {
+    if (match('preferences') ||
+        match('sound') ||
+        match('music') ||
+        match(l10n.preferencesSection) ||
+        match(l10n.soundEffects) ||
+        match(l10n.backgroundMusic)) {
       sections.add(_buildSectionHeader(context, l10n.preferencesSection));
       sections.add(const SizedBox(height: 10));
       sections.add(_buildSettingsCard(
@@ -519,7 +529,12 @@ class _ChildSettingsScreenState extends ConsumerState<ChildSettingsScreen> {
         match('language') ||
         match('themes') ||
         match('about') ||
-        match('privacy')) {
+        match('privacy') ||
+        match(l10n.appSettingsSection) ||
+        match(l10n.language) ||
+        match(l10n.themes) ||
+        match(l10n.aboutUs) ||
+        match(l10n.privacyPolicy)) {
       sections.add(_buildSectionHeader(context, l10n.appSettingsSection));
       sections.add(const SizedBox(height: 10));
       sections.add(_buildSettingsCard(
@@ -581,60 +596,54 @@ class _ChildSettingsScreenState extends ConsumerState<ChildSettingsScreen> {
   }
 
   void _openSettingByQuery(String value, Locale locale) {
+    final l10n = AppLocalizations.of(context)!;
     final query = value.trim().toLowerCase();
     if (query.isEmpty) return;
 
-    if (query == 'edit profile' || query == 'profile') {
+    bool matches(List<String> terms) =>
+        terms.any((t) => t.toLowerCase() == query);
+
+    void open(Widget screen) {
       Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => const SettingsEditProfileScreen()));
+          context, MaterialPageRoute(builder: (context) => screen));
+    }
+
+    if (matches(
+        ['edit profile', 'profile', l10n.editProfile, 'الملف الشخصي'])) {
+      open(const SettingsEditProfileScreen());
       return;
     }
-    if (query == 'change avatar' || query == 'avatar') {
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => const SettingsAvatarSelectionScreen()));
+    if (matches(['change avatar', 'avatar', l10n.changeAvatar, 'الصورة'])) {
+      open(const SettingsAvatarSelectionScreen());
       return;
     }
-    if (query == 'language' ||
-        query == _languageLabel(locale).toLowerCase() ||
-        query == 'اللغة') {
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => const SettingsLanguageScreen()));
+    if (matches([
+      'language',
+      _languageLabel(locale),
+      l10n.language,
+      'اللغة',
+    ])) {
+      open(const SettingsLanguageScreen());
       return;
     }
-    if (query == 'themes' ||
-        query == 'theme' ||
-        query == 'الثيمات' ||
-        query == 'المظهر') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const ChildThemeScreen()),
-      );
+    if (matches(
+        ['themes', 'theme', l10n.themes, 'الثيمات', 'المظهر'])) {
+      open(const ChildThemeScreen());
       return;
     }
-    if (query == 'about' ||
-        query == 'about us' ||
-        query == 'حول' ||
-        query == 'من نحن') {
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => const SettingsAboutUsScreen()));
+    if (matches(
+        ['about', 'about us', l10n.aboutUs, 'حول', 'من نحن'])) {
+      open(const SettingsAboutUsScreen());
       return;
     }
-    if (query == 'privacy' ||
-        query == 'privacy policy' ||
-        query == 'الخصوصية' ||
-        query == 'سياسة الخصوصية') {
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => const SettingsPrivacyPolicyScreen()));
+    if (matches([
+      'privacy',
+      'privacy policy',
+      l10n.privacyPolicy,
+      'الخصوصية',
+      'سياسة الخصوصية',
+    ])) {
+      open(const SettingsPrivacyPolicyScreen());
       return;
     }
   }
