@@ -52,6 +52,28 @@
 
   <title>Kinder World</title>
   <link rel="manifest" href="manifest.json">
+
+  <script>
+    // The web app is built with `--pwa-strategy=none`, so no service worker is
+    // registered. Older builds DID register one, and a stale service worker in a
+    // returning visitor's browser keeps serving its cached old bundle/assets even
+    // after a new deploy — which shows up as old UI, broken Arabic, and mojibake
+    // content from old caches. Whenever this fresh page loads, remove any leftover
+    // service worker and drop its caches so the visitor always gets the latest
+    // deployed build going forward.
+    (function () {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function (regs) {
+          regs.forEach(function (reg) { reg.unregister(); });
+        });
+      }
+      if (window.caches && caches.keys) {
+        caches.keys().then(function (keys) {
+          keys.forEach(function (k) { caches.delete(k); });
+        });
+      }
+    })();
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

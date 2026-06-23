@@ -5,7 +5,7 @@ $ErrorActionPreference = "Stop"
 $ApiBaseUrl = "https://graduation-project-gnbb.onrender.com"
 
 Write-Host "1/2 Building web with backend URL..." -ForegroundColor Cyan
-flutter build web --release --dart-define=API_BASE_URL=$ApiBaseUrl
+flutter build web --release --pwa-strategy=none --dart-define=API_BASE_URL=$ApiBaseUrl
 if ($LASTEXITCODE -ne 0) { Write-Host "Build failed" -ForegroundColor Red; exit 1 }
 
 Write-Host "2/2 Deploying to Firebase..." -ForegroundColor Cyan
