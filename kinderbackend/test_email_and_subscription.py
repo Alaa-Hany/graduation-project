@@ -11,7 +11,7 @@ from plan_service import PLAN_FREE, PLAN_PREMIUM
 
 def test_register_normalizes_email(client, db):
     response = client.post(
-        "/auth/register",
+        "/api/v1/auth/register",
         json={
             "name": "Case User",
             "email": "Case.User@Gmail.COM",
@@ -28,7 +28,7 @@ def test_register_normalizes_email(client, db):
 
 def test_register_accepts_non_gmail_when_no_allowlist(client, db):
     response = client.post(
-        "/auth/register",
+        "/api/v1/auth/register",
         json={
             "name": "Any Domain User",
             "email": "person@yahoo.com",
@@ -48,7 +48,7 @@ def test_register_respects_email_allowlist_policy(client, monkeypatch):
     monkeypatch.delenv("EMAIL_DOMAIN_DENYLIST", raising=False)
 
     blocked = client.post(
-        "/auth/register",
+        "/api/v1/auth/register",
         json={
             "name": "Blocked Domain",
             "email": "blocked@gmail.com",
@@ -60,7 +60,7 @@ def test_register_respects_email_allowlist_policy(client, monkeypatch):
     assert blocked.json()["detail"] == "Email domain is not allowed by policy"
 
     allowed = client.post(
-        "/auth/register",
+        "/api/v1/auth/register",
         json={
             "name": "Allowed Domain",
             "email": "allowed@example.com",
@@ -75,7 +75,7 @@ def test_login_accepts_uppercase_email(client, create_parent):
     create_parent(email="login.case@gmail.com", password="Password123!", name="Login Case")
 
     response = client.post(
-        "/auth/login",
+        "/api/v1/auth/login",
         json={
             "email": "LOGIN.CASE@GMAIL.COM",
             "password": "Password123!",
@@ -101,14 +101,14 @@ def test_subscription_endpoints(client, db):
 
     token = create_access_token(str(user.id))
 
-    plans_response = client.get("/plans")
+    plans_response = client.get("/api/v1/plans")
     assert plans_response.status_code == 200
     plans = plans_response.json()
     assert isinstance(plans, list)
     assert [plan["id"] for plan in plans] == ["PREMIUM", "FAMILY_PLUS"]
 
     status_response = client.get(
-        "/subscription",
+        "/api/v1/subscription",
         headers={"Authorization": f"Bearer {token}"},
     )
     assert status_response.status_code == 200
@@ -118,7 +118,7 @@ def test_subscription_endpoints(client, db):
     assert status["has_paid_access"] is False
 
     select_free = client.post(
-        "/subscription/select",
+        "/api/v1/subscription/select",
         json={"plan_id": "free"},
         headers={"Authorization": f"Bearer {token}"},
     )
@@ -127,7 +127,7 @@ def test_subscription_endpoints(client, db):
     assert user.plan == PLAN_FREE
 
     select_paid = client.post(
-        "/subscription/select",
+        "/api/v1/subscription/select",
         json={"plan_id": PLAN_PREMIUM},
         headers={"Authorization": f"Bearer {token}"},
     )

@@ -1,3 +1,5 @@
+from datetime import date
+
 from auth import hash_password
 from core.time_utils import db_utc_now
 from models import ChildProfile, User
@@ -45,7 +47,7 @@ def _create_child(
         parent_id=parent_id,
         name=name,
         picture_password=envelope,  # This will be JSON-encoded by the setter
-        age=7,
+        date_of_birth=date(date.today().year - 7, 1, 1),
     )
     db.add(child)
     db.commit()
@@ -58,7 +60,7 @@ def test_child_login_wrong_name_and_wrong_pictures_return_distinct_codes(client,
     child = _create_child(db, parent_id=parent.id, name="CodeKid")
 
     wrong_name = client.post(
-        "/auth/child/login",
+        "/api/v1/auth/child/login",
         json={
             "child_id": child.id,
             "name": "NotCodeKid",
@@ -69,7 +71,7 @@ def test_child_login_wrong_name_and_wrong_pictures_return_distinct_codes(client,
     assert wrong_name.json()["detail"]["code"] == "CHILD_INVALID_NAME"
 
     wrong_pictures = client.post(
-        "/auth/child/login",
+        "/api/v1/auth/child/login",
         json={
             "child_id": child.id,
             "name": child.name,
@@ -85,7 +87,7 @@ def test_child_login_returns_expiring_session_token(client, db):
     child = _create_child(db, parent_id=parent.id)
 
     response = client.post(
-        "/auth/child/login",
+        "/api/v1/auth/child/login",
         json={
             "child_id": child.id,
             "name": child.name,
@@ -104,7 +106,7 @@ def test_child_login_returns_expiring_session_token(client, db):
 def test_child_create_and_change_password_store_hashed_picture_password(client, db):
     parent = _create_parent(db, email="child.hash.parent@example.com")
     login = client.post(
-        "/auth/login",
+        "/api/v1/auth/login",
         json={
             "email": parent.email,
             "password": "Password123!",
@@ -114,7 +116,7 @@ def test_child_create_and_change_password_store_hashed_picture_password(client, 
     headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
 
     create = client.post(
-        "/children",
+        "/api/v1/children",
         json={
             "name": "Hash Kid",
             "picture_password": ["cat", "dog", "apple"],
@@ -131,7 +133,7 @@ def test_child_create_and_change_password_store_hashed_picture_password(client, 
     assert child.picture_password["hash"]
 
     change = client.post(
-        "/auth/child/change-password",
+        "/api/v1/auth/child/change-password",
         json={
             "child_id": child_id,
             "name": "Hash Kid",
@@ -157,7 +159,7 @@ def test_child_login_accepts_legacy_raw_picture_password_rows(client, db):
     )
 
     response = client.post(
-        "/auth/child/login",
+        "/api/v1/auth/child/login",
         json={
             "child_id": child.id,
             "name": child.name,
@@ -173,7 +175,7 @@ def test_child_session_validate_and_parent_auth_rejects_child_token(client, db):
     child = _create_child(db, parent_id=parent.id, name="TokenKid")
 
     login = client.post(
-        "/auth/child/login",
+        "/api/v1/auth/child/login",
         json={
             "child_id": child.id,
             "name": child.name,
@@ -185,7 +187,7 @@ def test_child_session_validate_and_parent_auth_rejects_child_token(client, db):
     session_token = login.json()["session_token"]
 
     validate = client.post(
-        "/auth/child/session/validate",
+        "/api/v1/auth/child/session/validate",
         json={
             "session_token": session_token,
             "device_id": "tablet-a",
@@ -196,7 +198,7 @@ def test_child_session_validate_and_parent_auth_rejects_child_token(client, db):
     assert validate.json()["child_id"] == child.id
 
     parent_only = client.get(
-        "/auth/me",
+        "/api/v1/auth/me",
         headers={"Authorization": f"Bearer {session_token}"},
     )
     assert parent_only.status_code == 401
@@ -208,7 +210,7 @@ def test_child_session_validate_requires_matching_device_for_bound_sessions(clie
     child = _create_child(db, parent_id=parent.id, name="ValidateKid")
 
     login = client.post(
-        "/auth/child/login",
+        "/api/v1/auth/child/login",
         json={
             "child_id": child.id,
             "name": child.name,
@@ -220,7 +222,7 @@ def test_child_session_validate_requires_matching_device_for_bound_sessions(clie
     session_token = login.json()["session_token"]
 
     missing_device = client.post(
-        "/auth/child/session/validate",
+        "/api/v1/auth/child/session/validate",
         json={
             "session_token": session_token,
         },
@@ -229,7 +231,7 @@ def test_child_session_validate_requires_matching_device_for_bound_sessions(clie
     assert missing_device.json()["detail"] == "Device ID is required for this child session"
 
     wrong_device = client.post(
-        "/auth/child/session/validate",
+        "/api/v1/auth/child/session/validate",
         json={
             "session_token": session_token,
             "device_id": "tablet-b",
@@ -248,7 +250,7 @@ def test_child_login_rate_limit_blocks_repeated_invalid_attempts(client, db, mon
 
     for _ in range(2):
         failed = client.post(
-            "/auth/child/login",
+            "/api/v1/auth/child/login",
             json={
                 "child_id": child.id,
                 "name": child.name,
@@ -258,7 +260,7 @@ def test_child_login_rate_limit_blocks_repeated_invalid_attempts(client, db, mon
         assert failed.status_code == 401
 
     blocked = client.post(
-        "/auth/child/login",
+        "/api/v1/auth/child/login",
         json={
             "child_id": child.id,
             "name": child.name,
@@ -277,7 +279,7 @@ def test_child_device_binding_rejects_unbound_device_when_enabled(client, db, mo
     child = _create_child(db, parent_id=parent.id, name="DeviceKid")
 
     first = client.post(
-        "/auth/child/login",
+        "/api/v1/auth/child/login",
         json={
             "child_id": child.id,
             "name": child.name,
@@ -288,7 +290,7 @@ def test_child_device_binding_rejects_unbound_device_when_enabled(client, db, mo
     assert first.status_code == 200
 
     second = client.post(
-        "/auth/child/login",
+        "/api/v1/auth/child/login",
         json={
             "child_id": child.id,
             "name": child.name,

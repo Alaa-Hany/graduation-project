@@ -207,7 +207,7 @@ def test_checkout_completed_webhook_updates_lifecycle_and_deduplicates(
         headers = auth_headers(parent)
 
         checkout = client.post(
-            "/subscription/checkout", json={"plan_type": "premium"}, headers=headers
+            "/api/v1/subscription/checkout", json={"plan_type": "premium"}, headers=headers
         )
         assert checkout.status_code == 200
 
@@ -236,7 +236,7 @@ def test_checkout_completed_webhook_updates_lifecycle_and_deduplicates(
         assert response.status_code == 200
         assert response.json()["status"] == "processed"
 
-        snapshot = client.get("/subscription/me", headers=headers)
+        snapshot = client.get("/api/v1/subscription/me", headers=headers)
         assert snapshot.status_code == 200
         payload = snapshot.json()
         assert payload["plan"] == PLAN_PREMIUM
@@ -280,13 +280,13 @@ def test_abandoned_or_failed_checkout_rolls_back_and_notifies(
         headers = auth_headers(parent)
 
         checkout = client.post(
-            "/subscription/checkout", json={"plan_type": "premium"}, headers=headers
+            "/api/v1/subscription/checkout", json={"plan_type": "premium"}, headers=headers
         )
         assert checkout.status_code == 200
 
         # Before any webhook resolves, the selection is pending and the parent
         # has NOT been notified yet.
-        pending_snapshot = client.get("/subscription/me", headers=headers).json()
+        pending_snapshot = client.get("/api/v1/subscription/me", headers=headers).json()
         assert pending_snapshot["lifecycle"]["status"] == "pending_activation"
         assert db.query(Notification).filter(Notification.user_id == parent.id).count() == 0
 
@@ -308,12 +308,12 @@ def test_abandoned_or_failed_checkout_rolls_back_and_notifies(
         assert response.status_code == 200
         assert response.json()["status"] == "processed"
 
-        snapshot = client.get("/subscription/me", headers=headers).json()
+        snapshot = client.get("/api/v1/subscription/me", headers=headers).json()
         assert snapshot["plan"] == PLAN_FREE
         assert snapshot["lifecycle"]["status"] == "free"
         assert snapshot["lifecycle"]["last_payment_status"] == expected_payment_status
 
-        history = client.get("/subscription/history", headers=headers).json()
+        history = client.get("/api/v1/subscription/history", headers=headers).json()
         assert any(item["event_type"] == expected_event for item in history["events"])
 
         notifications = db.query(Notification).filter(Notification.user_id == parent.id).all()
@@ -339,7 +339,7 @@ def test_invoice_paid_and_failed_and_subscription_deleted_webhooks_update_histor
         headers = auth_headers(parent)
 
         checkout = client.post(
-            "/subscription/checkout", json={"plan_type": "premium"}, headers=headers
+            "/api/v1/subscription/checkout", json={"plan_type": "premium"}, headers=headers
         )
         assert checkout.status_code == 200
 
@@ -418,7 +418,7 @@ def test_invoice_paid_and_failed_and_subscription_deleted_webhooks_update_histor
         assert failed_response.status_code == 200
         assert failed_response.json()["status"] == "processed"
 
-        snapshot_after_failed = client.get("/subscription/me", headers=headers)
+        snapshot_after_failed = client.get("/api/v1/subscription/me", headers=headers)
         assert snapshot_after_failed.status_code == 200
         snapshot_payload = snapshot_after_failed.json()
         assert snapshot_payload["lifecycle"]["last_payment_status"] == "failed"
@@ -443,7 +443,7 @@ def test_invoice_paid_and_failed_and_subscription_deleted_webhooks_update_histor
         assert deleted_response.status_code == 200
         assert deleted_response.json()["status"] == "processed"
 
-        history = client.get("/subscription/history", headers=headers)
+        history = client.get("/api/v1/subscription/history", headers=headers)
         assert history.status_code == 200
         history_payload = history.json()
         assert any(item["event_type"] == "renewal" for item in history_payload["events"])
@@ -460,7 +460,7 @@ def test_invoice_paid_and_failed_and_subscription_deleted_webhooks_update_histor
             for item in history_payload["payment_attempts"]
         )
 
-        final_snapshot = client.get("/subscription/me", headers=headers)
+        final_snapshot = client.get("/api/v1/subscription/me", headers=headers)
         assert final_snapshot.status_code == 200
         final_payload = final_snapshot.json()
         assert final_payload["plan"] == PLAN_FREE

@@ -156,6 +156,59 @@ def test_fallback_generate_arabic_intents(fallback, intent):
     assert response.metadata_json["language"] == "ar"
 
 
+@pytest.mark.parametrize(
+    "locale,texts,expected",
+    [
+        # Locale wins over message content (the app-language contract).
+        ("ar", ("hello world",), True),
+        ("ar_EG", ("hi",), True),
+        ("en", ("مرحبا",), False),
+        ("en_US", ("مرحبا",), False),
+        # No locale → fall back to sniffing the text.
+        (None, ("مرحبا",), True),
+        (None, ("hello",), False),
+        ("", ("hello",), False),
+    ],
+)
+def test_resolve_is_arabic_prefers_locale(locale, texts, expected):
+    assert rg_module._resolve_is_arabic(locale, *texts) is expected
+
+
+def test_fallback_generate_uses_locale_over_message_language(fallback):
+    # English message but Arabic app locale → reply must be Arabic.
+    response = fallback.generate(
+        child_name="Alaa",
+        child_age=6,
+        message="Hi, my name is Alaa",
+        quick_action="general_help",
+        recent_messages=[],
+        locale="ar",
+    )
+    assert response.metadata_json["language"] == "ar"
+
+    # Arabic message but English app locale → reply must be English.
+    response_en = fallback.generate(
+        child_name="علاء",
+        child_age=6,
+        message="مرحبا اسمي علاء",
+        quick_action="general_help",
+        recent_messages=[],
+        locale="en",
+    )
+    assert response_en.metadata_json["language"] == "en"
+
+
+def test_fallback_greeting_uses_locale(fallback):
+    # Latin name but Arabic locale → Arabic greeting template.
+    ar_greeting = fallback.greeting(child_name="Alaa", locale="ar")
+    assert "مرحب" in ar_greeting.content
+    assert "Hello" not in ar_greeting.content
+    # Arabic name but English locale → English greeting template.
+    en_greeting = fallback.greeting(child_name="Alaa", locale="en")
+    assert "Hello" in en_greeting.content
+    assert "مرحب" not in en_greeting.content
+
+
 def test_fallback_recommended_activity_paths(fallback):
     # Preferred category match (educational).
     lesson = fallback._recommended_activity(intent="recommend_lesson", child_age=7)
@@ -281,7 +334,7 @@ class _StubBackend:
     def provider_state(self):
         return self._state
 
-    def greeting(self, *, child_name=None):
+    def greeting(self, *, child_name=None, locale=None):
         if self._raise:
             raise self._raise
         return self._response

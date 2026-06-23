@@ -113,6 +113,16 @@ jobs:
       - name: Alembic upgrade
         run: alembic upgrade head
 
+      - name: Check for multiple Alembic heads
+        run: |
+          HEADS_OUTPUT=$(alembic heads)
+          echo "$HEADS_OUTPUT"
+          HEAD_COUNT=$(echo "$HEADS_OUTPUT" | grep -c .)
+          if [ "$HEAD_COUNT" -gt 1 ]; then
+            echo "ERROR: Multiple Alembic heads detected. Run 'alembic merge heads' before merging this PR."
+            exit 1
+          fi
+
       - name: Run pytest suite with coverage
         run: |
           python -m pytest -q \
@@ -195,6 +205,16 @@ jobs:
             alembic upgrade head
           else
             echo "Alembic directory not found, skipping migrations"
+          fi
+
+      - name: Check for multiple Alembic heads
+        run: |
+          HEADS_OUTPUT=$(alembic heads)
+          echo "$HEADS_OUTPUT"
+          HEAD_COUNT=$(echo "$HEADS_OUTPUT" | grep -c .)
+          if [ "$HEAD_COUNT" -gt 1 ]; then
+            echo "ERROR: Multiple Alembic heads detected. Run 'alembic merge heads' before merging this PR."
+            exit 1
           fi
 
       - name: Run pytest suite

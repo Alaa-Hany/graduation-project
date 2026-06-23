@@ -170,7 +170,7 @@ def run_tests():
     ok, _, seed_resp = test(
         "seed admin data",
         "POST",
-        "/admin/seed",
+        "/api/v1/admin/seed",
         params={"secret": os.environ["ADMIN_SEED_SECRET"]},
         expect_status=200,
     )
@@ -180,7 +180,7 @@ def run_tests():
     ok, _, admin_login_resp = test(
         "admin login (valid)",
         "POST",
-        "/admin/auth/login",
+        "/api/v1/admin/auth/login",
         body={
             "email": os.environ["ADMIN_SEED_EMAIL"],
             "password": os.environ["ADMIN_SEED_PASSWORD"],
@@ -193,7 +193,7 @@ def run_tests():
     test(
         "admin login (wrong password)",
         "POST",
-        "/admin/auth/login",
+        "/api/v1/admin/auth/login",
         body={"email": os.environ["ADMIN_SEED_EMAIL"], "password": "wrongpassword"},
         expect_status=401,
     )
@@ -201,7 +201,7 @@ def run_tests():
     test(
         "admin login (nonexistent user)",
         "POST",
-        "/admin/auth/login",
+        "/api/v1/admin/auth/login",
         body={"email": "nobody@kinderworld.app", "password": "anything"},
         expect_status=401,
     )
@@ -209,18 +209,18 @@ def run_tests():
     test(
         "admin me (valid token)",
         "GET",
-        "/admin/auth/me",
+        "/api/v1/admin/auth/me",
         token=admin_token,
         expect_status=200,
         expect_key="admin",
     )
 
-    test("admin me (no token)", "GET", "/admin/auth/me", expect_status=401)
+    test("admin me (no token)", "GET", "/api/v1/admin/auth/me", expect_status=401)
 
     test(
         "admin me (invalid token)",
         "GET",
-        "/admin/auth/me",
+        "/api/v1/admin/auth/me",
         token="invalid.token.here",
         expect_status=401,
     )
@@ -234,7 +234,7 @@ def run_tests():
     ok, _, reg_resp = test(
         "parent register (valid)",
         "POST",
-        "/auth/register",
+        "/api/v1/auth/register",
         body={
             "name": "Test Parent",
             "email": parent_email,
@@ -249,7 +249,7 @@ def run_tests():
     test(
         "parent register (duplicate email)",
         "POST",
-        "/auth/register",
+        "/api/v1/auth/register",
         body={
             "name": "Test Parent",
             "email": parent_email,
@@ -262,7 +262,7 @@ def run_tests():
     test(
         "parent register (password mismatch)",
         "POST",
-        "/auth/register",
+        "/api/v1/auth/register",
         body={
             "name": "Test Parent",
             "email": f"other{ts}@gmail.com",
@@ -275,7 +275,7 @@ def run_tests():
     test(
         "parent register (non-gmail domain accepted)",
         "POST",
-        "/auth/register",
+        "/api/v1/auth/register",
         body={
             "name": "Test Parent",
             "email": f"test{ts}@yahoo.com",
@@ -289,7 +289,7 @@ def run_tests():
     ok, _, login_resp = test(
         "parent login (valid)",
         "POST",
-        "/auth/login",
+        "/api/v1/auth/login",
         body={"email": parent_email, "password": parent_pass},
         expect_status=200,
         expect_key="access_token",
@@ -300,7 +300,7 @@ def run_tests():
     test(
         "parent login (wrong password)",
         "POST",
-        "/auth/login",
+        "/api/v1/auth/login",
         body={"email": parent_email, "password": "WrongPass@123"},
         expect_status=401,
     )
@@ -308,7 +308,7 @@ def run_tests():
     test(
         "parent login (nonexistent email)",
         "POST",
-        "/auth/login",
+        "/api/v1/auth/login",
         body={"email": f"nobody{ts}@gmail.com", "password": parent_pass},
         expect_status=401,
     )
@@ -317,7 +317,7 @@ def run_tests():
     test(
         "token refresh (valid)",
         "POST",
-        "/auth/refresh",
+        "/api/v1/auth/refresh",
         body={"refresh_token": refresh_token},
         expect_status=200,
         expect_key="access_token",
@@ -326,7 +326,7 @@ def run_tests():
     test(
         "token refresh (invalid token)",
         "POST",
-        "/auth/refresh",
+        "/api/v1/auth/refresh",
         body={"refresh_token": "invalid.refresh.token"},
         expect_status=401,
     )
@@ -335,20 +335,20 @@ def run_tests():
     test(
         "auth me (valid token)",
         "GET",
-        "/auth/me",
+        "/api/v1/auth/me",
         token=parent_token,
         expect_status=200,
         expect_key="user",
     )
 
-    test("auth me (no token)", "GET", "/auth/me", expect_status=401)
+    test("auth me (no token)", "GET", "/api/v1/auth/me", expect_status=401)
 
     # ── 8. Child Management ───────────────────────────────────────────────────
     print("\n[8] CHILD MANAGEMENT")
     ok, _, child_resp = test(
         "create child (valid)",
         "POST",
-        "/children",
+        "/api/v1/children",
         body={
             "name": "Alice",
             "picture_password": ["cat", "dog", "apple"],
@@ -366,7 +366,7 @@ def run_tests():
     test(
         "create child (plan limit reached)",
         "POST",
-        "/children",
+        "/api/v1/children",
         body={"name": "Alice2", "picture_password": ["cat", "dog", "apple"], "age": 7},
         token=parent_token,
         expect_status=402,
@@ -375,7 +375,7 @@ def run_tests():
     test(
         "create child (age too young)",
         "POST",
-        "/children",
+        "/api/v1/children",
         body={"name": "Baby", "picture_password": ["cat", "dog", "apple"], "age": 2},
         token=parent_token,
         expect_status=422,
@@ -384,7 +384,7 @@ def run_tests():
     test(
         "create child (age too old)",
         "POST",
-        "/children",
+        "/api/v1/children",
         body={"name": "Teen", "picture_password": ["cat", "dog", "apple"], "age": 15},
         token=parent_token,
         expect_status=422,
@@ -393,19 +393,19 @@ def run_tests():
     test(
         "list children (valid)",
         "GET",
-        "/children",
+        "/api/v1/children",
         token=parent_token,
         expect_status=200,
         expect_key="children",
     )
 
-    test("list children (no token)", "GET", "/children", expect_status=401)
+    test("list children (no token)", "GET", "/api/v1/children", expect_status=401)
 
     if child_id:
         test(
             "update child (valid)",
             "PUT",
-            f"/children/{child_id}",
+            f"/api/v1/children/{child_id}",
             body={"name": "Alice Updated", "age": 8},
             token=parent_token,
             expect_status=200,
@@ -416,7 +416,7 @@ def run_tests():
         test(
             "update child (admin token rejected)",
             "PUT",
-            f"/children/{child_id}",
+            f"/api/v1/children/{child_id}",
             body={"name": "Hacked"},
             token=admin_token,
             expect_status=401,
@@ -425,12 +425,12 @@ def run_tests():
     # ── 9. Child Auth ─────────────────────────────────────────────────────────
     print("\n[9] CHILD AUTH")
     # First upgrade parent to PREMIUM so child limit is not hit
-    req("POST", "/subscription/select", body={"plan_type": "premium"}, token=parent_token)
+    req("POST", "/api/v1/subscription/select", body={"plan_type": "premium"}, token=parent_token)
 
     ok, _, child_reg_resp = test(
         "child register (valid)",
         "POST",
-        "/auth/child/register",
+        "/api/v1/auth/child/register",
         body={
             "name": "Bob",
             "picture_password": ["sun", "moon", "star"],
@@ -445,7 +445,7 @@ def run_tests():
     test(
         "child register (parent not found)",
         "POST",
-        "/auth/child/register",
+        "/api/v1/auth/child/register",
         body={
             "name": "Ghost",
             "picture_password": ["a", "b", "c"],
@@ -459,7 +459,7 @@ def run_tests():
         test(
             "child login (valid)",
             "POST",
-            "/auth/child/login",
+            "/api/v1/auth/child/login",
             body={"child_id": bob_id, "name": "Bob", "picture_password": ["sun", "moon", "star"]},
             expect_status=200,
             expect_key="success",
@@ -468,7 +468,7 @@ def run_tests():
         test(
             "child login (wrong picture password)",
             "POST",
-            "/auth/child/login",
+            "/api/v1/auth/child/login",
             body={
                 "child_id": bob_id,
                 "name": "Bob",
@@ -480,7 +480,7 @@ def run_tests():
         test(
             "child login (wrong name)",
             "POST",
-            "/auth/child/login",
+            "/api/v1/auth/child/login",
             body={
                 "child_id": bob_id,
                 "name": "NotBob",
@@ -492,7 +492,7 @@ def run_tests():
         test(
             "child change password (valid)",
             "POST",
-            "/auth/child/change-password",
+            "/api/v1/auth/child/change-password",
             body={
                 "child_id": bob_id,
                 "name": "Bob",
@@ -506,7 +506,7 @@ def run_tests():
         test(
             "child change password (wrong current)",
             "POST",
-            "/auth/child/change-password",
+            "/api/v1/auth/child/change-password",
             body={
                 "child_id": bob_id,
                 "name": "Bob",
@@ -519,16 +519,16 @@ def run_tests():
     # ── 10. Subscription ──────────────────────────────────────────────────────
     print("\n[10] SUBSCRIPTION")
     test(
-        "get subscription (valid)", "GET", "/subscription/me", token=parent_token, expect_status=200
+        "get subscription (valid)", "GET", "/api/v1/subscription/me", token=parent_token, expect_status=200
     )
 
-    test("get plans (public)", "GET", "/plans", expect_status=200)
+    test("get plans (public)", "GET", "/api/v1/plans", expect_status=200)
 
     # Flutter sends plan_type (lowercase) — backend now accepts both plan_id and plan_type
     test(
         "select plan (free via plan_type)",
         "POST",
-        "/subscription/select",
+        "/api/v1/subscription/select",
         body={"plan_type": "free"},
         token=parent_token,
         expect_status=200,
@@ -537,7 +537,7 @@ def run_tests():
     test(
         "select plan (premium via plan_id)",
         "POST",
-        "/subscription/select",
+        "/api/v1/subscription/select",
         body={"plan_id": "PREMIUM"},
         token=parent_token,
         expect_status=200,
@@ -546,7 +546,7 @@ def run_tests():
     test(
         "select plan (invalid)",
         "POST",
-        "/subscription/select",
+        "/api/v1/subscription/select",
         body={"plan_type": "INVALID_PLAN"},
         token=parent_token,
         expect_status=400,
@@ -555,21 +555,21 @@ def run_tests():
     test(
         "select plan (no fields)",
         "POST",
-        "/subscription/select",
+        "/api/v1/subscription/select",
         body={},
         token=parent_token,
         expect_status=422,
     )
 
-    test("subscription (no token)", "GET", "/subscription/me", expect_status=401)
+    test("subscription (no token)", "GET", "/api/v1/subscription/me", expect_status=401)
 
     # ── 11. Notifications ─────────────────────────────────────────────────────
     print("\n[11] NOTIFICATIONS")
     test(
-        "list notifications (valid)", "GET", "/notifications", token=parent_token, expect_status=200
+        "list notifications (valid)", "GET", "/api/v1/notifications", token=parent_token, expect_status=200
     )
 
-    test("list notifications (no token)", "GET", "/notifications", expect_status=401)
+    test("list notifications (no token)", "GET", "/api/v1/notifications", expect_status=401)
 
     # ── 12. Parental Controls ─────────────────────────────────────────────────
     print("\n[12] PARENTAL CONTROLS")
@@ -577,7 +577,7 @@ def run_tests():
     test(
         "get parental controls (valid)",
         "GET",
-        "/parental-controls/settings",
+        "/api/v1/parental-controls/settings",
         token=parent_token,
         expect_status=200,
         expect_key="settings",
@@ -586,7 +586,7 @@ def run_tests():
     test(
         "update parental controls (valid)",
         "PUT",
-        "/parental-controls/settings",
+        "/api/v1/parental-controls/settings",
         body={
             "daily_limit_enabled": True,
             "hours_per_day": 3,
@@ -604,18 +604,18 @@ def run_tests():
         expect_key="settings",
     )
 
-    test("parental controls (no token)", "GET", "/parental-controls/settings", expect_status=401)
+    test("parental controls (no token)", "GET", "/api/v1/parental-controls/settings", expect_status=401)
 
     # ── 13. Admin Users ───────────────────────────────────────────────────────
     print("\n[13] ADMIN — USER MANAGEMENT")
-    test("admin list users (valid)", "GET", "/admin/users", token=admin_token, expect_status=200)
+    test("admin list users (valid)", "GET", "/api/v1/admin/users", token=admin_token, expect_status=200)
 
-    test("admin list users (no token)", "GET", "/admin/users", expect_status=401)
+    test("admin list users (no token)", "GET", "/api/v1/admin/users", expect_status=401)
 
     test(
         "admin list users (parent token)",
         "GET",
-        "/admin/users",
+        "/api/v1/admin/users",
         token=parent_token,
         expect_status=401,
     )
@@ -625,19 +625,19 @@ def run_tests():
     test(
         "admin analytics overview (valid)",
         "GET",
-        "/admin/analytics/overview",
+        "/api/v1/admin/analytics/overview",
         token=admin_token,
         expect_status=200,
     )
 
-    test("admin analytics (no token)", "GET", "/admin/analytics/overview", expect_status=401)
+    test("admin analytics (no token)", "GET", "/api/v1/admin/analytics/overview", expect_status=401)
 
     # ── 15. Rate Limiting ─────────────────────────────────────────────────────
     print("\n[15] RATE LIMITING (auth endpoint — 5 req/5min)")
     bad_email = f"ratelimit{ts}@gmail.com"
     rate_hit = False
     for i in range(7):
-        status, resp = req("POST", "/auth/login", body={"email": bad_email, "password": "wrong"})
+        status, resp = req("POST", "/api/v1/auth/login", body={"email": bad_email, "password": "wrong"})
         if status == 429:
             rate_hit = True
             print(f"  ✅  [rate limit triggered] Hit 429 on attempt {i+1}")
@@ -654,7 +654,7 @@ def run_tests():
         test(
             "delete child (valid)",
             "DELETE",
-            f"/children/{child_id}",
+            f"/api/v1/children/{child_id}",
             token=parent_token,
             expect_status=200,
         )
@@ -662,7 +662,7 @@ def run_tests():
         test(
             "delete child (already deleted)",
             "DELETE",
-            f"/children/{child_id}",
+            f"/api/v1/children/{child_id}",
             token=parent_token,
             expect_status=404,
         )

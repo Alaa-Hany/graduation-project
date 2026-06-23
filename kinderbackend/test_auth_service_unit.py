@@ -16,7 +16,8 @@ import pytest
 from fastapi import HTTPException
 
 import services.auth_service as auth_module
-from auth import create_refresh_token, hash_password
+from auth import hash_password
+from core.message_catalog import AuthMessages
 from core.time_utils import db_utc_now
 from schemas.auth import (
     ForgotPasswordIn,
@@ -278,35 +279,67 @@ def test_resend_otp_success(service, db, create_parent):
 
 
 def test_refresh_invalid_token(service, db):
-    payload = RefreshIn(refresh_token="not-a-jwt")
+    payload = RefreshIn(refresh_token="not-a-valid-token")
     with pytest.raises(HTTPException) as exc:
         service.refresh_parent_access_token(payload, db)
     assert exc.value.status_code == 401
 
 
 def test_refresh_user_not_found(service, db):
-    token = create_refresh_token("999999", 0)
-    payload = RefreshIn(refresh_token=token)
+    payload = RefreshIn(refresh_token="999999:some-secret")
     with pytest.raises(HTTPException) as exc:
         service.refresh_parent_access_token(payload, db)
     assert exc.value.status_code == 401
 
 
-def test_refresh_token_version_mismatch(service, db, create_parent):
-    user = create_parent(email="refresh-stale@example.com")
-    token = create_refresh_token(str(user.id), (user.token_version or 0) + 5)
-    payload = RefreshIn(refresh_token=token)
+def test_refresh_without_stored_session_is_session_expired(service, db, create_parent):
+    # A user who has never logged in since rotation shipped (or whose session
+    # was revoked) has no refresh_token_hash on file — must force re-login.
+    user = create_parent(email="refresh-no-session@example.com")
+    payload = RefreshIn(refresh_token=f"{user.id}:some-secret")
     with pytest.raises(HTTPException) as exc:
         service.refresh_parent_access_token(payload, db)
     assert exc.value.status_code == 401
+    assert exc.value.detail == AuthMessages.SESSION_EXPIRED
 
 
-def test_refresh_success(service, db, create_parent):
+def test_refresh_reused_token_revokes_session(service, db, create_parent):
+    user = create_parent(email="refresh-reuse@example.com")
+    token = service._issue_refresh_token(user=user)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    starting_version = user.token_version or 0
+
+    # Rotate once successfully so the original token is now stale.
+    service.refresh_parent_access_token(RefreshIn(refresh_token=token), db)
+
+    with pytest.raises(HTTPException) as exc:
+        service.refresh_parent_access_token(RefreshIn(refresh_token=token), db)
+    assert exc.value.status_code == 401
+    assert exc.value.detail == AuthMessages.INVALID_REFRESH_TOKEN
+
+    db.refresh(user)
+    assert user.token_version == starting_version + 1
+    assert user.refresh_token_hash is None
+
+
+def test_refresh_success_rotates_token(service, db, create_parent):
     user = create_parent(email="refresh-ok@example.com")
-    token = create_refresh_token(str(user.id), user.token_version or 0)
+    token = service._issue_refresh_token(user=user)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
     payload = RefreshIn(refresh_token=token)
     result = service.refresh_parent_access_token(payload, db)
     assert "access_token" in result
+    assert result["refresh_token"] != token
+
+    db.refresh(user)
+    assert user.refresh_token_hash == service._hash_refresh_token_secret(
+        result["refresh_token"].split(":", 1)[1]
+    )
 
 
 # ---------------------------------------------------------------------------

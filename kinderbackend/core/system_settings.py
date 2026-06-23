@@ -62,6 +62,29 @@ def get_bool_setting(db: Session, key: str, default: bool) -> bool:
     return _coerce_bool(raw, default)
 
 
+def get_dict_setting(db: Session, key: str, default: dict[str, Any]) -> dict[str, Any]:
+    existing = ensure_default_settings(db)
+    setting = existing.get(key)
+    raw = setting.value_json if setting is not None else default
+    if isinstance(raw, dict):
+        return raw
+    return default
+
+
+def get_default_child_limit(db: Session) -> int | None:
+    """Return the admin-configured default child limit for the FREE plan.
+
+    Falls back to the built-in default when unset or invalid. A value <= 0 is
+    treated as "unset" so it never silently blocks all child creation."""
+    defaults = get_dict_setting(db, "defaults", DEFAULT_SYSTEM_SETTINGS["defaults"])
+    raw = defaults.get("default_child_limit")
+    try:
+        limit = int(raw)
+    except (TypeError, ValueError):
+        return None
+    return limit if limit > 0 else None
+
+
 def is_maintenance_mode(db: Session) -> bool:
     return get_bool_setting(db, "maintenance_mode", default=False)
 

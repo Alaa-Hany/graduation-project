@@ -25,6 +25,7 @@ class FakeAiBuddyService implements AiBuddyService {
   @override
   Future<AiBuddyConversation> getOrStartCurrentSession({
     required int childId,
+    String? locale,
   }) async {
     _conversation ??= _buildConversation(childId: childId);
     return _conversation!;
@@ -34,6 +35,7 @@ class FakeAiBuddyService implements AiBuddyService {
   Future<AiBuddyConversation> startSession({
     required int childId,
     bool forceNew = false,
+    String? locale,
   }) async {
     _conversation = _buildConversation(childId: childId);
     return _conversation!;
@@ -51,6 +53,7 @@ class FakeAiBuddyService implements AiBuddyService {
     required String content,
     String? clientMessageId,
     String? quickAction,
+    String? locale,
   }) async {
     final session = _conversation?.session ??
         AiBuddySession(

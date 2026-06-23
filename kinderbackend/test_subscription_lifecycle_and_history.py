@@ -5,7 +5,7 @@ def test_subscription_lifecycle_and_history_flow(client, db, create_parent, auth
     parent = create_parent(email="lifecycle.parent@example.com", plan=PLAN_FREE)
     headers = auth_headers(parent)
 
-    initial = client.get("/subscription/me", headers=headers)
+    initial = client.get("/api/v1/subscription/me", headers=headers)
     assert initial.status_code == 200
     initial_payload = initial.json()
     assert initial_payload["plan"] == PLAN_FREE
@@ -13,7 +13,7 @@ def test_subscription_lifecycle_and_history_flow(client, db, create_parent, auth
     assert initial_payload["history_summary"]["event_count"] == 0
 
     select = client.post(
-        "/subscription/select",
+        "/api/v1/subscription/select",
         json={"plan_type": "premium"},
         headers=headers,
     )
@@ -26,7 +26,7 @@ def test_subscription_lifecycle_and_history_flow(client, db, create_parent, auth
     assert select_payload["session_id"].startswith("mock_session_")
     assert select_payload["started_at"] is None
 
-    me_after_select = client.get("/subscription/me", headers=headers)
+    me_after_select = client.get("/api/v1/subscription/me", headers=headers)
     assert me_after_select.status_code == 200
     me_payload = me_after_select.json()
     assert me_payload["plan"] == PLAN_FREE
@@ -38,27 +38,27 @@ def test_subscription_lifecycle_and_history_flow(client, db, create_parent, auth
     assert me_payload["history_summary"]["billing_transaction_count"] == 0
     assert me_payload["history_summary"]["payment_attempt_count"] >= 1
 
-    history = client.get("/subscription/history", headers=headers)
+    history = client.get("/api/v1/subscription/history", headers=headers)
     assert history.status_code == 200
     history_payload = history.json()
     event_types = [item["event_type"] for item in history_payload["events"]]
     assert "select" in event_types
     assert history_payload["payment_attempts"][0]["attempt_type"] == "checkout"
 
-    before_renew = client.get("/subscription", headers=headers).json()
+    before_renew = client.get("/api/v1/subscription", headers=headers).json()
     renew = client.post(
-        "/subscription/activate",
+        "/api/v1/subscription/activate",
         json={"plan_type": "premium", "session_id": select_payload["session_id"]},
         headers=headers,
     )
     assert renew.status_code == 409
     assert renew.json()["detail"] == "Payment is not completed yet"
 
-    after_activate_attempt = client.get("/subscription", headers=headers).json()
+    after_activate_attempt = client.get("/api/v1/subscription", headers=headers).json()
     assert after_activate_attempt["current_plan_id"] == before_renew["current_plan_id"]
     assert after_activate_attempt["status"] == "pending_activation"
 
-    history_after_renew = client.get("/subscription/history", headers=headers)
+    history_after_renew = client.get("/api/v1/subscription/history", headers=headers)
     assert history_after_renew.status_code == 200
     renew_event_types = [item["event_type"] for item in history_after_renew.json()["events"]]
     assert any(
@@ -67,11 +67,11 @@ def test_subscription_lifecycle_and_history_flow(client, db, create_parent, auth
     )
     assert "failure" in renew_event_types
 
-    cancel = client.post("/subscription/cancel", headers=headers)
+    cancel = client.post("/api/v1/subscription/cancel", headers=headers)
     assert cancel.status_code == 410
     assert cancel.json()["detail"] == "No active subscription to cancel"
 
-    manage = client.post("/subscription/manage", headers=headers)
+    manage = client.post("/api/v1/subscription/manage", headers=headers)
     assert manage.status_code == 410
     assert manage.json()["detail"] == "Billing portal is not available for this account."
 
@@ -81,7 +81,7 @@ def test_activate_rejects_mismatched_pending_plan(client, create_parent, auth_he
     headers = auth_headers(parent)
 
     select = client.post(
-        "/subscription/select",
+        "/api/v1/subscription/select",
         json={"plan_type": "premium"},
         headers=headers,
     )
@@ -89,7 +89,7 @@ def test_activate_rejects_mismatched_pending_plan(client, create_parent, auth_he
     select_payload = select.json()
 
     activate = client.post(
-        "/subscription/activate",
+        "/api/v1/subscription/activate",
         json={"plan_type": "family_plus", "session_id": select_payload["session_id"]},
         headers=headers,
     )
@@ -107,13 +107,13 @@ def test_manage_subscription_rejects_accounts_without_billing_customer(
     parent = create_parent(email="manage.empty@example.com", plan=PLAN_FREE)
     headers = auth_headers(parent)
 
-    manage = client.post("/subscription/manage", headers=headers)
+    manage = client.post("/api/v1/subscription/manage", headers=headers)
     assert manage.status_code == 410
     assert manage.json()["detail"] == "Billing portal is not available for this account."
 
 
 def test_manage_subscription_requires_authentication(client):
-    manage = client.post("/subscription/manage")
+    manage = client.post("/api/v1/subscription/manage")
     assert manage.status_code == 401
 
 
@@ -125,13 +125,13 @@ def test_billing_portal_rejects_accounts_without_billing_customer(
     parent = create_parent(email="portal.empty@example.com", plan=PLAN_FREE)
     headers = auth_headers(parent)
 
-    portal = client.post("/billing/portal", headers=headers)
+    portal = client.post("/api/v1/billing/portal", headers=headers)
     assert portal.status_code == 410
     assert portal.json()["detail"] == "Billing portal is not available for this account."
 
 
 def test_billing_portal_requires_authentication(client):
-    portal = client.post("/billing/portal")
+    portal = client.post("/api/v1/billing/portal")
     assert portal.status_code == 401
 
 
@@ -149,13 +149,13 @@ def test_admin_subscription_detail_exposes_lifecycle_and_history(
     admin = create_admin(email="subscriptions.admin@example.com", role_names=["super_admin"])
 
     client.post(
-        "/subscription/select",
+        "/api/v1/subscription/select",
         json={"plan_type": "family_plus"},
         headers=auth_headers(parent),
     )
 
     detail = client.get(
-        f"/admin/subscriptions/{parent.id}",
+        f"/api/v1/admin/subscriptions/{parent.id}",
         headers=admin_headers(admin),
     )
     assert detail.status_code == 200

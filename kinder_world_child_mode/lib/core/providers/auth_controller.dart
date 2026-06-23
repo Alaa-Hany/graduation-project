@@ -581,6 +581,7 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
     secureStorage: secureStorage,
     authApi: authApi,
     logger: logger,
+    ref: ref,
   );
 });
 

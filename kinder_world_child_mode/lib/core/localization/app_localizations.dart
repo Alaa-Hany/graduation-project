@@ -1867,6 +1867,8 @@ abstract class AppLocalizations {
   String get adminSettingsDefaultsTitle;
   String get adminSettingsDefaultPlanLabel;
   String get adminSettingsDefaultChildLimitLabel;
+  String get adminSettingsSaved;
+  String get adminSettingsSaveFailed;
 
   // Generic labels
   String get labelId;

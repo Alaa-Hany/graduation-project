@@ -8,7 +8,7 @@ def test_openapi_core_routes_include_high_value_metadata(client) -> None:
     schema = response.json()
     paths = schema["paths"]
 
-    login_operation = paths["/auth/login"]["post"]
+    login_operation = paths["/api/v1/auth/login"]["post"]
     login_schema_ref = login_operation["requestBody"]["content"]["application/json"]["schema"][
         "$ref"
     ]
@@ -16,14 +16,14 @@ def test_openapi_core_routes_include_high_value_metadata(client) -> None:
     assert "two-factor authentication" in login_operation["description"].lower()
     assert login_schema_ref.endswith("/LoginIn")
 
-    me_operation = paths["/auth/me"]["get"]
+    me_operation = paths["/api/v1/auth/me"]["get"]
     me_response_ref = me_operation["responses"]["200"]["content"]["application/json"]["schema"][
         "$ref"
     ]
     assert me_operation["summary"] == "Get Current Parent"
     assert me_response_ref.endswith("/CurrentUserResponse")
 
-    select_operation = paths["/subscription/select"]["post"]
+    select_operation = paths["/api/v1/subscription/select"]["post"]
     select_request_ref = select_operation["requestBody"]["content"]["application/json"]["schema"][
         "$ref"
     ]
@@ -35,7 +35,7 @@ def test_openapi_core_routes_include_high_value_metadata(client) -> None:
     assert select_request_ref.endswith("/SubscriptionSelectRequest")
     assert select_response_ref.endswith("/SubscriptionSelectResponse")
 
-    support_operation = paths["/support/tickets/{ticket_id}/reply"]["post"]
+    support_operation = paths["/api/v1/support/tickets/{ticket_id}/reply"]["post"]
     support_response_ref = support_operation["responses"]["200"]["content"]["application/json"][
         "schema"
     ]["$ref"]
@@ -43,7 +43,7 @@ def test_openapi_core_routes_include_high_value_metadata(client) -> None:
     assert "thread" in support_operation["description"].lower()
     assert support_response_ref.endswith("/SupportTicketMutationResponse")
 
-    notifications_operation = paths["/notifications"]["get"]
+    notifications_operation = paths["/api/v1/notifications"]["get"]
     notifications_response_ref = notifications_operation["responses"]["200"]["content"][
         "application/json"
     ]["schema"]["$ref"]

@@ -20,7 +20,7 @@ def test_child_create_accepts_known_avatar_asset_and_id(client, create_parent, a
     headers = auth_headers(parent)
 
     asset_response = client.post(
-        "/children",
+        "/api/v1/children",
         json={
             "name": "Asset Kid",
             "picture_password": ["cat", "dog", "apple"],
@@ -33,7 +33,7 @@ def test_child_create_accepts_known_avatar_asset_and_id(client, create_parent, a
     assert asset_response.json()["child"]["avatar"] == "assets/images/avatars/girl1.png"
 
     id_response = client.post(
-        "/children",
+        "/api/v1/children",
         json={
             "name": "Id Kid",
             "picture_password": ["sun", "moon", "star"],
@@ -52,7 +52,7 @@ def test_child_create_accepts_valid_inline_avatar_image(client, create_parent, a
     avatar = _png_data_url()
 
     response = client.post(
-        "/children",
+        "/api/v1/children",
         json={
             "name": "Inline Kid",
             "picture_password": ["cat", "dog", "apple"],
@@ -70,7 +70,7 @@ def test_child_create_rejects_unsupported_avatar_reference(client, create_parent
     headers = auth_headers(parent)
 
     response = client.post(
-        "/children",
+        "/api/v1/children",
         json={
             "name": "Bad Ref",
             "picture_password": ["cat", "dog", "apple"],
@@ -93,7 +93,7 @@ def test_child_create_rejects_malformed_inline_avatar_image(client, create_paren
     headers = auth_headers(parent)
 
     response = client.post(
-        "/children",
+        "/api/v1/children",
         json={
             "name": "Bad Data",
             "picture_password": ["cat", "dog", "apple"],
@@ -115,7 +115,7 @@ def test_child_create_rejects_avatar_content_type_mismatch(client, create_parent
     png_payload = _png_data_url().split(",", 1)[1]
 
     response = client.post(
-        "/children",
+        "/api/v1/children",
         json={
             "name": "Bad Mime",
             "picture_password": ["cat", "dog", "apple"],
@@ -137,7 +137,7 @@ def test_child_create_rejects_oversized_inline_avatar_image(client, create_paren
     oversized = base64.b64encode(b"a" * ((2 * 1024 * 1024) + 1)).decode("ascii")
 
     response = client.post(
-        "/children",
+        "/api/v1/children",
         json={
             "name": "Too Large",
             "picture_password": ["cat", "dog", "apple"],
@@ -168,7 +168,7 @@ def test_admin_child_update_rejects_malformed_avatar_image(
     child = create_child(parent_id=parent.id, name="Managed Kid")
 
     response = client.patch(
-        f"/admin/children/{child.id}",
+        f"/api/v1/admin/children/{child.id}",
         json={"avatar": "data:image/png;base64,broken!!"},
         headers=admin_headers(admin),
     )

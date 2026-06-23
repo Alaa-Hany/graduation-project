@@ -99,7 +99,7 @@ class TestChangePasswordSuccess:
     ):
         """Test successful password change with valid credentials."""
         response = client.post(
-            "/auth/change-password",
+            "/api/v1/auth/change-password",
             json={
                 "currentPassword": "CurrentPass123!",
                 "newPassword": "NewPass456!",
@@ -123,7 +123,7 @@ class TestChangePasswordSuccess:
     ):
         """Test password change with complex special characters."""
         response = client.post(
-            "/auth/change-password",
+            "/api/v1/auth/change-password",
             json={
                 "currentPassword": "CurrentPass123!",
                 "newPassword": "C0mpl3x@P#ssw0rd",
@@ -143,7 +143,7 @@ class TestChangePasswordValidation:
     def test_change_password_too_short(self, client, free_user_token: str):
         """Test rejection of too-short password (< 8 chars)."""
         response = client.post(
-            "/auth/change-password",
+            "/api/v1/auth/change-password",
             json={
                 "currentPassword": "CurrentPass123!",
                 "newPassword": "Short1!",  # 7 chars
@@ -158,7 +158,7 @@ class TestChangePasswordValidation:
     def test_change_password_no_uppercase(self, client, free_user_token: str):
         """Test rejection of password without uppercase letter."""
         response = client.post(
-            "/auth/change-password",
+            "/api/v1/auth/change-password",
             json={
                 "currentPassword": "CurrentPass123!",
                 "newPassword": "noupppercase123!",
@@ -173,7 +173,7 @@ class TestChangePasswordValidation:
     def test_change_password_no_digit(self, client, free_user_token: str):
         """Test rejection of password without digit."""
         response = client.post(
-            "/auth/change-password",
+            "/api/v1/auth/change-password",
             json={
                 "currentPassword": "CurrentPass123!",
                 "newPassword": "NoDigitPass!",
@@ -188,7 +188,7 @@ class TestChangePasswordValidation:
     def test_change_password_no_special_char(self, client, free_user_token: str):
         """Test rejection of password without special character."""
         response = client.post(
-            "/auth/change-password",
+            "/api/v1/auth/change-password",
             json={
                 "currentPassword": "CurrentPass123!",
                 "newPassword": "NoSpecial123",
@@ -207,7 +207,7 @@ class TestChangePasswordErrors:
     def test_change_password_wrong_current(self, client, free_user_token: str):
         """Test with incorrect current password."""
         response = client.post(
-            "/auth/change-password",
+            "/api/v1/auth/change-password",
             json={
                 "currentPassword": "WrongPassword123!",
                 "newPassword": "NewPass456!",
@@ -222,7 +222,7 @@ class TestChangePasswordErrors:
     def test_change_password_mismatch(self, client, free_user_token: str):
         """Test password confirmation mismatch."""
         response = client.post(
-            "/auth/change-password",
+            "/api/v1/auth/change-password",
             json={
                 "currentPassword": "CurrentPass123!",
                 "newPassword": "NewPass456!",
@@ -237,7 +237,7 @@ class TestChangePasswordErrors:
     def test_change_password_missing_token(self, client):
         """Test without authentication token."""
         response = client.post(
-            "/auth/change-password",
+            "/api/v1/auth/change-password",
             json={
                 "currentPassword": "CurrentPass123!",
                 "newPassword": "NewPass456!",
@@ -250,7 +250,7 @@ class TestChangePasswordErrors:
     def test_change_password_invalid_token(self, client):
         """Test with invalid token."""
         response = client.post(
-            "/auth/change-password",
+            "/api/v1/auth/change-password",
             json={
                 "currentPassword": "CurrentPass123!",
                 "newPassword": "NewPass456!",
@@ -273,7 +273,7 @@ class TestFreeUserFeatures:
     def test_free_user_can_access_basic_reports(self, client, free_user_token: str):
         """FREE user CAN access basic_reports."""
         response = client.get(
-            "/reports/basic", headers={"Authorization": f"Bearer {free_user_token}"}
+            "/api/v1/reports/basic", headers={"Authorization": f"Bearer {free_user_token}"}
         )
         assert response.status_code == 200
         assert response.json()["access_level"] == "basic"
@@ -281,7 +281,7 @@ class TestFreeUserFeatures:
     def test_free_user_can_access_basic_notifications(self, client, free_user_token: str):
         """FREE user CAN access basic_notifications."""
         response = client.get(
-            "/notifications/basic", headers={"Authorization": f"Bearer {free_user_token}"}
+            "/api/v1/notifications/basic", headers={"Authorization": f"Bearer {free_user_token}"}
         )
         assert response.status_code == 200
         assert response.json()["access_level"] == "basic"
@@ -289,7 +289,7 @@ class TestFreeUserFeatures:
     def test_free_user_can_access_basic_parental_controls(self, client, free_user_token: str):
         """FREE user CAN access basic_parental_controls."""
         response = client.get(
-            "/parental-controls/basic", headers={"Authorization": f"Bearer {free_user_token}"}
+            "/api/v1/parental-controls/basic", headers={"Authorization": f"Bearer {free_user_token}"}
         )
         assert response.status_code == 200
         assert response.json()["access_level"] == "basic"
@@ -297,7 +297,7 @@ class TestFreeUserFeatures:
     def test_free_user_cannot_access_advanced_reports(self, client, free_user_token: str):
         """FREE user CANNOT access advanced_reports."""
         response = client.get(
-            "/reports/advanced", headers={"Authorization": f"Bearer {free_user_token}"}
+            "/api/v1/reports/advanced", headers={"Authorization": f"Bearer {free_user_token}"}
         )
         assert response.status_code == 403
         assert response.json()["detail"]["code"] == "FEATURE_NOT_AVAILABLE"
@@ -305,28 +305,28 @@ class TestFreeUserFeatures:
     def test_free_user_cannot_access_smart_notifications(self, client, free_user_token: str):
         """FREE user CANNOT access smart_notifications."""
         response = client.get(
-            "/notifications/smart", headers={"Authorization": f"Bearer {free_user_token}"}
+            "/api/v1/notifications/smart", headers={"Authorization": f"Bearer {free_user_token}"}
         )
         assert response.status_code == 403
 
     def test_free_user_cannot_access_ai_insights(self, client, free_user_token: str):
         """FREE user CANNOT access ai_insights."""
         response = client.get(
-            "/ai/insights", headers={"Authorization": f"Bearer {free_user_token}"}
+            "/api/v1/ai/insights", headers={"Authorization": f"Bearer {free_user_token}"}
         )
         assert response.status_code == 403
 
     def test_free_user_cannot_access_offline_downloads(self, client, free_user_token: str):
         """FREE user CANNOT access offline_downloads."""
         response = client.get(
-            "/downloads/offline", headers={"Authorization": f"Bearer {free_user_token}"}
+            "/api/v1/downloads/offline", headers={"Authorization": f"Bearer {free_user_token}"}
         )
         assert response.status_code == 403
 
     def test_free_user_cannot_access_priority_support(self, client, free_user_token: str):
         """FREE user CANNOT access priority_support."""
         response = client.get(
-            "/support/priority", headers={"Authorization": f"Bearer {free_user_token}"}
+            "/api/v1/support/priority", headers={"Authorization": f"Bearer {free_user_token}"}
         )
         assert response.status_code == 403
 
@@ -343,26 +343,26 @@ class TestPremiumUserFeatures:
         """PREMIUM user inherits all FREE tier features."""
         # Basic reports
         response = client.get(
-            "/reports/basic", headers={"Authorization": f"Bearer {premium_user_token}"}
+            "/api/v1/reports/basic", headers={"Authorization": f"Bearer {premium_user_token}"}
         )
         assert response.status_code == 200
 
         # Basic notifications
         response = client.get(
-            "/notifications/basic", headers={"Authorization": f"Bearer {premium_user_token}"}
+            "/api/v1/notifications/basic", headers={"Authorization": f"Bearer {premium_user_token}"}
         )
         assert response.status_code == 200
 
         # Basic parental controls
         response = client.get(
-            "/parental-controls/basic", headers={"Authorization": f"Bearer {premium_user_token}"}
+            "/api/v1/parental-controls/basic", headers={"Authorization": f"Bearer {premium_user_token}"}
         )
         assert response.status_code == 200
 
     def test_premium_user_can_access_advanced_reports(self, client, premium_user_token: str):
         """PREMIUM user CAN access advanced_reports."""
         response = client.get(
-            "/reports/advanced", headers={"Authorization": f"Bearer {premium_user_token}"}
+            "/api/v1/reports/advanced", headers={"Authorization": f"Bearer {premium_user_token}"}
         )
         assert response.status_code == 200
         assert response.json()["access_level"] == "advanced"
@@ -370,7 +370,7 @@ class TestPremiumUserFeatures:
     def test_premium_user_can_access_smart_notifications(self, client, premium_user_token: str):
         """PREMIUM user CAN access smart_notifications."""
         response = client.get(
-            "/notifications/smart", headers={"Authorization": f"Bearer {premium_user_token}"}
+            "/api/v1/notifications/smart", headers={"Authorization": f"Bearer {premium_user_token}"}
         )
         assert response.status_code == 200
         assert response.json()["access_level"] == "smart"
@@ -378,21 +378,21 @@ class TestPremiumUserFeatures:
     def test_premium_user_can_access_ai_insights(self, client, premium_user_token: str):
         """PREMIUM user CAN access ai_insights."""
         response = client.get(
-            "/ai/insights", headers={"Authorization": f"Bearer {premium_user_token}"}
+            "/api/v1/ai/insights", headers={"Authorization": f"Bearer {premium_user_token}"}
         )
         assert response.status_code == 200
 
     def test_premium_user_can_access_offline_downloads(self, client, premium_user_token: str):
         """PREMIUM user CAN access offline_downloads."""
         response = client.get(
-            "/downloads/offline", headers={"Authorization": f"Bearer {premium_user_token}"}
+            "/api/v1/downloads/offline", headers={"Authorization": f"Bearer {premium_user_token}"}
         )
         assert response.status_code == 200
 
     def test_premium_user_cannot_access_priority_support(self, client, premium_user_token: str):
         """PREMIUM user CANNOT access priority_support (FAMILY_PLUS only)."""
         response = client.get(
-            "/support/priority", headers={"Authorization": f"Bearer {premium_user_token}"}
+            "/api/v1/support/priority", headers={"Authorization": f"Bearer {premium_user_token}"}
         )
         assert response.status_code == 403
 
@@ -408,15 +408,15 @@ class TestFamilyPlusUserFeatures:
     def test_family_plus_has_all_features(self, client, family_plus_user_token: str):
         """FAMILY_PLUS user has access to ALL features."""
         endpoints = [
-            "/reports/basic",
-            "/reports/advanced",
-            "/notifications/basic",
-            "/notifications/smart",
-            "/parental-controls/basic",
-            "/parental-controls/advanced",
-            "/ai/insights",
-            "/downloads/offline",
-            "/support/priority",
+            "/api/v1/reports/basic",
+            "/api/v1/reports/advanced",
+            "/api/v1/notifications/basic",
+            "/api/v1/notifications/smart",
+            "/api/v1/parental-controls/basic",
+            "/api/v1/parental-controls/advanced",
+            "/api/v1/ai/insights",
+            "/api/v1/downloads/offline",
+            "/api/v1/support/priority",
         ]
 
         for endpoint in endpoints:
@@ -442,7 +442,7 @@ class TestIntegration:
         """User can change password and still access their features."""
         # Change password
         response = client.post(
-            "/auth/change-password",
+            "/api/v1/auth/change-password",
             json={
                 "currentPassword": "CurrentPass123!",
                 "newPassword": "NewPass456!",
@@ -454,12 +454,12 @@ class TestIntegration:
 
         # Old token should be revoked after password change.
         revoked = client.get(
-            "/reports/basic", headers={"Authorization": f"Bearer {free_user_token}"}
+            "/api/v1/reports/basic", headers={"Authorization": f"Bearer {free_user_token}"}
         )
         assert revoked.status_code == 401
 
         login = client.post(
-            "/auth/login",
+            "/api/v1/auth/login",
             json={
                 "email": free_user.email,
                 "password": "NewPass456!",
@@ -468,14 +468,14 @@ class TestIntegration:
         assert login.status_code == 200
 
         response = client.get(
-            "/reports/basic",
+            "/api/v1/reports/basic",
             headers={"Authorization": f"Bearer {login.json()['access_token']}"},
         )
         assert response.status_code == 200
 
     def test_invalid_password_prevents_feature_access(self, client, free_user_token: str):
         """Invalid token prevents all feature access."""
-        response = client.get("/reports/basic", headers={"Authorization": "Bearer invalid"})
+        response = client.get("/api/v1/reports/basic", headers={"Authorization": "Bearer invalid"})
         assert response.status_code == 401
 
 
@@ -493,7 +493,7 @@ class TestDatabasePersistence:
         """Verify password hash is actually stored in database."""
         # Change password
         response = client.post(
-            "/auth/change-password",
+            "/api/v1/auth/change-password",
             json={
                 "currentPassword": "CurrentPass123!",
                 "newPassword": "NewPass456!",

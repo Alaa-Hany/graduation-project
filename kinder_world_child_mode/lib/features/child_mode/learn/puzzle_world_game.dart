@@ -1164,7 +1164,12 @@ class _ShufflePuzzleScreenState
       ),
       child: AspectRatio(
         aspectRatio: 1,
-        child: GridView.builder(
+        // Force LTR so cell index 0 maps to the top-left visually. The image
+        // crop math in _PuzzleImageTile always slices column 0 from the left,
+        // so under Arabic RTL the grid would otherwise mirror horizontally.
+        child: Directionality(
+          textDirection: TextDirection.ltr,
+          child: GridView.builder(
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: _boardSize,
@@ -1215,6 +1220,7 @@ class _ShufflePuzzleScreenState
               },
             );
           },
+          ),
         ),
       ),
     );

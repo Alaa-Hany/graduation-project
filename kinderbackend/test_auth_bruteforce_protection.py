@@ -14,16 +14,16 @@ def test_parent_login_locks_after_repeated_failed_attempts(client, create_parent
         "password": "WrongPassword123!",
     }
 
-    first = client.post("/auth/login", json=payload)
+    first = client.post("/api/v1/auth/login", json=payload)
     assert first.status_code == 401
 
-    second = client.post("/auth/login", json=payload)
+    second = client.post("/api/v1/auth/login", json=payload)
     assert second.status_code == 401
 
-    third = client.post("/auth/login", json=payload)
+    third = client.post("/api/v1/auth/login", json=payload)
     assert third.status_code == 401
 
-    locked = client.post("/auth/login", json=payload)
+    locked = client.post("/api/v1/auth/login", json=payload)
     assert locked.status_code == 423
     detail = locked.json()["detail"]
     assert detail["code"] == "PARENT_AUTH_TEMP_LOCKED"
@@ -49,13 +49,13 @@ def test_parent_login_recovers_after_lockout_window(client, create_parent, monke
         "password": "WrongPassword123!",
     }
 
-    assert client.post("/auth/login", json=bad_payload).status_code == 401
-    assert client.post("/auth/login", json=bad_payload).status_code == 401
-    assert client.post("/auth/login", json=bad_payload).status_code == 401
-    assert client.post("/auth/login", json=bad_payload).status_code == 423
+    assert client.post("/api/v1/auth/login", json=bad_payload).status_code == 401
+    assert client.post("/api/v1/auth/login", json=bad_payload).status_code == 401
+    assert client.post("/api/v1/auth/login", json=bad_payload).status_code == 401
+    assert client.post("/api/v1/auth/login", json=bad_payload).status_code == 423
 
     still_locked = client.post(
-        "/auth/login",
+        "/api/v1/auth/login",
         json={"email": parent.email, "password": "Password123!"},
     )
     assert still_locked.status_code == 423
@@ -64,7 +64,7 @@ def test_parent_login_recovers_after_lockout_window(client, create_parent, monke
     rate_limiter.requests.clear()
 
     recovered = client.post(
-        "/auth/login",
+        "/api/v1/auth/login",
         json={"email": parent.email, "password": "Password123!"},
     )
     assert recovered.status_code == 200
@@ -89,13 +89,13 @@ def test_failed_parent_login_does_not_lock_different_account(
         "password": "WrongPassword123!",
     }
 
-    assert client.post("/auth/login", json=bad_payload).status_code == 401
-    assert client.post("/auth/login", json=bad_payload).status_code == 401
-    assert client.post("/auth/login", json=bad_payload).status_code == 401
-    assert client.post("/auth/login", json=bad_payload).status_code == 423
+    assert client.post("/api/v1/auth/login", json=bad_payload).status_code == 401
+    assert client.post("/api/v1/auth/login", json=bad_payload).status_code == 401
+    assert client.post("/api/v1/auth/login", json=bad_payload).status_code == 401
+    assert client.post("/api/v1/auth/login", json=bad_payload).status_code == 423
 
     other_account = client.post(
-        "/auth/login",
+        "/api/v1/auth/login",
         json={"email": second_parent.email, "password": "Password123!"},
     )
     assert other_account.status_code == 200

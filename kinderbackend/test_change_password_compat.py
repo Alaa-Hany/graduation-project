@@ -50,7 +50,7 @@ class TestChangePasswordCamelCase:
     ):
         """Success with camelCase fields (currentPassword, newPassword, confirmPassword)."""
         response = client.post(
-            "/auth/change-password",
+            "/api/v1/auth/change-password",
             json={
                 "currentPassword": "CurrentPass123!",
                 "newPassword": "NewPass456!",
@@ -78,7 +78,7 @@ class TestChangePasswordSnakeCase:
     ):
         """Success with snake_case fields (current_password, new_password, confirm_password)."""
         response = client.post(
-            "/auth/change-password",
+            "/api/v1/auth/change-password",
             json={
                 "current_password": "CurrentPass123!",
                 "new_password": "NewPass456!",
@@ -102,7 +102,7 @@ class TestChangePasswordSnakeCase:
     ):
         """Success with MIXED camelCase and snake_case (client inconsistency)."""
         response = client.post(
-            "/auth/change-password",
+            "/api/v1/auth/change-password",
             json={
                 "current_password": "CurrentPass123!",  # snake_case
                 "newPassword": "NewPass456!",  # camelCase
@@ -122,7 +122,7 @@ class TestChangePasswordErrors:
     def test_wrong_current_password_camelcase(self, client: TestClient, test_user_token: str):
         """401 when current password wrong (camelCase)."""
         response = client.post(
-            "/auth/change-password",
+            "/api/v1/auth/change-password",
             json={
                 "currentPassword": "WrongPassword123!",
                 "newPassword": "NewPass456!",
@@ -137,7 +137,7 @@ class TestChangePasswordErrors:
     def test_wrong_current_password_snake_case(self, client: TestClient, test_user_token: str):
         """401 when current password wrong (snake_case)."""
         response = client.post(
-            "/auth/change-password",
+            "/api/v1/auth/change-password",
             json={
                 "current_password": "WrongPassword123!",
                 "new_password": "NewPass456!",
@@ -152,7 +152,7 @@ class TestChangePasswordErrors:
     def test_password_mismatch_camelcase(self, client: TestClient, test_user_token: str):
         """400 when new password doesn't match confirm (camelCase)."""
         response = client.post(
-            "/auth/change-password",
+            "/api/v1/auth/change-password",
             json={
                 "currentPassword": "CurrentPass123!",
                 "newPassword": "NewPass456!",
@@ -167,7 +167,7 @@ class TestChangePasswordErrors:
     def test_password_mismatch_snake_case(self, client: TestClient, test_user_token: str):
         """400 when new password doesn't match confirm (snake_case)."""
         response = client.post(
-            "/auth/change-password",
+            "/api/v1/auth/change-password",
             json={
                 "current_password": "CurrentPass123!",
                 "new_password": "NewPass456!",
@@ -182,7 +182,7 @@ class TestChangePasswordErrors:
     def test_weak_password_camelcase(self, client: TestClient, test_user_token: str):
         """422 when password too weak (camelCase)."""
         response = client.post(
-            "/auth/change-password",
+            "/api/v1/auth/change-password",
             json={
                 "currentPassword": "CurrentPass123!",
                 "newPassword": "weak",  # Too short, no uppercase, no special
@@ -199,7 +199,7 @@ class TestChangePasswordErrors:
     def test_weak_password_snake_case(self, client: TestClient, test_user_token: str):
         """422 when password too weak (snake_case)."""
         response = client.post(
-            "/auth/change-password",
+            "/api/v1/auth/change-password",
             json={
                 "current_password": "CurrentPass123!",
                 "new_password": "weak",  # Too short, no uppercase, no special
@@ -225,7 +225,7 @@ class TestBasicFeaturePlans:
     def test_free_user_can_access_basic_reports(self, client: TestClient, test_user_token: str):
         """FREE user CAN access /reports/basic."""
         response = client.get(
-            "/reports/basic", headers={"Authorization": f"Bearer {test_user_token}"}
+            "/api/v1/reports/basic", headers={"Authorization": f"Bearer {test_user_token}"}
         )
         assert response.status_code == 200
 
@@ -234,7 +234,7 @@ class TestBasicFeaturePlans:
     ):
         """FREE user CAN access /notifications/basic."""
         response = client.get(
-            "/notifications/basic", headers={"Authorization": f"Bearer {test_user_token}"}
+            "/api/v1/notifications/basic", headers={"Authorization": f"Bearer {test_user_token}"}
         )
         assert response.status_code == 200
 
@@ -243,7 +243,7 @@ class TestBasicFeaturePlans:
     ):
         """FREE user CAN access /parental-controls/basic."""
         response = client.get(
-            "/parental-controls/basic", headers={"Authorization": f"Bearer {test_user_token}"}
+            "/api/v1/parental-controls/basic", headers={"Authorization": f"Bearer {test_user_token}"}
         )
         assert response.status_code == 200
 
@@ -252,7 +252,7 @@ class TestBasicFeaturePlans:
     ):
         """FREE user CANNOT access /reports/advanced (403)."""
         response = client.get(
-            "/reports/advanced", headers={"Authorization": f"Bearer {test_user_token}"}
+            "/api/v1/reports/advanced", headers={"Authorization": f"Bearer {test_user_token}"}
         )
         assert response.status_code == 403
         assert "FEATURE_NOT_AVAILABLE" in response.json()["detail"]["code"]

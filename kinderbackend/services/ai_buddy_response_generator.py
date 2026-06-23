@@ -11,6 +11,21 @@ from services.ai_providers.enhanced_ai_provider import enhanced_ai_provider
 
 logger = logging.getLogger(__name__)
 
+_ARABIC_PATTERN = re.compile(r"[؀-ۿ]")
+
+
+def _resolve_is_arabic(locale: str | None, *texts: str) -> bool:
+    """Decide the reply language for AI Buddy.
+
+    When the caller supplies the app's UI locale we honour it directly, so the
+    buddy always answers in the language of the app the child is using. We only
+    fall back to sniffing the message/name text when no locale is provided
+    (older clients or internal callers that don't pass one).
+    """
+    if locale:
+        return locale.strip().lower().startswith("ar")
+    return any(bool(_ARABIC_PATTERN.search(text or "")) for text in texts)
+
 
 @dataclass(slots=True)
 class AiBuddyProviderState:
@@ -41,6 +56,7 @@ class _AiBuddyBackend(Protocol):
         self,
         *,
         child_name: str | None = None,
+        locale: str | None = None,
     ) -> AiBuddyGeneratedResponse: ...
 
     def generate(
@@ -51,11 +67,11 @@ class _AiBuddyBackend(Protocol):
         message: str,
         quick_action: str | None,
         recent_messages: Iterable[str],
+        locale: str | None = None,
     ) -> AiBuddyGeneratedResponse: ...
 
 
 class _InternalFallbackAiBuddyBackend:
-    _arabic_pattern = re.compile(r"[\u0600-\u06ff]")
     _default_reason = (
         "AI Buddy is running in safe fallback mode. " "No external AI provider is configured yet."
     )
@@ -78,9 +94,22 @@ class _InternalFallbackAiBuddyBackend:
         self,
         *,
         child_name: str | None = None,
+        locale: str | None = None,
     ) -> AiBuddyGeneratedResponse:
         name = (child_name or "").strip()
-        if name:
+        is_arabic = _resolve_is_arabic(locale, name)
+        if is_arabic:
+            if name:
+                content = (
+                    f"مرحبًا {name}! أنا رفيقك التعليمي في الوضع الآمن. "
+                    "اطلب مني فكرة درس أو لعبة ممتعة أو قصة قصيرة."
+                )
+            else:
+                content = (
+                    "مرحبًا! أنا رفيقك التعليمي في الوضع الآمن. "
+                    "اطلب مني فكرة درس أو لعبة ممتعة أو قصة قصيرة."
+                )
+        elif name:
             content = (
                 f"Hello {name}! I am your learning buddy in safe mode. "
                 "Ask me for a lesson idea, a fun game, or a short story."
@@ -111,10 +140,11 @@ class _InternalFallbackAiBuddyBackend:
         message: str,
         quick_action: str | None,
         recent_messages: Iterable[str],
+        locale: str | None = None,
     ) -> AiBuddyGeneratedResponse:
         normalized = message.strip()
         normalized_lower = normalized.lower()
-        is_arabic = bool(self._arabic_pattern.search(normalized))
+        is_arabic = _resolve_is_arabic(locale, normalized)
         intent = quick_action or self._infer_intent(normalized_lower)
         content = self._build_response(
             child_name=child_name,
@@ -320,8 +350,6 @@ class _InternalFallbackAiBuddyBackend:
 
 
 class _EnhancedAiBuddyBackend:
-    _arabic_pattern = re.compile(r"[\u0600-\u06ff]")
-
     def __init__(
         self,
         *,
@@ -379,8 +407,9 @@ class _EnhancedAiBuddyBackend:
         self,
         *,
         child_name: str | None = None,
+        locale: str | None = None,
     ) -> AiBuddyGeneratedResponse:
-        is_arabic = bool(self._arabic_pattern.search(child_name or ""))
+        is_arabic = _resolve_is_arabic(locale, child_name or "")
         generated = self._provider.generate_greeting(
             child_name=child_name,
             is_arabic=is_arabic,
@@ -410,8 +439,9 @@ class _EnhancedAiBuddyBackend:
         message: str,
         quick_action: str | None,
         recent_messages: Iterable[str],
+        locale: str | None = None,
     ) -> AiBuddyGeneratedResponse:
-        is_arabic = bool(self._arabic_pattern.search(message))
+        is_arabic = _resolve_is_arabic(locale, message)
         activities = self._content_service.get_activities_for_age(child_age or 0)
         generated = self._provider.generate(
             child_name=child_name,
@@ -486,8 +516,11 @@ class AiBuddyResponseGenerator:
         self,
         *,
         child_name: str | None = None,
+        locale: str | None = None,
     ) -> AiBuddyGeneratedResponse:
-        response = self._run_with_fallback(lambda backend: backend.greeting(child_name=child_name))
+        response = self._run_with_fallback(
+            lambda backend: backend.greeting(child_name=child_name, locale=locale)
+        )
         logger.info(
             "ai_buddy_greeting response_source=%s safety_status=%s provider=%s",
             response.response_source,
@@ -504,6 +537,7 @@ class AiBuddyResponseGenerator:
         message: str,
         quick_action: str | None,
         recent_messages: Iterable[str],
+        locale: str | None = None,
     ) -> AiBuddyGeneratedResponse:
         response = self._run_with_fallback(
             lambda backend: backend.generate(
@@ -512,6 +546,7 @@ class AiBuddyResponseGenerator:
                 message=message,
                 quick_action=quick_action,
                 recent_messages=recent_messages,
+                locale=locale,
             )
         )
         logger.info(
@@ -532,6 +567,7 @@ class AiBuddyResponseGenerator:
         quick_action: str | None,
         recent_messages: Iterable[str],
         reason: str | None = None,
+        locale: str | None = None,
     ) -> AiBuddyGeneratedResponse:
         response = self._fallback_backend.generate(
             child_name=child_name,
@@ -539,6 +575,7 @@ class AiBuddyResponseGenerator:
             message=message,
             quick_action=quick_action,
             recent_messages=recent_messages,
+            locale=locale,
         )
         if isinstance(self._fallback_backend, _InternalFallbackAiBuddyBackend):
             response = self._fallback_backend.with_reason(response, reason=reason)

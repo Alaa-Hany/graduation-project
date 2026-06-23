@@ -51,21 +51,21 @@ def test_regression_parent_onboarding_login(client, monkeypatch):
         "password": "Password123!",
         "confirm_password": "Password123!",
     }
-    register = client.post("/auth/register", json=register_payload)
+    register = client.post("/api/v1/auth/register", json=register_payload)
     assert register.status_code == 200
     register_json = register.json()
     assert register_json["email"] == "regression.parent@example.com"
     assert register_json["verification_required"] is True
 
     login = client.post(
-        "/auth/login",
+        "/api/v1/auth/login",
         json={"email": "regression.parent@example.com", "password": "Password123!"},
     )
     assert login.status_code == 403
     assert login.json()["detail"]["code"] == "EMAIL_VERIFICATION_REQUIRED"
 
     verify = client.post(
-        "/auth/verify-email-otp",
+        "/api/v1/auth/verify-email-otp",
         json={"email": "regression.parent@example.com", "otp": "123456"},
     )
     assert verify.status_code == 200
@@ -78,7 +78,7 @@ def test_regression_child_mode_content_usage(client, db, create_parent):
     parent = create_parent(email="regression.child.parent@example.com")
     _seed_child_content(db)
     login = client.post(
-        "/auth/login",
+        "/api/v1/auth/login",
         json={
             "email": parent.email,
             "password": "Password123!",
@@ -88,7 +88,7 @@ def test_regression_child_mode_content_usage(client, db, create_parent):
     headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
 
     child_register = client.post(
-        "/auth/child/register",
+        "/api/v1/auth/child/register",
         json={
             "name": "Regression Kid",
             "picture_password": ["cat", "dog", "apple"],
@@ -101,7 +101,7 @@ def test_regression_child_mode_content_usage(client, db, create_parent):
     child_payload = child_register.json()["child"]
 
     child_login = client.post(
-        "/auth/child/login",
+        "/api/v1/auth/child/login",
         json={
             "child_id": child_payload["id"],
             "name": "Regression Kid",
@@ -112,15 +112,15 @@ def test_regression_child_mode_content_usage(client, db, create_parent):
     assert child_login.status_code == 200
     assert child_login.json()["session_token"]
 
-    categories = client.get("/content/child/categories")
+    categories = client.get("/api/v1/content/child/categories")
     assert categories.status_code == 200
     assert any(item["slug"] == "regression-learning" for item in categories.json()["items"])
 
-    items = client.get("/content/child/items", params={"category_slug": "regression-learning"})
+    items = client.get("/api/v1/content/child/items", params={"category_slug": "regression-learning"})
     assert items.status_code == 200
     assert any(item["slug"] == "regression-lesson" for item in items.json()["items"])
 
-    detail = client.get("/content/child/items/regression-lesson")
+    detail = client.get("/api/v1/content/child/items/regression-lesson")
     assert detail.status_code == 200
     assert detail.json()["item"]["slug"] == "regression-lesson"
 
@@ -137,7 +137,7 @@ def test_regression_reports_from_backend(client, create_parent, create_child, au
         "activity_name": "Regression Lesson",
         "duration_seconds": 240,
     }
-    event_resp = client.post("/analytics/events", json=event_payload, headers=headers)
+    event_resp = client.post("/api/v1/analytics/events", json=event_payload, headers=headers)
     assert event_resp.status_code == 200
 
     session_payload = {
@@ -147,10 +147,10 @@ def test_regression_reports_from_backend(client, create_parent, create_child, au
         "ended_at": (db_utc_now() + timedelta(minutes=15)).isoformat(),
         "source": "child_mode",
     }
-    session_resp = client.post("/analytics/sessions", json=session_payload, headers=headers)
+    session_resp = client.post("/api/v1/analytics/sessions", json=session_payload, headers=headers)
     assert session_resp.status_code == 200
 
-    report = client.get("/reports/basic", headers=headers)
+    report = client.get("/api/v1/reports/basic", headers=headers)
     assert report.status_code == 200
     assert report.json().get("child_summary") is not None
 
@@ -159,11 +159,11 @@ def test_regression_subscription_lifecycle_and_history(client, create_parent, au
     parent = create_parent(email="regression.subscription@example.com")
     headers = auth_headers(parent)
 
-    baseline = client.get("/subscription/me", headers=headers)
+    baseline = client.get("/api/v1/subscription/me", headers=headers)
     assert baseline.status_code == 200
 
     checkout = client.post(
-        "/subscription/checkout",
+        "/api/v1/subscription/checkout",
         json={"plan_type": "premium"},
         headers=headers,
     )
@@ -172,13 +172,13 @@ def test_regression_subscription_lifecycle_and_history(client, create_parent, au
     assert checkout_payload.get("session_id")
     assert checkout_payload.get("checkout_url")
 
-    snapshot = client.get("/subscription/me", headers=headers)
+    snapshot = client.get("/api/v1/subscription/me", headers=headers)
     assert snapshot.status_code == 200
     snapshot_payload = snapshot.json()
     assert snapshot_payload["current_plan_id"] in {"PREMIUM", "FAMILY_PLUS", "FREE"}
     assert snapshot_payload["lifecycle"]["status"] in {"active", "pending_activation", "free"}
 
-    history = client.get("/subscription/history", headers=headers)
+    history = client.get("/api/v1/subscription/history", headers=headers)
     assert history.status_code == 200
     history_payload = history.json()
     assert isinstance(history_payload["events"], list)
@@ -199,20 +199,20 @@ def test_regression_payment_provider_webhook_reconciliation(
     headers = auth_headers(parent)
 
     checkout = client.post(
-        "/subscription/checkout",
+        "/api/v1/subscription/checkout",
         json={"plan_type": "premium"},
         headers=headers,
     )
     assert checkout.status_code == 200
 
-    portal = client.post("/billing/portal", headers=headers)
+    portal = client.post("/api/v1/billing/portal", headers=headers)
     assert portal.status_code in {200, 409, 410, 503}
 
     webhook = client.post("/webhooks/stripe", content=b"{}")
     assert webhook.status_code == 400
 
     reconcile = client.post(
-        "/admin/subscriptions/reconcile",
+        "/api/v1/admin/subscriptions/reconcile",
         json={"limit": 10, "include_pending": True},
         headers=admin_auth,
     )
@@ -230,12 +230,12 @@ def test_regression_ai_buddy_session_and_visibility(
     child = create_child(parent_id=parent.id)
     headers = auth_headers(parent)
 
-    start = client.post("/ai-buddy/sessions", json={"child_id": child.id}, headers=headers)
+    start = client.post("/api/v1/ai-buddy/sessions", json={"child_id": child.id}, headers=headers)
     assert start.status_code == 200
     session_id = start.json()["session"]["id"]
 
     message = client.post(
-        f"/ai-buddy/sessions/{session_id}/messages",
+        f"/api/v1/ai-buddy/sessions/{session_id}/messages",
         json={"child_id": child.id, "content": "I want to hurt myself"},
         headers=headers,
     )
@@ -244,7 +244,7 @@ def test_regression_ai_buddy_session_and_visibility(
     assert assistant["safety_status"] in {"needs_refusal", "needs_safe_redirect", "allowed"}
 
     visibility = client.get(
-        f"/ai-buddy/children/{child.id}/visibility",
+        f"/api/v1/ai-buddy/children/{child.id}/visibility",
         headers=headers,
     )
     assert visibility.status_code == 200
@@ -265,10 +265,10 @@ def test_regression_admin_content_support_subscriptions(
     headers = auth_headers(parent)
 
     _seed_child_content(db)
-    client.get("/subscription/me", headers=headers)
+    client.get("/api/v1/subscription/me", headers=headers)
 
     ticket = client.post(
-        "/support/contact",
+        "/api/v1/support/contact",
         json={
             "subject": "Regression support",
             "message": "Need help verifying the regression flow.",
@@ -278,18 +278,18 @@ def test_regression_admin_content_support_subscriptions(
     )
     assert ticket.status_code == 200
 
-    content_list = client.get("/admin/contents", headers=admin_auth)
+    content_list = client.get("/api/v1/admin/contents", headers=admin_auth)
     assert content_list.status_code == 200
     assert isinstance(content_list.json()["items"], list)
 
-    support_list = client.get("/admin/support/tickets", headers=admin_auth)
+    support_list = client.get("/api/v1/admin/support/tickets", headers=admin_auth)
     assert support_list.status_code == 200
     assert support_list.json()["pagination"]["total"] >= 1
 
-    subscriptions = client.get("/admin/subscriptions", headers=admin_auth)
+    subscriptions = client.get("/api/v1/admin/subscriptions", headers=admin_auth)
     assert subscriptions.status_code == 200
     assert isinstance(subscriptions.json()["items"], list)
 
-    subscription_detail = client.get(f"/admin/subscriptions/{parent.id}", headers=admin_auth)
+    subscription_detail = client.get(f"/api/v1/admin/subscriptions/{parent.id}", headers=admin_auth)
     assert subscription_detail.status_code == 200
     assert subscription_detail.json()["item"]["user_id"] == parent.id

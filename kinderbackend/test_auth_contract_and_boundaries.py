@@ -13,10 +13,10 @@ def test_public_login_rate_limit_blocks_sixth_attempt(client, create_parent):
     }
 
     for _ in range(5):
-        response = client.post("/auth/login", json=payload)
+        response = client.post("/api/v1/auth/login", json=payload)
         assert response.status_code == 401
 
-    blocked = client.post("/auth/login", json=payload)
+    blocked = client.post("/api/v1/auth/login", json=payload)
     assert blocked.status_code == 429
     detail = blocked.json()["detail"]
     assert detail["code"] == "RATE_LIMIT_EXCEEDED"
@@ -25,7 +25,7 @@ def test_public_login_rate_limit_blocks_sixth_attempt(client, create_parent):
 
 def test_register_accepts_snake_case_confirm_password(client):
     response = client.post(
-        "/auth/register",
+        "/api/v1/auth/register",
         json={
             "name": "Snake Parent",
             "email": "snake.parent@example.com",
@@ -62,14 +62,14 @@ def test_register_schema_rejects_blank_confirm_password_after_trim():
 def test_change_password_revokes_existing_refresh_token(client, create_parent):
     parent = create_parent(email="refresh.parent@example.com", password="Password123!")
     login = client.post(
-        "/auth/login",
+        "/api/v1/auth/login",
         json={"email": parent.email, "password": "Password123!"},
     )
     assert login.status_code == 200
     login_body = login.json()
 
     change = client.post(
-        "/auth/change-password",
+        "/api/v1/auth/change-password",
         json={
             "current_password": "Password123!",
             "new_password": "NewPassword123!",
@@ -80,11 +80,11 @@ def test_change_password_revokes_existing_refresh_token(client, create_parent):
     assert change.status_code == 200
 
     refresh = client.post(
-        "/auth/refresh",
+        "/api/v1/auth/refresh",
         json={"refresh_token": login_body["refresh_token"]},
     )
     assert refresh.status_code == 401
-    assert refresh.json()["detail"] == "Invalid refresh token"
+    assert refresh.json()["detail"] == "Session expired. Please log in again."
 
 
 def test_auth_me_rejects_admin_token(
@@ -96,7 +96,7 @@ def test_auth_me_rejects_admin_token(
     seed_builtin_rbac()
     admin = create_admin(email="boundary.admin@example.com", role_names=["super_admin"])
 
-    response = client.get("/auth/me", headers=admin_headers(admin))
+    response = client.get("/api/v1/auth/me", headers=admin_headers(admin))
     assert response.status_code == 401
     assert response.json()["detail"] == "Invalid token type"
 
@@ -106,7 +106,7 @@ def test_children_endpoints_reject_child_session_token(client, create_parent, cr
     child = create_child(parent_id=parent.id, name="Boundary Kid")
 
     login = client.post(
-        "/auth/child/login",
+        "/api/v1/auth/child/login",
         json={
             "child_id": child.id,
             "name": child.name,
@@ -116,7 +116,7 @@ def test_children_endpoints_reject_child_session_token(client, create_parent, cr
     assert login.status_code == 200
 
     token = login.json()["session_token"]
-    response = client.get("/children", headers={"Authorization": f"Bearer {token}"})
+    response = client.get("/api/v1/children", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 401
     assert response.json()["detail"] == "Invalid token type"
 
@@ -126,7 +126,7 @@ def test_child_change_password_accepts_camelcase_aliases(client, create_parent, 
     child = create_child(parent_id=parent.id, name="Alias Kid")
 
     change = client.post(
-        "/auth/child/change-password",
+        "/api/v1/auth/child/change-password",
         json={
             "child_id": child.id,
             "name": child.name,
@@ -138,7 +138,7 @@ def test_child_change_password_accepts_camelcase_aliases(client, create_parent, 
     assert change.json()["success"] is True
 
     old_login = client.post(
-        "/auth/child/login",
+        "/api/v1/auth/child/login",
         json={
             "child_id": child.id,
             "name": child.name,
@@ -148,7 +148,7 @@ def test_child_change_password_accepts_camelcase_aliases(client, create_parent, 
     assert old_login.status_code == 401
 
     new_login = client.post(
-        "/auth/child/login",
+        "/api/v1/auth/child/login",
         json={
             "child_id": child.id,
             "name": child.name,
@@ -185,11 +185,11 @@ def test_admin_logout_revokes_existing_access_token(
     admin = create_admin(email="logout.admin@example.com", role_names=["super_admin"])
     headers = admin_headers(admin)
 
-    logout = client.post("/admin/auth/logout", headers=headers)
+    logout = client.post("/api/v1/admin/auth/logout", headers=headers)
     assert logout.status_code == 200
     assert logout.json()["success"] is True
 
-    me = client.get("/admin/auth/me", headers=headers)
+    me = client.get("/api/v1/admin/auth/me", headers=headers)
     assert me.status_code == 401
     assert me.json()["detail"] == "Admin token has been revoked"
 
@@ -199,7 +199,7 @@ def test_admin_refresh_rejects_parent_refresh_token(client, create_parent):
     parent_refresh_token = create_refresh_token(str(parent.id), getattr(parent, "token_version", 0))
 
     response = client.post(
-        "/admin/auth/refresh",
+        "/api/v1/admin/auth/refresh",
         json={"refresh_token": parent_refresh_token},
     )
     assert response.status_code == 401
@@ -207,12 +207,12 @@ def test_admin_refresh_rejects_parent_refresh_token(client, create_parent):
 
 
 def test_admin_bootstrap_creates_first_super_admin(client):
-    status_response = client.get("/admin/auth/bootstrap/status")
+    status_response = client.get("/api/v1/admin/auth/bootstrap/status")
     assert status_response.status_code == 200
     assert status_response.json() == {"can_bootstrap": True}
 
     response = client.post(
-        "/admin/auth/bootstrap",
+        "/api/v1/admin/auth/bootstrap",
         json={
             "email": "first.admin@example.com",
             "password": "AdminPass123!",
@@ -227,7 +227,7 @@ def test_admin_bootstrap_creates_first_super_admin(client):
     assert body["admin"]["email"] == "first.admin@example.com"
     assert "super_admin" in body["admin"]["roles"]
 
-    after_status = client.get("/admin/auth/bootstrap/status")
+    after_status = client.get("/api/v1/admin/auth/bootstrap/status")
     assert after_status.status_code == 200
     assert after_status.json() == {"can_bootstrap": False}
 
@@ -237,7 +237,7 @@ def test_admin_bootstrap_rejects_when_admin_exists(client, seed_builtin_rbac, cr
     create_admin(email="existing.admin@example.com", role_names=["super_admin"])
 
     response = client.post(
-        "/admin/auth/bootstrap",
+        "/api/v1/admin/auth/bootstrap",
         json={
             "email": "second.admin@example.com",
             "password": "AdminPass123!",

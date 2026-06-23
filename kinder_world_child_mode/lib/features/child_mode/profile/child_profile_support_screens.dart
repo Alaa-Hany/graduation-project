@@ -442,8 +442,6 @@ class ChildSettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _ChildSettingsScreenState extends ConsumerState<ChildSettingsScreen> {
-  bool _soundEnabled = true;
-  bool _musicEnabled = true;
   String _settingsQuery = '';
 
   @override
@@ -566,14 +564,16 @@ class _ChildSettingsScreenState extends ConsumerState<ChildSettingsScreen> {
           _buildSwitchTile(context,
               title: l10n.soundEffects,
               icon: Icons.volume_up_outlined,
-              value: _soundEnabled,
-              onChanged: (val) => setState(() => _soundEnabled = val)),
+              value: ref.watch(soundControllerProvider),
+              onChanged: (val) =>
+                  ref.read(soundControllerProvider.notifier).setEnabled(val)),
           _buildDivider(),
           _buildSwitchTile(context,
               title: l10n.backgroundMusic,
               icon: Icons.music_note_outlined,
-              value: _musicEnabled,
-              onChanged: (val) => setState(() => _musicEnabled = val)),
+              value: ref.watch(soundControllerProvider),
+              onChanged: (val) =>
+                  ref.read(soundControllerProvider.notifier).setEnabled(val)),
         ],
       ));
       sections.add(const SizedBox(height: 30));

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 import admin_models  # noqa: F401
 from auth import hash_password
@@ -38,7 +38,7 @@ def test_basic_reports_returns_dynamic_parent_summary(client, db, auth_headers):
                 parent_id=parent.id,
                 name="Dana",
                 picture_password=["cat", "dog", "apple"],
-                age=7,
+                date_of_birth=date(date.today().year - 7, 1, 1),
                 avatar="av1",
                 is_active=True,
             ),
@@ -46,7 +46,7 @@ def test_basic_reports_returns_dynamic_parent_summary(client, db, auth_headers):
                 parent_id=parent.id,
                 name="Lina",
                 picture_password=["sun", "moon", "star"],
-                age=9,
+                date_of_birth=date(date.today().year - 9, 1, 1),
                 avatar="av2",
                 is_active=False,
             ),
@@ -71,7 +71,7 @@ def test_basic_reports_returns_dynamic_parent_summary(client, db, auth_headers):
     )
     db.commit()
 
-    response = client.get("/reports/basic", headers=auth_headers(parent))
+    response = client.get("/api/v1/reports/basic", headers=auth_headers(parent))
 
     assert response.status_code == 200
     payload = response.json()
@@ -95,7 +95,7 @@ def test_advanced_reports_returns_dynamic_profile_metadata(client, db, auth_head
                 parent_id=parent.id,
                 name="Adam",
                 picture_password=["cat", "dog", "apple"],
-                age=5,
+                date_of_birth=date(date.today().year - 5, 1, 1),
                 avatar="av1",
                 is_active=True,
             ),
@@ -103,7 +103,7 @@ def test_advanced_reports_returns_dynamic_profile_metadata(client, db, auth_head
                 parent_id=parent.id,
                 name="Sara",
                 picture_password=["sun", "moon", "star"],
-                age=10,
+                date_of_birth=date(date.today().year - 10, 1, 1),
                 avatar="av2",
                 is_active=True,
             ),
@@ -111,7 +111,7 @@ def test_advanced_reports_returns_dynamic_profile_metadata(client, db, auth_head
     )
     db.commit()
 
-    response = client.get("/reports/advanced", headers=auth_headers(parent))
+    response = client.get("/api/v1/reports/advanced", headers=auth_headers(parent))
 
     assert response.status_code == 200
     payload = response.json()
@@ -130,7 +130,7 @@ def test_reports_with_recorded_analytics_data(client, db, auth_headers):
         parent_id=parent.id,
         name="Nora",
         picture_password=["cat", "dog", "apple"],
-        age=8,
+        date_of_birth=date(date.today().year - 8, 1, 1),
         avatar="av1",
         is_active=True,
     )
@@ -147,7 +147,7 @@ def test_reports_with_recorded_analytics_data(client, db, auth_headers):
     end = start + timedelta(minutes=20)
 
     session_resp = client.post(
-        "/analytics/sessions",
+        "/api/v1/analytics/sessions",
         json={
             "child_id": child.id,
             "session_id": "sess-1",
@@ -160,7 +160,7 @@ def test_reports_with_recorded_analytics_data(client, db, auth_headers):
     assert session_resp.status_code == 200
 
     lesson_resp = client.post(
-        "/analytics/events",
+        "/api/v1/analytics/events",
         json={
             "child_id": child.id,
             "event_type": "lesson_completed",
@@ -179,7 +179,7 @@ def test_reports_with_recorded_analytics_data(client, db, auth_headers):
     assert lesson_resp.status_code == 200
 
     mood_resp = client.post(
-        "/analytics/events",
+        "/api/v1/analytics/events",
         json={
             "child_id": child.id,
             "event_type": "mood_entry",
@@ -191,7 +191,7 @@ def test_reports_with_recorded_analytics_data(client, db, auth_headers):
     assert mood_resp.status_code == 200
 
     achievement_resp = client.post(
-        "/analytics/events",
+        "/api/v1/analytics/events",
         json={
             "child_id": child.id,
             "event_type": "achievement_unlocked",
@@ -202,7 +202,7 @@ def test_reports_with_recorded_analytics_data(client, db, auth_headers):
     )
     assert achievement_resp.status_code == 200
 
-    basic = client.get("/reports/basic", headers=auth_headers(parent))
+    basic = client.get("/api/v1/reports/basic", headers=auth_headers(parent))
     assert basic.status_code == 200
     basic_payload = basic.json()
     assert basic_payload["data_availability"]["screen_time"] is True
@@ -214,7 +214,7 @@ def test_reports_with_recorded_analytics_data(client, db, auth_headers):
     assert basic_payload["summary"]["average_score"] == 95.0
     assert basic_payload["recent_sessions"][0]["title"] == "Numbers"
 
-    advanced = client.get("/reports/advanced", headers=auth_headers(parent))
+    advanced = client.get("/api/v1/reports/advanced", headers=auth_headers(parent))
     assert advanced.status_code == 200
     reports = advanced.json()["reports"]
     assert reports["data_availability"]["mood_trends"] is True
@@ -238,7 +238,7 @@ def test_reports_can_be_filtered_to_single_child(client, db, auth_headers):
         parent_id=parent.id,
         name="Nour",
         picture_password=["cat", "dog", "apple"],
-        age=8,
+        date_of_birth=date(date.today().year - 8, 1, 1),
         avatar="av1",
         is_active=True,
     )
@@ -246,7 +246,7 @@ def test_reports_can_be_filtered_to_single_child(client, db, auth_headers):
         parent_id=parent.id,
         name="Youssef",
         picture_password=["sun", "moon", "star"],
-        age=9,
+        date_of_birth=date(date.today().year - 9, 1, 1),
         avatar="av2",
         is_active=True,
     )
@@ -257,7 +257,7 @@ def test_reports_can_be_filtered_to_single_child(client, db, auth_headers):
 
     now = datetime.now(timezone.utc).replace(microsecond=0)
     client.post(
-        "/analytics/events",
+        "/api/v1/analytics/events",
         json={
             "child_id": first_child.id,
             "event_type": "activity_completed",
@@ -268,7 +268,7 @@ def test_reports_can_be_filtered_to_single_child(client, db, auth_headers):
         headers=auth_headers(parent),
     )
     client.post(
-        "/analytics/events",
+        "/api/v1/analytics/events",
         json={
             "child_id": second_child.id,
             "event_type": "activity_completed",
@@ -280,7 +280,7 @@ def test_reports_can_be_filtered_to_single_child(client, db, auth_headers):
     )
 
     response = client.get(
-        "/reports/basic",
+        "/api/v1/reports/basic",
         params={"child_id": first_child.id, "days": 7},
         headers=auth_headers(parent),
     )

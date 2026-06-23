@@ -1,8 +1,13 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:kinder_world/core/api/auth_api.dart';
 import 'package:kinder_world/core/messages/app_messages.dart';
 import 'package:kinder_world/core/models/user.dart';
+import 'package:kinder_world/core/providers/child_session_controller.dart';
+import 'package:kinder_world/core/providers/gamification_provider.dart';
+import 'package:kinder_world/core/providers/mood_provider.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
 import 'package:kinder_world/core/utils/session_token_utils.dart';
 import 'package:logger/logger.dart';
@@ -118,12 +123,16 @@ class AuthRepository
   final AuthApi _authApi;
   @override
   final Logger _logger;
+  @override
+  final Ref _ref;
 
   AuthRepository({
     required SecureStorage secureStorage,
     required AuthApi authApi,
     required Logger logger,
+    required Ref ref,
   })  : _secureStorage = secureStorage,
         _authApi = authApi,
-        _logger = logger;
+        _logger = logger,
+        _ref = ref;
 }

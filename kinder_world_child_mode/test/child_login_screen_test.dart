@@ -133,6 +133,9 @@ class _TestAuthApi extends AuthApi {
         );
 }
 
+final _testRefProvider = Provider<Ref>((ref) => ref);
+Ref _testRef() => ProviderContainer().read(_testRefProvider);
+
 class _FakeAuthRepository extends AuthRepository {
   _FakeAuthRepository({
     required SecureStorage storage,
@@ -141,6 +144,7 @@ class _FakeAuthRepository extends AuthRepository {
           secureStorage: storage,
           authApi: _TestAuthApi(storage),
           logger: Logger(),
+          ref: _testRef(),
         );
 
   Future<User?> Function({

@@ -19,7 +19,7 @@ def test_ai_buddy_session_start_and_message_flow(
     headers = auth_headers(parent)
 
     start = client.post(
-        "/ai-buddy/sessions",
+        "/api/v1/ai-buddy/sessions",
         json={"child_id": child.id},
         headers=headers,
     )
@@ -33,7 +33,7 @@ def test_ai_buddy_session_start_and_message_flow(
 
     session_id = start_payload["session"]["id"]
     send = client.post(
-        f"/ai-buddy/sessions/{session_id}/messages",
+        f"/api/v1/ai-buddy/sessions/{session_id}/messages",
         json={
             "child_id": child.id,
             "content": "Can you tell me a story?",
@@ -49,7 +49,7 @@ def test_ai_buddy_session_start_and_message_flow(
     assert send_payload["provider"]["status"] == "fallback"
 
     current = client.get(
-        "/ai-buddy/sessions/current",
+        "/api/v1/ai-buddy/sessions/current",
         params={"child_id": child.id},
         headers=headers,
     )
@@ -58,7 +58,7 @@ def test_ai_buddy_session_start_and_message_flow(
     assert current_payload["session"]["id"] == session_id
     assert len(current_payload["messages"]) == 3
 
-    detail = client.get(f"/ai-buddy/sessions/{session_id}", headers=headers)
+    detail = client.get(f"/api/v1/ai-buddy/sessions/{session_id}", headers=headers)
     assert detail.status_code == 200
     detail_payload = detail.json()
     assert detail_payload["messages"][-1]["role"] == "assistant"
@@ -77,7 +77,7 @@ def test_ai_buddy_child_session_can_chat_but_not_access_other_child(
     sibling = create_child(parent_id=parent.id, name="Omar", age=6)
 
     child_login = client.post(
-        "/auth/child/login",
+        "/api/v1/auth/child/login",
         json={
             "child_id": child.id,
             "name": child.name,
@@ -91,7 +91,7 @@ def test_ai_buddy_child_session_can_chat_but_not_access_other_child(
     }
 
     start = client.post(
-        "/ai-buddy/sessions",
+        "/api/v1/ai-buddy/sessions",
         json={"child_id": child.id},
         headers=child_headers,
     )
@@ -99,7 +99,7 @@ def test_ai_buddy_child_session_can_chat_but_not_access_other_child(
     session_id = start.json()["session"]["id"]
 
     send = client.post(
-        f"/ai-buddy/sessions/{session_id}/messages",
+        f"/api/v1/ai-buddy/sessions/{session_id}/messages",
         json={
             "child_id": child.id,
             "content": "Tell me a fun fact",
@@ -111,7 +111,7 @@ def test_ai_buddy_child_session_can_chat_but_not_access_other_child(
     assert send.json()["assistant_message"]["role"] == "assistant"
 
     current = client.get(
-        "/ai-buddy/sessions/current",
+        "/api/v1/ai-buddy/sessions/current",
         params={"child_id": child.id},
         headers=child_headers,
     )
@@ -119,7 +119,7 @@ def test_ai_buddy_child_session_can_chat_but_not_access_other_child(
     assert current.json()["session"]["id"] == session_id
 
     sibling_attempt = client.get(
-        "/ai-buddy/sessions/current",
+        "/api/v1/ai-buddy/sessions/current",
         params={"child_id": sibling.id},
         headers=child_headers,
     )
@@ -127,7 +127,7 @@ def test_ai_buddy_child_session_can_chat_but_not_access_other_child(
     assert sibling_attempt.json()["detail"] == "Child session cannot access another child"
 
     parent_started_sibling = client.post(
-        "/ai-buddy/sessions",
+        "/api/v1/ai-buddy/sessions",
         json={"child_id": sibling.id},
         headers=auth_headers(parent),
     )
@@ -135,7 +135,7 @@ def test_ai_buddy_child_session_can_chat_but_not_access_other_child(
     sibling_session_id = parent_started_sibling.json()["session"]["id"]
 
     forbidden_detail = client.get(
-        f"/ai-buddy/sessions/{sibling_session_id}",
+        f"/api/v1/ai-buddy/sessions/{sibling_session_id}",
         headers=child_headers,
     )
     assert forbidden_detail.status_code == 404
@@ -160,7 +160,7 @@ def test_ai_buddy_respects_system_disable_flag(
     db.commit()
 
     response = client.post(
-        "/ai-buddy/sessions",
+        "/api/v1/ai-buddy/sessions",
         json={"child_id": child.id},
         headers=auth_headers(parent),
     )
@@ -182,7 +182,9 @@ def test_ai_buddy_generator_uses_provider_backend_when_ready() -> None:
                 supports_activity_suggestions=True,
             )
 
-        def greeting(self, *, child_name: str | None = None) -> AiBuddyGeneratedResponse:
+        def greeting(
+            self, *, child_name: str | None = None, locale: str | None = None
+        ) -> AiBuddyGeneratedResponse:
             return AiBuddyGeneratedResponse(
                 content=f"Hello {child_name or 'friend'} from provider!",
                 intent="greeting",
@@ -201,6 +203,7 @@ def test_ai_buddy_generator_uses_provider_backend_when_ready() -> None:
             message: str,
             quick_action: str | None,
             recent_messages,
+            locale: str | None = None,
         ) -> AiBuddyGeneratedResponse:
             return AiBuddyGeneratedResponse(
                 content=f"Provider reply to: {message}",
@@ -241,7 +244,9 @@ def test_ai_buddy_generator_falls_back_when_provider_backend_fails() -> None:
                 supports_activity_suggestions=True,
             )
 
-        def greeting(self, *, child_name: str | None = None) -> AiBuddyGeneratedResponse:
+        def greeting(
+            self, *, child_name: str | None = None, locale: str | None = None
+        ) -> AiBuddyGeneratedResponse:
             raise RuntimeError("provider offline")
 
         def generate(
@@ -252,6 +257,7 @@ def test_ai_buddy_generator_falls_back_when_provider_backend_fails() -> None:
             message: str,
             quick_action: str | None,
             recent_messages,
+            locale: str | None = None,
         ) -> AiBuddyGeneratedResponse:
             raise RuntimeError("provider offline")
 
@@ -288,7 +294,9 @@ def test_ai_buddy_service_recovers_safe_story_when_provider_output_is_blocked(
                 supports_activity_suggestions=True,
             )
 
-        def greeting(self, *, child_name: str | None = None) -> AiBuddyGeneratedResponse:
+        def greeting(
+            self, *, child_name: str | None = None, locale: str | None = None
+        ) -> AiBuddyGeneratedResponse:
             return AiBuddyGeneratedResponse(
                 content=f"Hello {child_name or 'friend'}!",
                 intent="greeting",
@@ -307,6 +315,7 @@ def test_ai_buddy_service_recovers_safe_story_when_provider_output_is_blocked(
             message: str,
             quick_action: str | None,
             recent_messages,
+            locale: str | None = None,
         ) -> AiBuddyGeneratedResponse:
             return AiBuddyGeneratedResponse(
                 content="Here is a story about a knife.",

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import date
+
 
 def test_change_password_rate_limit_is_user_scoped(
     client,
@@ -21,7 +23,7 @@ def test_change_password_rate_limit_is_user_scoped(
 
     for next_password in next_passwords:
         response = client.post(
-            "/auth/change-password",
+            "/api/v1/auth/change-password",
             json={
                 "currentPassword": current_password,
                 "newPassword": next_password,
@@ -34,7 +36,7 @@ def test_change_password_rate_limit_is_user_scoped(
         current_password = next_password
 
     blocked = client.post(
-        "/auth/change-password",
+        "/api/v1/auth/change-password",
         json={
             "currentPassword": current_password,
             "newPassword": "BlockedPass123!",
@@ -48,7 +50,7 @@ def test_change_password_rate_limit_is_user_scoped(
     assert blocked.headers["Retry-After"] == "300"
 
     other_user = client.post(
-        "/auth/change-password",
+        "/api/v1/auth/change-password",
         json={
             "currentPassword": "Password123!",
             "newPassword": "SecondUserPass123!",
@@ -69,7 +71,7 @@ def test_parent_pin_reset_request_rate_limit_blocks_after_threshold(
 
     for attempt in range(5):
         response = client.post(
-            "/auth/parent-pin/reset-request",
+            "/api/v1/auth/parent-pin/reset-request",
             json={"note": f"Need help resetting PIN #{attempt}"},
             headers=headers,
         )
@@ -77,7 +79,7 @@ def test_parent_pin_reset_request_rate_limit_blocks_after_threshold(
         assert response.json()["success"] is True
 
     blocked = client.post(
-        "/auth/parent-pin/reset-request",
+        "/api/v1/auth/parent-pin/reset-request",
         json={"note": "Need one more reset request"},
         headers=headers,
     )
@@ -97,7 +99,7 @@ def test_support_contact_rate_limit_blocks_after_threshold(
 
     for attempt in range(5):
         response = client.post(
-            "/support/contact",
+            "/api/v1/support/contact",
             json={
                 "subject": f"Billing question {attempt}",
                 "message": "I need help understanding my subscription billing details.",
@@ -109,7 +111,7 @@ def test_support_contact_rate_limit_blocks_after_threshold(
         assert response.json()["success"] is True
 
     blocked = client.post(
-        "/support/contact",
+        "/api/v1/support/contact",
         json={
             "subject": "Billing question blocked",
             "message": "I still need help understanding my subscription billing details.",
@@ -131,7 +133,7 @@ def test_child_change_password_rate_limit_blocks_repeated_attempts(client, db, c
         parent_id=parent.id,
         name="Limiter Kid",
         picture_password=["cat", "dog", "apple"],
-        age=7,
+        date_of_birth=date(date.today().year - 7, 1, 1),
     )
     db.add(child)
     db.commit()
@@ -139,7 +141,7 @@ def test_child_change_password_rate_limit_blocks_repeated_attempts(client, db, c
 
     for _ in range(5):
         response = client.post(
-            "/auth/child/change-password",
+            "/api/v1/auth/child/change-password",
             json={
                 "child_id": child.id,
                 "name": child.name,
@@ -150,7 +152,7 @@ def test_child_change_password_rate_limit_blocks_repeated_attempts(client, db, c
         assert response.status_code == 401
 
     blocked = client.post(
-        "/auth/child/change-password",
+        "/api/v1/auth/child/change-password",
         json={
             "child_id": child.id,
             "name": child.name,

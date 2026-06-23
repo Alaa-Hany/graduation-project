@@ -10,7 +10,6 @@ from rate_limit import (
     password_reset_rate_limit,
 )
 from schemas.auth import (
-    AccessTokenResponse,
     AuthTokenResponse,
     ChildChangePasswordIn,
     ChildLoginIn,
@@ -22,6 +21,7 @@ from schemas.auth import (
     OtpActionResponse,
     PendingVerificationResponse,
     RefreshIn,
+    RefreshTokenResponse,
     RegisterIn,
     ResendEmailOtpIn,
     ResetPasswordIn,
@@ -105,10 +105,10 @@ def login(
 
 @router.post(
     "/auth/refresh",
-    response_model=AccessTokenResponse,
+    response_model=RefreshTokenResponse,
     summary="Refresh Parent Access Token",
-    description="Exchange a valid refresh token for a new parent access token.",
-    response_description="New access token for the existing parent session.",
+    description="Exchange a valid refresh token for a new parent access token and a rotated refresh token. The previous refresh token is invalidated.",
+    response_description="New access and refresh tokens for the existing parent session.",
 )
 def refresh(
     payload: RefreshIn,

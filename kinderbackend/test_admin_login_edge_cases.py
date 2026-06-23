@@ -7,7 +7,7 @@ admin auth service that the happy-path tests don't reach.
 
 def test_admin_login_rejects_unknown_email(client):
     resp = client.post(
-        "/admin/auth/login",
+        "/api/v1/admin/auth/login",
         json={"email": "nobody@example.com", "password": "whatever"},
     )
     assert resp.status_code == 401
@@ -16,7 +16,7 @@ def test_admin_login_rejects_unknown_email(client):
 def test_admin_login_rejects_wrong_password(client, create_admin):
     admin = create_admin(email="wrongpass.admin@example.com")
     resp = client.post(
-        "/admin/auth/login",
+        "/api/v1/admin/auth/login",
         json={"email": admin.email, "password": "definitely-not-it"},
     )
     assert resp.status_code == 401
@@ -25,7 +25,7 @@ def test_admin_login_rejects_wrong_password(client, create_admin):
 def test_admin_login_blocks_disabled_account(client, create_admin):
     admin = create_admin(email="disabled.admin@example.com", is_active=False)
     resp = client.post(
-        "/admin/auth/login",
+        "/api/v1/admin/auth/login",
         json={"email": admin.email, "password": "AdminPass123!"},
     )
     assert resp.status_code == 403
@@ -41,7 +41,7 @@ def test_repeated_failed_admin_logins_lock_account(client, create_admin):
     statuses = []
     for _ in range(5):
         resp = client.post(
-            "/admin/auth/login",
+            "/api/v1/admin/auth/login",
             json={"email": admin.email, "password": "wrong-password"},
         )
         statuses.append(resp.status_code)
@@ -50,7 +50,7 @@ def test_repeated_failed_admin_logins_lock_account(client, create_admin):
 
     # The account is now locked: even the correct password is rejected with 423.
     locked = client.post(
-        "/admin/auth/login",
+        "/api/v1/admin/auth/login",
         json={"email": admin.email, "password": "AdminPass123!"},
     )
     assert locked.status_code == 423

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
@@ -51,6 +52,9 @@ class _DummyBox implements Box<dynamic> {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+final _testRefProvider = Provider<Ref>((ref) => ref);
+Ref _testRef() => ProviderContainer().read(_testRefProvider);
+
 class _SmokeAuthRepository extends AuthRepository {
   _SmokeAuthRepository({
     required SecureStorage storage,
@@ -65,6 +69,7 @@ class _SmokeAuthRepository extends AuthRepository {
             ),
           ),
           logger: Logger(),
+          ref: _testRef(),
         );
 
   Future<User?> Function({

@@ -56,16 +56,16 @@ def _seed_public_content(db):
 def test_smoke_public_and_child_content(client, db):
     _seed_public_content(db)
 
-    resp = client.get("/content/about")
+    resp = client.get("/api/v1/content/about")
     assert resp.status_code == 200
     assert resp.json()["item"]["slug"] == "about"
 
-    resp = client.get("/content/child/categories")
+    resp = client.get("/api/v1/content/child/categories")
     assert resp.status_code == 200
     items = resp.json()["items"]
     assert any(item["slug"] == "learning" for item in items)
 
-    resp = client.get("/content/child/items")
+    resp = client.get("/api/v1/content/child/items")
     assert resp.status_code == 200
     items = resp.json()["items"]
     assert any(item["slug"] == "lesson-alpha" for item in items)
@@ -83,7 +83,7 @@ def test_smoke_activity_reports_flow(client, db, create_parent, create_child, au
         "activity_name": "Alphabet Lesson",
         "duration_seconds": 300,
     }
-    resp = client.post("/analytics/events", json=event_payload, headers=headers)
+    resp = client.post("/api/v1/analytics/events", json=event_payload, headers=headers)
     assert resp.status_code == 200
 
     session_payload = {
@@ -93,10 +93,10 @@ def test_smoke_activity_reports_flow(client, db, create_parent, create_child, au
         "ended_at": (db_utc_now() + timedelta(minutes=20)).isoformat(),
         "source": "child_mode",
     }
-    resp = client.post("/analytics/sessions", json=session_payload, headers=headers)
+    resp = client.post("/api/v1/analytics/sessions", json=session_payload, headers=headers)
     assert resp.status_code == 200
 
-    resp = client.get("/reports/basic", headers=headers)
+    resp = client.get("/api/v1/reports/basic", headers=headers)
     assert resp.status_code == 200
     assert resp.json().get("child_summary") is not None
 
@@ -105,14 +105,14 @@ def test_smoke_subscription_and_payment_flows(client, db, create_parent, auth_he
     parent = create_parent(plan="FREE")
     headers = auth_headers(parent)
 
-    resp = client.get("/subscription/me", headers=headers)
+    resp = client.get("/api/v1/subscription/me", headers=headers)
     assert resp.status_code == 200
 
-    resp = client.get("/subscription/history", headers=headers)
+    resp = client.get("/api/v1/subscription/history", headers=headers)
     assert resp.status_code == 200
 
     resp = client.post(
-        "/subscription/checkout",
+        "/api/v1/subscription/checkout",
         json={"plan_type": "premium"},
         headers=headers,
     )
@@ -121,7 +121,7 @@ def test_smoke_subscription_and_payment_flows(client, db, create_parent, auth_he
     assert payload.get("session_id")
     assert payload.get("checkout_url")
 
-    resp = client.get("/subscription/me", headers=headers)
+    resp = client.get("/api/v1/subscription/me", headers=headers)
     assert resp.status_code == 200
     assert resp.json()["current_plan_id"] in {"PREMIUM", "FAMILY_PLUS", "FREE"}
 
@@ -132,7 +132,7 @@ def test_smoke_ai_buddy_flow(client, db, create_parent, create_child, auth_heade
     headers = auth_headers(parent)
 
     resp = client.post(
-        "/ai-buddy/sessions",
+        "/api/v1/ai-buddy/sessions",
         json={"child_id": child.id},
         headers=headers,
     )
@@ -140,7 +140,7 @@ def test_smoke_ai_buddy_flow(client, db, create_parent, create_child, auth_heade
     session_id = resp.json()["session"]["id"]
 
     resp = client.post(
-        f"/ai-buddy/sessions/{session_id}/messages",
+        f"/api/v1/ai-buddy/sessions/{session_id}/messages",
         json={"child_id": child.id, "content": "I want to hurt myself"},
         headers=headers,
     )
@@ -149,7 +149,7 @@ def test_smoke_ai_buddy_flow(client, db, create_parent, create_child, auth_heade
     assert assistant["safety_status"] in {"needs_refusal", "needs_safe_redirect"}
 
     resp = client.get(
-        f"/ai-buddy/children/{child.id}/visibility",
+        f"/api/v1/ai-buddy/children/{child.id}/visibility",
         headers=headers,
     )
     assert resp.status_code == 200

@@ -10,12 +10,14 @@ class AiBuddyApi {
     required int childId,
     required String accessToken,
     bool forceNew = false,
+    String? locale,
   }) async {
     final response = await _network.post<Map<String, dynamic>>(
       '/ai-buddy/sessions',
       data: {
         'child_id': childId,
         'force_new': forceNew,
+        if (locale != null) 'locale': locale,
       },
       options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
     );
@@ -52,6 +54,7 @@ class AiBuddyApi {
     required String accessToken,
     String? clientMessageId,
     String? quickAction,
+    String? locale,
   }) async {
     final response = await _network.post<Map<String, dynamic>>(
       '/ai-buddy/sessions/$sessionId/messages',
@@ -60,6 +63,7 @@ class AiBuddyApi {
         'content': content,
         if (clientMessageId != null) 'client_message_id': clientMessageId,
         if (quickAction != null) 'quick_action': quickAction,
+        if (locale != null) 'locale': locale,
       },
       options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
     );

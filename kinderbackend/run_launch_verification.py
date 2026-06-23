@@ -130,7 +130,7 @@ def _smoke_register_parent(client: httpx.Client) -> tuple[str | None, CheckResul
         "password": "Password123!",
         "confirm_password": "Password123!",
     }
-    status, data = _post_json(client, "/auth/register", payload)
+    status, data = _post_json(client, "/api/v1/auth/register", payload)
     if status == 200 and data:
         token = data.get("access_token")
         if token:
@@ -149,7 +149,7 @@ def _smoke_register_parent(client: httpx.Client) -> tuple[str | None, CheckResul
 
 
 def _smoke_me(client: httpx.Client, token: str) -> CheckResult:
-    response = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
+    response = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
     if response.status_code == 200:
         return CheckResult("smoke_parent_me", "PASS")
     return CheckResult(
@@ -173,7 +173,7 @@ def _smoke_child_and_content(client: httpx.Client, token: str) -> list[CheckResu
     }
     status, data = _post_json(
         client,
-        "/children",
+        "/api/v1/children",
         child_payload,
         headers={"Authorization": f"Bearer {token}"},
     )
@@ -186,13 +186,13 @@ def _smoke_child_and_content(client: httpx.Client, token: str) -> list[CheckResu
         return results
     results.append(CheckResult("smoke_child_create", "PASS"))
 
-    status, data = _get_json(client, "/content/child/categories")
+    status, data = _get_json(client, "/api/v1/content/child/categories")
     if status == 200:
         results.append(CheckResult("smoke_child_categories", "PASS"))
     else:
         results.append(CheckResult("smoke_child_categories", "FAIL", details=data))
 
-    status, data = _get_json(client, "/content/child/items")
+    status, data = _get_json(client, "/api/v1/content/child/items")
     if status == 200:
         results.append(CheckResult("smoke_child_items", "PASS"))
     else:
@@ -212,7 +212,7 @@ def _smoke_reports(client: httpx.Client, token: str, child_id: int) -> list[Chec
         "activity_name": "Launch Check Lesson",
         "duration_seconds": 120,
     }
-    status, data = _post_json(client, "/analytics/events", event_payload, headers=headers)
+    status, data = _post_json(client, "/api/v1/analytics/events", event_payload, headers=headers)
     results.append(
         CheckResult(
             "smoke_activity_event",
@@ -228,7 +228,7 @@ def _smoke_reports(client: httpx.Client, token: str, child_id: int) -> list[Chec
         "ended_at": "2024-01-01T00:15:00Z",
         "source": "child_mode",
     }
-    status, data = _post_json(client, "/analytics/sessions", session_payload, headers=headers)
+    status, data = _post_json(client, "/api/v1/analytics/sessions", session_payload, headers=headers)
     results.append(
         CheckResult(
             "smoke_activity_session",
@@ -237,7 +237,7 @@ def _smoke_reports(client: httpx.Client, token: str, child_id: int) -> list[Chec
         )
     )
 
-    response = client.get("/reports/basic", headers=headers)
+    response = client.get("/api/v1/reports/basic", headers=headers)
     status = response.status_code
     data = (
         response.json()
@@ -258,7 +258,7 @@ def _smoke_subscription_and_payments(client: httpx.Client, token: str) -> list[C
     results: list[CheckResult] = []
     headers = {"Authorization": f"Bearer {token}"}
 
-    response = client.get("/subscription/me", headers=headers)
+    response = client.get("/api/v1/subscription/me", headers=headers)
     status = response.status_code
     data = (
         response.json()
@@ -269,7 +269,7 @@ def _smoke_subscription_and_payments(client: httpx.Client, token: str) -> list[C
         CheckResult("smoke_subscription_me", "PASS" if status == 200 else "FAIL", details=data)
     )
 
-    response = client.get("/subscription/history", headers=headers)
+    response = client.get("/api/v1/subscription/history", headers=headers)
     status = response.status_code
     data = (
         response.json()
@@ -282,7 +282,7 @@ def _smoke_subscription_and_payments(client: httpx.Client, token: str) -> list[C
 
     status, data = _post_json(
         client,
-        "/subscription/checkout",
+        "/api/v1/subscription/checkout",
         {"plan_type": "premium"},
         headers=headers,
     )
@@ -294,7 +294,7 @@ def _smoke_subscription_and_payments(client: httpx.Client, token: str) -> list[C
         )
     )
 
-    status, data = _post_json(client, "/billing/portal", None, headers=headers)
+    status, data = _post_json(client, "/api/v1/billing/portal", None, headers=headers)
     if status == 200:
         results.append(CheckResult("smoke_billing_portal", "PASS", details=data))
     elif status in {409, 501, 503}:
@@ -316,7 +316,7 @@ def _smoke_ai_buddy(client: httpx.Client, token: str, child_id: int) -> CheckRes
     headers = {"Authorization": f"Bearer {token}"}
     status, data = _post_json(
         client,
-        "/ai-buddy/sessions",
+        "/api/v1/ai-buddy/sessions",
         {"child_id": child_id},
         headers=headers,
     )
@@ -351,7 +351,7 @@ def _run_smoke_tests(client: httpx.Client) -> list[CheckResult]:
             break
 
     # Retrieve child id by listing children (avoids carrying state)
-    response = client.get("/children", headers={"Authorization": f"Bearer {token}"})
+    response = client.get("/api/v1/children", headers={"Authorization": f"Bearer {token}"})
     if response.status_code == 200:
         payload = response.json()
         children = payload.get("children") or []

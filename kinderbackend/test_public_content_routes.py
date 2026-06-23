@@ -93,13 +93,13 @@ def test_public_about_and_legal_pages_are_backed_by_published_cms_content(client
         body_en="Terms body from CMS",
     )
 
-    about_response = client.get("/content/about")
+    about_response = client.get("/api/v1/content/about")
     assert about_response.status_code == 200
     about_payload = about_response.json()
     assert about_payload["body"] == "About page body from CMS"
     assert about_payload["item"]["slug"] == "about"
 
-    legal_response = client.get("/legal/terms")
+    legal_response = client.get("/api/v1/legal/terms")
     assert legal_response.status_code == 200
     legal_payload = legal_response.json()
     assert legal_payload["body"] == "Terms body from CMS"
@@ -131,7 +131,7 @@ def test_public_help_faq_reads_structured_items_from_page_metadata(client, db):
         },
     )
 
-    response = client.get("/content/help-faq")
+    response = client.get("/api/v1/content/help-faq")
 
     assert response.status_code == 200
     payload = response.json()
@@ -177,23 +177,23 @@ def test_child_content_public_endpoints_return_only_published_child_content(clie
     db.add(draft)
     db.commit()
 
-    categories_response = client.get("/content/child/categories")
+    categories_response = client.get("/api/v1/content/child/categories")
     assert categories_response.status_code == 200
     categories_payload = categories_response.json()
     assert [item["slug"] for item in categories_payload["items"]] == ["educational"]
 
-    items_response = client.get("/content/child/items", params={"category_slug": "educational"})
+    items_response = client.get("/api/v1/content/child/items", params={"category_slug": "educational"})
     assert items_response.status_code == 200
     items_payload = items_response.json()
     assert len(items_payload["items"]) == 1
     assert items_payload["items"][0]["slug"] == "math-basics"
     assert items_payload["items"][0]["quizzes"][0]["title_en"] == "Math Basics Quiz"
 
-    detail_response = client.get("/content/child/items/math-basics")
+    detail_response = client.get("/api/v1/content/child/items/math-basics")
     assert detail_response.status_code == 200
     detail_payload = detail_response.json()
     assert detail_payload["item"]["slug"] == "math-basics"
 
-    age_filtered = client.get("/content/child/items", params={"age": 9})
+    age_filtered = client.get("/api/v1/content/child/items", params={"age": 9})
     assert age_filtered.status_code == 200
     assert age_filtered.json()["items"] == []

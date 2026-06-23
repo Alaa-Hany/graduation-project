@@ -75,7 +75,7 @@ def test_admin_cms_categories_and_content_are_grouped_by_axis(
     )
 
     categories_response = client.get(
-        "/admin/categories",
+        "/api/v1/admin/categories",
         headers=admin_headers(admin),
     )
     assert categories_response.status_code == 200
@@ -90,7 +90,7 @@ def test_admin_cms_categories_and_content_are_grouped_by_axis(
     assert axes["behavioral"]["content_count"] == 1
 
     contents_response = client.get(
-        "/admin/contents",
+        "/api/v1/admin/contents",
         params={"axis_key": "educational"},
         headers=admin_headers(admin),
     )

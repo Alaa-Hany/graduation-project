@@ -328,6 +328,22 @@ class AccessTokenResponse(BaseModel):
     )
 
 
+class RefreshTokenResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.access.token",
+                "refresh_token": "8f3c1a7d2e9b4f6a1c8d2e5f9b7a3c4d.6f1a9c4e8b2d7f3a",
+                "token_type": "bearer",
+            }
+        }
+    )
+
+
 class CurrentUserResponse(BaseModel):
     user: UserOut
 

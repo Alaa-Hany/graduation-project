@@ -17,7 +17,7 @@ def test_parent_registration_requires_email_otp_before_activation(client, db, mo
     )
 
     register = client.post(
-        "/auth/register",
+        "/api/v1/auth/register",
         json={
             "name": "OTP Parent",
             "email": "otp.parent@example.com",
@@ -38,14 +38,14 @@ def test_parent_registration_requires_email_otp_before_activation(client, db, mo
     assert pending_user.email_verified is False
 
     blocked_login = client.post(
-        "/auth/login",
+        "/api/v1/auth/login",
         json={"email": "otp.parent@example.com", "password": "Password123!"},
     )
     assert blocked_login.status_code == 403
     assert blocked_login.json()["detail"]["code"] == "EMAIL_VERIFICATION_REQUIRED"
 
     verify = client.post(
-        "/auth/verify-email-otp",
+        "/api/v1/auth/verify-email-otp",
         json={"email": "otp.parent@example.com", "otp": "123456"},
     )
     assert verify.status_code == 200
@@ -69,7 +69,7 @@ def test_resend_email_otp_enforces_cooldown(client, db, monkeypatch):
     )
 
     client.post(
-        "/auth/register",
+        "/api/v1/auth/register",
         json={
             "name": "Cooldown Parent",
             "email": "cooldown.parent@example.com",
@@ -79,7 +79,7 @@ def test_resend_email_otp_enforces_cooldown(client, db, monkeypatch):
     )
 
     resend_too_soon = client.post(
-        "/auth/resend-email-otp",
+        "/api/v1/auth/resend-email-otp",
         json={"email": "cooldown.parent@example.com"},
     )
     assert resend_too_soon.status_code == 429
@@ -91,7 +91,7 @@ def test_resend_email_otp_enforces_cooldown(client, db, monkeypatch):
     db.commit()
 
     resend_ok = client.post(
-        "/auth/resend-email-otp",
+        "/api/v1/auth/resend-email-otp",
         json={"email": "cooldown.parent@example.com"},
     )
     assert resend_ok.status_code == 200

@@ -23,14 +23,35 @@ class AdminSystemSettingsScreen extends ConsumerStatefulWidget {
 class _AdminSystemSettingsScreenState
     extends ConsumerState<AdminSystemSettingsScreen> {
   bool _loading = true;
+  bool _saving = false;
   String? _error;
   AdminSystemSettingsPayload? _payload;
   List<AdminCmsAxisSummary> _axes = const [];
+
+  final TextEditingController _defaultPlanController = TextEditingController();
+  final TextEditingController _childLimitController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _defaultPlanController.dispose();
+    _childLimitController.dispose();
+    super.dispose();
+  }
+
+  void _syncDefaultControllers(AdminSystemSettingsPayload payload) {
+    final effective = payload.effective;
+    final defaults = effective['defaults'] is Map
+        ? Map<String, dynamic>.from(effective['defaults'] as Map)
+        : <String, dynamic>{};
+    _defaultPlanController.text = defaults['default_plan']?.toString() ?? 'FREE';
+    _childLimitController.text =
+        defaults['default_child_limit']?.toString() ?? '1';
   }
 
   Future<void> _load() async {
@@ -47,6 +68,7 @@ class _AdminSystemSettingsScreenState
       final payload = results[0] as AdminSystemSettingsPayload;
       final catalog = results[1] as AdminCmsCatalogResponse;
       if (!mounted) return;
+      _syncDefaultControllers(payload);
       setState(() {
         _payload = payload;
         _axes = catalog.axes;
@@ -62,11 +84,33 @@ class _AdminSystemSettingsScreenState
   }
 
   Future<void> _save(Map<String, dynamic> updates) async {
-    final payload = await ref
-        .read(adminManagementRepositoryProvider)
-        .updateAdminSettings(updates);
-    if (!mounted) return;
-    setState(() => _payload = payload);
+    if (_saving) return;
+    final l10n = AppLocalizations.of(context)!;
+    setState(() => _saving = true);
+    try {
+      final payload = await ref
+          .read(adminManagementRepositoryProvider)
+          .updateAdminSettings(updates);
+      if (!mounted) return;
+      _syncDefaultControllers(payload);
+      setState(() {
+        _payload = payload;
+        _saving = false;
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.adminSettingsSaved)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.adminSettingsSaveFailed),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    }
   }
 
   @override
@@ -157,16 +201,6 @@ class _AdminSystemSettingsScreenState
     final featureFlags = effective['feature_flags'] is Map
         ? Map<String, dynamic>.from(effective['feature_flags'] as Map)
         : <String, dynamic>{};
-    final defaults = effective['defaults'] is Map
-        ? Map<String, dynamic>.from(effective['defaults'] as Map)
-        : <String, dynamic>{};
-    final defaultPlanController = TextEditingController(
-      text: defaults['default_plan']?.toString() ?? 'FREE',
-    );
-    final childLimitController = TextEditingController(
-      text: defaults['default_child_limit']?.toString() ?? '1',
-    );
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -201,7 +235,9 @@ class _AdminSystemSettingsScreenState
                   ),
                 ),
                 value: effective['maintenance_mode'] as bool? ?? false,
-                onChanged: (value) => _save({'maintenance_mode': value}),
+                onChanged: _saving
+                    ? null
+                    : (value) => _save({'maintenance_mode': value}),
               ),
               const Divider(height: 1, indent: 16, endIndent: 16),
               SwitchListTile(
@@ -230,7 +266,9 @@ class _AdminSystemSettingsScreenState
                   ),
                 ),
                 value: effective['registration_enabled'] as bool? ?? true,
-                onChanged: (value) => _save({'registration_enabled': value}),
+                onChanged: _saving
+                    ? null
+                    : (value) => _save({'registration_enabled': value}),
               ),
               const Divider(height: 1, indent: 16, endIndent: 16),
               SwitchListTile(
@@ -259,7 +297,9 @@ class _AdminSystemSettingsScreenState
                   ),
                 ),
                 value: effective['ai_buddy_enabled'] as bool? ?? true,
-                onChanged: (value) => _save({'ai_buddy_enabled': value}),
+                onChanged: _saving
+                    ? null
+                    : (value) => _save({'ai_buddy_enabled': value}),
               ),
             ],
           ),
@@ -288,11 +328,14 @@ class _AdminSystemSettingsScreenState
                         ),
                       ),
                       value: entry.value as bool? ?? false,
-                      onChanged: (value) {
-                        final updated = Map<String, dynamic>.from(featureFlags)
-                          ..[entry.key] = value;
-                        _save({'feature_flags': updated});
-                      },
+                      onChanged: _saving
+                          ? null
+                          : (value) {
+                              final updated =
+                                  Map<String, dynamic>.from(featureFlags)
+                                    ..[entry.key] = value;
+                              _save({'feature_flags': updated});
+                            },
                     ),
                     if (!isLast)
                       const Divider(height: 1, indent: 16, endIndent: 16),
@@ -316,7 +359,7 @@ class _AdminSystemSettingsScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 TextField(
-                  controller: defaultPlanController,
+                  controller: _defaultPlanController,
                   decoration: InputDecoration(
                     labelText: l10n.adminSettingsDefaultPlanLabel,
                     prefixIcon: const Icon(Icons.card_membership_outlined),
@@ -325,7 +368,7 @@ class _AdminSystemSettingsScreenState
                 ),
                 const SizedBox(height: 16),
                 TextField(
-                  controller: childLimitController,
+                  controller: _childLimitController,
                   decoration: InputDecoration(
                     labelText: l10n.adminSettingsDefaultChildLimitLabel,
                     prefixIcon: const Icon(Icons.child_care_outlined),
@@ -337,18 +380,29 @@ class _AdminSystemSettingsScreenState
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
-                    onPressed: () => _save({
-                      'defaults': {
-                        'default_plan': defaultPlanController.text
-                                .trim()
-                                .isEmpty
-                            ? 'FREE'
-                            : defaultPlanController.text.trim().toUpperCase(),
-                        'default_child_limit':
-                            int.tryParse(childLimitController.text.trim()) ?? 1,
-                      },
-                    }),
-                    icon: const Icon(Icons.save_rounded, size: 18),
+                    onPressed: _saving
+                        ? null
+                        : () => _save({
+                              'defaults': {
+                                'default_plan':
+                                    _defaultPlanController.text.trim().isEmpty
+                                        ? 'FREE'
+                                        : _defaultPlanController.text
+                                            .trim()
+                                            .toUpperCase(),
+                                'default_child_limit': int.tryParse(
+                                        _childLimitController.text.trim()) ??
+                                    1,
+                              },
+                            }),
+                    icon: _saving
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child:
+                                CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.save_rounded, size: 18),
                     label: Text(l10n.save),
                   ),
                 ),

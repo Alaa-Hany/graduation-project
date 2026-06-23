@@ -59,21 +59,21 @@ def _create_notification(db, *, user_id: int, title: str, is_read: bool = False)
 @pytest.mark.parametrize(
     ("method", "path", "payload"),
     [
-        ("get", "/auth/me", None),
-        ("get", "/privacy/settings", None),
+        ("get", "/api/v1/auth/me", None),
+        ("get", "/api/v1/privacy/settings", None),
         (
             "put",
-            "/privacy/settings",
+            "/api/v1/privacy/settings",
             {
                 "analytics_enabled": True,
                 "personalized_recommendations": True,
                 "data_collection_opt_out": False,
             },
         ),
-        ("get", "/parental-controls/settings", None),
+        ("get", "/api/v1/parental-controls/settings", None),
         (
             "put",
-            "/parental-controls/settings",
+            "/api/v1/parental-controls/settings",
             {
                 "daily_limit_enabled": True,
                 "hours_per_day": 2,
@@ -87,10 +87,10 @@ def _create_notification(db, *, user_id: int, title: str, is_read: bool = False)
                 "emergency_lock": False,
             },
         ),
-        ("get", "/notifications", None),
-        ("post", "/support/contact", {"subject": "Need help", "message": "Hello"}),
-        ("get", "/billing/methods", None),
-        ("get", "/subscription/me", None),
+        ("get", "/api/v1/notifications", None),
+        ("post", "/api/v1/support/contact", {"subject": "Need help", "message": "Hello"}),
+        ("get", "/api/v1/billing/methods", None),
+        ("get", "/api/v1/subscription/me", None),
     ],
 )
 def test_parent_protected_endpoints_require_auth(
@@ -110,7 +110,7 @@ def test_parent_register_login_refresh_and_logout_revokes_refresh_token(client, 
     monkeypatch.setattr(auth_service, "_generate_email_otp", lambda: FIXED_OTP)
 
     register = client.post(
-        "/auth/register",
+        "/api/v1/auth/register",
         json={
             "name": "Parent Example",
             "email": "Parent.Example@GMAIL.com",
@@ -126,7 +126,7 @@ def test_parent_register_login_refresh_and_logout_revokes_refresh_token(client, 
 
     # Verify OTP to get tokens
     verify = client.post(
-        "/auth/verify-email-otp",
+        "/api/v1/auth/verify-email-otp",
         json={
             "email": "parent.example@gmail.com",
             "otp": FIXED_OTP,
@@ -139,32 +139,32 @@ def test_parent_register_login_refresh_and_logout_revokes_refresh_token(client, 
     assert "refresh_token" in verify_data
 
     refresh = client.post(
-        "/auth/refresh",
+        "/api/v1/auth/refresh",
         json={"refresh_token": verify_data["refresh_token"]},
     )
     assert refresh.status_code == 200
     assert "access_token" in refresh.json()
 
     me = client.get(
-        "/auth/me",
+        "/api/v1/auth/me",
         headers={"Authorization": f"Bearer {verify_data['access_token']}"},
     )
     assert me.status_code == 200
     assert me.json()["user"]["email"] == "parent.example@gmail.com"
 
     logout = client.post(
-        "/auth/logout",
+        "/api/v1/auth/logout",
         headers={"Authorization": f"Bearer {verify_data['access_token']}"},
     )
     assert logout.status_code == 200
     assert logout.json()["success"] is True
 
     refresh_after_logout = client.post(
-        "/auth/refresh",
+        "/api/v1/auth/refresh",
         json={"refresh_token": verify_data["refresh_token"]},
     )
     assert refresh_after_logout.status_code == 401
-    assert refresh_after_logout.json()["detail"] == "Invalid refresh token"
+    assert refresh_after_logout.json()["detail"] == "Session expired. Please log in again."
 
     user = db.query(User).filter(User.email == "parent.example@gmail.com").first()
     assert user is not None
@@ -176,7 +176,7 @@ def test_free_plan_child_limit_is_enforced(client, db):
     headers = _auth_header(parent)
 
     first = client.post(
-        "/children",
+        "/api/v1/children",
         json={
             "name": "Lina",
             "picture_password": ["cat", "dog", "apple"],
@@ -189,7 +189,7 @@ def test_free_plan_child_limit_is_enforced(client, db):
     assert first.json()["child"]["name"] == "Lina"
 
     second = client.post(
-        "/children",
+        "/api/v1/children",
         json={
             "name": "Omar",
             "picture_password": ["sun", "moon", "star"],
@@ -204,6 +204,48 @@ def test_free_plan_child_limit_is_enforced(client, db):
     assert detail["limit"] == 1
 
 
+def test_free_plan_child_limit_honours_admin_default(client, db):
+    from models import SystemSetting
+
+    db.add(
+        SystemSetting(
+            key="defaults",
+            value_json={"default_plan": "FREE", "default_child_limit": 2},
+        )
+    )
+    db.commit()
+
+    parent = _create_parent(db, email="free.parent.cfg@gmail.com", plan=PLAN_FREE)
+    headers = _auth_header(parent)
+
+    for idx, name in enumerate(("Lina", "Omar")):
+        resp = client.post(
+            "/api/v1/children",
+            json={
+                "name": name,
+                "picture_password": ["cat", "dog", "apple"],
+                "age": 6 + idx,
+                "avatar": "boy1",
+            },
+            headers=headers,
+        )
+        assert resp.status_code == 200, resp.json()
+
+    third = client.post(
+        "/api/v1/children",
+        json={
+            "name": "Sara",
+            "picture_password": ["sun", "moon", "star"],
+            "age": 8,
+        },
+        headers=headers,
+    )
+    assert third.status_code == 402
+    detail = third.json()["detail"]
+    assert detail["code"] == "CHILD_LIMIT_REACHED"
+    assert detail["limit"] == 2
+
+
 def test_child_validation_duplicate_name_update_login_and_picture_password_flow(
     client: TestClient, db
 ):
@@ -211,7 +253,7 @@ def test_child_validation_duplicate_name_update_login_and_picture_password_flow(
     headers = _auth_header(parent)
 
     invalid_age = client.post(
-        "/children",
+        "/api/v1/children",
         json={
             "name": "Tiny",
             "picture_password": ["cat", "dog", "apple"],
@@ -223,7 +265,7 @@ def test_child_validation_duplicate_name_update_login_and_picture_password_flow(
     assert invalid_age.json()["detail"] == "Child age must be between 5 and 12"
 
     create = client.post(
-        "/children",
+        "/api/v1/children",
         json={
             "name": "Mariam",
             "picture_password": ["cat", "dog", "apple"],
@@ -237,7 +279,7 @@ def test_child_validation_duplicate_name_update_login_and_picture_password_flow(
     child_id = child["id"]
 
     duplicate = client.post(
-        "/children",
+        "/api/v1/children",
         json={
             "name": "Mariam",
             "picture_password": ["sun", "moon", "star"],
@@ -248,12 +290,12 @@ def test_child_validation_duplicate_name_update_login_and_picture_password_flow(
     assert duplicate.status_code == 400
     assert duplicate.json()["detail"]["code"] == "CHILD_NAME_EXISTS"
 
-    listing = client.get("/children", headers=headers)
+    listing = client.get("/api/v1/children", headers=headers)
     assert listing.status_code == 200
     assert len(listing.json()["children"]) == 1
 
     update = client.put(
-        f"/children/{child_id}",
+        f"/api/v1/children/{child_id}",
         json={
             "name": "Mariam Updated",
             "age": 9,
@@ -266,7 +308,7 @@ def test_child_validation_duplicate_name_update_login_and_picture_password_flow(
     assert update.json()["child"]["age"] == 9
 
     wrong_child_login = client.post(
-        "/auth/child/login",
+        "/api/v1/auth/child/login",
         json={
             "child_id": child_id,
             "name": "Wrong Name",
@@ -276,7 +318,7 @@ def test_child_validation_duplicate_name_update_login_and_picture_password_flow(
     assert wrong_child_login.status_code == 401
 
     correct_child_login = client.post(
-        "/auth/child/login",
+        "/api/v1/auth/child/login",
         json={
             "child_id": child_id,
             "name": "Mariam Updated",
@@ -287,7 +329,7 @@ def test_child_validation_duplicate_name_update_login_and_picture_password_flow(
     assert correct_child_login.json()["success"] is True
 
     wrong_change = client.post(
-        "/auth/child/change-password",
+        "/api/v1/auth/child/change-password",
         json={
             "child_id": child_id,
             "name": "Mariam Updated",
@@ -298,7 +340,7 @@ def test_child_validation_duplicate_name_update_login_and_picture_password_flow(
     assert wrong_change.status_code == 401
 
     invalid_new_password = client.post(
-        "/auth/child/change-password",
+        "/api/v1/auth/child/change-password",
         json={
             "child_id": child_id,
             "name": "Mariam Updated",
@@ -309,7 +351,7 @@ def test_child_validation_duplicate_name_update_login_and_picture_password_flow(
     assert invalid_new_password.status_code == 422
 
     change = client.post(
-        "/auth/child/change-password",
+        "/api/v1/auth/child/change-password",
         json={
             "child_id": child_id,
             "name": "Mariam Updated",
@@ -321,7 +363,7 @@ def test_child_validation_duplicate_name_update_login_and_picture_password_flow(
     assert change.json()["success"] is True
 
     old_password_login = client.post(
-        "/auth/child/login",
+        "/api/v1/auth/child/login",
         json={
             "child_id": child_id,
             "name": "Mariam Updated",
@@ -331,7 +373,7 @@ def test_child_validation_duplicate_name_update_login_and_picture_password_flow(
     assert old_password_login.status_code == 401
 
     new_password_login = client.post(
-        "/auth/child/login",
+        "/api/v1/auth/child/login",
         json={
             "child_id": child_id,
             "name": "Mariam Updated",
@@ -350,7 +392,7 @@ def test_privacy_parental_controls_notifications_support_and_billing_persist(
     note_one = _create_notification(db, user_id=parent.id, title="Welcome alert", is_read=False)
     note_two = _create_notification(db, user_id=parent.id, title="Weekly summary", is_read=False)
 
-    privacy_get = client.get("/privacy/settings", headers=headers)
+    privacy_get = client.get("/api/v1/privacy/settings", headers=headers)
     assert privacy_get.status_code == 200
     assert privacy_get.json() == {
         "analytics_enabled": True,
@@ -359,7 +401,7 @@ def test_privacy_parental_controls_notifications_support_and_billing_persist(
     }
 
     privacy_put = client.put(
-        "/privacy/settings",
+        "/api/v1/privacy/settings",
         json={
             "analytics_enabled": False,
             "personalized_recommendations": False,
@@ -376,12 +418,12 @@ def test_privacy_parental_controls_notifications_support_and_billing_persist(
     assert privacy_row.personalized_recommendations is False
     assert privacy_row.data_collection_opt_out is True
 
-    controls_get = client.get("/parental-controls/settings", headers=headers)
+    controls_get = client.get("/api/v1/parental-controls/settings", headers=headers)
     assert controls_get.status_code == 200
     assert controls_get.json()["settings"]["hours_per_day"] == 2
 
     controls_put = client.put(
-        "/parental-controls/settings",
+        "/api/v1/parental-controls/settings",
         json={
             "daily_limit_enabled": True,
             "hours_per_day": 3,
@@ -400,22 +442,22 @@ def test_privacy_parental_controls_notifications_support_and_billing_persist(
     assert controls_put.json()["settings"]["hours_per_day"] == 3
     assert controls_put.json()["settings"]["emergency_lock"] is True
 
-    notifications = client.get("/notifications", headers=headers)
+    notifications = client.get("/api/v1/notifications", headers=headers)
     assert notifications.status_code == 200
     assert len(notifications.json()["notifications"]) == 2
 
-    mark_one = client.post(f"/notifications/{note_one.id}/read", headers=headers)
+    mark_one = client.post(f"/api/v1/notifications/{note_one.id}/read", headers=headers)
     assert mark_one.status_code == 200
     db.refresh(note_one)
     assert note_one.is_read is True
 
-    mark_all = client.post("/notifications/mark-all-read", headers=headers)
+    mark_all = client.post("/api/v1/notifications/mark-all-read", headers=headers)
     assert mark_all.status_code == 200
     db.refresh(note_two)
     assert note_two.is_read is True
 
     support = client.post(
-        "/support/contact",
+        "/api/v1/support/contact",
         json={
             "subject": "Payment question",
             "message": "I need help with billing",
@@ -429,22 +471,22 @@ def test_privacy_parental_controls_notifications_support_and_billing_persist(
     assert ticket.status == "open"
 
     add_method = client.post(
-        "/billing/methods",
+        "/api/v1/billing/methods",
         json={"label": "Visa ending 1234"},
         headers=headers,
     )
     assert add_method.status_code == 200
     method_id = add_method.json()["method"]["id"]
 
-    list_methods = client.get("/billing/methods", headers=headers)
+    list_methods = client.get("/api/v1/billing/methods", headers=headers)
     assert list_methods.status_code == 200
     assert len(list_methods.json()["methods"]) == 1
     assert list_methods.json()["methods"][0]["label"] == "Visa ending 1234"
 
-    delete_method = client.delete(f"/billing/methods/{method_id}", headers=headers)
+    delete_method = client.delete(f"/api/v1/billing/methods/{method_id}", headers=headers)
     assert delete_method.status_code == 200
 
-    missing_delete = client.delete(f"/billing/methods/{method_id}", headers=headers)
+    missing_delete = client.delete(f"/api/v1/billing/methods/{method_id}", headers=headers)
     assert missing_delete.status_code == 404
 
 
@@ -452,20 +494,20 @@ def test_subscription_demo_mode_and_placeholder_billing_endpoints(client: TestCl
     user = _create_parent(db, email="subscription.parent@gmail.com", plan=PLAN_FREE)
     headers = _auth_header(user)
 
-    subscription_me = client.get("/subscription/me", headers=headers)
+    subscription_me = client.get("/api/v1/subscription/me", headers=headers)
     assert subscription_me.status_code == 200
     assert subscription_me.json()["plan"] == PLAN_FREE
     assert subscription_me.json()["limits"]["max_children"] == 1
 
     invalid_select = client.post(
-        "/subscription/select",
+        "/api/v1/subscription/select",
         json={"plan_id": "enterprise"},
         headers=headers,
     )
     assert invalid_select.status_code == 400
 
     premium_select = client.post(
-        "/subscription/select",
+        "/api/v1/subscription/select",
         json={"plan_type": "premium"},
         headers=headers,
     )
@@ -478,11 +520,11 @@ def test_subscription_demo_mode_and_placeholder_billing_endpoints(client: TestCl
     db.refresh(user)
     assert user.plan == PLAN_FREE
 
-    manage = client.post("/subscription/manage", headers=headers)
+    manage = client.post("/api/v1/subscription/manage", headers=headers)
     assert manage.status_code == 410
     assert manage.json()["detail"] == "Billing portal is not available for this account."
 
-    portal = client.post("/billing/portal", headers=headers)
+    portal = client.post("/api/v1/billing/portal", headers=headers)
     assert portal.status_code == 410
     assert portal.json()["detail"] == "Billing portal is not available for this account."
 
@@ -494,7 +536,7 @@ def test_feature_gated_sparse_data_responses_use_real_account_state(client: Test
     premium_headers = _auth_header(premium_user)
     family_headers = _auth_header(family_user)
 
-    smart_notifications = client.get("/notifications/smart", headers=premium_headers)
+    smart_notifications = client.get("/api/v1/notifications/smart", headers=premium_headers)
     assert smart_notifications.status_code == 200
     smart_payload = smart_notifications.json()
     assert smart_payload["access_level"] == "smart"
@@ -503,7 +545,7 @@ def test_feature_gated_sparse_data_responses_use_real_account_state(client: Test
     assert smart_payload["notifications"][0]["rule_key"] == "account_setup_required"
     assert "No child profiles" in smart_payload["notifications"][0]["message"]
 
-    ai_insights = client.get("/ai/insights", headers=premium_headers)
+    ai_insights = client.get("/api/v1/ai/insights", headers=premium_headers)
     assert ai_insights.status_code == 200
     insights_payload = ai_insights.json()
     assert insights_payload["data_source"] == "backend_rules"
@@ -513,18 +555,18 @@ def test_feature_gated_sparse_data_responses_use_real_account_state(client: Test
         "insight_baseline_pending",
     }
 
-    offline = client.get("/downloads/offline", headers=premium_headers)
+    offline = client.get("/api/v1/downloads/offline", headers=premium_headers)
     assert offline.status_code == 200
     assert offline.json()["status"] == "downloads enabled"
     assert offline.json()["quota_mb"] == 500
 
-    advanced_controls = client.get("/parental-controls/advanced", headers=premium_headers)
+    advanced_controls = client.get("/api/v1/parental-controls/advanced", headers=premium_headers)
     assert advanced_controls.status_code == 200
     assert advanced_controls.json()["access_level"] == "advanced"
     assert isinstance(advanced_controls.json()["controls"], list)
     assert advanced_controls.json()["data_source"] == "backend_parental_controls"
 
-    priority_support = client.get("/support/priority", headers=family_headers)
+    priority_support = client.get("/api/v1/support/priority", headers=family_headers)
     assert priority_support.status_code == 200
     assert priority_support.json()["support_level"] == "priority"
     assert "phone" in priority_support.json()["support_channels"]
@@ -537,7 +579,7 @@ def test_child_parental_controls_crud_and_parent_ownership(client: TestClient, d
     other_headers = _auth_header(other_parent)
 
     create_child = client.post(
-        "/children",
+        "/api/v1/children",
         json={
             "name": "Yousef",
             "picture_password": ["cat", "dog", "apple"],
@@ -549,13 +591,13 @@ def test_child_parental_controls_crud_and_parent_ownership(client: TestClient, d
     child_id = create_child.json()["child"]["id"]
 
     get_default = client.get(
-        f"/parental-controls/children/{child_id}/settings", headers=owner_headers
+        f"/api/v1/parental-controls/children/{child_id}/settings", headers=owner_headers
     )
     assert get_default.status_code == 200
     assert get_default.json()["settings"]["daily_limit_minutes"] == 120
 
     update = client.put(
-        f"/parental-controls/children/{child_id}/settings",
+        f"/api/v1/parental-controls/children/{child_id}/settings",
         json={
             "daily_limit_enabled": True,
             "daily_limit_minutes": 90,
@@ -595,7 +637,7 @@ def test_child_parental_controls_crud_and_parent_ownership(client: TestClient, d
     assert len(payload["blocked_sites"]) == 1
 
     replace_apps = client.put(
-        f"/parental-controls/children/{child_id}/blocked-apps",
+        f"/api/v1/parental-controls/children/{child_id}/blocked-apps",
         json={
             "blocked_apps": [
                 {"app_identifier": "com.chat.app", "app_name": "Chat App"},
@@ -608,7 +650,7 @@ def test_child_parental_controls_crud_and_parent_ownership(client: TestClient, d
     assert len(replace_apps.json()["blocked_apps"]) == 2
 
     replace_sites = client.put(
-        f"/parental-controls/children/{child_id}/blocked-sites",
+        f"/api/v1/parental-controls/children/{child_id}/blocked-sites",
         json={"blocked_sites": [{"domain": "social.example"}]},
         headers=owner_headers,
     )
@@ -616,7 +658,7 @@ def test_child_parental_controls_crud_and_parent_ownership(client: TestClient, d
     assert replace_sites.json()["blocked_sites"][0]["domain"] == "social.example"
 
     replace_schedule = client.put(
-        f"/parental-controls/children/{child_id}/schedule-rules",
+        f"/api/v1/parental-controls/children/{child_id}/schedule-rules",
         json={
             "allowed_windows": [
                 {"day_of_week": 2, "start_time": "15:00", "end_time": "17:00", "is_allowed": True}
@@ -628,12 +670,12 @@ def test_child_parental_controls_crud_and_parent_ownership(client: TestClient, d
     assert len(replace_schedule.json()["allowed_windows"]) == 1
     assert replace_schedule.json()["allowed_windows"][0]["day_of_week"] == 2
 
-    list_controls = client.get("/parental-controls/children", headers=owner_headers)
+    list_controls = client.get("/api/v1/parental-controls/children", headers=owner_headers)
     assert list_controls.status_code == 200
     assert len(list_controls.json()["items"]) == 1
     assert list_controls.json()["items"][0]["child"]["id"] == child_id
 
     forbidden = client.get(
-        f"/parental-controls/children/{child_id}/settings", headers=other_headers
+        f"/api/v1/parental-controls/children/{child_id}/settings", headers=other_headers
     )
     assert forbidden.status_code == 403

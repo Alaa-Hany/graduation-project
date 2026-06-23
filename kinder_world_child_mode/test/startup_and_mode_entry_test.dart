@@ -59,6 +59,9 @@ class _TestSecureStorage extends SecureStorage {
   }
 }
 
+final _testRefProvider = Provider<Ref>((ref) => ref);
+Ref _testRef() => ProviderContainer().read(_testRefProvider);
+
 class _FakeAuthRepository extends AuthRepository {
   _FakeAuthRepository({
     required SecureStorage storage,
@@ -72,6 +75,7 @@ class _FakeAuthRepository extends AuthRepository {
           ),
           secureStorage: storage,
           logger: Logger(),
+          ref: _testRef(),
         );
 
   final bool hasPin;

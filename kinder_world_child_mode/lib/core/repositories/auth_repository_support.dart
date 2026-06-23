@@ -9,6 +9,7 @@ mixin _AuthRepositorySupportMixin {
   SecureStorage get _secureStorage;
   AuthApi get _authApi;
   Logger get _logger;
+  Ref get _ref;
 
   User? _userFromJson(dynamic data) {
     if (data is! Map<String, dynamic>) {

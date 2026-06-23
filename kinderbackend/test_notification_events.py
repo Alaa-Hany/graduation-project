@@ -23,14 +23,14 @@ def test_support_ticket_admin_updates_create_parent_notifications(
     db.refresh(ticket)
 
     reply = client.post(
-        f"/admin/support/tickets/{ticket.id}/reply",
+        f"/api/v1/admin/support/tickets/{ticket.id}/reply",
         json={"message": "We are looking into it."},
         headers=admin_headers(admin),
     )
     assert reply.status_code == 200
 
     resolve = client.post(
-        f"/admin/support/tickets/{ticket.id}/resolve",
+        f"/api/v1/admin/support/tickets/{ticket.id}/resolve",
         headers=admin_headers(admin),
     )
     assert resolve.status_code == 200
@@ -56,20 +56,20 @@ def test_subscription_changes_create_notifications_and_are_listed(
     headers = auth_headers(parent)
 
     select = client.post(
-        "/subscription/select",
+        "/api/v1/subscription/select",
         json={"plan_type": "premium"},
         headers=headers,
     )
     assert select.status_code == 200
 
     override = client.post(
-        f"/admin/subscriptions/{parent.id}/override-plan",
+        f"/api/v1/admin/subscriptions/{parent.id}/override-plan",
         json={"plan": "family_plus"},
         headers=admin_headers(admin),
     )
     assert override.status_code == 200
 
-    listed = client.get("/notifications", headers=headers)
+    listed = client.get("/api/v1/notifications", headers=headers)
     assert listed.status_code == 200
     payload = listed.json()
     # Selecting a plan no longer emits a "pending" notification at button-click

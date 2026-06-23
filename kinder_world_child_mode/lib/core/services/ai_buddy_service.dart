@@ -29,6 +29,7 @@ class AiBuddyService {
 
   Future<AiBuddyConversation> getOrStartCurrentSession({
     required int childId,
+    String? locale,
   }) async {
     final token = await _requireConversationAccessToken();
     try {
@@ -43,6 +44,7 @@ class AiBuddyService {
       final started = await _api.startSession(
         childId: childId,
         accessToken: token,
+        locale: locale,
       );
       return AiBuddyConversation.fromJson(started);
     } on DioException catch (e) {
@@ -53,6 +55,7 @@ class AiBuddyService {
   Future<AiBuddyConversation> startSession({
     required int childId,
     bool forceNew = false,
+    String? locale,
   }) async {
     final token = await _requireConversationAccessToken();
     try {
@@ -60,6 +63,7 @@ class AiBuddyService {
         childId: childId,
         accessToken: token,
         forceNew: forceNew,
+        locale: locale,
       );
       return AiBuddyConversation.fromJson(response);
     } on DioException catch (e) {
@@ -88,6 +92,7 @@ class AiBuddyService {
     required String content,
     String? clientMessageId,
     String? quickAction,
+    String? locale,
   }) async {
     final token = await _requireConversationAccessToken();
     try {
@@ -98,6 +103,7 @@ class AiBuddyService {
         accessToken: token,
         clientMessageId: clientMessageId,
         quickAction: quickAction,
+        locale: locale,
       );
       return AiBuddySendResult.fromJson(response);
     } on DioException catch (e) {

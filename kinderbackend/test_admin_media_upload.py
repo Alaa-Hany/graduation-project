@@ -48,7 +48,7 @@ def test_admin_video_upload_endpoint_returns_cloud_media_payload(
     )
 
     response = client.post(
-        "/admin/media/videos/upload",
+        "/api/v1/admin/media/videos/upload",
         headers=admin_headers(admin),
         data={"axis_key": "behavioral", "content_slug": "kindness-video"},
         files={"file": ("kindness.mp4", b"fake-video-bytes", "video/mp4")},
@@ -76,7 +76,7 @@ def test_published_video_content_requires_video_url(
     category = _create_category(db)
 
     response = client.post(
-        "/admin/contents",
+        "/api/v1/admin/contents",
         headers=admin_headers(admin),
         json={
             "category_id": category.id,
@@ -120,7 +120,7 @@ def test_public_child_content_item_exposes_video_fields(client, db):
     db.add(content)
     db.commit()
 
-    response = client.get("/content/child/items/letters-song")
+    response = client.get("/api/v1/content/child/items/letters-song")
     assert response.status_code == 200
     item = response.json()["item"]
     assert item["video_url"] == "https://cdn.example.com/letters.mp4"

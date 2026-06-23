@@ -2174,6 +2174,11 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get adminSettingsDefaultChildLimitLabel => 'الحد الافتراضي للأطفال';
   @override
+  String get adminSettingsSaved => 'تم حفظ الإعدادات';
+  @override
+  String get adminSettingsSaveFailed =>
+      'تعذّر حفظ الإعدادات. حاول مرة أخرى.';
+  @override
   String get adminSettingsDefaultPlanLabel => 'الخطة الافتراضية';
   @override
   String get adminSettingsDefaultsTitle => 'الإعدادات الافتراضية';

@@ -54,6 +54,7 @@ class _FakeAiBuddyApi extends AiBuddyApi {
     required int childId,
     required String accessToken,
     bool forceNew = false,
+    String? locale,
   }) async {
     lastAccessToken = accessToken;
     return {

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 import admin_models  # noqa: F401
 from auth import hash_password
@@ -27,7 +27,7 @@ def _create_child(db, parent, *, name="Yara", age=7) -> ChildProfile:
         parent_id=parent.id,
         name=name,
         picture_password=["cat", "dog", "apple"],
-        age=age,
+        date_of_birth=date(date.today().year - age, 1, 1),
         avatar="av1",
         is_active=True,
     )
@@ -44,7 +44,7 @@ def _recent(minutes_ago: int) -> str:
 
 
 def _post_event(client, headers, **fields):
-    resp = client.post("/analytics/events", json=fields, headers=headers)
+    resp = client.post("/api/v1/analytics/events", json=fields, headers=headers)
     assert resp.status_code == 200, resp.text
     return resp
 
@@ -101,7 +101,7 @@ def test_development_report_scores_four_domains_with_narrative(client, db, auth_
         occurred_at=_recent(12),
     )
 
-    resp = client.get(f"/reports/development?child_id={child.id}", headers=headers)
+    resp = client.get(f"/api/v1/reports/development?child_id={child.id}", headers=headers)
     assert resp.status_code == 200, resp.text
     payload = resp.json()
 
@@ -129,7 +129,7 @@ def test_development_report_handles_insufficient_data(client, db, auth_headers):
     child = _create_child(db, parent, name="Omar")
 
     resp = client.get(
-        f"/reports/development?child_id={child.id}&language=en", headers=auth_headers(parent)
+        f"/api/v1/reports/development?child_id={child.id}&language=en", headers=auth_headers(parent)
     )
     assert resp.status_code == 200, resp.text
     payload = resp.json()
@@ -146,7 +146,7 @@ def test_development_report_requires_advanced_plan(client, db, auth_headers):
     parent = _create_parent(db, email="dev-free@example.com", plan=PLAN_FREE)
     child = _create_child(db, parent, name="Free Kid")
 
-    resp = client.get(f"/reports/development?child_id={child.id}", headers=auth_headers(parent))
+    resp = client.get(f"/api/v1/reports/development?child_id={child.id}", headers=auth_headers(parent))
     assert resp.status_code == 403
 
 
@@ -155,5 +155,5 @@ def test_development_report_rejects_other_parents_child(client, db, auth_headers
     other = _create_parent(db, email="dev-other@example.com", plan=PLAN_PREMIUM)
     child = _create_child(db, owner, name="Owned")
 
-    resp = client.get(f"/reports/development?child_id={child.id}", headers=auth_headers(other))
+    resp = client.get(f"/api/v1/reports/development?child_id={child.id}", headers=auth_headers(other))
     assert resp.status_code == 404

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kinder_world/core/api/auth_api.dart';
 import 'package:kinder_world/core/models/user.dart';
@@ -295,6 +296,9 @@ Map<String, dynamic> _parentAuthRaw({
   };
 }
 
+final _testRefProvider = Provider<Ref>((ref) => ref);
+Ref _testRef() => ProviderContainer().read(_testRefProvider);
+
 void main() {
   late _MemorySecureStorage storage;
   late _FakeAuthApi authApi;
@@ -306,6 +310,7 @@ void main() {
     repository = AuthRepository(
       secureStorage: storage,
       authApi: authApi,
+      ref: _testRef(),
       logger: Logger(),
     );
   });

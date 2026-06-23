@@ -11,12 +11,12 @@ def test_parent_pin_status_set_verify_change_and_reset_request(
     user = create_parent(email="pin.parent@gmail.com", name="Pin Parent", plan="FREE")
     headers = auth_headers(user)
 
-    status_before = client.get("/auth/parent-pin/status", headers=headers)
+    status_before = client.get("/api/v1/auth/parent-pin/status", headers=headers)
     assert status_before.status_code == 200
     assert status_before.json()["has_pin"] is False
 
     set_pin = client.post(
-        "/auth/parent-pin/set",
+        "/api/v1/auth/parent-pin/set",
         json={"pin": "1234", "confirm_pin": "1234"},
         headers=headers,
     )
@@ -27,13 +27,13 @@ def test_parent_pin_status_set_verify_change_and_reset_request(
     assert user.parent_pin_hash is not None
     assert user.parent_pin_hash != "1234"
 
-    status_after = client.get("/auth/parent-pin/status", headers=headers)
+    status_after = client.get("/api/v1/auth/parent-pin/status", headers=headers)
     assert status_after.status_code == 200
     assert status_after.json()["has_pin"] is True
     assert status_after.json()["is_locked"] is False
 
     verify_pin = client.post(
-        "/auth/parent-pin/verify",
+        "/api/v1/auth/parent-pin/verify",
         json={"pin": "1234"},
         headers=headers,
     )
@@ -41,7 +41,7 @@ def test_parent_pin_status_set_verify_change_and_reset_request(
     assert verify_pin.json()["success"] is True
 
     change_pin = client.post(
-        "/auth/parent-pin/change",
+        "/api/v1/auth/parent-pin/change",
         json={
             "current_pin": "1234",
             "new_pin": "5678",
@@ -53,21 +53,21 @@ def test_parent_pin_status_set_verify_change_and_reset_request(
     assert change_pin.json()["success"] is True
 
     verify_old = client.post(
-        "/auth/parent-pin/verify",
+        "/api/v1/auth/parent-pin/verify",
         json={"pin": "1234"},
         headers=headers,
     )
     assert verify_old.status_code == 401
 
     verify_new = client.post(
-        "/auth/parent-pin/verify",
+        "/api/v1/auth/parent-pin/verify",
         json={"pin": "5678"},
         headers=headers,
     )
     assert verify_new.status_code == 200
 
     reset_request = client.post(
-        "/auth/parent-pin/reset-request",
+        "/api/v1/auth/parent-pin/reset-request",
         json={"note": "Need help resetting the parent PIN"},
         headers=headers,
     )
@@ -94,27 +94,27 @@ def test_parent_pin_lockout_after_repeated_failures(client, db, create_parent, a
 
     for _ in range(4):
         response = client.post(
-            "/auth/parent-pin/verify",
+            "/api/v1/auth/parent-pin/verify",
             json={"pin": "1111"},
             headers=headers,
         )
         assert response.status_code == 401
 
     locked = client.post(
-        "/auth/parent-pin/verify",
+        "/api/v1/auth/parent-pin/verify",
         json={"pin": "1111"},
         headers=headers,
     )
     assert locked.status_code == 423
     assert locked.json()["detail"]["locked_until"] is not None
 
-    status = client.get("/auth/parent-pin/status", headers=headers)
+    status = client.get("/api/v1/auth/parent-pin/status", headers=headers)
     assert status.status_code == 200
     assert status.json()["is_locked"] is True
     assert status.json()["failed_attempts"] == 5
 
     even_correct_while_locked = client.post(
-        "/auth/parent-pin/verify",
+        "/api/v1/auth/parent-pin/verify",
         json={"pin": "2468"},
         headers=headers,
     )

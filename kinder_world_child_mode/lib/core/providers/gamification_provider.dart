@@ -4,12 +4,16 @@
 // Exposes: gamificationServiceProvider, gamificationStateProvider,
 //          pendingRewardProvider, and convenience providers.
 
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:kinder_world/core/api/api_providers.dart';
 import 'package:kinder_world/core/providers/app_services.dart';
 import 'package:kinder_world/core/models/achievement.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
+import 'package:kinder_world/core/providers/content_controller.dart';
+import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/core/repositories/gamification_repository.dart';
 import 'package:kinder_world/core/services/gamification_service.dart';
 import 'package:kinder_world/features/child_mode/store/reward_store_screen.dart';
@@ -173,6 +177,10 @@ class GamificationNotifier extends StateNotifier<GamificationNotifierState> {
         } catch (_) {}
       }
 
+      // Refresh every activity-driven value so the UI updates instantly,
+      // without needing a manual pull-to-refresh.
+      _refreshDependentData();
+
       return result;
     } catch (e) {
       state = state.copyWith(error: e.toString());
@@ -182,6 +190,24 @@ class GamificationNotifier extends StateNotifier<GamificationNotifierState> {
         state.gamificationState?.streak ?? 0,
       );
     }
+  }
+
+  /// Pulls the freshly-written profile into the session state and forces the
+  /// activity-driven providers to refetch, so values that don't live in the
+  /// gamification state (activities-completed count, daily/weekly goals,
+  /// continue-learning and history) update instantly after each activity.
+  void _refreshDependentData() {
+    final ref = _ref;
+    if (ref == null) return;
+    // activitiesCompleted / xp / streak written to the child repo → session.
+    unawaited(
+      ref.read(childSessionControllerProvider.notifier).refreshProfile(),
+    );
+    // Daily goal, weekly challenge, continue-learning and history feeds.
+    ref.invalidate(currentChildTodayProgressProvider);
+    ref.invalidate(weeklySummaryProvider);
+    ref.invalidate(currentChildRecentProgressProvider);
+    ref.invalidate(currentChildHomeFeedProvider);
   }
 
   // ── Dismiss Reward ────────────────────────────────────────────────────────

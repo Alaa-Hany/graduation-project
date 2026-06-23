@@ -29,7 +29,7 @@ def test_admin_diagnostics_events_endpoint(
     )
 
     response = client.get(
-        "/admin/diagnostics/events",
+        "/api/v1/admin/diagnostics/events",
         headers=admin_headers(admin),
         params={"limit": 10, "category": "payment"},
     )
@@ -83,11 +83,11 @@ def test_admin_diagnostics_metrics_endpoint_exposes_request_metrics(
     assert health.status_code == 200
     assert "X-Process-Time-Ms" in health.headers
 
-    unauthorized = client.get("/admin/diagnostics/metrics")
+    unauthorized = client.get("/api/v1/admin/diagnostics/metrics")
     assert unauthorized.status_code == 401
 
     response = client.get(
-        "/admin/diagnostics/metrics",
+        "/api/v1/admin/diagnostics/metrics",
         headers=admin_headers(admin),
         params={"category": "http", "name_prefix": "http."},
     )

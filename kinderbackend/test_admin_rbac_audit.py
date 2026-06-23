@@ -47,15 +47,15 @@ def _enable_sensitive_confirmations(monkeypatch):
 # A representative GET endpoint for every "view/manage" permission.  These are
 # side-effect free, so they can be hammered across all roles deterministically.
 GET_ENDPOINT_BY_PERMISSION: dict[str, str] = {
-    "admin.admins.manage": "/admin/admin-users",
-    "admin.users.view": "/admin/users",
-    "admin.children.view": "/admin/children",
-    "admin.content.view": "/admin/categories",
-    "admin.analytics.view": "/admin/analytics/overview",
-    "admin.audit.view": "/admin/audit-logs",
-    "admin.support.view": "/admin/support/tickets",
-    "admin.subscription.view": "/admin/subscriptions",
-    "admin.settings.edit": "/admin/settings",
+    "admin.admins.manage": "/api/v1/admin/admin-users",
+    "admin.users.view": "/api/v1/admin/users",
+    "admin.children.view": "/api/v1/admin/children",
+    "admin.content.view": "/api/v1/admin/categories",
+    "admin.analytics.view": "/api/v1/admin/analytics/overview",
+    "admin.audit.view": "/api/v1/admin/audit-logs",
+    "admin.support.view": "/api/v1/admin/support/tickets",
+    "admin.subscription.view": "/api/v1/admin/subscriptions",
+    "admin.settings.edit": "/api/v1/admin/settings",
 }
 
 
@@ -71,7 +71,7 @@ def test_builtin_role_has_exactly_declared_permissions(
     seed_builtin_rbac()
     admin = create_admin(email=f"{role_name}@kinderworld.app", role_names=[role_name])
 
-    me = client.get("/admin/auth/me", headers=admin_headers(admin))
+    me = client.get("/api/v1/admin/auth/me", headers=admin_headers(admin))
     assert me.status_code == 200
 
     payload = me.json()["admin"]
@@ -115,10 +115,10 @@ def test_no_role_admin_is_denied_all_rbac_management_endpoints(
     headers = admin_headers(admin)
 
     for path in (
-        "/admin/admin-users",
-        "/admin/roles",
-        "/admin/roles-matrix",
-        "/admin/permissions",
+        "/api/v1/admin/admin-users",
+        "/api/v1/admin/roles",
+        "/api/v1/admin/roles-matrix",
+        "/api/v1/admin/permissions",
     ):
         resp = client.get(path, headers=headers)
         assert resp.status_code == 403
@@ -144,13 +144,13 @@ def test_sensitive_confirmation_required_for_disable_remove_role_and_permissions
     headers = admin_headers(super_admin)
 
     # disable without confirmation -> 400
-    resp = client.post(f"/admin/admin-users/{target.id}/disable", headers=headers)
+    resp = client.post(f"/api/v1/admin/admin-users/{target.id}/disable", headers=headers)
     assert resp.status_code == 400
     assert resp.json()["detail"]["code"] == "ADMIN_CONFIRMATION_REQUIRED"
 
     # remove-role without confirmation -> 400
     resp = client.post(
-        f"/admin/admin-users/{target.id}/remove-role",
+        f"/api/v1/admin/admin-users/{target.id}/remove-role",
         json={"role_id": support_role.id},
         headers=headers,
     )
@@ -159,7 +159,7 @@ def test_sensitive_confirmation_required_for_disable_remove_role_and_permissions
 
     # update role permissions without confirmation -> 400
     resp = client.patch(
-        f"/admin/roles/{support_role.id}/permissions",
+        f"/api/v1/admin/roles/{support_role.id}/permissions",
         json={"permission_ids": []},
         headers=headers,
     )
@@ -168,7 +168,7 @@ def test_sensitive_confirmation_required_for_disable_remove_role_and_permissions
 
     # with the right confirmation headers the actions go through
     resp = client.post(
-        f"/admin/admin-users/{target.id}/remove-role",
+        f"/api/v1/admin/admin-users/{target.id}/remove-role",
         json={"role_id": support_role.id},
         headers={
             **headers,
@@ -199,7 +199,7 @@ def test_remove_role_protects_last_super_admin(
     super_role = db.query(Role).filter(Role.name == "super_admin").one()
 
     resp = client.post(
-        f"/admin/admin-users/{sole_super.id}/remove-role",
+        f"/api/v1/admin/admin-users/{sole_super.id}/remove-role",
         json={"role_id": super_role.id},
         headers=admin_headers(manager),
     )
@@ -217,7 +217,7 @@ def test_admin_cannot_remove_their_own_role(
     super_role = db.query(Role).filter(Role.name == "super_admin").one()
 
     resp = client.post(
-        f"/admin/admin-users/{actor.id}/remove-role",
+        f"/api/v1/admin/admin-users/{actor.id}/remove-role",
         json={"role_id": super_role.id},
         headers=admin_headers(actor),
     )
@@ -241,7 +241,7 @@ def test_token_version_increments_on_password_change_and_disable(
     assert target.token_version == 0
 
     resp = client.patch(
-        f"/admin/admin-users/{target.id}",
+        f"/api/v1/admin/admin-users/{target.id}",
         json={"password": "BrandNewPass123!"},
         headers=headers,
     )
@@ -249,7 +249,7 @@ def test_token_version_increments_on_password_change_and_disable(
     db.refresh(target)
     assert target.token_version == 1
 
-    resp = client.post(f"/admin/admin-users/{target.id}/disable", headers=headers)
+    resp = client.post(f"/api/v1/admin/admin-users/{target.id}/disable", headers=headers)
     assert resp.status_code == 200
     db.refresh(target)
     assert target.token_version == 2
@@ -265,17 +265,17 @@ def test_password_change_revokes_existing_admin_tokens(
     target_headers = admin_headers(target)
 
     # token valid before the password change
-    assert client.get("/admin/auth/me", headers=target_headers).status_code == 200
+    assert client.get("/api/v1/admin/auth/me", headers=target_headers).status_code == 200
 
     resp = client.patch(
-        f"/admin/admin-users/{target.id}",
+        f"/api/v1/admin/admin-users/{target.id}",
         json={"password": "RotatedPass123!"},
         headers=admin_headers(super_admin),
     )
     assert resp.status_code == 200
 
     # old token now carries a stale token_version -> revoked
-    revoked = client.get("/admin/auth/me", headers=target_headers)
+    revoked = client.get("/api/v1/admin/auth/me", headers=target_headers)
     assert revoked.status_code == 401
 
 
@@ -298,7 +298,7 @@ def test_audit_log_records_all_rbac_mutations(
 
     # create admin user
     created = client.post(
-        "/admin/admin-users",
+        "/api/v1/admin/admin-users",
         json={"email": "audit.new@kinderworld.app", "password": "NewAdminPass123!"},
         headers=headers,
     )
@@ -308,7 +308,7 @@ def test_audit_log_records_all_rbac_mutations(
     # update admin user
     assert (
         client.patch(
-            f"/admin/admin-users/{new_id}", json={"name": "Renamed"}, headers=headers
+            f"/api/v1/admin/admin-users/{new_id}", json={"name": "Renamed"}, headers=headers
         ).status_code
         == 200
     )
@@ -316,7 +316,7 @@ def test_audit_log_records_all_rbac_mutations(
     # assign + remove role
     assert (
         client.post(
-            f"/admin/admin-users/{new_id}/assign-role",
+            f"/api/v1/admin/admin-users/{new_id}/assign-role",
             json={"role_id": content_role.id},
             headers=headers,
         ).status_code
@@ -324,7 +324,7 @@ def test_audit_log_records_all_rbac_mutations(
     )
     assert (
         client.post(
-            f"/admin/admin-users/{new_id}/remove-role",
+            f"/api/v1/admin/admin-users/{new_id}/remove-role",
             json={"role_id": content_role.id},
             headers=headers,
         ).status_code
@@ -332,25 +332,25 @@ def test_audit_log_records_all_rbac_mutations(
     )
 
     # disable + enable
-    assert client.post(f"/admin/admin-users/{new_id}/disable", headers=headers).status_code == 200
-    assert client.post(f"/admin/admin-users/{new_id}/enable", headers=headers).status_code == 200
+    assert client.post(f"/api/v1/admin/admin-users/{new_id}/disable", headers=headers).status_code == 200
+    assert client.post(f"/api/v1/admin/admin-users/{new_id}/enable", headers=headers).status_code == 200
 
     # role create / update / update-permissions
     role_resp = client.post(
-        "/admin/roles", json={"name": "auditor_role", "description": "x"}, headers=headers
+        "/api/v1/admin/roles", json={"name": "auditor_role", "description": "x"}, headers=headers
     )
     assert role_resp.status_code == 200
     role_id = role_resp.json()["item"]["id"]
     assert (
         client.patch(
-            f"/admin/roles/{role_id}", json={"description": "updated"}, headers=headers
+            f"/api/v1/admin/roles/{role_id}", json={"description": "updated"}, headers=headers
         ).status_code
         == 200
     )
     view_perm = db.query(Permission).filter(Permission.name == "admin.content.view").one()
     assert (
         client.patch(
-            f"/admin/roles/{role_id}/permissions",
+            f"/api/v1/admin/roles/{role_id}/permissions",
             json={"permission_ids": [view_perm.id]},
             headers=headers,
         ).status_code
@@ -388,7 +388,7 @@ def test_roles_matrix_flags_builtin_drift(
     db.commit()
     headers = admin_headers(super_admin)
 
-    resp = client.get("/admin/roles-matrix", headers=headers)
+    resp = client.get("/api/v1/admin/roles-matrix", headers=headers)
     assert resp.status_code == 200
     roles = {r["name"]: r for r in resp.json()["roles"]}
 
@@ -408,7 +408,7 @@ def test_roles_matrix_flags_builtin_drift(
     db.delete(mapping)
     db.commit()
 
-    resp = client.get("/admin/roles-matrix", headers=headers)
+    resp = client.get("/api/v1/admin/roles-matrix", headers=headers)
     assert resp.status_code == 200
     drifted = {r["name"]: r for r in resp.json()["roles"]}["content_admin"]
     assert drifted["matches_built_in_matrix"] is False
@@ -421,12 +421,12 @@ def test_roles_matrix_flags_builtin_drift(
 
 
 def test_bootstrap_creates_first_super_admin_then_is_locked(client, db):
-    status_before = client.get("/admin/auth/bootstrap/status")
+    status_before = client.get("/api/v1/admin/auth/bootstrap/status")
     assert status_before.status_code == 200
     assert status_before.json()["can_bootstrap"] is True
 
     resp = client.post(
-        "/admin/auth/bootstrap",
+        "/api/v1/admin/auth/bootstrap",
         json={
             "email": "founder@kinderworld.app",
             "password": "FounderPass123!",
@@ -441,14 +441,14 @@ def test_bootstrap_creates_first_super_admin_then_is_locked(client, db):
 
     # the bootstrapped admin can immediately use a privileged endpoint
     me_headers = {"Authorization": f"Bearer {body['access_token']}"}
-    assert client.get("/admin/admin-users", headers=me_headers).status_code == 200
+    assert client.get("/api/v1/admin/admin-users", headers=me_headers).status_code == 200
 
     # bootstrap is now closed
-    status_after = client.get("/admin/auth/bootstrap/status")
+    status_after = client.get("/api/v1/admin/auth/bootstrap/status")
     assert status_after.json()["can_bootstrap"] is False
 
     second = client.post(
-        "/admin/auth/bootstrap",
+        "/api/v1/admin/auth/bootstrap",
         json={"email": "second@kinderworld.app", "password": "SecondPass123!"},
     )
     assert second.status_code == 409
@@ -464,23 +464,23 @@ def test_two_factor_full_lifecycle(client, db, seed_builtin_rbac, create_admin, 
     admin = create_admin(email="twofa@kinderworld.app", role_names=["super_admin"])
     headers = admin_headers(admin)
 
-    status0 = client.get("/admin/auth/2fa/status", headers=headers)
+    status0 = client.get("/api/v1/admin/auth/2fa/status", headers=headers)
     assert status0.status_code == 200
     assert status0.json()["enabled"] is False
 
-    setup = client.post("/admin/auth/2fa/setup", headers=headers)
+    setup = client.post("/api/v1/admin/auth/2fa/setup", headers=headers)
     assert setup.status_code == 200
     secret = setup.json()["secret"]
     assert secret
     assert setup.json()["enabled"] is False  # not enabled until confirmed
 
     # wrong code is rejected
-    bad = client.post("/admin/auth/2fa/enable", json={"code": "000000"}, headers=headers)
+    bad = client.post("/api/v1/admin/auth/2fa/enable", json={"code": "000000"}, headers=headers)
     assert bad.status_code == 422
 
     # correct TOTP code enables 2FA
     good = client.post(
-        "/admin/auth/2fa/enable",
+        "/api/v1/admin/auth/2fa/enable",
         json={"code": generate_totp_code(secret)},
         headers=headers,
     )
@@ -488,20 +488,20 @@ def test_two_factor_full_lifecycle(client, db, seed_builtin_rbac, create_admin, 
     assert good.json()["enabled"] is True
     assert good.json()["success"] is True
 
-    enabled_status = client.get("/admin/auth/2fa/status", headers=headers)
+    enabled_status = client.get("/api/v1/admin/auth/2fa/status", headers=headers)
     assert enabled_status.json()["enabled"] is True
     assert enabled_status.json()["confirmed_at"] is not None
 
     # login now requires a valid 2FA code
     db.refresh(admin)
     no_code = client.post(
-        "/admin/auth/login",
+        "/api/v1/admin/auth/login",
         json={"email": admin.email, "password": "AdminPass123!"},
     )
     assert no_code.status_code == 401
 
     with_code = client.post(
-        "/admin/auth/login",
+        "/api/v1/admin/auth/login",
         json={
             "email": admin.email,
             "password": "AdminPass123!",
@@ -511,11 +511,11 @@ def test_two_factor_full_lifecycle(client, db, seed_builtin_rbac, create_admin, 
     assert with_code.status_code == 200
 
     # disable 2FA
-    disabled = client.post("/admin/auth/2fa/disable", headers=headers)
+    disabled = client.post("/api/v1/admin/auth/2fa/disable", headers=headers)
     assert disabled.status_code == 200
     assert disabled.json()["enabled"] is False
 
-    final_status = client.get("/admin/auth/2fa/status", headers=headers)
+    final_status = client.get("/api/v1/admin/auth/2fa/status", headers=headers)
     assert final_status.json()["enabled"] is False
 
 

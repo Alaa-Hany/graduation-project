@@ -12,6 +12,7 @@ import 'package:kinder_world/core/models/progress_record.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/providers/content_controller.dart';
 import 'package:kinder_world/core/providers/progress_controller.dart';
+import 'package:kinder_world/core/providers/sound_provider.dart';
 import 'package:kinder_world/core/providers/theme_provider.dart';
 import 'package:kinder_world/core/services/sound_effects_service.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
@@ -390,6 +391,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
       );
     }
 
+    final l10n = AppLocalizations.of(context)!;
     return CustomScrollView(
       slivers: [
         // ── Compact header bar ──────────────────────────────────────────
@@ -399,6 +401,20 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
           floating: true,
           title: const ChildHeader(compact: true, padding: EdgeInsets.zero),
           actions: [
+            Consumer(builder: (context, ref, _) {
+              final soundOn = ref.watch(soundControllerProvider);
+              return IconButton(
+                visualDensity: VisualDensity.compact,
+                iconSize: 20,
+                tooltip: soundOn ? l10n.sound : l10n.backgroundMusic,
+                icon: Icon(
+                  soundOn ? Icons.music_note_rounded : Icons.music_off_rounded,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+                onPressed: () =>
+                    ref.read(soundControllerProvider.notifier).toggle(),
+              );
+            }),
             Consumer(builder: (context, ref, _) {
               final themeState = ref.watch(themeControllerProvider);
               final isDark = themeState.mode.resolvesToDark(

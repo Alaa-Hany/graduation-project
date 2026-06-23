@@ -3,7 +3,7 @@ import logging
 import os
 import time
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from jwt import PyJWTError as JWTError
 from sqlalchemy.orm import Session
@@ -14,7 +14,8 @@ from core.redis_client import get_redis_client
 from core.time_utils import db_utc_now, utc_now
 from core.validators import resolve_child_age, validate_child_age, validate_picture_password_length
 from models import ChildProfile, User
-from plan_service import PLAN_LIMITS, get_user_plan
+from core.system_settings import get_default_child_limit
+from plan_service import PLAN_FREE, PLAN_LIMITS, get_user_plan
 from schemas.auth import (
     ChildChangePasswordIn,
     ChildLoginIn,
@@ -288,6 +289,12 @@ class ChildService:
     def enforce_child_limit(self, *, parent: User, db: Session) -> None:
         plan = get_user_plan(parent)
         limit = PLAN_LIMITS.get(plan)
+        # The FREE plan limit is configurable from the admin system settings
+        # ("defaults.default_child_limit"); the paid plans keep their fixed caps.
+        if plan == PLAN_FREE:
+            configured = get_default_child_limit(db)
+            if configured is not None:
+                limit = configured
         if limit is None:
             return
 
@@ -354,7 +361,9 @@ class ChildService:
             avatar=payload.avatar,
         )
         if payload.age is not None and payload.date_of_birth is None:
-            child.age = payload.age
+            # TODO: callers should pass a real date_of_birth instead of an integer age
+            today = date.today()
+            child.date_of_birth = date(today.year - int(payload.age), 1, 1)
         db.add(child)
         db.commit()
         db.refresh(child)
@@ -414,7 +423,9 @@ class ChildService:
             child.date_of_birth = payload.date_of_birth
         if payload.age is not None:
             if payload.date_of_birth is None:
-                child.age = payload.age
+                # TODO: callers should pass a real date_of_birth instead of an integer age
+                today = date.today()
+                child.date_of_birth = date(today.year - int(payload.age), 1, 1)
         if payload.age is not None or payload.date_of_birth is not None:
             resolved_age = resolve_child_age(payload.age, payload.date_of_birth)
             validate_child_age(resolved_age)

@@ -11,7 +11,7 @@ def test_parent_two_factor_setup_enable_login_and_disable(
     parent = create_parent(email="parent.2fa@example.com", password="Password123!")
     headers = auth_headers(parent)
 
-    status = client.get("/auth/2fa/status", headers=headers)
+    status = client.get("/api/v1/auth/2fa/status", headers=headers)
     assert status.status_code == 200
     assert status.json() == {
         "enabled": False,
@@ -19,7 +19,7 @@ def test_parent_two_factor_setup_enable_login_and_disable(
         "confirmed_at": None,
     }
 
-    setup = client.post("/auth/2fa/setup", headers=headers)
+    setup = client.post("/api/v1/auth/2fa/setup", headers=headers)
     assert setup.status_code == 200
     setup_payload = setup.json()
     assert setup_payload["enabled"] is False
@@ -29,7 +29,7 @@ def test_parent_two_factor_setup_enable_login_and_disable(
     assert "otpauth://totp/" in setup_payload["provisioning_uri"]
 
     code = generate_totp_code(setup_payload["secret"])
-    enable = client.post("/auth/2fa/enable", json={"code": code}, headers=headers)
+    enable = client.post("/api/v1/auth/2fa/enable", json={"code": code}, headers=headers)
     assert enable.status_code == 200
     enable_payload = enable.json()
     assert enable_payload["enabled"] is True
@@ -37,7 +37,7 @@ def test_parent_two_factor_setup_enable_login_and_disable(
     assert enable_payload["success"] is True
 
     missing_code = client.post(
-        "/auth/login",
+        "/api/v1/auth/login",
         json={"email": parent.email, "password": "Password123!"},
     )
     assert missing_code.status_code == 401
@@ -48,7 +48,7 @@ def test_parent_two_factor_setup_enable_login_and_disable(
     }
 
     bad_code = client.post(
-        "/auth/login",
+        "/api/v1/auth/login",
         json={
             "email": parent.email,
             "password": "Password123!",
@@ -59,7 +59,7 @@ def test_parent_two_factor_setup_enable_login_and_disable(
     assert bad_code.json()["detail"]["code"] == "PARENT_INVALID_TWO_FACTOR_CODE"
 
     login = client.post(
-        "/auth/login",
+        "/api/v1/auth/login",
         json={
             "email": parent.email,
             "password": "Password123!",
@@ -70,13 +70,13 @@ def test_parent_two_factor_setup_enable_login_and_disable(
     assert login.json()["user"]["two_factor_enabled"] is True
     assert login.json()["user"]["two_factor_method"] == "totp"
 
-    disable = client.post("/auth/2fa/disable", headers=headers)
+    disable = client.post("/api/v1/auth/2fa/disable", headers=headers)
     assert disable.status_code == 200
     assert disable.json()["enabled"] is False
     assert disable.json()["success"] is True
 
     login_without_code = client.post(
-        "/auth/login",
+        "/api/v1/auth/login",
         json={"email": parent.email, "password": "Password123!"},
     )
     assert login_without_code.status_code == 200
@@ -92,7 +92,7 @@ def test_admin_two_factor_setup_enable_login_and_disable(
     admin = create_admin(email="admin.2fa@example.com", role_names=["super_admin"])
     headers = admin_headers(admin)
 
-    status = client.get("/admin/auth/2fa/status", headers=headers)
+    status = client.get("/api/v1/admin/auth/2fa/status", headers=headers)
     assert status.status_code == 200
     assert status.json() == {
         "enabled": False,
@@ -100,14 +100,14 @@ def test_admin_two_factor_setup_enable_login_and_disable(
         "confirmed_at": None,
     }
 
-    setup = client.post("/admin/auth/2fa/setup", headers=headers)
+    setup = client.post("/api/v1/admin/auth/2fa/setup", headers=headers)
     assert setup.status_code == 200
     setup_payload = setup.json()
     assert setup_payload["method"] == "totp"
     assert setup_payload["secret"]
 
     enable = client.post(
-        "/admin/auth/2fa/enable",
+        "/api/v1/admin/auth/2fa/enable",
         json={"code": generate_totp_code(setup_payload["secret"])},
         headers=headers,
     )
@@ -115,7 +115,7 @@ def test_admin_two_factor_setup_enable_login_and_disable(
     assert enable.json()["enabled"] is True
 
     missing_code = client.post(
-        "/admin/auth/login",
+        "/api/v1/admin/auth/login",
         json={"email": admin.email, "password": "AdminPass123!"},
     )
     assert missing_code.status_code == 401
@@ -126,7 +126,7 @@ def test_admin_two_factor_setup_enable_login_and_disable(
     }
 
     login = client.post(
-        "/admin/auth/login",
+        "/api/v1/admin/auth/login",
         json={
             "email": admin.email,
             "password": "AdminPass123!",
@@ -137,7 +137,7 @@ def test_admin_two_factor_setup_enable_login_and_disable(
     assert login.json()["admin"]["two_factor_enabled"] is True
     assert login.json()["admin"]["two_factor_method"] == "totp"
 
-    disable = client.post("/admin/auth/2fa/disable", headers=headers)
+    disable = client.post("/api/v1/admin/auth/2fa/disable", headers=headers)
     assert disable.status_code == 200
     assert disable.json()["enabled"] is False
 
@@ -146,7 +146,7 @@ def test_parent_two_factor_enable_requires_setup(client, create_parent, auth_hea
     parent = create_parent(email="parent.2fa.missing@example.com")
 
     response = client.post(
-        "/auth/2fa/enable",
+        "/api/v1/auth/2fa/enable",
         json={"code": "123456"},
         headers=auth_headers(parent),
     )

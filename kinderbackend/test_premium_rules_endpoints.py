@@ -11,7 +11,7 @@ def _record_event(client, headers, *, child_id: int, event_type: str, occurred_a
         "occurred_at": occurred_at.isoformat(),
         **extra,
     }
-    response = client.post("/analytics/events", json=payload, headers=headers)
+    response = client.post("/api/v1/analytics/events", json=payload, headers=headers)
     assert response.status_code == 200, response.text
 
 
@@ -22,7 +22,7 @@ def _record_session(client, headers, *, child_id: int, started_at, ended_at, **e
         "ended_at": ended_at.isoformat(),
         **extra,
     }
-    response = client.post("/analytics/sessions", json=payload, headers=headers)
+    response = client.post("/api/v1/analytics/sessions", json=payload, headers=headers)
     assert response.status_code == 200, response.text
 
 
@@ -89,7 +89,7 @@ def test_premium_rules_endpoints_use_backend_data(
         activity_name="Daily Streak",
     )
 
-    insights = client.get("/ai/insights", headers=headers)
+    insights = client.get("/api/v1/ai/insights", headers=headers)
     assert insights.status_code == 200
     insights_payload = insights.json()
     assert insights_payload["data_source"] == "backend_rules"
@@ -99,14 +99,14 @@ def test_premium_rules_endpoints_use_backend_data(
         for item in insights_payload["insights"]
     )
 
-    smart_notifications = client.get("/notifications/smart", headers=headers)
+    smart_notifications = client.get("/api/v1/notifications/smart", headers=headers)
     assert smart_notifications.status_code == 200
     smart_payload = smart_notifications.json()
     assert smart_payload["data_source"] == "backend_rules"
     assert any(item["type"] == "INACTIVITY_ALERT" for item in smart_payload["notifications"])
     assert any(item["type"] == "MOOD_TREND" for item in smart_payload["notifications"])
 
-    offline = client.get("/downloads/offline", headers=headers)
+    offline = client.get("/api/v1/downloads/offline", headers=headers)
     assert offline.status_code == 200
     offline_payload = offline.json()
     assert offline_payload["data_source"] == "backend_rules"
@@ -125,7 +125,7 @@ def test_ai_insights_sparse_activity_use_real_rule_outputs(
     create_child(parent_id=parent.id, name="Mila", age=6)
     headers = auth_headers(parent)
 
-    insights = client.get("/ai/insights", headers=headers)
+    insights = client.get("/api/v1/ai/insights", headers=headers)
     assert insights.status_code == 200
     insights_payload = insights.json()
     assert insights_payload["data_source"] == "backend_rules"
@@ -169,7 +169,7 @@ def test_priority_support_and_admin_queue_are_rules_based(
     db.add_all([urgent_ticket, standard_ticket])
     db.commit()
 
-    priority = client.get("/support/priority", headers=auth_headers(family_parent))
+    priority = client.get("/api/v1/support/priority", headers=auth_headers(family_parent))
     assert priority.status_code == 200
     priority_payload = priority.json()
     assert priority_payload["support_level"] == "priority"
@@ -177,7 +177,7 @@ def test_priority_support_and_admin_queue_are_rules_based(
     assert priority_payload["highest_priority_ticket"]["ticket_id"] == urgent_ticket.id
     assert priority_payload["highest_priority_ticket"]["priority_level"] in {"urgent", "high"}
 
-    admin_list = client.get("/admin/support/tickets", headers=admin_headers(admin))
+    admin_list = client.get("/api/v1/admin/support/tickets", headers=admin_headers(admin))
     assert admin_list.status_code == 200
     items = admin_list.json()["items"]
     assert items[0]["id"] == urgent_ticket.id

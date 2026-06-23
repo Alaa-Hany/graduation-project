@@ -15,11 +15,24 @@ class SoundEffectsService {
 
   final AudioPlayer _player = AudioPlayer();
 
+  /// When false, all app-wide sound effects are silenced. Controlled by the
+  /// child's "music" toggle in the home header (see [soundControllerProvider]).
+  bool enabled = true;
+
+  void setEnabled(bool value) {
+    enabled = value;
+    if (!value) {
+      // Stop anything currently playing the moment the child mutes.
+      _player.stop().catchError((_) {});
+    }
+  }
+
   Future<void> playTap() => _play(_tapAsset, volume: 0.5);
 
   Future<void> playReward() => _play(_rewardAsset, volume: 0.6);
 
   Future<void> _play(String assetPath, {required double volume}) async {
+    if (!enabled) return;
     try {
       await _player.stop();
       await _player.setVolume(volume);

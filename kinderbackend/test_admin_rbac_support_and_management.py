@@ -5,6 +5,8 @@ settings, child management, user management, and subscription admin actions.
 
 from __future__ import annotations
 
+from datetime import date
+
 import admin_models  # noqa: F401
 from admin_auth import create_admin_access_token
 from admin_models import AdminUser, AdminUserRole, AuditLog, Permission, Role, RolePermission
@@ -115,11 +117,12 @@ def _create_parent(
 
 
 def _create_child(db, *, parent_id: int, name: str = "Kid One", age: int = 8) -> ChildProfile:
+    today = date.today()
     child = ChildProfile(
         parent_id=parent_id,
         name=name,
         picture_password=["cat", "dog", "apple"],
-        age=age,
+        date_of_birth=date(today.year - age, 1, 1),
         avatar="assets/images/avatars/av1.png",
     )
     db.add(child)
@@ -146,7 +149,7 @@ def test_admin_login_me_refresh_and_logout_flow(client: TestClient, db):
     admin = _create_admin(db, email="super.admin@kinderworld.app", role_names=["super_admin"])
 
     login = client.post(
-        "/admin/auth/login",
+        "/api/v1/admin/auth/login",
         json={"email": admin.email, "password": "AdminPass123!"},
     )
     assert login.status_code == 200
@@ -156,28 +159,28 @@ def test_admin_login_me_refresh_and_logout_flow(client: TestClient, db):
     assert "admin.admins.manage" in login_payload["admin"]["permissions"]
 
     me = client.get(
-        "/admin/auth/me",
+        "/api/v1/admin/auth/me",
         headers={"Authorization": f"Bearer {login_payload['access_token']}"},
     )
     assert me.status_code == 200
     assert me.json()["admin"]["email"] == admin.email
 
     refresh = client.post(
-        "/admin/auth/refresh",
+        "/api/v1/admin/auth/refresh",
         json={"refresh_token": login_payload["refresh_token"]},
     )
     assert refresh.status_code == 200
     assert "access_token" in refresh.json()
 
     logout = client.post(
-        "/admin/auth/logout",
+        "/api/v1/admin/auth/logout",
         headers={"Authorization": f"Bearer {login_payload['access_token']}"},
     )
     assert logout.status_code == 200
     assert logout.json()["success"] is True
 
     refresh_after_logout = client.post(
-        "/admin/auth/refresh",
+        "/api/v1/admin/auth/refresh",
         json={"refresh_token": login_payload["refresh_token"]},
     )
     assert refresh_after_logout.status_code == 401
@@ -190,7 +193,7 @@ def test_admin_endpoints_reject_parent_tokens_and_enforce_permissions(client: Te
     parent_token = create_access_token(str(parent.id), parent.token_version)
 
     wrong_token = client.get(
-        "/admin/users",
+        "/api/v1/admin/users",
         headers={"Authorization": f"Bearer {parent_token}"},
     )
     assert wrong_token.status_code == 401
@@ -203,11 +206,11 @@ def test_admin_endpoints_reject_parent_tokens_and_enforce_permissions(client: Te
         role_ids=[manager_role.id],
     )
 
-    denied = client.get("/admin/users", headers=_admin_headers(limited_admin))
+    denied = client.get("/api/v1/admin/users", headers=_admin_headers(limited_admin))
     assert denied.status_code == 403
     assert denied.json()["detail"]["code"] == "PERMISSION_DENIED"
 
-    allowed = client.get("/admin/support/tickets", headers=_admin_headers(limited_admin))
+    allowed = client.get("/api/v1/admin/support/tickets", headers=_admin_headers(limited_admin))
     assert allowed.status_code == 200
     assert allowed.json()["items"] == []
 
@@ -222,7 +225,7 @@ def test_admin_support_ticket_assign_reply_close_and_audit(client: TestClient, d
     ticket = _create_ticket(db, user_id=parent.id)
 
     assign = client.post(
-        f"/admin/support/tickets/{ticket.id}/assign",
+        f"/api/v1/admin/support/tickets/{ticket.id}/assign",
         json={"admin_user_id": support_admin.id},
         headers=_admin_headers(super_admin),
     )
@@ -231,7 +234,7 @@ def test_admin_support_ticket_assign_reply_close_and_audit(client: TestClient, d
     assert assign.json()["item"]["status"] == "in_progress"
 
     reply = client.post(
-        f"/admin/support/tickets/{ticket.id}/reply",
+        f"/api/v1/admin/support/tickets/{ticket.id}/reply",
         json={"message": "We are looking into this now."},
         headers=_admin_headers(super_admin),
     )
@@ -240,7 +243,7 @@ def test_admin_support_ticket_assign_reply_close_and_audit(client: TestClient, d
     assert reply.json()["item"]["thread"][-1]["author_type"] == "admin"
 
     close = client.post(
-        f"/admin/support/tickets/{ticket.id}/close",
+        f"/api/v1/admin/support/tickets/{ticket.id}/close",
         headers=_admin_headers(super_admin),
     )
     assert close.status_code == 200
@@ -248,7 +251,7 @@ def test_admin_support_ticket_assign_reply_close_and_audit(client: TestClient, d
     assert close.json()["item"]["closed_at"] is not None
 
     audit = client.get(
-        "/admin/audit-logs",
+        "/api/v1/admin/audit-logs",
         params={"entity_type": "support_ticket"},
         headers=_admin_headers(super_admin),
     )
@@ -266,12 +269,12 @@ def test_admin_user_management_subscription_and_refund_flow(client: TestClient, 
         db, email="managed.parent@gmail.com", plan=PLAN_PREMIUM, name="Managed Parent"
     )
 
-    users_list = client.get("/admin/users", headers=_admin_headers(admin))
+    users_list = client.get("/api/v1/admin/users", headers=_admin_headers(admin))
     assert users_list.status_code == 200
     assert any(item["email"] == parent.email for item in users_list.json()["items"])
 
     create_user = client.post(
-        "/admin/users",
+        "/api/v1/admin/users",
         json={
             "name": "Created By Admin",
             "email": "created.by.admin@example.com",
@@ -285,7 +288,7 @@ def test_admin_user_management_subscription_and_refund_flow(client: TestClient, 
     assert create_user.json()["item"]["plan"] == PLAN_PREMIUM
 
     update_user = client.patch(
-        f"/admin/users/{parent.id}",
+        f"/api/v1/admin/users/{parent.id}",
         json={"name": "Managed Parent Updated", "plan": "family_plus"},
         headers=_admin_headers(admin),
     )
@@ -293,16 +296,16 @@ def test_admin_user_management_subscription_and_refund_flow(client: TestClient, 
     assert update_user.json()["item"]["name"] == "Managed Parent Updated"
     assert update_user.json()["item"]["plan"] == "FAMILY_PLUS"
 
-    disable = client.post(f"/admin/users/{parent.id}/disable", headers=_admin_headers(admin))
+    disable = client.post(f"/api/v1/admin/users/{parent.id}/disable", headers=_admin_headers(admin))
     assert disable.status_code == 200
     assert disable.json()["item"]["is_active"] is False
 
-    enable = client.post(f"/admin/users/{parent.id}/enable", headers=_admin_headers(admin))
+    enable = client.post(f"/api/v1/admin/users/{parent.id}/enable", headers=_admin_headers(admin))
     assert enable.status_code == 200
     assert enable.json()["item"]["is_active"] is True
 
     reset_password = client.post(
-        f"/admin/users/{parent.id}/reset-password",
+        f"/api/v1/admin/users/{parent.id}/reset-password",
         json={"new_password": "ResetPass123!"},
         headers=_admin_headers(admin),
     )
@@ -312,14 +315,14 @@ def test_admin_user_management_subscription_and_refund_flow(client: TestClient, 
     assert verify_password("ResetPass123!", parent.password_hash)
 
     subscription_detail = client.get(
-        f"/admin/subscriptions/{parent.id}",
+        f"/api/v1/admin/subscriptions/{parent.id}",
         headers=_admin_headers(admin),
     )
     assert subscription_detail.status_code == 200
     assert subscription_detail.json()["item"]["user"]["plan"] == "FAMILY_PLUS"
 
     override_plan = client.post(
-        f"/admin/subscriptions/{parent.id}/override-plan",
+        f"/api/v1/admin/subscriptions/{parent.id}/override-plan",
         json={"plan": "premium"},
         headers=_admin_headers(admin),
     )
@@ -327,14 +330,14 @@ def test_admin_user_management_subscription_and_refund_flow(client: TestClient, 
     assert override_plan.json()["item"]["user"]["plan"] == PLAN_PREMIUM
 
     cancel_plan = client.post(
-        f"/admin/subscriptions/{parent.id}/cancel",
+        f"/api/v1/admin/subscriptions/{parent.id}/cancel",
         headers=_admin_headers(admin),
     )
     assert cancel_plan.status_code == 200
     assert cancel_plan.json()["item"]["user"]["plan"] == PLAN_FREE
 
     refund = client.post(
-        f"/admin/subscriptions/{parent.id}/refund",
+        f"/api/v1/admin/subscriptions/{parent.id}/refund",
         headers=_admin_headers(admin),
     )
     assert refund.status_code == 200
@@ -342,7 +345,7 @@ def test_admin_user_management_subscription_and_refund_flow(client: TestClient, 
     assert refund.json()["status"] == "succeeded"
 
     delete_user = client.delete(
-        f"/admin/users/{parent.id}",
+        f"/api/v1/admin/users/{parent.id}",
         headers=_admin_headers(admin),
     )
     assert delete_user.status_code == 200
@@ -356,12 +359,12 @@ def test_admin_settings_and_child_management_endpoints(client: TestClient, db):
     parent = _create_parent(db, email="child.parent@gmail.com")
     child = _create_child(db, parent_id=parent.id, name="Nour", age=9)
 
-    settings = client.get("/admin/settings", headers=_admin_headers(admin))
+    settings = client.get("/api/v1/admin/settings", headers=_admin_headers(admin))
     assert settings.status_code == 200
     assert settings.json()["effective"]["maintenance_mode"] is False
 
     update_settings = client.patch(
-        "/admin/settings",
+        "/api/v1/admin/settings",
         json={"maintenance_mode": True, "ai_buddy_enabled": False},
         headers=_admin_headers(admin),
     )
@@ -369,13 +372,13 @@ def test_admin_settings_and_child_management_endpoints(client: TestClient, db):
     assert update_settings.json()["effective"]["maintenance_mode"] is True
     assert update_settings.json()["effective"]["ai_buddy_enabled"] is False
 
-    children = client.get("/admin/children", params={"age": 9}, headers=_admin_headers(admin))
+    children = client.get("/api/v1/admin/children", params={"age": 9}, headers=_admin_headers(admin))
     assert children.status_code == 200
     assert len(children.json()["items"]) == 1
     assert children.json()["items"][0]["name"] == "Nour"
 
     update_child = client.patch(
-        f"/admin/children/{child.id}",
+        f"/api/v1/admin/children/{child.id}",
         json={"name": "Nour Updated", "age": 10, "date_of_birth": "2016-01-10"},
         headers=_admin_headers(admin),
     )
@@ -383,25 +386,25 @@ def test_admin_settings_and_child_management_endpoints(client: TestClient, db):
     assert update_child.json()["item"]["name"] == "Nour Updated"
     assert update_child.json()["item"]["age"] == 10
 
-    progress = client.get(f"/admin/children/{child.id}/progress", headers=_admin_headers(admin))
+    progress = client.get(f"/api/v1/admin/children/{child.id}/progress", headers=_admin_headers(admin))
     assert progress.status_code == 200
     assert progress.json()["child"]["is_active"] is True
 
     activity_log = client.get(
-        f"/admin/children/{child.id}/activity-log", headers=_admin_headers(admin)
+        f"/api/v1/admin/children/{child.id}/activity-log", headers=_admin_headers(admin)
     )
     assert activity_log.status_code == 200
     assert isinstance(activity_log.json()["items"], list)
 
     deactivate = client.post(
-        f"/admin/children/{child.id}/deactivate",
+        f"/api/v1/admin/children/{child.id}/deactivate",
         headers=_admin_headers(admin),
     )
     assert deactivate.status_code == 200
     assert deactivate.json()["item"]["is_active"] is False
 
     delete_child = client.delete(
-        f"/admin/children/{child.id}",
+        f"/api/v1/admin/children/{child.id}",
         headers=_admin_headers(admin),
     )
     assert delete_child.status_code == 200
@@ -418,14 +421,14 @@ def test_last_super_admin_protections_and_self_disable_guard(client: TestClient,
     manager = _create_admin(db, email="manager.only@kinderworld.app", role_ids=[manager_role.id])
 
     self_disable = client.post(
-        f"/admin/admin-users/{super_admin.id}/disable",
+        f"/api/v1/admin/admin-users/{super_admin.id}/disable",
         headers=_admin_headers(super_admin),
     )
     assert self_disable.status_code == 400
     assert self_disable.json()["detail"] == "You cannot disable your own admin account"
 
     disable_last_super_admin = client.post(
-        f"/admin/admin-users/{super_admin.id}/disable",
+        f"/api/v1/admin/admin-users/{super_admin.id}/disable",
         headers=_admin_headers(manager),
     )
     assert disable_last_super_admin.status_code == 400
@@ -437,7 +440,7 @@ def test_admin_failed_login_tracks_security_metadata_and_audit(client: TestClien
     admin = _create_admin(db, email="audit.security@kinderworld.app", role_names=["super_admin"])
 
     failed = client.post(
-        "/admin/auth/login",
+        "/api/v1/admin/auth/login",
         json={"email": admin.email, "password": "WrongPass123!"},
     )
     assert failed.status_code == 401
@@ -455,7 +458,7 @@ def test_admin_failed_login_tracks_security_metadata_and_audit(client: TestClien
     assert any(log.entity_id == str(admin.id) for log in logs)
 
     success = client.post(
-        "/admin/auth/login",
+        "/api/v1/admin/auth/login",
         json={"email": admin.email, "password": "AdminPass123!"},
     )
     assert success.status_code == 200

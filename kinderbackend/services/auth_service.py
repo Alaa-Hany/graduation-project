@@ -1,3 +1,4 @@
+import hashlib
 import logging
 import os
 import random
@@ -8,17 +9,10 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from fastapi import HTTPException
-from jwt import PyJWTError as JWTError
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from auth import (
-    create_access_token,
-    create_refresh_token,
-    decode_token,
-    hash_password,
-    verify_password,
-)
+from auth import create_access_token, hash_password, verify_password
 from core.message_catalog import AuthMessages
 from core.redis_client import get_redis_client
 from core.system_settings import require_registration_enabled
@@ -46,6 +40,7 @@ logger = logging.getLogger(__name__)
 PARENT_PIN_LENGTH = 4
 PARENT_PIN_MAX_ATTEMPTS = 5
 PARENT_PIN_LOCKOUT_MINUTES = 5
+REFRESH_TOKEN_EXPIRE_DAYS = 7
 
 
 # Redis key helpers — brute-force state lives in Redis in production.
@@ -298,6 +293,29 @@ class AuthService:
         except Exception as exc:
             logger.error("Redis failure-key DELETE failed (%s)", exc)
 
+    @staticmethod
+    def _hash_refresh_token_secret(secret: str) -> str:
+        return hashlib.sha256(secret.encode("utf-8")).hexdigest()
+
+    def _issue_refresh_token(self, *, user: User) -> str:
+        """Mint a new opaque refresh token and persist its hash for rotation.
+
+        Token shape is "{user_id}:{secret}" so a refresh request can look the
+        owner up by primary key without scanning every user; only the
+        high-entropy secret half is hashed and compared, so the id prefix
+        carries no security weight on its own.
+        """
+        secret = secrets.token_urlsafe(32)
+        user.refresh_token_hash = self._hash_refresh_token_secret(secret)
+        user.refresh_token_expires_at = db_utc_now() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        return f"{user.id}:{secret}"
+
+    @staticmethod
+    def _revoke_refresh_session(user: User) -> None:
+        user.token_version = (user.token_version or 0) + 1
+        user.refresh_token_hash = None
+        user.refresh_token_expires_at = None
+
     def register_parent(self, payload: RegisterIn, db: Session) -> dict:
         require_registration_enabled(db)
         normalized_email = normalize_email(payload.email)
@@ -398,13 +416,14 @@ class AuthService:
         self._clear_parent_login_failures(email=normalized_email)
         two_factor_service.require_parent_login_code(account=user, code=payload.two_factor_code)
         user.updated_at = db_utc_now()
+        refresh_token = self._issue_refresh_token(user=user)
         db.add(user)
         db.commit()
         db.refresh(user)
 
         return {
             "access_token": create_access_token(str(user.id), user.token_version),
-            "refresh_token": create_refresh_token(str(user.id), user.token_version),
+            "refresh_token": refresh_token,
             "token_type": "bearer",
             "user": user_to_json(user),
         }
@@ -415,9 +434,13 @@ class AuthService:
         if user is None:
             raise HTTPException(status_code=404, detail=AuthMessages.USER_NOT_FOUND)
         if self._user_has_verified_email(user):
+            refresh_token = self._issue_refresh_token(user=user)
+            db.add(user)
+            db.commit()
+            db.refresh(user)
             return {
                 "access_token": create_access_token(str(user.id), user.token_version),
-                "refresh_token": create_refresh_token(str(user.id), user.token_version),
+                "refresh_token": refresh_token,
                 "token_type": "bearer",
                 "user": user_to_json(user),
             }
@@ -430,13 +453,14 @@ class AuthService:
         user.email_verified_at = db_utc_now()
         user.is_active = True
         self._clear_email_otp(user)
+        refresh_token = self._issue_refresh_token(user=user)
         db.add(user)
         db.commit()
         db.refresh(user)
 
         return {
             "access_token": create_access_token(str(user.id), user.token_version),
-            "refresh_token": create_refresh_token(str(user.id), user.token_version),
+            "refresh_token": refresh_token,
             "token_type": "bearer",
             "user": user_to_json(user),
         }
@@ -508,21 +532,38 @@ class AuthService:
         return payload
 
     def refresh_parent_access_token(self, payload: RefreshIn, db: Session) -> dict:
-        try:
-            decoded = decode_token(payload.refresh_token)
-            user_id = decoded.get("sub")
-            token_version = decoded.get("token_version", 0)
-        except JWTError:
+        user_id_str, _, secret = payload.refresh_token.partition(":")
+        if not secret or not user_id_str.isdigit():
             raise HTTPException(status_code=401, detail=AuthMessages.INVALID_REFRESH_TOKEN)
 
-        user = db.query(User).filter(User.id == int(user_id)).first()
+        user = db.query(User).filter(User.id == int(user_id_str)).first()
         if not user:
             raise HTTPException(status_code=401, detail=AuthMessages.INVALID_REFRESH_TOKEN)
-        if int(token_version) != int(getattr(user, "token_version", 0)):
+
+        stored_hash = getattr(user, "refresh_token_hash", None)
+        expires_at = getattr(user, "refresh_token_expires_at", None)
+        # No stored hash means this session predates rotation (or was already
+        # revoked) — there is nothing to validate against, so force re-login.
+        if not stored_hash or expires_at is None or ensure_utc(expires_at) <= utc_now():
+            raise HTTPException(status_code=401, detail=AuthMessages.SESSION_EXPIRED)
+
+        if not secrets.compare_digest(self._hash_refresh_token_secret(secret), stored_hash):
+            # The presented token doesn't match the current one on file, i.e. it
+            # was already rotated away (or forged). Treat as reuse and revoke
+            # every outstanding token for this user rather than just this one.
+            self._revoke_refresh_session(user)
+            db.add(user)
+            db.commit()
             raise HTTPException(status_code=401, detail=AuthMessages.INVALID_REFRESH_TOKEN)
 
+        new_refresh_token = self._issue_refresh_token(user=user)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
         return {
-            "access_token": create_access_token(str(user_id), user.token_version),
+            "access_token": create_access_token(str(user.id), user.token_version),
+            "refresh_token": new_refresh_token,
             "token_type": "bearer",
         }
 
@@ -573,7 +614,7 @@ class AuthService:
                 )
 
             user.password_hash = hash_password(payload.new_password)
-            user.token_version = (user.token_version or 0) + 1
+            self._revoke_refresh_session(user)
             db.add(user)
             db.commit()
             db.refresh(user)
@@ -602,7 +643,7 @@ class AuthService:
 
     def logout(self, *, db: Session, user: User) -> dict:
         try:
-            user.token_version = (user.token_version or 0) + 1
+            self._revoke_refresh_session(user)
             db.add(user)
             db.commit()
             db.refresh(user)
@@ -898,7 +939,7 @@ class AuthService:
             raise HTTPException(status_code=400, detail=AuthMessages.INVALID_OR_EXPIRED_RESET_TOKEN)
 
         matching_user.password_hash = hash_password(payload.new_password)
-        matching_user.token_version = (matching_user.token_version or 0) + 1
+        self._revoke_refresh_session(matching_user)
         self._clear_password_reset_token(matching_user)
         matching_user.updated_at = db_utc_now()
         db.add(matching_user)

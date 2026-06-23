@@ -53,6 +53,7 @@ class AiBuddyService:
         child_session: ChildProfile | None = None,
         force_new: bool = False,
         title: str | None = None,
+        locale: str | None = None,
     ) -> dict[str, Any]:
         self._require_enabled(db)
         self._ensure_child_session_matches(
@@ -76,7 +77,10 @@ class AiBuddyService:
         provider_state = self._response_generator.provider_state()
 
         if session is None:
-            greeting = self._response_generator.greeting(child_name=child.name)
+            greeting = self._response_generator.greeting(
+                child_name=child.name,
+                locale=locale,
+            )
             provider_state = greeting.provider_state
             session = self._persistence_service.create_session(
                 db=db,
@@ -227,6 +231,7 @@ class AiBuddyService:
         content: str,
         client_message_id: str | None = None,
         quick_action: str | None = None,
+        locale: str | None = None,
     ) -> dict[str, Any]:
         self._require_enabled(db)
         self._ensure_child_session_matches(
@@ -332,6 +337,7 @@ class AiBuddyService:
                     message=content,
                     quick_action=quick_action,
                     recent_messages=recent_messages,
+                    locale=locale,
                 )
                 output_moderation = self._moderation_service.moderate_output(text=generated.content)
                 log_with_context(
@@ -375,6 +381,7 @@ class AiBuddyService:
                         quick_action=quick_action,
                         recent_messages=recent_messages,
                         output_moderation=output_moderation,
+                        locale=locale,
                     )
                     if recovered is not None:
                         assistant_content = recovered.content
@@ -637,6 +644,28 @@ class AiBuddyService:
         if int(session.child_id) != int(child_session.id):
             raise HTTPException(status_code=404, detail="AI Buddy session not found")
 
+    # Keyword hints (Arabic + English) used to recover a benign free-text
+    # request when its *generated* answer was blocked by output moderation.
+    # The child's input was already classified "allowed", so a story/game/lesson
+    # ask should fall back to a safe canned answer instead of a harsh refusal.
+    _intent_keyword_hints = (
+        ("tell_story", ("story", "tale", "احك", "حكاي", "حدوت", "قص")),
+        ("suggest_game", ("game", "play", "لعب", "العب", "نلعب")),
+        ("recommend_lesson", ("lesson", "learn", "math", "درس", "تعلم", "حساب", "رياض")),
+        ("fun_fact", ("fact", "معلوم", "حقيق", "لماذا", "ليه", "ليش")),
+        ("motivation", ("sad", "tired", "حزين", "زعلان", "تعبان", "ملل", "خايف", "زعل")),
+    )
+
+    def _infer_recoverable_intent(self, content: str) -> str | None:
+        """Map a free-text message to a benign recoverable intent, if any."""
+        lowered = (content or "").strip().lower()
+        if not lowered:
+            return None
+        for intent, hints in self._intent_keyword_hints:
+            if any(hint in lowered for hint in hints):
+                return intent
+        return None
+
     def _recover_safe_quick_action_response(
         self,
         *,
@@ -645,20 +674,23 @@ class AiBuddyService:
         quick_action: str | None,
         recent_messages: list[str],
         output_moderation,
+        locale: str | None = None,
     ):
-        if quick_action not in self._recoverable_quick_actions:
+        effective_action = quick_action or self._infer_recoverable_intent(content)
+        if effective_action not in self._recoverable_quick_actions:
             return None
         recovery_reason = (
             "A generated response was replaced after output moderation. "
-            f"Using the safe fallback for quick action '{quick_action}'."
+            f"Using the safe fallback for quick action '{effective_action}'."
         )
         recovered = self._response_generator.fallback_generate(
             child_name=child.name,
             child_age=getattr(child, "age", None),
             message=content,
-            quick_action=quick_action,
+            quick_action=effective_action,
             recent_messages=recent_messages,
             reason=recovery_reason,
+            locale=locale,
         )
         return recovered if recovered.safety_status == "allowed" else None
 

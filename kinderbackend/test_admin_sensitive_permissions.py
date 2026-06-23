@@ -52,7 +52,7 @@ def test_admin_user_plan_override_requires_permission_and_confirmation(
     parent = create_parent(email="plan.override.target@example.com")
 
     resp = client.patch(
-        f"/admin/users/{parent.id}",
+        f"/api/v1/admin/users/{parent.id}",
         json={"plan": "PREMIUM"},
         headers={
             **admin_headers(limited_admin),
@@ -74,7 +74,7 @@ def test_admin_user_plan_override_requires_permission_and_confirmation(
         role_names=["super_admin"],
     )
     resp = client.patch(
-        f"/admin/users/{parent.id}",
+        f"/api/v1/admin/users/{parent.id}",
         json={"plan": "PREMIUM"},
         headers=admin_headers(super_admin),
     )
@@ -82,7 +82,7 @@ def test_admin_user_plan_override_requires_permission_and_confirmation(
     assert resp.json()["detail"]["code"] == "ADMIN_CONFIRMATION_REQUIRED"
 
     resp = client.patch(
-        f"/admin/users/{parent.id}",
+        f"/api/v1/admin/users/{parent.id}",
         json={"plan": "PREMIUM"},
         headers={
             **admin_headers(super_admin),
@@ -118,7 +118,7 @@ def test_admin_user_delete_requires_permission_and_confirmation(
     parent = create_parent(email="delete.target@example.com")
 
     resp = client.delete(
-        f"/admin/users/{parent.id}",
+        f"/api/v1/admin/users/{parent.id}",
         headers={
             **admin_headers(limited_admin),
             "X-Admin-Confirm": "CONFIRM",
@@ -132,14 +132,14 @@ def test_admin_user_delete_requires_permission_and_confirmation(
         role_names=["super_admin"],
     )
     resp = client.delete(
-        f"/admin/users/{parent.id}",
+        f"/api/v1/admin/users/{parent.id}",
         headers=admin_headers(super_admin),
     )
     assert resp.status_code == 400
     assert resp.json()["detail"]["code"] == "ADMIN_CONFIRMATION_REQUIRED"
 
     resp = client.delete(
-        f"/admin/users/{parent.id}",
+        f"/api/v1/admin/users/{parent.id}",
         headers={
             **admin_headers(super_admin),
             "X-Admin-Confirm": "CONFIRM",
@@ -176,7 +176,7 @@ def test_admin_child_delete_requires_permission_and_confirmation(
     child = create_child(parent_id=parent.id)
 
     resp = client.delete(
-        f"/admin/children/{child.id}",
+        f"/api/v1/admin/children/{child.id}",
         headers={
             **admin_headers(limited_admin),
             "X-Admin-Confirm": "CONFIRM",
@@ -190,14 +190,14 @@ def test_admin_child_delete_requires_permission_and_confirmation(
         role_names=["super_admin"],
     )
     resp = client.delete(
-        f"/admin/children/{child.id}",
+        f"/api/v1/admin/children/{child.id}",
         headers=admin_headers(super_admin),
     )
     assert resp.status_code == 400
     assert resp.json()["detail"]["code"] == "ADMIN_CONFIRMATION_REQUIRED"
 
     resp = client.delete(
-        f"/admin/children/{child.id}",
+        f"/api/v1/admin/children/{child.id}",
         headers={
             **admin_headers(super_admin),
             "X-Admin-Confirm": "CONFIRM",

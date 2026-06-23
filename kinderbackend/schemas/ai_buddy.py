@@ -61,6 +61,7 @@ class AiBuddyStartSessionIn(BaseModel):
     child_id: int
     force_new: bool = False
     title: str | None = None
+    locale: str | None = Field(None, max_length=10)
 
 
 class AiBuddySendMessageIn(BaseModel):
@@ -68,6 +69,7 @@ class AiBuddySendMessageIn(BaseModel):
     content: str = Field(..., min_length=1, max_length=1000)
     client_message_id: str | None = Field(None, max_length=120)
     quick_action: str | None = Field(None, max_length=80)
+    locale: str | None = Field(None, max_length=10)
 
 
 class AiBuddySendMessageOut(BaseModel):

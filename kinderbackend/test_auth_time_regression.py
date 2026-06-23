@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from types import SimpleNamespace
 
 import pytest
@@ -20,7 +20,7 @@ def _request() -> Request:
         {
             "type": "http",
             "method": "POST",
-            "path": "/admin/auth/login",
+            "path": "/api/v1/admin/auth/login",
             "headers": [],
             "client": ("127.0.0.1", 12345),
             "scheme": "http",
@@ -131,7 +131,7 @@ def test_validate_child_session_returns_expiry_as_utc_iso(db) -> None:
         parent_id=parent.id,
         name="Kid",
         picture_password=["cat", "dog", "apple"],
-        age=7,
+        date_of_birth=date(date.today().year - 7, 1, 1),
     )
     db.add(child)
     db.commit()

@@ -119,6 +119,26 @@ mixin _AuthRepositoryStateMixin on _AuthRepositorySupportMixin {
 
       await _secureStorage.clearParentPinVerification();
       await _secureStorage.clearAuthOnly();
+
+      const hiveBoxNames = [
+        'child_profiles',
+        'activities',
+        'progress_records',
+        'gamification_data',
+        'mood_entries',
+      ];
+      for (final boxName in hiveBoxNames) {
+        try {
+          await Hive.box(boxName).clear();
+        } catch (e) {
+          _logger.d('Error clearing Hive box "$boxName" during logout: $e');
+        }
+      }
+
+      _ref.invalidate(childSessionControllerProvider);
+      _ref.invalidate(gamificationStateProvider);
+      _ref.invalidate(moodNotifierProvider);
+
       _logger.d('Logout successful');
       return true;
     } catch (e) {

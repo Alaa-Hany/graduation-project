@@ -285,9 +285,17 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
 
     try {
       final service = ref.read(aiBuddyServiceProvider);
+      final locale = ref.read(localeProvider).languageCode;
       final conversation = forceNew
-          ? await service.startSession(childId: childId, forceNew: true)
-          : await service.getOrStartCurrentSession(childId: childId);
+          ? await service.startSession(
+              childId: childId,
+              forceNew: true,
+              locale: locale,
+            )
+          : await service.getOrStartCurrentSession(
+              childId: childId,
+              locale: locale,
+            );
       if (!mounted) return;
       setState(() {
         _conversation = conversation;
@@ -354,6 +362,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
             quickAction: quickAction,
             clientMessageId:
                 '${childId}_${DateTime.now().millisecondsSinceEpoch}',
+            locale: ref.read(localeProvider).languageCode,
           );
       if (!mounted) return;
       final existingMessages = List<AiBuddyMessage>.from(

@@ -756,17 +756,18 @@ class _EntertainmentDetailScreenState
 
   Future<List<PublicContentItem>> _loadCmsContent() async {
     final repository = ref.read(publicContentRepositoryProvider);
+    // Placement is decided strictly by the admin's category assignment. We
+    // resolve this tile to its matching CMS category and show ONLY that
+    // category's items. We deliberately do NOT fall back to scanning every
+    // entertaining item by keyword: that old heuristic searched item titles
+    // and descriptions, so a video whose description merely mentioned a word
+    // like "games"/"ألعاب" would leak into the Games tile even though the
+    // admin filed it under Funny Clips.
     final categorySlug = await _cmsCategorySlug(repository);
-    if (categorySlug != null) {
-      final directItems =
-          await repository.fetchItems(categorySlug: categorySlug);
-      if (directItems.isNotEmpty) {
-        return directItems;
-      }
+    if (categorySlug == null) {
+      return const <PublicContentItem>[];
     }
-
-    final items = await repository.fetchItems();
-    return items.where(_matchesCmsPlacement).toList();
+    return repository.fetchItems(categorySlug: categorySlug);
   }
 
   Future<String?> _cmsCategorySlug(PublicContentRepository repository) async {
@@ -779,41 +780,24 @@ class _EntertainmentDetailScreenState
       if (category.axisKey != 'entertaining') {
         continue;
       }
+      // Match a tile to its category by looking only at the category's own
+      // slug/title (never the item titles/descriptions). A tile term that is
+      // contained in the category identifier counts as a match, so "songs"
+      // resolves "songs-music" and "puppet" resolves "puppet-show", while a
+      // tile like Games — which has no matching category — resolves to null.
       final categoryTerms = [
         category.slug,
         category.titleEn,
         category.titleAr,
-      ].map(_normalizeCmsPlacementToken);
-      if (categoryTerms.any(selectedTerms.contains)) {
+      ].map(_normalizeCmsPlacementToken).where((term) => term.isNotEmpty);
+      final matchesCategory = selectedTerms.any(
+        (term) => categoryTerms.any((categoryTerm) => categoryTerm.contains(term)),
+      );
+      if (matchesCategory) {
         return category.slug;
       }
     }
     return null;
-  }
-
-  bool _matchesCmsPlacement(PublicContentItem item) {
-    final isEntertaining = item.axisKey == 'entertaining' ||
-        item.category?.axisKey == 'entertaining' ||
-        item.metadata['axis_key'] == 'entertaining';
-    if (!isEntertaining) {
-      return false;
-    }
-
-    final terms = _entertainmentSearchTerms()
-        .map(_normalizeCmsPlacementToken)
-        .where((term) => term.isNotEmpty)
-        .toList();
-    final haystack = [
-      item.slug,
-      item.titleEn,
-      item.titleAr,
-      item.descriptionEn ?? '',
-      item.descriptionAr ?? '',
-      item.category?.slug ?? '',
-      item.category?.titleEn ?? '',
-      item.category?.titleAr ?? '',
-    ].map(_normalizeCmsPlacementToken).join(' ');
-    return terms.any(haystack.contains);
   }
 
   List<String> _entertainmentSearchTerms() {

@@ -22,11 +22,10 @@ HOW TO TALK:
 5. End most replies with one gentle follow-up question to keep the chat going.
 6. Celebrate effort and small wins ("Great try!", "You did it!").
 
-LANGUAGE (children here speak several languages):
-- ALWAYS reply in the SAME language the child used in their latest message.
-- If the child writes in Arabic, reply in clear, simple Modern Standard Arabic that a child can read.
-- If they write in English, reply in English. If they switch languages, switch with them.
-- Never mix two languages in one reply unless the child did.
+LANGUAGE (this is the language of the app the child is using):
+- You will be told exactly which language to reply in. ALWAYS reply in that language, in clear, simple words a young child can read.
+- Reply in that language EVEN IF the child writes in a different language, or uses names or words from another language. Do not switch languages because of what the child typed.
+- Never mix two languages in one reply.
 
 WHAT YOU HELP WITH:
 - Telling tiny gentle stories with a positive message.
@@ -203,8 +202,9 @@ class EnhancedAIProvider:
                 {
                     "role": "system",
                     "content": (
-                        "The child wrote in Arabic, so reply in clear, simple Arabic suitable for a "
-                        "young child. If they switch to another language later, reply in that language."
+                        "Reply in clear, simple Modern Standard Arabic suitable for a young child. "
+                        "Reply in Arabic even if the child's message is in English or contains English "
+                        "names or words. Do not reply in any other language."
                     ),
                 }
             )
@@ -213,8 +213,9 @@ class EnhancedAIProvider:
                 {
                     "role": "system",
                     "content": (
-                        "The child wrote in English, so reply in simple English. If they switch to "
-                        "Arabic or another language later, reply in that language."
+                        "Reply in simple English suitable for a young child. Reply in English even if "
+                        "the child's message is in Arabic or contains Arabic names or words. Do not "
+                        "reply in any other language."
                     ),
                 }
             )

@@ -144,7 +144,7 @@ def test_presentation_parent_child_activity_and_reports_flow(
     )
 
     parent_login = client.post(
-        "/auth/login",
+        "/api/v1/auth/login",
         json={"email": parent.email, "password": "Password123!"},
     )
     assert parent_login.status_code == 200
@@ -153,7 +153,7 @@ def test_presentation_parent_child_activity_and_reports_flow(
     headers = {"Authorization": f"Bearer {parent_payload['access_token']}"}
 
     child_login = client.post(
-        "/auth/child/login",
+        "/api/v1/auth/child/login",
         json={
             "child_id": child.id,
             "name": "Presentation Kid",
@@ -164,7 +164,7 @@ def test_presentation_parent_child_activity_and_reports_flow(
     assert child_login.status_code == 200
     assert child_login.json()["session_token"]
 
-    child_items = client.get("/content/child/items")
+    child_items = client.get("/api/v1/content/child/items")
     assert child_items.status_code == 200
     assert any(item["slug"] == "presentation-lesson" for item in child_items.json()["items"])
 
@@ -175,7 +175,7 @@ def test_presentation_parent_child_activity_and_reports_flow(
         "activity_name": "Presentation Lesson",
         "duration_seconds": 420,
     }
-    event_resp = client.post("/analytics/events", json=event_payload, headers=headers)
+    event_resp = client.post("/api/v1/analytics/events", json=event_payload, headers=headers)
     assert event_resp.status_code == 200
 
     session_payload = {
@@ -185,10 +185,10 @@ def test_presentation_parent_child_activity_and_reports_flow(
         "ended_at": (db_utc_now()).isoformat(),
         "source": "child_mode",
     }
-    session_resp = client.post("/analytics/sessions", json=session_payload, headers=headers)
+    session_resp = client.post("/api/v1/analytics/sessions", json=session_payload, headers=headers)
     assert session_resp.status_code == 200
 
-    reports = client.get("/reports/basic", headers=headers)
+    reports = client.get("/api/v1/reports/basic", headers=headers)
     assert reports.status_code == 200
     report_payload = reports.json()
     assert report_payload.get("child_summary") is not None
@@ -208,7 +208,7 @@ def test_presentation_admin_login_smoke(
     )
 
     response = client.post(
-        "/admin/auth/login",
+        "/api/v1/admin/auth/login",
         json={"email": admin.email, "password": "AdminPass123!"},
     )
     assert response.status_code == 200
@@ -233,7 +233,7 @@ def test_presentation_recurring_purchase_unlocks_premium_access(
         headers = auth_headers(parent)
 
         checkout = client.post(
-            "/subscription/checkout",
+            "/api/v1/subscription/checkout",
             json={"plan_type": "premium"},
             headers=headers,
         )
@@ -266,7 +266,7 @@ def test_presentation_recurring_purchase_unlocks_premium_access(
         assert webhook.status_code == 200
         assert webhook.json()["status"] == "processed"
 
-        snapshot = client.get("/subscription/me", headers=headers)
+        snapshot = client.get("/api/v1/subscription/me", headers=headers)
         assert snapshot.status_code == 200
         payload = snapshot.json()
         assert payload["current_plan_id"] == PLAN_PREMIUM
@@ -276,7 +276,7 @@ def test_presentation_recurring_purchase_unlocks_premium_access(
         assert payload["lifecycle"]["last_payment_status"] == "succeeded"
         assert any(item["event_type"] == "checkout_completed" for item in payload["recent_events"])
 
-        history = client.get("/subscription/history", headers=headers)
+        history = client.get("/api/v1/subscription/history", headers=headers)
         assert history.status_code == 200
         history_payload = history.json()
         assert any(item["status"] == "succeeded" for item in history_payload["payment_attempts"])

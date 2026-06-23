@@ -16,7 +16,7 @@ def test_support_ticket_sensitive_fields_are_encrypted_at_rest(
     email = "billing.contact@example.com"
 
     create = client.post(
-        "/support/contact",
+        "/api/v1/support/contact",
         json={
             "subject": subject,
             "message": message,
@@ -40,7 +40,7 @@ def test_support_ticket_sensitive_fields_are_encrypted_at_rest(
     assert row.email.startswith("enc::v1::")
 
     reply = client.post(
-        f"/support/tickets/{ticket_id}/reply",
+        f"/api/v1/support/tickets/{ticket_id}/reply",
         json={"message": "I also need the invoice emailed to accounting."},
         headers=headers,
     )
@@ -80,7 +80,7 @@ def test_support_ticket_plaintext_legacy_rows_still_read_back(
     db.commit()
     ticket_id = db.execute(text("SELECT max(id) FROM support_tickets")).scalar_one()
 
-    detail = client.get(f"/support/tickets/{ticket_id}", headers=auth_headers(parent))
+    detail = client.get(f"/api/v1/support/tickets/{ticket_id}", headers=auth_headers(parent))
     assert detail.status_code == 200
     item = detail.json()["item"]
     assert item["subject"] == "Legacy subject"
@@ -100,12 +100,12 @@ def test_ai_buddy_message_content_is_encrypted_at_rest(
     headers = auth_headers(parent)
     prompt = "Can you teach me a fun fact about space?"
 
-    start = client.post("/ai-buddy/sessions", json={"child_id": child.id}, headers=headers)
+    start = client.post("/api/v1/ai-buddy/sessions", json={"child_id": child.id}, headers=headers)
     assert start.status_code == 200
     session_id = start.json()["session"]["id"]
 
     send = client.post(
-        f"/ai-buddy/sessions/{session_id}/messages",
+        f"/api/v1/ai-buddy/sessions/{session_id}/messages",
         json={"child_id": child.id, "content": prompt},
         headers=headers,
     )
@@ -135,7 +135,7 @@ def test_admin_login_metadata_is_encrypted_at_rest(
     user_agent = "UnitTestAgent/1.0"
 
     login = client.post(
-        "/admin/auth/login",
+        "/api/v1/admin/auth/login",
         json={"email": admin.email, "password": "AdminPass123!"},
         headers={"User-Agent": user_agent},
     )

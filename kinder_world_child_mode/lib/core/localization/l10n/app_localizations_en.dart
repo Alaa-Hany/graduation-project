@@ -5040,6 +5040,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminSettingsDefaultChildLimitLabel => 'Default child limit';
 
   @override
+  String get adminSettingsSaved => 'Settings saved';
+
+  @override
+  String get adminSettingsSaveFailed =>
+      'Could not save settings. Please try again.';
+
+  @override
   String get adminAdminsTitle => 'Admin management';
 
   @override

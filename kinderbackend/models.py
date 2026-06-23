@@ -43,6 +43,8 @@ class User(Base):
     plan = Column(String, nullable=False, default="FREE", server_default=text("'FREE'"))
 
     token_version = Column(Integer, default=0, nullable=False, server_default=text("0"))
+    refresh_token_hash = Column(String, nullable=True)
+    refresh_token_expires_at = Column(UTCDateTime(), nullable=True)
     parent_pin_hash = Column(String, nullable=True)
     parent_pin_failed_attempts = Column(
         Integer, default=0, nullable=False, server_default=text("0")
@@ -332,15 +334,6 @@ class ChildProfile(Base):
             - self.date_of_birth.year
             - ((today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day))
         )
-
-    @age.setter
-    def age(self, value: int | None) -> None:
-        if value is None:
-            self.date_of_birth = None
-            return
-        age = int(value)
-        today = date_type.today()
-        self.date_of_birth = date_type(today.year - age, 1, 1)
 
     parent = relationship("User", back_populates="children")
     activity_events = relationship(

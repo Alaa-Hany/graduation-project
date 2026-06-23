@@ -50,7 +50,7 @@ def test_preview_youtube_channel_videos_returns_items(
     )
 
     response = client.get(
-        "/admin/content/youtube/videos",
+        "/api/v1/admin/content/youtube/videos",
         headers=admin_headers(admin),
         params={"channel": "@SomeChannel"},
     )
@@ -87,7 +87,7 @@ def test_preview_youtube_channel_videos_surfaces_service_errors(
     monkeypatch.setattr("routers.admin_cms.list_channel_videos", _raise)
 
     response = client.get(
-        "/admin/content/youtube/videos",
+        "/api/v1/admin/content/youtube/videos",
         headers=admin_headers(admin),
         params={"channel": "@SomeChannel"},
     )
@@ -108,7 +108,7 @@ def test_import_youtube_videos_creates_content_items(
     category = _create_category(db)
 
     response = client.post(
-        "/admin/content/youtube/import",
+        "/api/v1/admin/content/youtube/import",
         headers=admin_headers(admin),
         json={
             "items": [
@@ -145,7 +145,7 @@ def test_import_youtube_videos_requires_at_least_one_item(
     admin = create_admin(email="yt.admin4@example.com", role_names=["super_admin"])
 
     response = client.post(
-        "/admin/content/youtube/import",
+        "/api/v1/admin/content/youtube/import",
         headers=admin_headers(admin),
         json={"items": []},
     )

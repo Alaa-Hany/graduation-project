@@ -72,6 +72,9 @@ class _FakeStorage extends SecureStorage {
   Future<bool> clearParentPinVerification() async => true;
 }
 
+final _testRefProvider = Provider<Ref>((ref) => ref);
+Ref _testRef() => ProviderContainer().read(_testRefProvider);
+
 class _FakeAuthRepository extends AuthRepository {
   _FakeAuthRepository(SecureStorage storage)
       : super(
@@ -80,6 +83,7 @@ class _FakeAuthRepository extends AuthRepository {
             NetworkService(secureStorage: storage, logger: Logger()),
           ),
           logger: Logger(),
+          ref: _testRef(),
         );
 
   @override

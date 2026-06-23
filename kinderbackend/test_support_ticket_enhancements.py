@@ -11,7 +11,7 @@ def test_parent_support_ticket_creation_history_detail_and_reply(
     headers = auth_headers(parent)
 
     create = client.post(
-        "/support/contact",
+        "/api/v1/support/contact",
         json={
             "subject": "Billing question",
             "message": "I need help understanding my current plan billing.",
@@ -25,17 +25,17 @@ def test_parent_support_ticket_creation_history_detail_and_reply(
     assert created_ticket["status"] == "open"
     assert len(created_ticket["thread"]) == 1
 
-    history = client.get("/support/tickets", headers=headers)
+    history = client.get("/api/v1/support/tickets", headers=headers)
     assert history.status_code == 200
     assert history.json()["summary"]["total"] == 1
     assert history.json()["items"][0]["category"] == "billing_issue"
 
-    detail = client.get(f"/support/tickets/{created_ticket['id']}", headers=headers)
+    detail = client.get(f"/api/v1/support/tickets/{created_ticket['id']}", headers=headers)
     assert detail.status_code == 200
     assert detail.json()["item"]["thread"][0]["author_type"] == "user"
 
     reply = client.post(
-        f"/support/tickets/{created_ticket['id']}/reply",
+        f"/api/v1/support/tickets/{created_ticket['id']}/reply",
         json={"message": "I still need an invoice copy."},
         headers=headers,
     )
@@ -56,7 +56,7 @@ def test_parent_support_validation_and_cross_user_access(client, db, create_pare
     other = create_parent(email="other@gmail.com")
 
     invalid_category = client.post(
-        "/support/contact",
+        "/api/v1/support/contact",
         json={
             "subject": "Need help",
             "message": "This is a valid support message body.",
@@ -68,7 +68,7 @@ def test_parent_support_validation_and_cross_user_access(client, db, create_pare
     assert invalid_category.json()["detail"]["code"] == "INVALID_SUPPORT_CATEGORY"
 
     short_message = client.post(
-        "/support/contact",
+        "/api/v1/support/contact",
         json={
             "subject": "Hi",
             "message": "short",
@@ -91,7 +91,7 @@ def test_parent_support_validation_and_cross_user_access(client, db, create_pare
     db.commit()
     db.refresh(ticket)
 
-    forbidden_detail = client.get(f"/support/tickets/{ticket.id}", headers=auth_headers(other))
+    forbidden_detail = client.get(f"/api/v1/support/tickets/{ticket.id}", headers=auth_headers(other))
     assert forbidden_detail.status_code == 404
 
     closed_ticket = SupportTicket(
@@ -107,7 +107,7 @@ def test_parent_support_validation_and_cross_user_access(client, db, create_pare
     db.refresh(closed_ticket)
 
     reply_closed = client.post(
-        f"/support/tickets/{closed_ticket.id}/reply",
+        f"/api/v1/support/tickets/{closed_ticket.id}/reply",
         json={"message": "Please reopen this ticket."},
         headers=auth_headers(owner),
     )
@@ -124,7 +124,7 @@ def test_parent_soft_delete_hides_ticket_but_preserves_record(
     headers = auth_headers(owner)
 
     create = client.post(
-        "/support/contact",
+        "/api/v1/support/contact",
         json={
             "subject": "Delete me later",
             "message": "This ticket should be hidden without losing the stored record.",
@@ -135,26 +135,26 @@ def test_parent_soft_delete_hides_ticket_but_preserves_record(
     assert create.status_code == 200
     ticket_id = create.json()["item"]["id"]
 
-    deleted = client.delete(f"/support/tickets/{ticket_id}", headers=headers)
+    deleted = client.delete(f"/api/v1/support/tickets/{ticket_id}", headers=headers)
     assert deleted.status_code == 200
     assert deleted.json()["success"] is True
 
-    hidden_from_user = client.get(f"/support/tickets/{ticket_id}", headers=headers)
+    hidden_from_user = client.get(f"/api/v1/support/tickets/{ticket_id}", headers=headers)
     assert hidden_from_user.status_code == 404
 
-    history = client.get("/support/tickets", headers=headers)
+    history = client.get("/api/v1/support/tickets", headers=headers)
     assert history.status_code == 200
     assert history.json()["items"] == []
     assert history.json()["summary"]["total"] == 0
 
     hidden_from_admin_default = client.get(
-        f"/admin/support/tickets/{ticket_id}",
+        f"/api/v1/admin/support/tickets/{ticket_id}",
         headers=admin_headers(admin),
     )
     assert hidden_from_admin_default.status_code == 404
 
     visible_to_admin = client.get(
-        f"/admin/support/tickets/{ticket_id}",
+        f"/api/v1/admin/support/tickets/{ticket_id}",
         params={"include_deleted": "true"},
         headers=admin_headers(admin),
     )
@@ -162,12 +162,12 @@ def test_parent_soft_delete_hides_ticket_but_preserves_record(
     assert visible_to_admin.json()["item"]["deleted_at"] is not None
     assert visible_to_admin.json()["item"]["status"] == "closed"
 
-    admin_list_default = client.get("/admin/support/tickets", headers=admin_headers(admin))
+    admin_list_default = client.get("/api/v1/admin/support/tickets", headers=admin_headers(admin))
     assert admin_list_default.status_code == 200
     assert admin_list_default.json()["items"] == []
 
     admin_list_with_deleted = client.get(
-        "/admin/support/tickets",
+        "/api/v1/admin/support/tickets",
         params={"include_deleted": "true"},
         headers=admin_headers(admin),
     )
@@ -179,7 +179,7 @@ def test_parent_soft_delete_hides_ticket_but_preserves_record(
     assert stored_ticket.deleted_at is not None
 
     reply_after_delete = client.post(
-        f"/support/tickets/{ticket_id}/reply",
+        f"/api/v1/support/tickets/{ticket_id}/reply",
         json={"message": "This should not reach a deleted ticket."},
         headers=headers,
     )
@@ -216,7 +216,7 @@ def test_admin_support_filters_resolve_and_closed_reply_guard(
     db.refresh(technical_ticket)
 
     filtered = client.get(
-        "/admin/support/tickets",
+        "/api/v1/admin/support/tickets",
         params={"status": "open", "category": "billing_issue"},
         headers=admin_headers(admin),
     )
@@ -225,14 +225,14 @@ def test_admin_support_filters_resolve_and_closed_reply_guard(
     assert filtered.json()["items"][0]["category"] == "billing_issue"
 
     resolve = client.post(
-        f"/admin/support/tickets/{technical_ticket.id}/resolve",
+        f"/api/v1/admin/support/tickets/{technical_ticket.id}/resolve",
         headers=admin_headers(admin),
     )
     assert resolve.status_code == 200
     assert resolve.json()["item"]["status"] == "resolved"
 
     parent_reply = client.post(
-        f"/support/tickets/{technical_ticket.id}/reply",
+        f"/api/v1/support/tickets/{technical_ticket.id}/reply",
         json={"message": "The reports issue still happens on my phone."},
         headers=auth_headers(parent),
     )
@@ -240,14 +240,14 @@ def test_admin_support_filters_resolve_and_closed_reply_guard(
     assert parent_reply.json()["item"]["status"] == "open"
 
     close = client.post(
-        f"/admin/support/tickets/{technical_ticket.id}/close",
+        f"/api/v1/admin/support/tickets/{technical_ticket.id}/close",
         headers=admin_headers(admin),
     )
     assert close.status_code == 200
     assert close.json()["item"]["status"] == "closed"
 
     reply_closed = client.post(
-        f"/admin/support/tickets/{technical_ticket.id}/reply",
+        f"/api/v1/admin/support/tickets/{technical_ticket.id}/reply",
         json={"message": "This should not be sent"},
         headers=admin_headers(admin),
     )
@@ -255,7 +255,7 @@ def test_admin_support_filters_resolve_and_closed_reply_guard(
     assert reply_closed.json()["detail"] == "Closed tickets cannot receive replies"
 
     invalid_filter = client.get(
-        "/admin/support/tickets",
+        "/api/v1/admin/support/tickets",
         params={"category": "bad_filter"},
         headers=admin_headers(admin),
     )

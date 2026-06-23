@@ -9,6 +9,7 @@ class AuthMessages:
     TOKEN_REVOKED = "Token has been revoked"
     USER_NOT_FOUND = "User not found"
     INVALID_REFRESH_TOKEN = "Invalid refresh token"
+    SESSION_EXPIRED = "Session expired. Please log in again."
     INVALID_CREDENTIALS = "Invalid credentials"
     PARENT_AUTH_TEMP_LOCKED = "Too many failed login attempts. Try again later."
     PASSWORDS_DO_NOT_MATCH = "Passwords do not match"

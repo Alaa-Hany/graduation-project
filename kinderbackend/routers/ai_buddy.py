@@ -34,6 +34,7 @@ def start_ai_buddy_session(
         child_session=principal.child,
         force_new=payload.force_new,
         title=payload.title,
+        locale=payload.locale,
     )
 
 
@@ -84,6 +85,7 @@ async def send_ai_buddy_message(
         content=payload.content,
         client_message_id=payload.client_message_id,
         quick_action=payload.quick_action,
+        locale=payload.locale,
     )
 
 

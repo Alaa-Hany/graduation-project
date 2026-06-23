@@ -283,21 +283,11 @@ def root():
 
 
 def _include_api_router(router) -> None:
-    """Register a router at three prefixes:
-
-    * bare (legacy, no prefix)           → raw response, no envelope
-    * /api/v1 (versioned legacy)         → raw response, no envelope
-    * /api/v2 (new standard)             → response wrapped in envelope
-
-    Business logic lives entirely in the service layer and is reused across
-    all three registrations — no duplication.
-    """
-    app.include_router(router)  # bare / legacy
+    """Register a router at the /api/v1 prefix only."""
     app.include_router(router, prefix=API_V1_PREFIX)  # /api/v1 — no envelope
-    app.include_router(router, prefix=API_V2_PREFIX)  # /api/v2 — envelope applied
 
 
-# --- App routes, available as legacy, /api/v1, and /api/v2 paths ------------
+# --- App routes, available at /api/v1 ----------------------------------------
 _include_api_router(children_router)
 _include_api_router(public_auth_router)
 _include_api_router(subscription_router)
@@ -314,7 +304,7 @@ _include_api_router(parental_controls_router)
 _include_api_router(ai_buddy_router)
 _include_api_router(voice_router)
 
-# --- Admin routes, available as legacy, /api/v1, and /api/v2 paths ----------
+# --- Admin routes, available at /api/v1 --------------------------------------
 _include_api_router(admin_auth_router)
 _include_api_router(admin_admins_router)
 _include_api_router(admin_users_router)
