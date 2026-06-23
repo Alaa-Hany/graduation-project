@@ -1,10 +1,7 @@
 from admin_models import Permission, Role, RolePermission
 from models import AiBuddyMessage
 from routers.admin_seed import PERMISSION_DEFS, ROLE_DEFS
-from services.ai_buddy_response_generator import (
-    AiBuddyGeneratedResponse,
-    AiBuddyProviderState,
-)
+from services.ai_buddy_response_generator import AiBuddyGeneratedResponse, AiBuddyProviderState
 from services.ai_buddy_service import ai_buddy_service
 
 

@@ -11,10 +11,10 @@ from sqlalchemy.orm import Session
 from auth import create_token, decode_token, hash_password, verify_password
 from core.errors import forbidden, http_error, not_found, unauthorized, unprocessable
 from core.redis_client import get_redis_client
+from core.system_settings import get_default_child_limit
 from core.time_utils import db_utc_now, utc_now
 from core.validators import resolve_child_age, validate_child_age, validate_picture_password_length
 from models import ChildProfile, User
-from core.system_settings import get_default_child_limit
 from plan_service import PLAN_FREE, PLAN_LIMITS, get_user_plan
 from schemas.auth import (
     ChildChangePasswordIn,
