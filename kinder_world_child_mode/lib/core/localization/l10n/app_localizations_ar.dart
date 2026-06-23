@@ -3542,6 +3542,24 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   String get sttEmptyResult => 'لم أسمعك جيداً — حاول مرة أخرى';
 
   @override
+  String get aiBuddySafetyAlertsTitle => 'أمان مساعد الأطفال';
+
+  @override
+  String get aiBuddySafetyAlertsEmpty => 'لا توجد تنبيهات أمان بعد';
+
+  @override
+  String get aiBuddySafetyAlertsLast7Days => 'خلال آخر ٧ أيام';
+
+  @override
+  String get aiBuddySafetyAlertsViewAll => 'أحدث التنبيهات';
+
+  @override
+  String get aiBuddyAlertBlocked => 'تم الحظر';
+
+  @override
+  String get aiBuddyAlertRedirected => 'تم التوجيه';
+
+  @override
   String get aiBuddyParentAccessRequired =>
       'هذه الشاشة تحتاج حاليًا إلى تسجيل دخول ولي الأمر.';
 

@@ -134,6 +134,21 @@ class AiBuddyService {
     }
   }
 
+  Future<AiBuddySafetyAlerts> getChildSafetyAlerts({
+    required int childId,
+  }) async {
+    final token = await _requireParentAccessToken();
+    try {
+      final response = await _api.getChildSafetyAlerts(
+        childId: childId,
+        accessToken: token,
+      );
+      return AiBuddySafetyAlerts.fromJson(response);
+    } on DioException catch (e) {
+      throw _mapDioError(e);
+    }
+  }
+
   Future<String> _requireParentAccessToken() async {
     final parentToken = await _secureStorage.getParentAccessToken();
     if (parentToken != null && parentToken.isNotEmpty) {

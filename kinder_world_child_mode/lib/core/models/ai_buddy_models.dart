@@ -387,6 +387,65 @@ class AiBuddySendResult {
   }
 }
 
+class AiBuddySafetyAlert {
+  const AiBuddySafetyAlert({
+    required this.id,
+    required this.occurredAt,
+    required this.classification,
+    required this.topic,
+    required this.actionTaken,
+    required this.inputPreview,
+  });
+
+  final int id;
+  final DateTime? occurredAt;
+  final String classification;
+  final String? topic;
+  final String? actionTaken;
+  final String? inputPreview;
+
+  factory AiBuddySafetyAlert.fromJson(Map<String, dynamic> json) {
+    return AiBuddySafetyAlert(
+      id: json['id'] as int? ?? 0,
+      occurredAt: _readDateTime(json['occurred_at']),
+      classification: json['classification'] as String? ?? 'unknown',
+      topic: json['topic'] as String?,
+      actionTaken: json['action_taken'] as String?,
+      inputPreview: json['input_preview'] as String?,
+    );
+  }
+}
+
+class AiBuddySafetyAlerts {
+  const AiBuddySafetyAlerts({
+    required this.childId,
+    required this.alerts,
+    required this.total,
+  });
+
+  final int childId;
+  final List<AiBuddySafetyAlert> alerts;
+  final int total;
+
+  /// Number of alerts whose timestamp is after [cutoff].
+  int alertsSince(DateTime cutoff) => alerts
+      .where((alert) =>
+          alert.occurredAt != null && alert.occurredAt!.isAfter(cutoff))
+      .length;
+
+  factory AiBuddySafetyAlerts.fromJson(Map<String, dynamic> json) {
+    return AiBuddySafetyAlerts(
+      childId: json['child_id'] as int? ?? 0,
+      alerts: (json['alerts'] as List<dynamic>? ?? const [])
+          .whereType<Map>()
+          .map((item) =>
+              AiBuddySafetyAlert.fromJson(Map<String, dynamic>.from(item)))
+          .toList(),
+      total: json['total'] as int? ?? 0,
+    );
+  }
+}
+
 DateTime? _readDateTime(dynamic value) {
   if (value is String && value.isNotEmpty) {
     return DateTime.tryParse(value)?.toLocal();

@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from core.time_utils import db_utc_now
-from models import AiBuddyMessage, AiBuddySession, ChildProfile, User
+from models import AiBuddyMessage, AiBuddySession, AiInteraction, ChildProfile, User
 
 
 class AiBuddyPersistenceService:
@@ -133,6 +133,25 @@ class AiBuddyPersistenceService:
         db.add(message)
         db.flush()
         return message
+
+    def list_safety_interventions(
+        self,
+        *,
+        db: Session,
+        child_id: int,
+        limit: int = 50,
+    ) -> list[AiInteraction]:
+        return (
+            db.query(AiInteraction)
+            .filter(
+                AiInteraction.child_id == child_id,
+                AiInteraction.interaction_type == "safety_intervention",
+                AiInteraction.archived_at.is_(None),
+            )
+            .order_by(AiInteraction.occurred_at.desc(), AiInteraction.id.desc())
+            .limit(max(limit, 1))
+            .all()
+        )
 
     def list_messages(
         self,

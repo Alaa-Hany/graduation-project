@@ -5591,6 +5591,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sttEmptyResult => "I didn't catch that — please try again";
 
   @override
+  String get aiBuddySafetyAlertsTitle => 'AI Buddy Safety';
+
+  @override
+  String get aiBuddySafetyAlertsEmpty => 'No safety alerts yet';
+
+  @override
+  String get aiBuddySafetyAlertsLast7Days => 'In the last 7 days';
+
+  @override
+  String get aiBuddySafetyAlertsViewAll => 'Recent alerts';
+
+  @override
+  String get aiBuddyAlertBlocked => 'Blocked';
+
+  @override
+  String get aiBuddyAlertRedirected => 'Redirected';
+
+  @override
   String get aiBuddyParentAccessRequired =>
       'This screen currently needs parent sign-in to start AI Buddy.';
 

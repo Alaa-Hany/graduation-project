@@ -535,6 +535,45 @@ class AiBuddyService:
             child_id=child_id,
         )
 
+    def get_child_safety_alerts(
+        self,
+        *,
+        db: Session,
+        parent: User,
+        child_id: int,
+        limit: int = 50,
+    ) -> dict[str, Any]:
+        child = self._persistence_service.get_child_for_parent(
+            db=db,
+            parent=parent,
+            child_id=child_id,
+        )
+        interactions = self._persistence_service.list_safety_interventions(
+            db=db,
+            child_id=child.id,
+            limit=limit,
+        )
+        alerts = [self._serialize_safety_alert(item) for item in interactions]
+        return {
+            "child_id": child.id,
+            "alerts": alerts,
+            "total": len(alerts),
+        }
+
+    def _serialize_safety_alert(self, interaction: AiInteraction) -> dict[str, Any]:
+        flags = interaction.safety_flags_json or {}
+        preview = interaction.input_preview or ""
+        return {
+            "id": interaction.id,
+            "occurred_at": (
+                interaction.occurred_at.isoformat() if interaction.occurred_at else None
+            ),
+            "classification": interaction.safety_status,
+            "topic": flags.get("topic"),
+            "action_taken": flags.get("action_taken"),
+            "input_preview": preview[:80] if preview else None,
+        }
+
     def delete_child_history(
         self,
         *,
