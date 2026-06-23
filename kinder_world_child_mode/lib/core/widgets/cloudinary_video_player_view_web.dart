@@ -23,6 +23,11 @@ class _CloudinaryVideoPlayerViewState extends State<CloudinaryVideoPlayerView> {
   late final String _viewType;
   late final web.HTMLElement _playerElement;
 
+  /// Collapsed/expanded height of the embedded player on the page.
+  static const double _collapsedHeight = 320;
+  static const double _expandedHeight = 540;
+  bool _expanded = false;
+
   @override
   void initState() {
     super.initState();
@@ -31,6 +36,9 @@ class _CloudinaryVideoPlayerViewState extends State<CloudinaryVideoPlayerView> {
     if (youtubeEmbed != null) {
       _playerElement = web.HTMLIFrameElement()
         ..src = youtubeEmbed
+        ..allow =
+            'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen'
+        ..allowFullscreen = true
         ..style.border = '0'
         ..style.width = '100%'
         ..style.height = '100%';
@@ -66,10 +74,36 @@ class _CloudinaryVideoPlayerViewState extends State<CloudinaryVideoPlayerView> {
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(20),
-          child: SizedBox(
-            height: 320,
-            width: double.infinity,
-            child: HtmlElementView(viewType: _viewType),
+          child: Stack(
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+                height: _expanded ? _expandedHeight : _collapsedHeight,
+                width: double.infinity,
+                child: HtmlElementView(viewType: _viewType),
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Material(
+                  color: Colors.black54,
+                  shape: const CircleBorder(),
+                  child: IconButton(
+                    tooltip: _expanded
+                        ? MaterialLocalizations.of(context).closeButtonTooltip
+                        : l10n.playWatchVideoAction,
+                    icon: Icon(
+                      _expanded
+                          ? Icons.fullscreen_exit_rounded
+                          : Icons.fullscreen_rounded,
+                      color: Colors.white,
+                    ),
+                    onPressed: () => setState(() => _expanded = !_expanded),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 12),

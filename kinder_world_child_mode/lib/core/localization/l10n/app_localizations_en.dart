@@ -3343,6 +3343,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String coloringPageN(int n) => 'Coloring Page $n';
 
+  @override
+  String get coloringPagesTab => 'Coloring Pages';
+
+  @override
+  String get coloringVideosTab => 'Videos';
+
+  @override
+  String get noColoringVideos => 'No coloring videos yet';
+
   // ── Subject Screen ──
   @override
   String get availableLessons => 'Available Lessons';

@@ -9,7 +9,6 @@ class EntertainingScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final categoriesState = ref.watch(publicContentCategoriesProvider);
     return Scaffold(
       backgroundColor: Color(0xFFF3E5F5),
       appBar: AppBar(
@@ -52,28 +51,24 @@ class EntertainingScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
             Expanded(
-              child: _CmsAxisCategoryGrid(
-                categoriesState: categoriesState,
-                axisKey: 'entertaining',
-                fallbackBuilder: (_) => GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 0.9,
-                  ),
-                  itemCount: _items.length,
-                  itemBuilder: (context, index) {
-                    final item = _items[index];
-                    return _buildFunCard(
-                      context,
-                      item['title'],
-                      item['image'],
-                      item['color'],
-                      l10n,
-                    );
-                  },
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 0.9,
                 ),
+                itemCount: _items.length,
+                itemBuilder: (context, index) {
+                  final item = _items[index];
+                  return _buildFunCard(
+                    context,
+                    item['title'],
+                    item['image'],
+                    item['color'],
+                    l10n,
+                  );
+                },
               ),
             ),
           ],
@@ -4133,7 +4128,6 @@ class BehavioralScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final categoriesState = ref.watch(publicContentCategoriesProvider);
     return Scaffold(
       backgroundColor: Color(0xFFE8F5E9),
       appBar: AppBar(
@@ -4160,23 +4154,19 @@ class BehavioralScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
             Expanded(
-              child: _CmsAxisCategoryGrid(
-                categoriesState: categoriesState,
-                axisKey: 'behavioral',
-                fallbackBuilder: (_) => GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 0.9,
-                  ),
-                  itemCount: _values.length,
-                  itemBuilder: (context, index) {
-                    final value = _values[index];
-                    return _buildValueCard(
-                        context, value['title'], value['image']);
-                  },
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 0.9,
                 ),
+                itemCount: _values.length,
+                itemBuilder: (context, index) {
+                  final value = _values[index];
+                  return _buildValueCard(
+                      context, value['title'], value['image']);
+                },
               ),
             ),
           ],
@@ -4825,7 +4815,6 @@ class SkillfulScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final categoriesState = ref.watch(publicContentCategoriesProvider);
     return Scaffold(
       backgroundColor: Color(0xFFFFF3E0),
       appBar: AppBar(
@@ -4852,17 +4841,13 @@ class SkillfulScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
             Expanded(
-              child: _CmsAxisCategoryList(
-                categoriesState: categoriesState,
-                axisKey: 'skillful',
-                fallbackBuilder: (_) => ListView.separated(
-                  itemCount: _skills.length,
-                  separatorBuilder: (ctx, index) => const SizedBox(height: 16),
-                  itemBuilder: (context, index) {
-                    final skill = _skills[index];
-                    return _buildSkillCard(context, skill);
-                  },
-                ),
+              child: ListView.separated(
+                itemCount: _skills.length,
+                separatorBuilder: (ctx, index) => const SizedBox(height: 16),
+                itemBuilder: (context, index) {
+                  final skill = _skills[index];
+                  return _buildSkillCard(context, skill);
+                },
               ),
             ),
           ],
@@ -5749,7 +5734,6 @@ class EducationalScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final categoriesState = ref.watch(publicContentCategoriesProvider);
     return Scaffold(
       backgroundColor: Color(0xFFE3F2FD),
       appBar: AppBar(
@@ -5790,22 +5774,18 @@ class EducationalScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 32),
             Expanded(
-              child: _CmsAxisCategoryGrid(
-                categoriesState: categoriesState,
-                axisKey: 'educational',
-                fallbackBuilder: (_) => GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 20,
-                    mainAxisSpacing: 20,
-                    childAspectRatio: 1.0,
-                  ),
-                  itemCount: _subjects.length,
-                  itemBuilder: (context, index) {
-                    final subject = _subjects[index];
-                    return _buildSubjectCard(context, subject);
-                  },
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 20,
+                  mainAxisSpacing: 20,
+                  childAspectRatio: 1.0,
                 ),
+                itemCount: _subjects.length,
+                itemBuilder: (context, index) {
+                  final subject = _subjects[index];
+                  return _buildSubjectCard(context, subject);
+                },
               ),
             ),
           ],

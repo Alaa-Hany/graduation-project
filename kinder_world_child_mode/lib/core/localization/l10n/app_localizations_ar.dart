@@ -1588,6 +1588,12 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   String get tapToColor => 'اضغط للتلوين';
   @override
   String coloringPageN(int n) => 'صفحة التلوين $n';
+  @override
+  String get coloringPagesTab => 'صفحات التلوين';
+  @override
+  String get coloringVideosTab => 'الفيديوهات';
+  @override
+  String get noColoringVideos => 'لا توجد فيديوهات تلوين بعد';
 
   // ── Subject ──
   @override

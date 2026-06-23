@@ -20,11 +20,13 @@ class ColoringGalleryScreen extends ConsumerStatefulWidget {
       _ColoringGalleryScreenState();
 }
 
-class _ColoringGalleryScreenState extends ConsumerState<ColoringGalleryScreen> {
+class _ColoringGalleryScreenState extends ConsumerState<ColoringGalleryScreen>
+    with SingleTickerProviderStateMixin {
   String _selectedLevel = 'All';
   final Map<String, ColoringProgressData> _progressBySvgPath = {};
   final Map<String, SvgColoringTemplate> _templateBySvgPath = {};
   late Future<List<PublicContentItem>> _cmsVideosFuture;
+  late final TabController _tabController;
 
   static const List<String> _levels = [
     'All',
@@ -104,8 +106,15 @@ class _ColoringGalleryScreenState extends ConsumerState<ColoringGalleryScreen> {
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     _cmsVideosFuture = _loadCmsVideos();
     _loadGalleryProgress();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   Future<List<PublicContentItem>> _loadCmsVideos() async {
@@ -165,6 +174,31 @@ class _ColoringGalleryScreenState extends ConsumerState<ColoringGalleryScreen> {
             fontFamily: 'Cairo',
           ),
         ),
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: child.kindness,
+          indicatorWeight: 3,
+          labelColor: colors.onSurface,
+          unselectedLabelColor: colors.onSurface.withValuesCompat(alpha: 0.55),
+          labelStyle: const TextStyle(
+            fontWeight: FontWeight.w900,
+            fontFamily: 'Cairo',
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.w700,
+            fontFamily: 'Cairo',
+          ),
+          tabs: [
+            Tab(
+              icon: const Icon(Icons.brush_rounded),
+              text: l10n.coloringPagesTab,
+            ),
+            Tab(
+              icon: const Icon(Icons.play_circle_outline_rounded),
+              text: l10n.coloringVideosTab,
+            ),
+          ],
+        ),
       ),
       body: Stack(
         children: [
@@ -176,146 +210,185 @@ class _ColoringGalleryScreenState extends ConsumerState<ColoringGalleryScreen> {
                 child: ChildHeader(compact: true),
               ),
               const SizedBox(height: 12),
-              SizedBox(
-                height: 50,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: _levels.length,
-                  itemBuilder: (context, index) {
-                    final level = _levels[index];
-                    final selected = level == _selectedLevel;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 10),
-                      child: InkWell(
-                        onTap: () => setState(() => _selectedLevel = level),
-                        borderRadius: BorderRadius.circular(26),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 220),
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          decoration: BoxDecoration(
-                            color: selected
-                                ? child.kindness.withValuesCompat(alpha: 0.22)
-                                : colors.surface,
-                            borderRadius: BorderRadius.circular(26),
-                            border: Border.all(
-                              color: selected
-                                  ? child.kindness
-                                  : colors.outlineVariant,
-                              width: 2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: (selected ? child.kindness : child.fun)
-                                    .withValuesCompat(alpha: 0.4),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Center(
-                            child: Text(
-                              level == 'All'
-                                  ? l10n.all
-                                  : level == 'Beginner'
-                                      ? l10n.beginner
-                                      : level == 'Intermediate'
-                                          ? l10n.intermediate
-                                          : level == 'Advanced'
-                                              ? l10n.advanced
-                                              : level,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontFamily: 'Cairo',
-                                color: selected
-                                    ? child.kindness.onColor
-                                    : colors.onSurface,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 14),
               Expanded(
-                child: FutureBuilder<List<PublicContentItem>>(
-                  future: _cmsVideosFuture,
-                  builder: (context, snapshot) {
-                    final cmsVideos =
-                        snapshot.data ?? const <PublicContentItem>[];
-                    if (_filteredItems.isEmpty && cmsVideos.isEmpty) {
-                      return Center(
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 24),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 18),
-                          decoration: BoxDecoration(
-                            color: colors.surface.withValuesCompat(alpha: 0.92),
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: child.fun.withValuesCompat(alpha: 0.35),
-                                blurRadius: 12,
-                                offset: const Offset(0, 5),
-                              ),
-                            ],
-                          ),
-                          child: Text(
-                            l10n.noColoringPages,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                              fontFamily: 'Cairo',
-                              color: colors.onSurface,
-                            ),
-                          ),
-                        ),
-                      );
-                    }
-
-                    return ListView(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      children: [
-                        ...cmsVideos
-                            .map((item) => _CmsColoringVideoCard(item: item)),
-                        ...List.generate(_filteredItems.length, (index) {
-                          final item = _filteredItems[index];
-                          final svgPath = item['svg']!;
-                          final progress = _progressBySvgPath[svgPath];
-                          final template = _templateBySvgPath[svgPath];
-                          return _ColoringItemCard(
-                            title: l10n.coloringPageN(index + 1),
-                            imagePath: item['image']!,
-                            previewTemplate: template,
-                            previewColors:
-                                progress?.colors ?? const <String, Color>{},
-                            isCompleted: progress?.isCompleted ?? false,
-                            onTap: () async {
-                              await Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => ColoringPageScreen(
-                                    svgAssetPath: item['svg']!,
-                                    title: item['title']!,
-                                  ),
-                                ),
-                              );
-                              if (!mounted) return;
-                              await _loadGalleryProgress();
-                            },
-                          );
-                        }),
-                      ],
-                    );
-                  },
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildColoringPagesTab(context, l10n, colors, child),
+                    _buildVideosTab(context, l10n, colors, child),
+                  ],
                 ),
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  /// Tab 1 — the built-in interactive coloring pages bundled with the app,
+  /// with the difficulty-level filter on top.
+  Widget _buildColoringPagesTab(
+    BuildContext context,
+    AppLocalizations l10n,
+    ColorScheme colors,
+    ChildThemeTokens child,
+  ) {
+    return Column(
+      children: [
+        SizedBox(
+          height: 50,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: _levels.length,
+            itemBuilder: (context, index) {
+              final level = _levels[index];
+              final selected = level == _selectedLevel;
+              return Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: InkWell(
+                  onTap: () => setState(() => _selectedLevel = level),
+                  borderRadius: BorderRadius.circular(26),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? child.kindness.withValuesCompat(alpha: 0.22)
+                          : colors.surface,
+                      borderRadius: BorderRadius.circular(26),
+                      border: Border.all(
+                        color: selected ? child.kindness : colors.outlineVariant,
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: (selected ? child.kindness : child.fun)
+                              .withValuesCompat(alpha: 0.4),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Text(
+                        level == 'All'
+                            ? l10n.all
+                            : level == 'Beginner'
+                                ? l10n.beginner
+                                : level == 'Intermediate'
+                                    ? l10n.intermediate
+                                    : level == 'Advanced'
+                                        ? l10n.advanced
+                                        : level,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontFamily: 'Cairo',
+                          color: selected
+                              ? child.kindness.onColor
+                              : colors.onSurface,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 14),
+        Expanded(
+          child: _filteredItems.isEmpty
+              ? _buildEmptyState(l10n.noColoringPages, colors, child)
+              : ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  children: List.generate(_filteredItems.length, (index) {
+                    final item = _filteredItems[index];
+                    final svgPath = item['svg']!;
+                    final progress = _progressBySvgPath[svgPath];
+                    final template = _templateBySvgPath[svgPath];
+                    return _ColoringItemCard(
+                      title: l10n.coloringPageN(index + 1),
+                      imagePath: item['image']!,
+                      previewTemplate: template,
+                      previewColors:
+                          progress?.colors ?? const <String, Color>{},
+                      isCompleted: progress?.isCompleted ?? false,
+                      onTap: () async {
+                        await Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => ColoringPageScreen(
+                              svgAssetPath: item['svg']!,
+                              title: item['title']!,
+                            ),
+                          ),
+                        );
+                        if (!mounted) return;
+                        await _loadGalleryProgress();
+                      },
+                    );
+                  }),
+                ),
+        ),
+      ],
+    );
+  }
+
+  /// Tab 2 — coloring videos published by admins through the CMS.
+  Widget _buildVideosTab(
+    BuildContext context,
+    AppLocalizations l10n,
+    ColorScheme colors,
+    ChildThemeTokens child,
+  ) {
+    return FutureBuilder<List<PublicContentItem>>(
+      future: _cmsVideosFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final cmsVideos = snapshot.data ?? const <PublicContentItem>[];
+        if (cmsVideos.isEmpty) {
+          return _buildEmptyState(l10n.noColoringVideos, colors, child);
+        }
+        return ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          children: [
+            const SizedBox(height: 14),
+            ...cmsVideos.map((item) => _CmsColoringVideoCard(item: item)),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyState(String message, ColorScheme colors, ChildThemeTokens child) {
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 24),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        decoration: BoxDecoration(
+          color: colors.surface.withValuesCompat(alpha: 0.92),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: child.fun.withValuesCompat(alpha: 0.35),
+              blurRadius: 12,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+            fontFamily: 'Cairo',
+            color: colors.onSurface,
+          ),
+        ),
       ),
     );
   }

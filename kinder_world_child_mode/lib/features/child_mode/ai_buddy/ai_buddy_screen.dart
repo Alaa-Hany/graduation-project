@@ -85,8 +85,6 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
   }
 
   void _initTts() {
-    final langCode = ref.read(localeProvider).languageCode;
-    _tts.setLanguage(langCode == 'ar' ? 'ar-SA' : 'en-US');
     _tts.setSpeechRate(0.45);
     _tts.setPitch(1.1);
     _tts.setCompletionHandler(() {
@@ -112,7 +110,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
     setState(() => _isListening = true);
     final langCode = ref.read(localeProvider).languageCode;
     await _stt.listen(
-      localeId: langCode == 'ar' ? 'ar_SA' : 'en_US',
+      localeId: langCode == 'ar' ? 'ar_EG' : 'en_US',
       listenFor: const Duration(seconds: 15),
       pauseFor: const Duration(seconds: 3),
       onResult: (result) {
@@ -140,8 +138,23 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
       return;
     }
     await _tts.stop();
+    // Match the voice to the language of the message itself, not the app
+    // locale. The AI buddy can reply in Arabic or English regardless of the
+    // UI language, and reading text with the wrong voice makes the audio
+    // sound nothing like the written words.
+    await _tts.setLanguage(_isArabic(text) ? 'ar-EG' : 'en-US');
     setState(() => _playingMessageId = messageId);
     await _tts.speak(text);
+  }
+
+  /// Returns true when [text] is predominantly Arabic, so we pick the right
+  /// TTS voice for it.
+  bool _isArabic(String text) {
+    final arabic = RegExp(r'[؀-ۿݐ-ݿﭐ-﷿ﹰ-﻿]');
+    final latin = RegExp(r'[A-Za-z]');
+    final arabicCount = arabic.allMatches(text).length;
+    final latinCount = latin.allMatches(text).length;
+    return arabicCount >= latinCount && arabicCount > 0;
   }
 
   @override

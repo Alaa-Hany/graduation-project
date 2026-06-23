@@ -1183,6 +1183,9 @@ abstract class AppLocalizations {
   String get noColoringPages;
   String get tapToColor;
   String coloringPageN(int n);
+  String get coloringPagesTab;
+  String get coloringVideosTab;
+  String get noColoringVideos;
 
   // ── Subject Screen ──
   String get availableLessons;

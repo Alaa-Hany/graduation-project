@@ -1651,6 +1651,22 @@ class _AdminContentManagementScreenState
     int? selectedCategoryId = quiz?.categoryId;
     int? selectedContentId = quiz?.contentId;
     String selectedStatus = quiz?.status ?? 'draft';
+    String selectedAxisKey =
+        quiz?.axisKey ?? quiz?.category?.axisKey ?? _selectedAxisKey;
+    final isArabic =
+        Localizations.localeOf(context).languageCode.toLowerCase() == 'ar';
+    List<AdminCmsCategory> categoriesForAxis() {
+      if (selectedAxisKey.isEmpty) {
+        return _categories;
+      }
+      return _categories
+          .where((category) => category.axisKey == selectedAxisKey)
+          .toList();
+    }
+
+    String categoryTitle(AdminCmsCategory category) =>
+        isArabic ? category.titleAr : category.titleEn;
+
     final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => StatefulBuilder(
@@ -1671,6 +1687,35 @@ class _AdminContentManagementScreenState
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      if (_axes.isNotEmpty) ...[
+                        DropdownButtonFormFieldCompat<String>(
+                          initialValue:
+                              selectedAxisKey.isEmpty ? null : selectedAxisKey,
+                          decoration: InputDecoration(
+                            hintText: _axisTitle(context, selectedAxisKey),
+                            prefixIcon: const Icon(Icons.account_tree_outlined),
+                          ),
+                          items: _axes
+                              .map(
+                                (axis) => DropdownMenuItem<String>(
+                                  value: axis.key,
+                                  child: Text(_axisTitle(context, axis.key)),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (value) => setStateDialog(() {
+                            selectedAxisKey = value ?? '';
+                            final availableCategoryIds = categoriesForAxis()
+                                .map((category) => category.id)
+                                .toSet();
+                            if (!availableCategoryIds
+                                .contains(selectedCategoryId)) {
+                              selectedCategoryId = null;
+                            }
+                          }),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
                       DropdownButtonFormFieldCompat<int?>(
                         initialValue: selectedCategoryId,
                         decoration: InputDecoration(
@@ -1679,10 +1724,10 @@ class _AdminContentManagementScreenState
                           DropdownMenuItem<int?>(
                               value: null,
                               child: Text(l10n.adminCmsNoCategory)),
-                          ..._categoriesForSelectedAxis.map((category) =>
+                          ...categoriesForAxis().map((category) =>
                               DropdownMenuItem<int?>(
                                   value: category.id,
-                                  child: Text(category.titleEn))),
+                                  child: Text(categoryTitle(category)))),
                         ],
                         onChanged: (value) =>
                             setStateDialog(() => selectedCategoryId = value),
