@@ -6,6 +6,7 @@ import 'package:kinder_world/core/models/achievement.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
+import 'package:kinder_world/core/providers/gamification_provider.dart';
 import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/avatar_view.dart';
@@ -30,6 +31,10 @@ class ChildProfileOverviewScreen extends ConsumerWidget {
     final childId = ref.watch(currentChildIdProvider) ?? '';
     final todayAsync = ref.watch(currentChildTodayProgressProvider);
     final weeklyAsync = ref.watch(weeklySummaryProvider(childId));
+    final liveXp = ref.watch(currentXPProvider);
+    final liveLevel = ref.watch(currentLevelProvider);
+    final liveStreak = ref.watch(currentStreakProvider);
+    final liveProgress = ref.watch(levelProgressProvider);
     const dailyTarget = 3;
     const weeklyTarget = 10;
     final todayDone = todayAsync.valueOrNull?.length ?? 0;
@@ -198,7 +203,7 @@ class ChildProfileOverviewScreen extends ConsumerWidget {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
-                                l10n.levelLabel(child.level),
+                                l10n.levelLabel(liveLevel),
                                 style: textTheme.labelMedium?.copyWith(
                                   color: colors.onPrimary,
                                   fontWeight: FontWeight.w800,
@@ -220,7 +225,7 @@ class ChildProfileOverviewScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      l10n.levelExplorer(child.level),
+                      l10n.levelExplorer(liveLevel),
                       textAlign: TextAlign.center,
                       style: textTheme.bodyMedium?.copyWith(
                         color: colors.onSurfaceVariant,
@@ -258,14 +263,14 @@ class ChildProfileOverviewScreen extends ConsumerWidget {
                     children: [
                       _ProfileStatCard(
                         width: tileWidth,
-                        value: '${LevelThresholds.xpInCurrentLevel(child.xp)}',
+                        value: '${LevelThresholds.xpInCurrentLevel(liveXp)}',
                         label: l10n.xp,
                         icon: Icons.star_rounded,
                         color: childTheme.xp,
                       ),
                       _ProfileStatCard(
                         width: tileWidth,
-                        value: '${child.streak}',
+                        value: '$liveStreak',
                         label: l10n.streak,
                         icon: Icons.local_fire_department_rounded,
                         color: childTheme.streak,
@@ -289,9 +294,9 @@ class ChildProfileOverviewScreen extends ConsumerWidget {
                     ChildSectionHeader(title: l10n.yourProgress),
                     const SizedBox(height: 20),
                     ChildXpProgressBar(
-                      progress: child.xpProgress.clamp(0.0, 1.0),
-                      currentXp: LevelThresholds.xpInCurrentLevel(child.xp),
-                      nextLevelXp: LevelThresholds.xpRangeForCurrentLevel(child.xp),
+                      progress: liveProgress.clamp(0.0, 1.0),
+                      currentXp: LevelThresholds.xpInCurrentLevel(liveXp),
+                      nextLevelXp: LevelThresholds.xpRangeForCurrentLevel(liveXp),
                     ),
                     const SizedBox(height: 16),
                     _ProgressRow(
@@ -435,8 +440,8 @@ class ChildProfileOverviewScreen extends ConsumerWidget {
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) => ChildLevelsScreen(
-                              currentLevel: child.level,
-                              coins: child.xp,
+                              currentLevel: liveLevel,
+                              coins: liveXp,
                             ),
                           ),
                         );
