@@ -182,7 +182,9 @@ def test_child_content_public_endpoints_return_only_published_child_content(clie
     categories_payload = categories_response.json()
     assert [item["slug"] for item in categories_payload["items"]] == ["educational"]
 
-    items_response = client.get("/api/v1/content/child/items", params={"category_slug": "educational"})
+    items_response = client.get(
+        "/api/v1/content/child/items", params={"category_slug": "educational"}
+    )
     assert items_response.status_code == 200
     items_payload = items_response.json()
     assert len(items_payload["items"]) == 1

@@ -228,7 +228,9 @@ def _smoke_reports(client: httpx.Client, token: str, child_id: int) -> list[Chec
         "ended_at": "2024-01-01T00:15:00Z",
         "source": "child_mode",
     }
-    status, data = _post_json(client, "/api/v1/analytics/sessions", session_payload, headers=headers)
+    status, data = _post_json(
+        client, "/api/v1/analytics/sessions", session_payload, headers=headers
+    )
     results.append(
         CheckResult(
             "smoke_activity_session",

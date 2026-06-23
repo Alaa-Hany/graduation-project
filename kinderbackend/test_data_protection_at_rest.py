@@ -64,12 +64,10 @@ def test_support_ticket_plaintext_legacy_rows_still_read_back(
 ):
     parent = create_parent(email="support.legacy@example.com")
     db.execute(
-        text(
-            """
+        text("""
             INSERT INTO support_tickets (user_id, subject, message, email, category, status)
             VALUES (:user_id, :subject, :message, :email, 'general_inquiry', 'open')
-            """
-        ),
+            """),
         {
             "user_id": parent.id,
             "subject": "Legacy subject",
@@ -145,13 +143,11 @@ def test_admin_login_metadata_is_encrypted_at_rest(
     assert payload["last_login_user_agent"] == user_agent
 
     row = db.execute(
-        text(
-            """
+        text("""
             SELECT last_login_ip, last_login_user_agent
             FROM admin_users
             WHERE id = :admin_id
-            """
-        ),
+            """),
         {"admin_id": admin.id},
     ).one()
     assert row.last_login_ip.startswith("enc::v1::")

@@ -243,7 +243,8 @@ class TestBasicFeaturePlans:
     ):
         """FREE user CAN access /parental-controls/basic."""
         response = client.get(
-            "/api/v1/parental-controls/basic", headers={"Authorization": f"Bearer {test_user_token}"}
+            "/api/v1/parental-controls/basic",
+            headers={"Authorization": f"Bearer {test_user_token}"},
         )
         assert response.status_code == 200
 

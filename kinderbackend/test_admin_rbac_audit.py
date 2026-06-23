@@ -332,8 +332,14 @@ def test_audit_log_records_all_rbac_mutations(
     )
 
     # disable + enable
-    assert client.post(f"/api/v1/admin/admin-users/{new_id}/disable", headers=headers).status_code == 200
-    assert client.post(f"/api/v1/admin/admin-users/{new_id}/enable", headers=headers).status_code == 200
+    assert (
+        client.post(f"/api/v1/admin/admin-users/{new_id}/disable", headers=headers).status_code
+        == 200
+    )
+    assert (
+        client.post(f"/api/v1/admin/admin-users/{new_id}/enable", headers=headers).status_code
+        == 200
+    )
 
     # role create / update / update-permissions
     role_resp = client.post(

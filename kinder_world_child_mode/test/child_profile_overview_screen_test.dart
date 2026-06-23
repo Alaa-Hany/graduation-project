@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
+import 'package:kinder_world/core/providers/gamification_provider.dart';
 import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/core/theme/app_theme.dart';
 import 'package:kinder_world/core/theme/theme_palette.dart';
@@ -50,6 +51,12 @@ void main() {
           // also opens a Hive box directly in its provider definition.
           currentChildTodayProgressProvider.overrideWith((ref) async => const []),
           weeklySummaryProvider(child.id).overrideWith((ref) async => const {}),
+          // Gamification providers chain down to a Hive box. Override the
+          // leaf providers so no Hive box is required in this unit test.
+          currentXPProvider.overrideWith((ref) => child.xp),
+          currentLevelProvider.overrideWith((ref) => child.level),
+          currentStreakProvider.overrideWith((ref) => child.streak),
+          levelProgressProvider.overrideWith((ref) => 0.5),
         ],
         child: MaterialApp(
           locale: const Locale('en'),

@@ -146,7 +146,9 @@ def test_development_report_requires_advanced_plan(client, db, auth_headers):
     parent = _create_parent(db, email="dev-free@example.com", plan=PLAN_FREE)
     child = _create_child(db, parent, name="Free Kid")
 
-    resp = client.get(f"/api/v1/reports/development?child_id={child.id}", headers=auth_headers(parent))
+    resp = client.get(
+        f"/api/v1/reports/development?child_id={child.id}", headers=auth_headers(parent)
+    )
     assert resp.status_code == 403
 
 
@@ -155,5 +157,7 @@ def test_development_report_rejects_other_parents_child(client, db, auth_headers
     other = _create_parent(db, email="dev-other@example.com", plan=PLAN_PREMIUM)
     child = _create_child(db, owner, name="Owned")
 
-    resp = client.get(f"/api/v1/reports/development?child_id={child.id}", headers=auth_headers(other))
+    resp = client.get(
+        f"/api/v1/reports/development?child_id={child.id}", headers=auth_headers(other)
+    )
     assert resp.status_code == 404

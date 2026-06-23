@@ -372,7 +372,9 @@ def test_admin_settings_and_child_management_endpoints(client: TestClient, db):
     assert update_settings.json()["effective"]["maintenance_mode"] is True
     assert update_settings.json()["effective"]["ai_buddy_enabled"] is False
 
-    children = client.get("/api/v1/admin/children", params={"age": 9}, headers=_admin_headers(admin))
+    children = client.get(
+        "/api/v1/admin/children", params={"age": 9}, headers=_admin_headers(admin)
+    )
     assert children.status_code == 200
     assert len(children.json()["items"]) == 1
     assert children.json()["items"][0]["name"] == "Nour"
@@ -386,7 +388,9 @@ def test_admin_settings_and_child_management_endpoints(client: TestClient, db):
     assert update_child.json()["item"]["name"] == "Nour Updated"
     assert update_child.json()["item"]["age"] == 10
 
-    progress = client.get(f"/api/v1/admin/children/{child.id}/progress", headers=_admin_headers(admin))
+    progress = client.get(
+        f"/api/v1/admin/children/{child.id}/progress", headers=_admin_headers(admin)
+    )
     assert progress.status_code == 200
     assert progress.json()["child"]["is_active"] is True
 

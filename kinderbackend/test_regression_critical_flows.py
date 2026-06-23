@@ -116,7 +116,9 @@ def test_regression_child_mode_content_usage(client, db, create_parent):
     assert categories.status_code == 200
     assert any(item["slug"] == "regression-learning" for item in categories.json()["items"])
 
-    items = client.get("/api/v1/content/child/items", params={"category_slug": "regression-learning"})
+    items = client.get(
+        "/api/v1/content/child/items", params={"category_slug": "regression-learning"}
+    )
     assert items.status_code == 200
     assert any(item["slug"] == "regression-lesson" for item in items.json()["items"])
 

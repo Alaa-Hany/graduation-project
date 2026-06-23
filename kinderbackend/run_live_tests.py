@@ -519,7 +519,11 @@ def run_tests():
     # ── 10. Subscription ──────────────────────────────────────────────────────
     print("\n[10] SUBSCRIPTION")
     test(
-        "get subscription (valid)", "GET", "/api/v1/subscription/me", token=parent_token, expect_status=200
+        "get subscription (valid)",
+        "GET",
+        "/api/v1/subscription/me",
+        token=parent_token,
+        expect_status=200,
     )
 
     test("get plans (public)", "GET", "/api/v1/plans", expect_status=200)
@@ -566,7 +570,11 @@ def run_tests():
     # ── 11. Notifications ─────────────────────────────────────────────────────
     print("\n[11] NOTIFICATIONS")
     test(
-        "list notifications (valid)", "GET", "/api/v1/notifications", token=parent_token, expect_status=200
+        "list notifications (valid)",
+        "GET",
+        "/api/v1/notifications",
+        token=parent_token,
+        expect_status=200,
     )
 
     test("list notifications (no token)", "GET", "/api/v1/notifications", expect_status=401)
@@ -604,11 +612,22 @@ def run_tests():
         expect_key="settings",
     )
 
-    test("parental controls (no token)", "GET", "/api/v1/parental-controls/settings", expect_status=401)
+    test(
+        "parental controls (no token)",
+        "GET",
+        "/api/v1/parental-controls/settings",
+        expect_status=401,
+    )
 
     # ── 13. Admin Users ───────────────────────────────────────────────────────
     print("\n[13] ADMIN — USER MANAGEMENT")
-    test("admin list users (valid)", "GET", "/api/v1/admin/users", token=admin_token, expect_status=200)
+    test(
+        "admin list users (valid)",
+        "GET",
+        "/api/v1/admin/users",
+        token=admin_token,
+        expect_status=200,
+    )
 
     test("admin list users (no token)", "GET", "/api/v1/admin/users", expect_status=401)
 
@@ -637,7 +656,9 @@ def run_tests():
     bad_email = f"ratelimit{ts}@gmail.com"
     rate_hit = False
     for i in range(7):
-        status, resp = req("POST", "/api/v1/auth/login", body={"email": bad_email, "password": "wrong"})
+        status, resp = req(
+            "POST", "/api/v1/auth/login", body={"email": bad_email, "password": "wrong"}
+        )
         if status == 429:
             rate_hit = True
             print(f"  ✅  [rate limit triggered] Hit 429 on attempt {i+1}")

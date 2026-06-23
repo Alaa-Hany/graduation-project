@@ -289,7 +289,8 @@ class TestFreeUserFeatures:
     def test_free_user_can_access_basic_parental_controls(self, client, free_user_token: str):
         """FREE user CAN access basic_parental_controls."""
         response = client.get(
-            "/api/v1/parental-controls/basic", headers={"Authorization": f"Bearer {free_user_token}"}
+            "/api/v1/parental-controls/basic",
+            headers={"Authorization": f"Bearer {free_user_token}"},
         )
         assert response.status_code == 200
         assert response.json()["access_level"] == "basic"
@@ -355,7 +356,8 @@ class TestPremiumUserFeatures:
 
         # Basic parental controls
         response = client.get(
-            "/api/v1/parental-controls/basic", headers={"Authorization": f"Bearer {premium_user_token}"}
+            "/api/v1/parental-controls/basic",
+            headers={"Authorization": f"Bearer {premium_user_token}"},
         )
         assert response.status_code == 200
 

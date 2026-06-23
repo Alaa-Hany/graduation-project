@@ -323,7 +323,9 @@ def test_external_provider_recurring_purchase_unlocks_access_and_supports_refund
             for item in synced_methods.json()["methods"]
             if item["provider_method_id"] == "pm_card_visa"
         )
-        delete_method = client.delete(f"/api/v1/billing/methods/{visa_method['id']}", headers=headers)
+        delete_method = client.delete(
+            f"/api/v1/billing/methods/{visa_method['id']}", headers=headers
+        )
         assert delete_method.status_code == 200
     finally:
         subscription_service._payment_provider_factory = original_factory

@@ -219,7 +219,9 @@ def test_content_publish_then_unpublish(client, db, super_admin_headers):
     assert row.status == "published"
     assert row.published_at is not None
 
-    unpub = client.post(f"/api/v1/admin/contents/{content_id}/unpublish", headers=super_admin_headers)
+    unpub = client.post(
+        f"/api/v1/admin/contents/{content_id}/unpublish", headers=super_admin_headers
+    )
     assert unpub.status_code == 200
     db.expire_all()
     row = db.query(ContentItem).filter(ContentItem.id == content_id).one()
@@ -518,7 +520,9 @@ def test_support_reply_saves_message_and_updates_status(
 def test_support_resolve_sets_status(client, db, super_admin_headers, create_parent):
     parent = create_parent(email="support.resolve@example.com")
     ticket = _create_ticket(db, user_id=parent.id)
-    resp = client.post(f"/api/v1/admin/support/tickets/{ticket.id}/resolve", headers=super_admin_headers)
+    resp = client.post(
+        f"/api/v1/admin/support/tickets/{ticket.id}/resolve", headers=super_admin_headers
+    )
     assert resp.status_code == 200
     db.expire_all()
     row = db.query(SupportTicket).filter(SupportTicket.id == ticket.id).one()
@@ -528,7 +532,9 @@ def test_support_resolve_sets_status(client, db, super_admin_headers, create_par
 def test_support_close_sets_status_and_closed_at(client, db, super_admin_headers, create_parent):
     parent = create_parent(email="support.close@example.com")
     ticket = _create_ticket(db, user_id=parent.id)
-    resp = client.post(f"/api/v1/admin/support/tickets/{ticket.id}/close", headers=super_admin_headers)
+    resp = client.post(
+        f"/api/v1/admin/support/tickets/{ticket.id}/close", headers=super_admin_headers
+    )
     assert resp.status_code == 200
     db.expire_all()
     row = db.query(SupportTicket).filter(SupportTicket.id == ticket.id).one()
@@ -583,7 +589,9 @@ def test_user_list_paginated_and_search(client, db, super_admin_headers, create_
     assert listing.status_code == 200
     assert "pagination" in listing.json()
 
-    search = client.get("/api/v1/admin/users", params={"search": "findme"}, headers=super_admin_headers)
+    search = client.get(
+        "/api/v1/admin/users", params={"search": "findme"}, headers=super_admin_headers
+    )
     emails = {u["email"] for u in search.json()["items"]}
     assert emails == {"findme.user@example.com"}
 
@@ -727,7 +735,9 @@ def test_child_activity_log_returns_list(
 ):
     parent = create_parent(email="child.activity@example.com")
     child = create_child(parent_id=parent.id)
-    resp = client.get(f"/api/v1/admin/children/{child.id}/activity-log", headers=super_admin_headers)
+    resp = client.get(
+        f"/api/v1/admin/children/{child.id}/activity-log", headers=super_admin_headers
+    )
     assert resp.status_code == 200
     assert isinstance(resp.json()["items"], list)
 
@@ -737,7 +747,9 @@ def test_child_ai_buddy_summary_returns_dict(
 ):
     parent = create_parent(email="child.aibuddy@example.com")
     child = create_child(parent_id=parent.id)
-    resp = client.get(f"/api/v1/admin/children/{child.id}/ai-buddy-summary", headers=super_admin_headers)
+    resp = client.get(
+        f"/api/v1/admin/children/{child.id}/ai-buddy-summary", headers=super_admin_headers
+    )
     assert resp.status_code == 200
     assert "item" in resp.json()
 
@@ -780,7 +792,9 @@ def test_audit_log_lists_and_records_new_mutation(client, db, super_admin_header
     _create_category(client, super_admin_headers, slug="audited-cat")
 
     after = client.get(
-        "/api/v1/admin/audit-logs", params={"action": "category.create"}, headers=super_admin_headers
+        "/api/v1/admin/audit-logs",
+        params={"action": "category.create"},
+        headers=super_admin_headers,
     )
     assert after.status_code == 200
     actions = [item["action"] for item in after.json()["items"]]

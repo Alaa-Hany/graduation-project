@@ -91,7 +91,9 @@ def test_parent_support_validation_and_cross_user_access(client, db, create_pare
     db.commit()
     db.refresh(ticket)
 
-    forbidden_detail = client.get(f"/api/v1/support/tickets/{ticket.id}", headers=auth_headers(other))
+    forbidden_detail = client.get(
+        f"/api/v1/support/tickets/{ticket.id}", headers=auth_headers(other)
+    )
     assert forbidden_detail.status_code == 404
 
     closed_ticket = SupportTicket(
