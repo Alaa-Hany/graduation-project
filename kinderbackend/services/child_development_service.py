@@ -36,22 +36,86 @@ DOMAINS = (
 # does not send an explicit "domain"/"category" in the event metadata.
 _DOMAIN_KEYWORDS: dict[str, tuple[str, ...]] = {
     "cognitive": (
-        "math", "number", "count", "shape", "science", "animal", "plant",
-        "logic", "puzzle", "memory", "geography", "رياضيات", "عدد", "حساب",
-        "شكل", "علوم", "حيوان", "نبات", "ذكاء", "ألغاز", "ذاكرة",
+        "math",
+        "number",
+        "count",
+        "shape",
+        "science",
+        "animal",
+        "plant",
+        "logic",
+        "puzzle",
+        "memory",
+        "geography",
+        "رياضيات",
+        "عدد",
+        "حساب",
+        "شكل",
+        "علوم",
+        "حيوان",
+        "نبات",
+        "ذكاء",
+        "ألغاز",
+        "ذاكرة",
     ),
     "language": (
-        "arabic", "english", "read", "story", "letter", "word", "spell",
-        "language", "عربي", "إنجليزي", "لغة", "قراءة", "قصة", "حرف", "كلمة", "إملاء",
+        "arabic",
+        "english",
+        "read",
+        "story",
+        "letter",
+        "word",
+        "spell",
+        "language",
+        "عربي",
+        "إنجليزي",
+        "لغة",
+        "قراءة",
+        "قصة",
+        "حرف",
+        "كلمة",
+        "إملاء",
     ),
     "creative": (
-        "draw", "color", "music", "art", "craft", "sing", "paint", "sport",
-        "dance", "رسم", "تلوين", "موسيقى", "فن", "غناء", "رياضة", "حرف يدوية", "رقص",
+        "draw",
+        "color",
+        "music",
+        "art",
+        "craft",
+        "sing",
+        "paint",
+        "sport",
+        "dance",
+        "رسم",
+        "تلوين",
+        "موسيقى",
+        "فن",
+        "غناء",
+        "رياضة",
+        "حرف يدوية",
+        "رقص",
     ),
     "social": (
-        "kind", "share", "cooper", "honest", "respect", "patien", "friend",
-        "help", "behav", "gratitude", "تعاون", "مشاركة", "صدق", "احترام", "صبر",
-        "لطف", "سلوك", "صديق", "مساعدة", "امتنان",
+        "kind",
+        "share",
+        "cooper",
+        "honest",
+        "respect",
+        "patien",
+        "friend",
+        "help",
+        "behav",
+        "gratitude",
+        "تعاون",
+        "مشاركة",
+        "صدق",
+        "احترام",
+        "صبر",
+        "لطف",
+        "سلوك",
+        "صديق",
+        "مساعدة",
+        "امتنان",
     ),
 }
 
@@ -185,9 +249,7 @@ class ChildDevelopmentService:
             }
         return results
 
-    def _build_ai_prompt(
-        self, *, child: ChildProfile, domains: list[dict], language: str
-    ) -> str:
+    def _build_ai_prompt(self, *, child: ChildProfile, domains: list[dict], language: str) -> str:
         lines = [
             f"Child name: {child.name or 'the child'}",
             f"Child age: {child.age if child.age is not None else 'unknown'}",
@@ -211,9 +273,7 @@ class ChildDevelopmentService:
         )
         return "\n".join(lines)
 
-    def _ai_narrative(
-        self, *, child: ChildProfile, domains: list[dict], language: str
-    ) -> dict:
+    def _ai_narrative(self, *, child: ChildProfile, domains: list[dict], language: str) -> dict:
         prompt = self._build_ai_prompt(child=child, domains=domains, language=language)
         provider_available = (
             settings.ai_provider_mode != "fallback" and enhanced_ai_provider.is_configured()

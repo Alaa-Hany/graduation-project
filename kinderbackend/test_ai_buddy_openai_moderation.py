@@ -27,9 +27,7 @@ def test_map_categories_prefers_refusal_over_redirect():
 
 
 def test_map_categories_self_harm_redirects():
-    classification, topic, _ = service._map_openai_categories(
-        {"self-harm/intent": True}
-    )
+    classification, topic, _ = service._map_openai_categories({"self-harm/intent": True})
     assert classification == "needs_safe_redirect"
     assert topic == "self_harm"
 
@@ -71,9 +69,7 @@ def test_keyword_layer_runs_before_openai(monkeypatch):
         called["hit"] = True
         return None
 
-    monkeypatch.setattr(
-        moderation_module.openai_moderation_service, "moderate", _should_not_run
-    )
+    monkeypatch.setattr(moderation_module.openai_moderation_service, "moderate", _should_not_run)
     decision = service.moderate_input(text="I want a gun")
     assert decision.classification == "needs_refusal"
     assert decision.metadata_json["moderation_layer"] == "keyword"

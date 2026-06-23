@@ -62,9 +62,7 @@ class VoiceService:
         try:
             from openai import OpenAI
 
-            self._client = OpenAI(
-                api_key=settings.ai_provider_api_key, timeout=20.0, max_retries=1
-            )
+            self._client = OpenAI(api_key=settings.ai_provider_api_key, timeout=20.0, max_retries=1)
             return self._client
         except ImportError:
             raise RuntimeError("OpenAI SDK is not installed")

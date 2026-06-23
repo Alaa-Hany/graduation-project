@@ -56,28 +56,49 @@ def test_development_report_scores_four_domains_with_narrative(client, db, auth_
 
     # Seed activities that map to each of the four domains.
     _post_event(
-        client, headers, child_id=child.id, event_type="lesson_completed",
-        activity_name="Numbers", lesson_id="lesson_math_01", occurred_at=_recent(5),
+        client,
+        headers,
+        child_id=child.id,
+        event_type="lesson_completed",
+        activity_name="Numbers",
+        lesson_id="lesson_math_01",
+        occurred_at=_recent(5),
         metadata_json={"score": 92, "category": "educational", "completion_status": "completed"},
     )
     _post_event(
-        client, headers, child_id=child.id, event_type="activity_completed",
-        activity_name="Arabic Reading", occurred_at=_recent(7),
+        client,
+        headers,
+        child_id=child.id,
+        event_type="activity_completed",
+        activity_name="Arabic Reading",
+        occurred_at=_recent(7),
         metadata_json={"score": 80, "category": "educational", "completion_status": "completed"},
     )
     _post_event(
-        client, headers, child_id=child.id, event_type="activity_completed",
-        activity_name="Drawing", occurred_at=_recent(9),
+        client,
+        headers,
+        child_id=child.id,
+        event_type="activity_completed",
+        activity_name="Drawing",
+        occurred_at=_recent(9),
         metadata_json={"score": 70, "category": "skillful", "completion_status": "completed"},
     )
     _post_event(
-        client, headers, child_id=child.id, event_type="activity_completed",
-        activity_name="Sharing and cooperation", occurred_at=_recent(11),
+        client,
+        headers,
+        child_id=child.id,
+        event_type="activity_completed",
+        activity_name="Sharing and cooperation",
+        occurred_at=_recent(11),
         metadata_json={"score": 85, "completion_status": "completed"},
     )
     _post_event(
-        client, headers, child_id=child.id, event_type="mood_entry",
-        mood_value=5, occurred_at=_recent(12),
+        client,
+        headers,
+        child_id=child.id,
+        event_type="mood_entry",
+        mood_value=5,
+        occurred_at=_recent(12),
     )
 
     resp = client.get(f"/reports/development?child_id={child.id}", headers=headers)
@@ -134,7 +155,5 @@ def test_development_report_rejects_other_parents_child(client, db, auth_headers
     other = _create_parent(db, email="dev-other@example.com", plan=PLAN_PREMIUM)
     child = _create_child(db, owner, name="Owned")
 
-    resp = client.get(
-        f"/reports/development?child_id={child.id}", headers=auth_headers(other)
-    )
+    resp = client.get(f"/reports/development?child_id={child.id}", headers=auth_headers(other))
     assert resp.status_code == 404

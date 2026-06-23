@@ -25,18 +25,14 @@ class OpenAIModerationService:
         # Only run the OpenAI moderation layer when the OpenAI provider is
         # actually in use. In "fallback" mode there is no live provider, so we
         # must not make network calls (this also keeps tests offline).
-        return settings.ai_provider_mode != "fallback" and bool(
-            settings.ai_provider_api_key
-        )
+        return settings.ai_provider_mode != "fallback" and bool(settings.ai_provider_api_key)
 
     def _get_client(self):
         if self._client is not None:
             return self._client
         from openai import OpenAI
 
-        self._client = OpenAI(
-            api_key=settings.ai_provider_api_key, timeout=10.0, max_retries=1
-        )
+        self._client = OpenAI(api_key=settings.ai_provider_api_key, timeout=10.0, max_retries=1)
         return self._client
 
     def moderate(self, text: str) -> OpenAIModerationResult | None:

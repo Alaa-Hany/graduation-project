@@ -234,9 +234,7 @@ class AiBuddyModerationService:
 
         # Keyword rules found nothing — ask the OpenAI moderation API as a second
         # layer to catch semantic cases the keyword lists miss.
-        ai_decision = self._moderate_with_openai(
-            text=normalized, language=language, source=source
-        )
+        ai_decision = self._moderate_with_openai(text=normalized, language=language, source=source)
         if ai_decision is not None:
             return ai_decision
 

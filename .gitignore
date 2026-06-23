@@ -55,12 +55,6 @@ __pycache__/
 *.pyc
 KinderWorld_Audit_Report.docx
 generate_audit_report.py
-*audit*
-*report*
-# Never ignore real source code under kinderbackend (the *audit*/*report*
-# patterns above were catching files like core/report_cache.py).
-!kinderbackend/services/*.py
-!kinderbackend/**/*.py
 
 # Scratch / local-only files
 puzzle_block.txt
