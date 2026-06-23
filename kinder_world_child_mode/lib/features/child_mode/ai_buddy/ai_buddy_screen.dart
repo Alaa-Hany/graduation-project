@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:speech_to_text/speech_to_text.dart';
@@ -52,6 +53,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
   final ScrollController _scrollCtrl = ScrollController();
   late final VoiceTtsService _ttsService;
   final SpeechToText _stt = SpeechToText();
+  final AudioPlayer _sfxPlayer = AudioPlayer();
   int? _playingMessageId;
   bool _isListening = false;
   bool _sttAvailable = false;
@@ -111,9 +113,20 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
     if (mounted) setState(() => _sttAvailable = available);
   }
 
+  /// Plays a short UI sound cue. Failure (e.g. missing asset) must never
+  /// interrupt listening, so it is swallowed silently.
+  Future<void> _playSfx(String assetPath) async {
+    try {
+      await _sfxPlayer.play(AssetSource(assetPath));
+    } catch (_) {
+      // Sound cues are a nice-to-have; ignore playback failures.
+    }
+  }
+
   Future<void> _startListening() async {
     if (!_sttAvailable || _isListening) return;
     await _ttsService.stop();
+    await _playSfx('sounds/mic_start.wav');
     setState(() => _isListening = true);
     final langCode = ref.read(localeProvider).languageCode;
     await _stt.listen(
@@ -146,6 +159,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
 
   Future<void> _stopListening() async {
     await _stt.stop();
+    await _playSfx('sounds/mic_stop.wav');
     if (mounted) setState(() => _isListening = false);
   }
 
@@ -205,6 +219,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
   void dispose() {
     _ttsService.dispose();
     _stt.stop();
+    _sfxPlayer.dispose();
     _pulseCtrl.dispose();
     _textCtrl.dispose();
     _scrollCtrl.dispose();
