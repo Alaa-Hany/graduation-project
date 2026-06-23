@@ -97,38 +97,9 @@ def list_admin_subscriptions(
     }
 
 
-@router.get("/{subscription_id}")
-def get_admin_subscription(
-    subscription_id: int,
-    db: Session = Depends(get_db),
-    admin=Depends(require_permission("admin.subscription.view")),
-):
-    user = _get_subscription_or_404(subscription_id, db)
-    item = serialize_subscription_record(user)
-    profile = user.subscription_profile
-    if profile is not None:
-        item["recent_events"] = subscription_service._list_subscription_events(  # noqa: SLF001
-            db=db,
-            profile=profile,
-            limit=20,
-        )
-        item["billing_history"] = subscription_service._list_billing_transactions(  # noqa: SLF001
-            db=db,
-            profile=profile,
-            limit=20,
-        )
-        item["payment_attempts"] = subscription_service._list_payment_attempts(  # noqa: SLF001
-            db=db,
-            profile=profile,
-            limit=20,
-        )
-    else:
-        item["recent_events"] = []
-        item["billing_history"] = []
-        item["payment_attempts"] = []
-    return {"item": item}
-
-
+# NOTE: static sub-paths (e.g. /diagnostics) MUST be declared before the
+# dynamic /{subscription_id} route, otherwise FastAPI matches them as an int
+# path param and returns 422 (the static route becomes unreachable).
 @router.get("/diagnostics")
 def subscription_diagnostics(
     limit: int = Query(20, ge=1, le=100),
@@ -220,6 +191,38 @@ def subscription_diagnostics(
         "reconciliation_events": [_serialize_event(item) for item in reconciliation_events],
         "payment_failures": [_serialize_attempt(item) for item in payment_failures],
     }
+
+
+@router.get("/{subscription_id}")
+def get_admin_subscription(
+    subscription_id: int,
+    db: Session = Depends(get_db),
+    admin=Depends(require_permission("admin.subscription.view")),
+):
+    user = _get_subscription_or_404(subscription_id, db)
+    item = serialize_subscription_record(user)
+    profile = user.subscription_profile
+    if profile is not None:
+        item["recent_events"] = subscription_service._list_subscription_events(  # noqa: SLF001
+            db=db,
+            profile=profile,
+            limit=20,
+        )
+        item["billing_history"] = subscription_service._list_billing_transactions(  # noqa: SLF001
+            db=db,
+            profile=profile,
+            limit=20,
+        )
+        item["payment_attempts"] = subscription_service._list_payment_attempts(  # noqa: SLF001
+            db=db,
+            profile=profile,
+            limit=20,
+        )
+    else:
+        item["recent_events"] = []
+        item["billing_history"] = []
+        item["payment_attempts"] = []
+    return {"item": item}
 
 
 @router.post("/reconcile")

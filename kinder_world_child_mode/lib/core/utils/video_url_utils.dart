@@ -39,7 +39,8 @@ String? youtubeEmbedUrl(String? rawUrl) {
   if (id == null) {
     return null;
   }
-  return 'https://www.youtube.com/embed/$id?rel=0';
+  return 'https://www.youtube-nocookie.com/embed/$id'
+      '?rel=0&modestbranding=1&iv_load_policy=3&playsinline=1';
 }
 
 String? youtubeThumbnailUrl(String? rawUrl) {

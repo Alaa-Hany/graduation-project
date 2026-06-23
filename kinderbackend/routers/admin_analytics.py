@@ -461,6 +461,10 @@ def get_axis_analytics_overview(
     admin=Depends(require_permission("admin.analytics.view")),
 ):
     """Get analytics overview for a specific axis."""
+    try:
+        normalize_content_axis_key(axis_key)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Axis not found")
     cache_key = _axis_cache_key(axis_key)
     cached = cache_service.get_json(cache_key)
     if isinstance(cached, dict):
@@ -483,6 +487,10 @@ def get_axis_usage_analytics(
     admin=Depends(require_permission("admin.analytics.view")),
 ):
     """Get usage analytics for a specific axis over time."""
+    try:
+        normalize_content_axis_key(axis_key)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Axis not found")
     cache_key = _axis_usage_cache_key(axis_key, range_name)
     cached = cache_service.get_json(cache_key)
     if isinstance(cached, dict):
