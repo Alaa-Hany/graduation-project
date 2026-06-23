@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 import 'package:intl/intl.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
@@ -48,7 +49,10 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
   final TextEditingController _textCtrl = TextEditingController();
   final ScrollController _scrollCtrl = ScrollController();
   final FlutterTts _tts = FlutterTts();
+  final SpeechToText _stt = SpeechToText();
   int? _playingMessageId;
+  bool _isListening = false;
+  bool _sttAvailable = false;
 
   AiBuddyConversation? _conversation;
   bool _isLoading = true;
@@ -72,6 +76,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
     );
 
     _initTts();
+    _initStt();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadConversation();
     });
@@ -90,6 +95,42 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
     });
   }
 
+  Future<void> _initStt() async {
+    final available = await _stt.initialize(
+      onError: (_) {
+        if (mounted) setState(() => _isListening = false);
+      },
+    );
+    if (mounted) setState(() => _sttAvailable = available);
+  }
+
+  Future<void> _startListening() async {
+    if (!_sttAvailable || _isListening) return;
+    await _tts.stop();
+    setState(() => _isListening = true);
+    final langCode = ref.read(localeProvider).languageCode;
+    await _stt.listen(
+      localeId: langCode == 'ar' ? 'ar_SA' : 'en_US',
+      listenFor: const Duration(seconds: 15),
+      pauseFor: const Duration(seconds: 3),
+      onResult: (result) {
+        if (result.finalResult) {
+          final text = result.recognizedWords.trim();
+          setState(() => _isListening = false);
+          if (text.isNotEmpty) {
+            _textCtrl.text = text;
+            _sendMessage();
+          }
+        }
+      },
+    );
+  }
+
+  Future<void> _stopListening() async {
+    await _stt.stop();
+    if (mounted) setState(() => _isListening = false);
+  }
+
   Future<void> _speakMessage(int messageId, String text) async {
     if (_playingMessageId == messageId) {
       await _tts.stop();
@@ -104,6 +145,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
   @override
   void dispose() {
     _tts.stop();
+    _stt.stop();
     _pulseCtrl.dispose();
     _textCtrl.dispose();
     _scrollCtrl.dispose();
@@ -718,6 +760,38 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
                 ),
               ),
             ),
+            if (_sttAvailable) ...[
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: disabled
+                    ? null
+                    : (_isListening ? _stopListening : _startListening),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: _isListening
+                        ? Colors.red.withValuesCompat(alpha: 0.12)
+                        : colors.surfaceContainerHighest,
+                    shape: BoxShape.circle,
+                    border: _isListening
+                        ? Border.all(color: Colors.red, width: 2)
+                        : null,
+                  ),
+                  child: Icon(
+                    _isListening ? Icons.stop_rounded : Icons.mic_rounded,
+                    size: 22,
+                    color: _isListening
+                        ? Colors.red
+                        : disabled
+                            ? colors.onSurfaceVariant.withValuesCompat(
+                                alpha: 0.4)
+                            : colors.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(width: 8),
             InkWell(
               onTap: disabled ? null : _sendMessage,

@@ -592,6 +592,11 @@ class _AdminContentManagementScreenState
     String selectedBehavioralMethod =
         metadataMap['behavioral_method']?.toString() ?? '';
     bool featured = metadataMap['featured'] == true;
+    bool isAddingCategory = false;
+    bool newCatSaving = false;
+    final newCatTitleEn = TextEditingController();
+    final newCatTitleAr = TextEditingController();
+    String newCatQuickFill = '';
     final isArabic =
         Localizations.localeOf(context).languageCode.toLowerCase() == 'ar';
     List<AdminCmsCategory> categoriesForAxis() {
@@ -736,64 +741,239 @@ class _AdminContentManagementScreenState
                         ),
                         const SizedBox(height: 12),
                       ],
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Expanded(
-                            child: DropdownButtonFormFieldCompat<int?>(
-                              initialValue: selectedCategoryId,
-                              decoration: InputDecoration(
-                                  labelText: l10n.adminCmsCategoryLabel),
-                              items: [
-                                DropdownMenuItem<int?>(
-                                    value: null,
-                                    child: Text(l10n.adminCmsNoCategory)),
-                                ...categoriesForAxis().map((category) =>
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: DropdownButtonFormFieldCompat<int?>(
+                                  initialValue: selectedCategoryId,
+                                  decoration: InputDecoration(
+                                      labelText: l10n.adminCmsCategoryLabel),
+                                  items: [
                                     DropdownMenuItem<int?>(
-                                        value: category.id,
-                                        child: Text(categoryTitle(category)))),
-                              ],
-                              onChanged: (value) => setStateDialog(() {
-                                selectedCategoryId = value;
-                                if (selectedAxisKey == 'behavioral' &&
-                                    value != null) {
-                                  final category = selectedCategoryForAxis();
-                                  if (category != null) {
-                                    for (final behavioralValue
-                                        in behavioralValueTitles()) {
-                                      if (normalizeBehavioralTitle(
-                                            behavioralValue,
-                                          ) ==
-                                          normalizeBehavioralTitle(
-                                            category.titleEn,
-                                          )) {
-                                        selectedBehavioralValue =
-                                            behavioralValue;
-                                        break;
+                                        value: null,
+                                        child: Text(l10n.adminCmsNoCategory)),
+                                    ...categoriesForAxis().map((category) =>
+                                        DropdownMenuItem<int?>(
+                                            value: category.id,
+                                            child:
+                                                Text(categoryTitle(category)))),
+                                  ],
+                                  onChanged: (value) => setStateDialog(() {
+                                    selectedCategoryId = value;
+                                    if (selectedAxisKey == 'behavioral' &&
+                                        value != null) {
+                                      final category =
+                                          selectedCategoryForAxis();
+                                      if (category != null) {
+                                        for (final behavioralValue
+                                            in behavioralValueTitles()) {
+                                          if (normalizeBehavioralTitle(
+                                                behavioralValue,
+                                              ) ==
+                                              normalizeBehavioralTitle(
+                                                category.titleEn,
+                                              )) {
+                                            selectedBehavioralValue =
+                                                behavioralValue;
+                                            break;
+                                          }
+                                        }
                                       }
                                     }
+                                  }),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              IconButton.filledTonal(
+                                tooltip: isAddingCategory
+                                    ? l10n.cancel
+                                    : l10n.adminCmsCategoryCreateTitle,
+                                onPressed: () => setStateDialog(() {
+                                  isAddingCategory = !isAddingCategory;
+                                  if (!isAddingCategory) {
+                                    newCatTitleEn.clear();
+                                    newCatTitleAr.clear();
+                                    newCatQuickFill = '';
                                   }
-                                }
-                              }),
+                                }),
+                                icon: Icon(isAddingCategory
+                                    ? Icons.close
+                                    : Icons.add),
+                              ),
+                            ],
+                          ),
+                          if (isAddingCategory) ...[
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerHighest
+                                    .withValues(alpha: 0.3),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .outline
+                                      .withValues(alpha: 0.25),
+                                ),
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Builder(builder: (context) {
+                                    final catalogItems =
+                                        _axisQuickFillItems(selectedAxisKey);
+                                    if (catalogItems.isEmpty) {
+                                      return const SizedBox.shrink();
+                                    }
+                                    final dropdownLabel =
+                                        switch (selectedAxisKey) {
+                                      'behavioral' =>
+                                        l10n.adminCmsBehavioralValueLabel,
+                                      'educational' => 'Subject',
+                                      'skillful' => 'Skill',
+                                      'entertaining' => 'Entertainment type',
+                                      _ => 'Quick fill',
+                                    };
+                                    return Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        DropdownButtonFormFieldCompat<String>(
+                                          key: ValueKey(
+                                              'new_cat_$selectedAxisKey'),
+                                          initialValue:
+                                              newCatQuickFill.isEmpty
+                                                  ? null
+                                                  : newCatQuickFill,
+                                          decoration: InputDecoration(
+                                              labelText: dropdownLabel),
+                                          items: catalogItems
+                                              .map((item) =>
+                                                  DropdownMenuItem<String>(
+                                                    value: item.titleEn,
+                                                    child: Text(item.titleEn),
+                                                  ))
+                                              .toList(),
+                                          onChanged: (value) =>
+                                              setStateDialog(() {
+                                            newCatQuickFill = value ?? '';
+                                            if (newCatQuickFill.isNotEmpty) {
+                                              final entry = catalogItems
+                                                  .where((i) =>
+                                                      i.titleEn ==
+                                                      newCatQuickFill)
+                                                  .firstOrNull;
+                                              if (entry != null) {
+                                                newCatTitleEn.text =
+                                                    entry.titleEn;
+                                                newCatTitleAr.text =
+                                                    entry.titleAr;
+                                              }
+                                            }
+                                          }),
+                                        ),
+                                        const SizedBox(height: 8),
+                                      ],
+                                    );
+                                  }),
+                                  TextField(
+                                    controller: newCatTitleEn,
+                                    decoration: InputDecoration(
+                                        labelText: l10n.adminCmsTitleEnLabel),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  TextField(
+                                    controller: newCatTitleAr,
+                                    decoration: InputDecoration(
+                                        labelText: l10n.adminCmsTitleArLabel),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Align(
+                                    alignment: AlignmentDirectional.centerEnd,
+                                    child: newCatSaving
+                                        ? const SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: CircularProgressIndicator
+                                                .adaptive(),
+                                          )
+                                        : FilledButton(
+                                            onPressed: () async {
+                                              if (newCatTitleEn.text
+                                                      .trim()
+                                                      .isEmpty ||
+                                                  newCatTitleAr.text
+                                                      .trim()
+                                                      .isEmpty) {
+                                                _showFeedback(
+                                                  l10n.adminCmsValidationTitleEnRequired,
+                                                  isError: true,
+                                                );
+                                                return;
+                                              }
+                                              setStateDialog(
+                                                  () => newCatSaving = true);
+                                              try {
+                                                final slug = newCatTitleEn.text
+                                                    .trim()
+                                                    .toLowerCase()
+                                                    .replaceAll(
+                                                        RegExp(r'[^a-z0-9]+'),
+                                                        '-')
+                                                    .replaceAll(
+                                                        RegExp(r'^-+|-+$'),
+                                                        '');
+                                                final created = await ref
+                                                    .read(
+                                                        adminManagementRepositoryProvider)
+                                                    .createCategory(
+                                                      axisKey: selectedAxisKey,
+                                                      slug: slug,
+                                                      titleEn: newCatTitleEn
+                                                          .text
+                                                          .trim(),
+                                                      titleAr: newCatTitleAr
+                                                          .text
+                                                          .trim(),
+                                                      descriptionEn: '',
+                                                      descriptionAr: '',
+                                                    );
+                                                await _loadAll();
+                                                if (!mounted) return;
+                                                setStateDialog(() {
+                                                  selectedAxisKey =
+                                                      created.axisKey;
+                                                  selectedCategoryId =
+                                                      created.id;
+                                                  isAddingCategory = false;
+                                                  newCatTitleEn.clear();
+                                                  newCatTitleAr.clear();
+                                                  newCatQuickFill = '';
+                                                  newCatSaving = false;
+                                                });
+                                              } catch (e) {
+                                                if (!mounted) return;
+                                                setStateDialog(
+                                                    () => newCatSaving = false);
+                                                _showFeedback(
+                                                    _extractErrorMessage(
+                                                        l10n, e),
+                                                    isError: true);
+                                              }
+                                            },
+                                            child: Text(l10n.save),
+                                          ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          IconButton.filledTonal(
-                            tooltip: l10n.adminCmsCategoryCreateTitle,
-                            onPressed: () async {
-                              final createdCategory = await _saveCategory(
-                                initialAxisKey: selectedAxisKey,
-                              );
-                              if (!mounted || createdCategory == null) {
-                                return;
-                              }
-                              setStateDialog(() {
-                                selectedAxisKey = createdCategory.axisKey;
-                                selectedCategoryId = createdCategory.id;
-                              });
-                            },
-                            icon: const Icon(Icons.add),
-                          ),
+                          ],
                         ],
                       ),
                       const SizedBox(height: 12),

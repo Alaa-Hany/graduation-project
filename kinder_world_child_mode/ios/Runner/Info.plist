@@ -41,6 +41,10 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>يحتاج التطبيق للتعرف على الكلام لإرسال رسائل صوتية للذكاء الاصطناعي</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>يحتاج التطبيق للميكروفون لتسجيل صوتك وإرساله للذكاء الاصطناعي</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
