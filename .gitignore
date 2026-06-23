@@ -12,6 +12,7 @@ venv/
 env/
 .vscode/
 .idea/
+.claude/
 .DS_Store
 Thumbs.db
 __pycache__/
