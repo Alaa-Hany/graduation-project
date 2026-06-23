@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:dio/dio.dart';
@@ -38,8 +39,23 @@ class VoiceTtsService {
   VoidCallback? _completionHandler;
 
   Future<void> init() async {
-    await _tts.setSpeechRate(0.50);
+    // iOS and Android use different speech-rate scales: the same numeric value
+    // sounds noticeably faster on Android, so slow it down there to keep the
+    // gentle, child-friendly pace consistent across platforms. Guard the
+    // Platform lookup with kIsWeb since dart:io is unavailable on web.
+    final speechRate = kIsWeb ? 0.50 : (Platform.isIOS ? 0.50 : 0.42);
+    await _tts.setSpeechRate(speechRate);
     await _tts.setPitch(1.1);
+    await _tts.setVolume(1.0);
+    // Make speak() resolve only when playback finishes, so callers can chain
+    // stop()/speak() without the engine dropping or overlapping utterances.
+    await _tts.awaitSpeakCompletion(true);
+    // A native TTS error would otherwise leave the UI stuck in the "playing"
+    // state, so clear it the same way completion does.
+    _tts.setErrorHandler((msg) {
+      _logger.w('Native TTS error: $msg');
+      _completionHandler?.call();
+    });
     try {
       final available = await _tts.isLanguageAvailable('ar-EG');
       _arabicAvailable = available == true;
