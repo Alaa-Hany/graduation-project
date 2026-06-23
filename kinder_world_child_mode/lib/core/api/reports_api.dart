@@ -47,6 +47,24 @@ class ReportsApi {
     return Map<String, dynamic>.from(response.data ?? const {});
   }
 
+  Future<Map<String, dynamic>> getDevelopmentReport({
+    required int childId,
+    int days = 30,
+    String language = 'ar',
+    String? parentAccessToken,
+  }) async {
+    final response = await _network.get<Map<String, dynamic>>(
+      '/reports/development',
+      queryParameters: {
+        'child_id': childId,
+        'days': days,
+        'language': language,
+      },
+      options: _authorizedOptions(parentAccessToken),
+    );
+    return Map<String, dynamic>.from(response.data ?? const {});
+  }
+
   Future<Map<String, dynamic>> ingestActivityEvent(
     Map<String, dynamic> payload, {
     String? parentAccessToken,

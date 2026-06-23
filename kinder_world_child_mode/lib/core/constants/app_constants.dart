@@ -187,7 +187,7 @@ class AppConstants {
 
   // ---------------------------------------------------------------------------
 
-  static const Duration apiTimeout = Duration(seconds: 15);
+  static const Duration apiTimeout = Duration(seconds: 60);
 
   static const String hiveBoxName = 'kinder_world_box';
   static const String secureStorageKey = 'kinder_world_secure';

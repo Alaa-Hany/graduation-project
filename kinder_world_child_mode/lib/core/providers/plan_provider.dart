@@ -374,7 +374,7 @@ final subscriptionSnapshotProvider =
   final subscriptionService = ref.watch(subscriptionServiceProvider);
   final data = await subscriptionService.getSubscription(
     forceRefresh: true,
-    allowCachedOnError: false,
+    allowCachedOnError: true,
   );
   if (data == null || data.isEmpty) {
     throw StateError('Subscription snapshot is unavailable');

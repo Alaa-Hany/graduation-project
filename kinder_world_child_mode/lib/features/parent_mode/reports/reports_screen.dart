@@ -20,6 +20,7 @@ import 'package:kinder_world/core/widgets/avatar_view.dart';
 import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/core/widgets/plan_status_banner.dart';
 import 'package:kinder_world/core/widgets/premium_section_upsell.dart';
+import 'package:kinder_world/features/parent_mode/reports/development_report_card.dart';
 import 'package:kinder_world/features/parent_mode/reports/report_interpreter.dart';
 import 'package:kinder_world/features/parent_mode/reports/report_models.dart';
 import 'package:kinder_world/features/parent_mode/reports/report_service.dart';
@@ -453,6 +454,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                   },
                                 ),
                                 if (plan.hasAdvancedReports) ...[
+                                  DevelopmentReportCard(
+                                    childId: selectedChild.id,
+                                    days: _period.days,
+                                  ),
+                                  const SizedBox(height: 16),
                                   _buildAdvancedInsightsCard(context, report),
                                   const SizedBox(height: 16),
                                 ] else ...[

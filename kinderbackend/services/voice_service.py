@@ -102,11 +102,13 @@ class VoiceService:
 
             client = self._get_client()
 
-            # Use a child-friendly voice
-            voice_id: str = voice or "nova"
+            # Pick a child-friendly voice: an explicit request wins, otherwise
+            # use the voice configured for the language in settings.
+            voice_id: str = voice or self._voice_for_language(language)
+            model = settings.tts_model
 
             response = client.audio.speech.create(
-                model="tts-1",
+                model=model,
                 voice=voice_id,
                 input=text,
                 speed=speed,
@@ -118,11 +120,17 @@ class VoiceService:
             return TTSResult(
                 audio_base64=audio_base64_value,
                 content_type="audio/mp3",
-                raw={"model": "tts-1", "voice": voice_id},
+                raw={"model": model, "voice": voice_id, "language": language},
             )
         except Exception as exc:
             logger.error("TTS failed: %s", str(exc))
             raise
+
+    def _voice_for_language(self, language: str) -> str:
+        """Return the configured child-friendly voice for the given language."""
+        if (language or "").lower().startswith("ar"):
+            return settings.tts_voice_ar
+        return settings.tts_voice_en
 
     def detect_language_from_text(self, text: str) -> str:
         """Detect if text contains Arabic characters."""

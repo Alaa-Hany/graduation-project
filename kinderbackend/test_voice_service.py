@@ -146,9 +146,29 @@ def test_synthesize_returns_tts_result():
     assert isinstance(result, TTSResult)
     assert result.content_type == "audio/mp3"
     assert base64.b64decode(result.audio_base64) == b"RAW_AUDIO_BYTES"
-    # Defaults to the child-friendly "nova" voice.
-    assert recorder["speech_kwargs"]["voice"] == "nova"
-    assert result.raw == {"model": "tts-1", "voice": "nova"}
+    # Defaults to the configured English voice ("nova") and TTS model.
+    from core.settings import settings
+
+    assert recorder["speech_kwargs"]["voice"] == settings.tts_voice_en
+    assert result.raw == {
+        "model": settings.tts_model,
+        "voice": settings.tts_voice_en,
+        "language": "en",
+    }
+
+
+def test_synthesize_uses_arabic_voice_for_arabic_language():
+    from core.settings import settings
+
+    service = VoiceService()
+    recorder: dict = {}
+    service._client = _FakeClient(recorder)
+
+    result = asyncio.run(service.synthesize(text="مرحبا", language="ar"))
+
+    # Arabic text gets the configured Arabic voice from settings.
+    assert recorder["speech_kwargs"]["voice"] == settings.tts_voice_ar
+    assert result.raw["language"] == "ar"
 
 
 def test_synthesize_uses_custom_voice_and_speed():

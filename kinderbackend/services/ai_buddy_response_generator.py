@@ -442,9 +442,11 @@ class _EnhancedAiBuddyBackend:
             child_age=child_age,
             available_activities=[
                 {
-                    "title": activity["title_en"],
-                    "slug": activity["slug"],
-                    "category": activity["category"],
+                    "title_en": activity.get("title_en", ""),
+                    "title_ar": activity.get("title_ar", ""),
+                    "slug": activity.get("slug", ""),
+                    "category": activity.get("category", ""),
+                    "category_title_en": activity.get("category_title_en", ""),
                 }
                 for activity in activities[:8]
             ],

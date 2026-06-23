@@ -15,6 +15,7 @@ from deps import get_current_user, get_db, require_feature
 from models import User
 from schemas.analytics import ActivityEventIn, SessionLogIn
 from services.analytics_service import analytics_service
+from services.child_development_service import child_development_service
 from services.notification_service import notification_service
 from services.parental_controls_service import list_parent_child_controls
 from services.premium_behavior_service import premium_behavior_service
@@ -105,6 +106,36 @@ async def advanced_reports(
         user=user,
         child_id=child_id,
         days=days,
+    )
+    cache_report(cache_key, payload)
+    return payload
+
+
+@router.get("/reports/development")
+async def child_development_report(
+    child_id: int = Query(..., description="Child to evaluate"),
+    days: int = Query(30, ge=1, le=365),
+    language: str = Query("ar"),
+    user: User = Depends(require_feature("advanced_reports")),
+    db: Session = Depends(get_db),
+):
+    """Parent-facing development profile: four strength/growth areas with an AI summary."""
+    logger.info("Development report requested by user %s for child %s", user.id, child_id)
+    lang = "ar" if str(language).lower().startswith("ar") else "en"
+    cache_key = report_cache_key(
+        user_id=user.id, child_id=child_id, report_type=f"development_{lang}", days=days
+    )
+    cached = get_cached_report(cache_key)
+    if cached is not None:
+        return cached
+
+    payload = await asyncio.to_thread(
+        child_development_service.build_development_profile,
+        db=db,
+        user=user,
+        child_id=child_id,
+        days=days,
+        language=lang,
     )
     cache_report(cache_key, payload)
     return payload

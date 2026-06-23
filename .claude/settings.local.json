@@ -111,6 +111,9 @@
       "Bash(flutter pub *)",
       "Read(//c/Graduation Project/**)",
       "Bash(./.venv/Scripts/python.exe -m pip install -q \"pillow==12.2.0\" \"python-dotenv==1.2.2\")",
-      "Bash(./.venv/Scripts/python.exe -c \"import PIL, dotenv; print\\('PIL', PIL.__version__\\); import importlib.metadata as m; print\\('dotenv', m.version\\('python-dotenv'\\)\\)\")"    ]
+      "Bash(./.venv/Scripts/python.exe -c \"import PIL, dotenv; print\\('PIL', PIL.__version__\\); import importlib.metadata as m; print\\('dotenv', m.version\\('python-dotenv'\\)\\)\")",
+      "Skill(run)",
+      "Skill(run:*)"
+    ]
   }
 }

@@ -131,6 +131,9 @@ class Settings:
     ai_model: str
     ai_max_tokens: int
     ai_temperature: float
+    tts_model: str
+    tts_voice_ar: str
+    tts_voice_en: str
     sentry_dsn: str | None
     youtube_api_key: str | None
 
@@ -239,6 +242,10 @@ class Settings:
         ai_model = (os.getenv("AI_MODEL") or "gpt-4o-mini").strip() or "gpt-4o-mini"
         ai_max_tokens = max(_as_int(os.getenv("AI_MAX_TOKENS"), 500), 64)
         ai_temperature = min(max(_as_float(os.getenv("AI_TEMPERATURE"), 0.7), 0.0), 2.0)
+        # Text-to-speech: model plus a child-friendly voice per language.
+        tts_model = (os.getenv("TTS_MODEL") or "gpt-4o-mini-tts").strip() or "gpt-4o-mini-tts"
+        tts_voice_ar = (os.getenv("TTS_VOICE_AR") or "shimmer").strip() or "shimmer"
+        tts_voice_en = (os.getenv("TTS_VOICE_EN") or "nova").strip() or "nova"
         sentry_dsn = (os.getenv("SENTRY_DSN") or "").strip() or None
         youtube_api_key = (os.getenv("YOUTUBE_API_KEY") or "").strip() or None
 
@@ -393,6 +400,9 @@ class Settings:
             ai_model=ai_model,
             ai_max_tokens=ai_max_tokens,
             ai_temperature=ai_temperature,
+            tts_model=tts_model,
+            tts_voice_ar=tts_voice_ar,
+            tts_voice_en=tts_voice_en,
             sentry_dsn=sentry_dsn,
             youtube_api_key=youtube_api_key,
         )

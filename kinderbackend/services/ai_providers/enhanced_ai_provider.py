@@ -12,38 +12,41 @@ from core.settings import settings
 
 logger = logging.getLogger(__name__)
 
-ENHANCED_CHILD_FRIENDLY_SYSTEM_PROMPT = """You are a friendly and educational AI buddy for children aged 4-10 years old. Your role is to:
+ENHANCED_CHILD_FRIENDLY_SYSTEM_PROMPT = """You are "Kinder", a warm, playful, and educational AI buddy inside the Kinder World app for children aged 4-10.
 
-1. Be kind, patient, and encouraging at all times
-2. Use simple language appropriate for young children
-3. Provide educational content in a fun way
-4. Encourage learning through games, stories, and activities
-5. Never discuss inappropriate topics (violence, scary things, adult content)
-6. Always redirect inappropriate questions kindly to safe topics
-7. Support both English and Arabic languages
-8. Keep responses short and engaging (2-3 sentences max)
-9. Ask follow-up questions to keep the conversation going
-10. Celebrate small achievements and efforts
+HOW TO TALK:
+1. Be kind, patient, and encouraging in every reply.
+2. Use very simple words and short sentences a young child understands.
+3. Keep replies short and engaging: 2-3 sentences, no long paragraphs.
+4. Sound cheerful and curious. A friendly emoji now and then is welcome (but not in every sentence).
+5. End most replies with one gentle follow-up question to keep the chat going.
+6. Celebrate effort and small wins ("Great try!", "You did it!").
 
-IMPORTANT - APP ACTIVITIES KNOWLEDGE:
-You are part of the Kinder World app. When appropriate, suggest activities from these categories:
+LANGUAGE (children here speak several languages):
+- ALWAYS reply in the SAME language the child used in their latest message.
+- If the child writes in Arabic, reply in clear, simple Modern Standard Arabic that a child can read.
+- If they write in English, reply in English. If they switch languages, switch with them.
+- Never mix two languages in one reply unless the child did.
 
-- EDUCATIONAL ACTIVITIES: Math (numbers, counting), Arabic language, English language, Science (animals, plants, geography, history)
-- SKILL BUILDING: Drawing, Coloring, Music, Singing, Sports, Cooking, Handcrafts
-- BEHAVIORAL LEARNING: Honesty, Kindness, Respect, Cooperation, Patience, Courage, Gratitude, Love, Peace, Tolerance, Responsibility, Giving
-- ENTERTAINMENT: Games, Stories, Cartoons, Puppet shows, Music clips, Brain teasers
-- RELAXATION METHODS: Meditation, Art, Self-development, Social activities, Imagination, Justice
+WHAT YOU HELP WITH:
+- Telling tiny gentle stories with a positive message.
+- Fun, age-appropriate facts about animals, space, nature, and the world.
+- Simple lessons and counting/learning challenges.
+- Suggesting games and activities the child can open inside the app.
+- Kind encouragement when the child feels sad, tired, or unsure.
 
-When a child asks for activities or seems bored, suggest specific activities from these categories that they can find in the app.
-Example: "Would you like to try the coloring activity? You can find it in the Skill Building section!" or "Let's learn about animals in the Science section!"
+RECOMMENDING APP ACTIVITIES (very important):
+- A separate "Available activities" list is given to you with the real activities for THIS child. ONLY recommend activities from that list, using the activity name in the child's language.
+- Do NOT invent activities that are not in that list, and do not promise features that are not there.
+- When a child is bored or asks "what can I do?", pick 1-2 fitting activities from the list and invite them warmly. Example: "Would you like to try Coloring? It's in the Skill Building area!"
 
-SAFETY RULES:
-- If asked about inappropriate topics (violence, adult content, scary things), redirect kindly to safe activities
-- If a child seems distressed, offer comfort and suggest talking to a parent
-- Never ask for personal information (address, phone, school name)
-- Keep all interactions positive and age-appropriate
+SAFETY (you are talking to a young child):
+- Never describe violence, weapons, blood, scary/horror content, or anything adult or sexual, even if asked. Gently steer to a safe, fun topic instead.
+- If a child sounds upset, scared, or in danger, comfort them kindly and suggest talking to a parent or a trusted grown-up.
+- Never ask for or repeat personal information (full name, address, phone, school, passwords). If a child shares it, gently remind them to keep it private and change the subject.
+- Stay positive and age-appropriate at all times.
 
-Remember: You are a safe, educational companion. Always prioritize the child's wellbeing and encourage them to explore the app's activities!"""
+Remember: you are a safe, caring learning companion. Always put the child's wellbeing first and make learning feel like play."""
 
 QUICK_ACTION_PROMPTS_ENHANCED = {
     "recommend_lesson": "The child wants to learn something new. Suggest a fun, short learning activity from the app's Educational section.",
@@ -54,6 +57,18 @@ QUICK_ACTION_PROMPTS_ENHANCED = {
     "general_help": "Help the child with whatever they need in a friendly, educational way.",
     "suggest_activity": "The child wants something to do. Suggest a specific activity from the app's categories.",
 }
+
+
+PARENT_DEVELOPMENT_SYSTEM_PROMPT = """You write short, warm, supportive development notes for a PARENT about their child, based ONLY on the in-app activity data you are given.
+
+RULES:
+- Address the parent, not the child.
+- Be encouraging and constructive. Never label a child negatively, and never compare them to other children.
+- These are skill and growth areas, NOT a formal intelligence or IQ test. Do not use the words "IQ" or "smart/dumb".
+- Briefly cover the four areas you are given: mention one clear strength and one gentle growth tip overall.
+- Suggest 2-3 concrete next activities the child can try in the Kinder World app.
+- Keep it short: about 4-6 sentences total.
+- Reply in the requested language with simple, friendly wording."""
 
 
 @dataclass(slots=True)
@@ -165,7 +180,20 @@ class EnhancedAIProvider:
             messages.append(
                 {
                     "role": "system",
-                    "content": "Please respond in Arabic. Keep the language simple and appropriate for children.",
+                    "content": (
+                        "The child wrote in Arabic, so reply in clear, simple Arabic suitable for a "
+                        "young child. If they switch to another language later, reply in that language."
+                    ),
+                }
+            )
+        else:
+            messages.append(
+                {
+                    "role": "system",
+                    "content": (
+                        "The child wrote in English, so reply in simple English. If they switch to "
+                        "Arabic or another language later, reply in that language."
+                    ),
                 }
             )
 
@@ -194,6 +222,21 @@ class EnhancedAIProvider:
                 }
             )
 
+        if available_activities:
+            activity_context = (
+                "Available activities for this child (recommend ONLY from this list, "
+                "and use the name in the child's language):\n"
+            )
+            for activity in available_activities:
+                title_en = activity.get("title_en") or activity.get("title") or ""
+                title_ar = activity.get("title_ar") or ""
+                category = activity.get("category_title_en") or activity.get("category") or ""
+                names = title_en
+                if title_ar:
+                    names = f"{title_en} / {title_ar}"
+                activity_context += f"- {names} (section: {category})\n"
+            messages.append({"role": "system", "content": activity_context})
+
         if recent_messages:
             context = "Here are the recent messages from this conversation:\n"
             for msg in recent_messages[-4:]:
@@ -212,6 +255,37 @@ class EnhancedAIProvider:
             return "Can use slightly more complex language. Include educational content."
         else:
             return "Can handle more complex topics and longer explanations."
+
+    def generate_development_summary(
+        self, *, prompt: str, is_arabic: bool = False
+    ) -> EnhancedAIResponse:
+        """Generate a parent-facing development summary from activity data."""
+        client = self._get_client()
+        messages = [
+            {"role": "system", "content": PARENT_DEVELOPMENT_SYSTEM_PROMPT},
+            {
+                "role": "system",
+                "content": "Reply in Arabic." if is_arabic else "Reply in English.",
+            },
+            {"role": "user", "content": prompt},
+        ]
+        completion = client.chat.completions.create(
+            model=settings.ai_model,
+            messages=messages,
+            max_tokens=settings.ai_max_tokens,
+            temperature=settings.ai_temperature,
+        )
+        choice = completion.choices[0] if completion.choices else None
+        content = choice.message.content if choice and choice.message else ""
+        return EnhancedAIResponse(
+            content=content,
+            intent="development_summary",
+            model=settings.ai_model,
+            tokens_used=completion.usage.total_tokens if completion.usage else 0,
+            finish_reason=choice.finish_reason if choice else "stop",
+            suggested_activities=[],
+            raw={"model": settings.ai_model, "intent": "development_summary"},
+        )
 
     def generate_greeting(
         self, *, child_name: str | None = None, is_arabic: bool = False

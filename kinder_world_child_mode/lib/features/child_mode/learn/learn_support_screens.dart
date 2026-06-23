@@ -1009,6 +1009,7 @@ class _EntertainmentDetailScreenState
             videoUrl: item.preferredVideoUrl,
             thumbnailUrl: item.effectiveThumbnailUrl,
             description: item.descriptionEn ?? item.descriptionAr,
+            quizzes: item.quizzes,
           ),
         ),
       ),
@@ -4798,6 +4799,13 @@ class _BehavioralContentDetailScreenState
                   ),
                 ),
               ],
+              if (item.quizzes.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                CmsQuizCard(
+                  quizzes: item.quizzes,
+                  accentColor: AppColors.behavioral,
+                ),
+              ],
             ],
           );
         },
@@ -5252,6 +5260,7 @@ class _SkillDetailScreenState extends ConsumerState<SkillDetailScreen> {
               videoUrl: item.preferredVideoUrl,
               thumbnailUrl: item.effectiveThumbnailUrl,
               description: item.descriptionEn ?? item.descriptionAr,
+              quizzes: item.quizzes,
             ),
           ),
         );
@@ -5390,12 +5399,14 @@ class SkillVideoScreen extends StatelessWidget {
   final String? videoUrl;
   final String? thumbnailUrl;
   final String? description;
+  final List<PublicQuiz> quizzes;
   const SkillVideoScreen({
     super.key,
     required this.videoTitle,
     this.videoUrl,
     this.thumbnailUrl,
     this.description,
+    this.quizzes = const [],
   });
 
   @override
@@ -5579,6 +5590,10 @@ class SkillVideoScreen extends StatelessWidget {
                           ],
                         ),
                       ),
+                      if (quizzes.isNotEmpty) ...[
+                        const SizedBox(height: 20),
+                        CmsQuizCard(quizzes: quizzes),
+                      ],
                       const SizedBox(height: 30),
                     ],
                   ),
@@ -6262,6 +6277,7 @@ class _EducationalSubjectScreenState
               videoUrl: item.preferredVideoUrl,
               thumbnailUrl: item.effectiveThumbnailUrl,
               description: item.descriptionEn ?? item.descriptionAr,
+              quizzes: item.quizzes,
             ),
           ),
         );
@@ -6826,6 +6842,522 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
                   ),
                   child: Text(
                     _currentQuestionIndex < _quizData.length - 1
+                        ? l10n.nextQuestion
+                        : l10n.lessonFinish,
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// CMS Quiz (admin-authored) — shown after a video when the admin has linked a
+// published quiz to the content item. Renders the real quiz the admin created
+// in the dashboard (questions + correct answer) instead of hard-coded demo
+// questions, across all four learning axes.
+// ───────────────────────────────────────────────────────────────────────────
+
+/// A single quiz question normalised from the flexible admin JSON schema.
+class _CmsQuizQuestion {
+  const _CmsQuizQuestion({
+    required this.prompt,
+    required this.options,
+    required this.correctIndex,
+  });
+
+  final String prompt;
+  final List<String> options;
+  final int correctIndex;
+}
+
+String? _cmsFirstNonEmpty(Map<dynamic, dynamic> raw, List<String> keys) {
+  for (final key in keys) {
+    final value = raw[key];
+    if (value != null && value.toString().trim().isNotEmpty) {
+      return value.toString().trim();
+    }
+  }
+  return null;
+}
+
+int _cmsCorrectIndex(Map<dynamic, dynamic> raw) {
+  final value = raw['correct_index'] ??
+      raw['answer_index'] ??
+      raw['correctAnswerIndex'] ??
+      raw['correct_answer'] ??
+      raw['correct'];
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse(value?.toString().trim() ?? '') ?? 0;
+}
+
+/// Parses the admin's `questions_json` (which accepts several key spellings)
+/// into a clean list, picking the language that matches the current locale.
+List<_CmsQuizQuestion> _parseCmsQuizQuestions(
+  List<Map<String, dynamic>> rawQuestions,
+  bool isArabic,
+) {
+  final parsed = <_CmsQuizQuestion>[];
+  for (final raw in rawQuestions) {
+    final prompt = isArabic
+        ? _cmsFirstNonEmpty(raw,
+            const ['prompt_ar', 'prompt_en', 'prompt', 'question', 'title'])
+        : _cmsFirstNonEmpty(raw,
+            const ['prompt_en', 'prompt_ar', 'prompt', 'question', 'title']);
+    if (prompt == null) continue;
+
+    final rawOptions = raw['options'] ?? raw['choices'];
+    if (rawOptions is! List) continue;
+
+    final options = <String>[];
+    for (final option in rawOptions) {
+      if (option is Map) {
+        final label = isArabic
+            ? _cmsFirstNonEmpty(option,
+                const ['label_ar', 'label_en', 'label', 'text', 'value'])
+            : _cmsFirstNonEmpty(option,
+                const ['label_en', 'label_ar', 'label', 'text', 'value']);
+        if (label != null) options.add(label);
+      } else if (option.toString().trim().isNotEmpty) {
+        options.add(option.toString().trim());
+      }
+    }
+    if (options.length < 2) continue;
+
+    var correctIndex = _cmsCorrectIndex(raw);
+    if (correctIndex < 0 || correctIndex >= options.length) correctIndex = 0;
+
+    parsed.add(_CmsQuizQuestion(
+      prompt: prompt,
+      options: options,
+      correctIndex: correctIndex,
+    ));
+  }
+  return parsed;
+}
+
+/// Card rendered after a video. Shows nothing unless the content item has a
+/// published quiz with at least one answerable question.
+class CmsQuizCard extends StatelessWidget {
+  const CmsQuizCard({
+    super.key,
+    required this.quizzes,
+    this.accentColor = AppColors.skillful,
+  });
+
+  final List<PublicQuiz> quizzes;
+  final Color accentColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final isArabic =
+        Localizations.localeOf(context).languageCode.toLowerCase() == 'ar';
+
+    PublicQuiz? quiz;
+    for (final candidate in quizzes) {
+      if (_parseCmsQuizQuestions(candidate.questions, isArabic).isNotEmpty) {
+        quiz = candidate;
+        break;
+      }
+    }
+    if (quiz == null) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(25),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValuesCompat(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: accentColor.withValuesCompat(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.quiz, color: accentColor),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  l10n.readyForFunQuiz,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            l10n.playQuizToEarnStars,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey[600]),
+          ),
+          const SizedBox(height: 18),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => CmsQuizScreen(
+                      quiz: quiz!,
+                      accentColor: accentColor,
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.play_circle_fill),
+              label: Text(
+                l10n.startQuiz,
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: accentColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Interactive quiz screen rendering the admin-authored questions with
+/// correct/incorrect feedback and a final score.
+class CmsQuizScreen extends StatefulWidget {
+  const CmsQuizScreen({
+    super.key,
+    required this.quiz,
+    this.accentColor = AppColors.skillful,
+  });
+
+  final PublicQuiz quiz;
+  final Color accentColor;
+
+  @override
+  State<CmsQuizScreen> createState() => _CmsQuizScreenState();
+}
+
+class _CmsQuizScreenState extends State<CmsQuizScreen> {
+  int _currentQuestionIndex = 0;
+  int? _selectedAnswerIndex;
+  bool _showResult = false;
+  int _correctCount = 0;
+
+  List<_CmsQuizQuestion>? _questions;
+
+  List<_CmsQuizQuestion> _ensureQuestions(BuildContext context) {
+    final cached = _questions;
+    if (cached != null) return cached;
+    final isArabic =
+        Localizations.localeOf(context).languageCode.toLowerCase() == 'ar';
+    final parsed = _parseCmsQuizQuestions(widget.quiz.questions, isArabic);
+    _questions = parsed;
+    return parsed;
+  }
+
+  String _quizTitle(bool isArabic) {
+    final quiz = widget.quiz;
+    final title = isArabic
+        ? (quiz.titleAr.isNotEmpty ? quiz.titleAr : quiz.titleEn)
+        : (quiz.titleEn.isNotEmpty ? quiz.titleEn : quiz.titleAr);
+    return title;
+  }
+
+  void _checkAnswer(int selectedIndex, _CmsQuizQuestion question) {
+    setState(() {
+      _selectedAnswerIndex = selectedIndex;
+      _showResult = true;
+      if (selectedIndex == question.correctIndex) _correctCount++;
+    });
+  }
+
+  void _nextQuestion(int total) {
+    if (_currentQuestionIndex < total - 1) {
+      setState(() {
+        _currentQuestionIndex++;
+        _selectedAnswerIndex = null;
+        _showResult = false;
+      });
+      return;
+    }
+    final l10n = AppLocalizations.of(context)!;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.celebration, color: Colors.orange, size: 28),
+            const SizedBox(width: 10),
+            Expanded(child: Text(l10n.greatJob)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l10n.youCompletedQuiz, textAlign: TextAlign.center),
+            const SizedBox(height: 12),
+            Text(
+              '⭐ $_correctCount / $total',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: widget.accentColor,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              Navigator.of(context).pop();
+            },
+            child: Text(
+              l10n.awesome,
+              style: const TextStyle(
+                color: Colors.orange,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final isArabic =
+        Localizations.localeOf(context).languageCode.toLowerCase() == 'ar';
+    final questions = _ensureQuestions(context);
+    final accent = widget.accentColor;
+
+    if (questions.isEmpty) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFFFF3E0),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back_ios, color: accent),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+        body: Center(child: Text(l10n.playNoBodyContentYet)),
+      );
+    }
+
+    final currentQ = questions[_currentQuestionIndex];
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFF3E0),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text(
+          _quizTitle(isArabic),
+          style: TextStyle(fontWeight: FontWeight.bold, color: accent),
+          overflow: TextOverflow.ellipsis,
+        ),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios, color: accent),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValuesCompat(alpha: 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: accent.withValuesCompat(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.star, color: accent),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.quizTime,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            l10n.questionOf(
+                                _currentQuestionIndex + 1, questions.length),
+                            style: TextStyle(color: Colors.grey[600]),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: LinearProgressIndicator(
+                  value: (_currentQuestionIndex + 1) / questions.length,
+                  backgroundColor: Colors.orange[100],
+                  valueColor: AlwaysStoppedAnimation<Color>(accent),
+                  minHeight: 8,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                child: Text(
+                  currentQ.prompt,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Expanded(
+                child: ListView.separated(
+                  itemCount: currentQ.options.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final option = currentQ.options[index];
+                    final isCorrect = index == currentQ.correctIndex;
+                    final isSelected = _selectedAnswerIndex == index;
+
+                    Color bgColor = Colors.white;
+                    Color borderColor = Colors.orange[200]!;
+                    Color textColor = Colors.black87;
+
+                    if (_showResult) {
+                      if (isCorrect) {
+                        bgColor = Colors.green[100]!;
+                        borderColor = Colors.green;
+                        textColor = Colors.green[900]!;
+                      } else if (isSelected && !isCorrect) {
+                        bgColor = Colors.red[100]!;
+                        borderColor = Colors.red;
+                        textColor = Colors.red[900]!;
+                      }
+                    } else if (isSelected) {
+                      bgColor = accent.withValuesCompat(alpha: 0.1);
+                      borderColor = accent;
+                    }
+
+                    return InkWell(
+                      onTap: _showResult
+                          ? null
+                          : () => _checkAnswer(index, currentQ),
+                      borderRadius: BorderRadius.circular(18),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 16),
+                        decoration: BoxDecoration(
+                          color: bgColor,
+                          border: Border.all(color: borderColor, width: 2),
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                option,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: textColor,
+                                ),
+                              ),
+                            ),
+                            if (_showResult && isCorrect)
+                              const Icon(Icons.check_circle,
+                                  color: Colors.green),
+                            if (_showResult && isSelected && !isCorrect)
+                              const Icon(Icons.cancel, color: Colors.red),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _showResult
+                      ? () => _nextQuestion(questions.length)
+                      : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: accent,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
+                  child: Text(
+                    _currentQuestionIndex < questions.length - 1
                         ? l10n.nextQuestion
                         : l10n.lessonFinish,
                     style: const TextStyle(
