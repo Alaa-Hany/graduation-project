@@ -77,6 +77,17 @@ class AiBuddyApi {
     return Map<String, dynamic>.from(response.data ?? const {});
   }
 
+  Future<Map<String, dynamic>> getChildSafetyAlerts({
+    required int childId,
+    required String accessToken,
+  }) async {
+    final response = await _network.get<Map<String, dynamic>>(
+      '/ai-buddy/children/$childId/safety-alerts',
+      options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+    );
+    return Map<String, dynamic>.from(response.data ?? const {});
+  }
+
   Future<Map<String, dynamic>> deleteChildHistory({
     required int childId,
     required String accessToken,

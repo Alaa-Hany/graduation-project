@@ -94,8 +94,9 @@ def test_get_client_is_cached(provider):
 def test_get_client_creates_openai(provider, monkeypatch):
     created = {}
 
-    def fake_openai(api_key):
+    def fake_openai(api_key, **kwargs):
         created["api_key"] = api_key
+        created["kwargs"] = kwargs
         return SimpleNamespace(name="client")
 
     import openai
@@ -104,6 +105,8 @@ def test_get_client_creates_openai(provider, monkeypatch):
     client = provider._get_client()
     assert client.name == "client"
     assert created["api_key"] == "sk-test"
+    assert created["kwargs"]["timeout"] == 20.0
+    assert created["kwargs"]["max_retries"] == 1
 
 
 # ---------------------------------------------------------------------------

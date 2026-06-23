@@ -1130,6 +1130,13 @@ abstract class AppLocalizations {
   String get aiBuddyUnavailableHint;
   String get aiBuddySafeModeHint;
   String get aiBuddyNoActiveChildSession;
+  String get sttEmptyResult;
+  String get aiBuddySafetyAlertsTitle;
+  String get aiBuddySafetyAlertsEmpty;
+  String get aiBuddySafetyAlertsLast7Days;
+  String get aiBuddySafetyAlertsViewAll;
+  String get aiBuddyAlertBlocked;
+  String get aiBuddyAlertRedirected;
   String get aiBuddyParentAccessRequired;
   String get aiInitialGreeting;
   String get aiWelcomeGreeting;

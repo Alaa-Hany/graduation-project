@@ -49,13 +49,35 @@ SAFETY (you are talking to a young child):
 Remember: you are a safe, caring learning companion. Always put the child's wellbeing first and make learning feel like play."""
 
 QUICK_ACTION_PROMPTS_ENHANCED = {
-    "recommend_lesson": "The child wants to learn something new. Suggest a fun, short learning activity from the app's Educational section.",
-    "suggest_game": "The child wants to play a game. Suggest a simple, fun game from the app's Entertainment section.",
-    "tell_story": "The child wants to hear a story. Tell a very short, gentle story with a positive message (2-3 sentences).",
-    "fun_fact": "The child wants to learn a fun fact. Share an interesting, age-appropriate fact about animals, space, or nature.",
-    "motivation": "The child seems to need encouragement. Offer kind, supportive words and suggest a small positive activity.",
-    "general_help": "Help the child with whatever they need in a friendly, educational way.",
-    "suggest_activity": "The child wants something to do. Suggest a specific activity from the app's categories.",
+    "recommend_lesson": (
+        "The child wants to learn something new. Pick ONE activity from the Available activities list "
+        "(prefer an educational one), invite them warmly by name, describe in one sentence what they "
+        "will do in that activity, and end with an encouraging question."
+    ),
+    "suggest_game": (
+        "The child wants to play. Pick ONE fun activity from the Available activities list, describe "
+        "it in one playful sentence, and ask if they want to try it right now."
+    ),
+    "tell_story": (
+        "Tell a tiny 3-4 sentence story with a gentle positive lesson (kindness, courage, or "
+        "curiosity). End by asking the child what they think happens next."
+    ),
+    "fun_fact": (
+        "Share ONE surprising, age-appropriate fact about animals, space, or nature in 1-2 sentences. "
+        "Then ask a curious follow-up question to keep the child thinking."
+    ),
+    "motivation": (
+        "The child needs encouragement. Write two warm supportive sentences, suggest one tiny doable "
+        "step they can do right now, and remind them you believe in them."
+    ),
+    "suggest_activity": (
+        "The child wants something to do. Pick 1-2 activities from the Available activities list that "
+        "sound most fun right now, and invite them warmly."
+    ),
+    "general_help": (
+        "Help the child with whatever they need in a friendly, educational way. Keep it short and end "
+        "with a question."
+    ),
 }
 
 
@@ -107,7 +129,9 @@ class EnhancedAIProvider:
         self.ensure_runtime_ready()
         from openai import OpenAI
 
-        self._client = OpenAI(api_key=settings.ai_provider_api_key)
+        self._client = OpenAI(
+            api_key=settings.ai_provider_api_key, timeout=20.0, max_retries=1
+        )
         return self._client
 
     def generate(

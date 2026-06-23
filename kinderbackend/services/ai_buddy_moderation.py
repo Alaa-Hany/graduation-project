@@ -4,7 +4,13 @@ import logging
 import re
 from dataclasses import dataclass, field
 
+from services.ai_buddy_openai_moderation import openai_moderation_service
+
 logger = logging.getLogger(__name__)
+
+# Normalize Arabic letter variants (alef/yaa/taa-marbuta forms) so a keyword
+# like "اقتل" also matches "أقتل"/"إقتل" without having to list every spelling.
+_ARABIC_ALEF = re.compile(r"[أإآ]")
 
 # Arabic clitics that legitimately attach to the front of a word
 # (e.g. "ال" the, "و" and, "بـ" with, "لـ" for). Allowing these lets a rule
@@ -62,6 +68,16 @@ class _SafetyRule:
 
 class AiBuddyModerationService:
     _arabic_pattern = re.compile(r"[\u0600-\u06ff]")
+    # OpenAI moderation category prefix -> (classification, topic). Ordered so
+    # the most serious mapping wins when several categories are flagged at once.
+    _openai_category_map = (
+        ("sexual", "needs_refusal", "sexual_content"),
+        ("violence", "needs_refusal", "violence"),
+        ("illicit/violent", "needs_refusal", "violence"),
+        ("self-harm", "needs_safe_redirect", "self_harm"),
+        ("harassment", "needs_safe_redirect", "bullying_or_hate"),
+        ("hate", "needs_safe_redirect", "bullying_or_hate"),
+    )
     _rules = (
         _SafetyRule(
             name="self_harm",
@@ -176,13 +192,24 @@ class AiBuddyModerationService:
         )
         return decision
 
+    def _normalize_arabic(self, text: str) -> str:
+        """Normalize Arabic letter variants before matching."""
+        text = _ARABIC_ALEF.sub("ا", text)
+        text = text.replace("ة", "ه")
+        text = text.replace("ى", "ي")
+        return text
+
     def _moderate(self, *, text: str, source: str) -> AiBuddyModerationDecision:
         normalized = (text or "").strip()
-        lowered = _ARABIC_NOISE.sub("", normalized.lower())
+        lowered = _ARABIC_NOISE.sub("", self._normalize_arabic(normalized.lower()))
         language = "ar" if self._arabic_pattern.search(normalized) else "en"
 
         for rule in self._rules:
-            hits = [keyword for keyword in rule.keywords if _keyword_matches(keyword, lowered)]
+            hits = [
+                keyword
+                for keyword in rule.keywords
+                if _keyword_matches(self._normalize_arabic(keyword), lowered)
+            ]
             if not hits:
                 continue
             return AiBuddyModerationDecision(
@@ -201,8 +228,17 @@ class AiBuddyModerationService:
                     "matched_rules": hits,
                     "topic": rule.topic,
                     "classification": rule.classification,
+                    "moderation_layer": "keyword",
                 },
             )
+
+        # Keyword rules found nothing — ask the OpenAI moderation API as a second
+        # layer to catch semantic cases the keyword lists miss.
+        ai_decision = self._moderate_with_openai(
+            text=normalized, language=language, source=source
+        )
+        if ai_decision is not None:
+            return ai_decision
 
         return AiBuddyModerationDecision(
             classification="allowed",
@@ -214,6 +250,54 @@ class AiBuddyModerationService:
                 "matched_rules": [],
                 "topic": "general",
                 "classification": "allowed",
+            },
+        )
+
+    def _map_openai_categories(
+        self, categories: dict[str, bool]
+    ) -> tuple[str | None, str | None, list[str]]:
+        flagged = [name for name, value in categories.items() if value]
+        if not flagged:
+            return None, None, []
+        for prefix, classification, topic in self._openai_category_map:
+            matched = [name for name in flagged if name.startswith(prefix)]
+            if matched:
+                return classification, topic, matched
+        return None, None, []
+
+    def _moderate_with_openai(
+        self, *, text: str, language: str, source: str
+    ) -> AiBuddyModerationDecision | None:
+        result = openai_moderation_service.moderate(text)
+        if result is None or not result.flagged:
+            return None
+        classification, topic, matched = self._map_openai_categories(result.categories)
+        if classification is None or topic is None:
+            return None
+        logger.info(
+            "ai_buddy_openai_moderation source=%s flagged=True classification=%s topic=%s categories=%s",
+            source,
+            classification,
+            topic,
+            matched,
+        )
+        return AiBuddyModerationDecision(
+            classification=classification,
+            topic=topic,
+            reason="Flagged by the OpenAI moderation layer.",
+            language=language,
+            matched_rules=tuple(matched),
+            safe_response=self._safe_response(
+                language=language,
+                classification=classification,
+                topic=topic,
+            ),
+            metadata_json={
+                "moderation_source": source,
+                "matched_rules": matched,
+                "topic": topic,
+                "classification": classification,
+                "moderation_layer": "openai",
             },
         )
 

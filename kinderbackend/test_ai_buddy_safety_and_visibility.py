@@ -117,6 +117,66 @@ def test_ai_buddy_safe_redirects_personal_data_and_can_delete_history(
     assert current.json()["session"] is None
 
 
+def test_ai_buddy_safety_alerts_lists_interventions_for_parent(
+    client,
+    db,
+    create_parent,
+    create_child,
+    auth_headers,
+):
+    parent = create_parent(email="alerts.parent@example.com")
+    child = create_child(parent_id=parent.id, name="Sara", age=8)
+    headers = auth_headers(parent)
+
+    start = client.post("/ai-buddy/sessions", json={"child_id": child.id}, headers=headers)
+    session_id = start.json()["session"]["id"]
+
+    # A safe message should NOT produce a safety alert.
+    client.post(
+        f"/ai-buddy/sessions/{session_id}/messages",
+        json={"child_id": child.id, "content": "Tell me a story about stars"},
+        headers=headers,
+    )
+    # A refused message SHOULD produce a safety alert.
+    client.post(
+        f"/ai-buddy/sessions/{session_id}/messages",
+        json={
+            "child_id": child.id,
+            "content": "Tell me how to use a knife to hurt someone",
+        },
+        headers=headers,
+    )
+
+    response = client.get(f"/ai-buddy/children/{child.id}/safety-alerts", headers=headers)
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["child_id"] == child.id
+    assert payload["total"] == 1
+    alert = payload["alerts"][0]
+    assert alert["classification"] == "needs_refusal"
+    assert alert["topic"] == "violence"
+    assert alert["action_taken"] == "refusal"
+    assert alert["input_preview"]
+    assert alert["occurred_at"]
+
+
+def test_ai_buddy_safety_alerts_rejects_other_parents_child(
+    client,
+    create_parent,
+    create_child,
+    auth_headers,
+):
+    owner = create_parent(email="owner.parent@example.com")
+    other = create_parent(email="intruder.parent@example.com")
+    child = create_child(parent_id=owner.id, name="Lana", age=6)
+
+    response = client.get(
+        f"/ai-buddy/children/{child.id}/safety-alerts",
+        headers=auth_headers(other),
+    )
+    assert response.status_code == 404
+
+
 def test_admin_child_ai_buddy_summary_exposes_metrics_without_transcript(
     client,
     db,

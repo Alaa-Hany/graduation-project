@@ -7,6 +7,7 @@ import 'package:kinder_world/core/models/privacy_settings.dart';
 import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/parent_design_system.dart';
+import 'package:kinder_world/features/parent_mode/safety/ai_buddy_safety_alerts_card.dart';
 import 'package:kinder_world/features/parent_mode/safety/safety_dashboard_service.dart';
 import 'package:kinder_world/router.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
@@ -220,6 +221,14 @@ class _SafetyDashboardScreenState extends ConsumerState<SafetyDashboardScreen> {
                   _ActivitySection(data: data),
                   const SizedBox(height: 16),
                   _AlertsSection(data: data),
+                  for (final child in data.children)
+                    if (int.tryParse(child.id) != null) ...[
+                      const SizedBox(height: 16),
+                      AiBuddySafetyAlertsCard(
+                        childId: int.parse(child.id),
+                        childName: child.name,
+                      ),
+                    ],
                   const SizedBox(height: 16),
                   _SupportSection(data: data),
                   const SizedBox(height: 16),

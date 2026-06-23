@@ -10,6 +10,7 @@ from models import User
 from schemas.ai_buddy import (
     AiBuddyConversationOut,
     AiBuddyDeleteHistoryOut,
+    AiBuddySafetyAlertsOut,
     AiBuddySendMessageIn,
     AiBuddySendMessageOut,
     AiBuddyStartSessionIn,
@@ -93,6 +94,19 @@ def get_ai_buddy_visibility_summary(
     user: User = Depends(get_current_user),
 ):
     return ai_buddy_service.get_parent_visibility_summary(
+        db=db,
+        parent=user,
+        child_id=child_id,
+    )
+
+
+@router.get("/children/{child_id}/safety-alerts", response_model=AiBuddySafetyAlertsOut)
+def get_ai_buddy_safety_alerts(
+    child_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    return ai_buddy_service.get_child_safety_alerts(
         db=db,
         parent=user,
         child_id=child_id,

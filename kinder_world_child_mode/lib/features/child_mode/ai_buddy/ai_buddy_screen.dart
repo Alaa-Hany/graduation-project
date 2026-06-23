@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:intl/intl.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
@@ -14,6 +13,7 @@ import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/providers/gamification_provider.dart';
 import 'package:kinder_world/core/services/ai_buddy_service.dart';
 import 'package:kinder_world/core/services/gamification_service.dart';
+import 'package:kinder_world/core/services/voice_tts_service.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
@@ -50,7 +50,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
 
   final TextEditingController _textCtrl = TextEditingController();
   final ScrollController _scrollCtrl = ScrollController();
-  final FlutterTts _tts = FlutterTts();
+  late final VoiceTtsService _ttsService;
   final SpeechToText _stt = SpeechToText();
   int? _playingMessageId;
   bool _isListening = false;
@@ -77,6 +77,11 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
       CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
     );
 
+    _ttsService = VoiceTtsService(
+      network: ref.read(networkServiceProvider),
+      secureStorage: ref.read(secureStorageProvider),
+      logger: ref.read(loggerProvider),
+    );
     _initTts();
     _initStt();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -85,20 +90,22 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
   }
 
   void _initTts() {
-    _tts.setSpeechRate(0.45);
-    _tts.setPitch(1.1);
-    _tts.setCompletionHandler(() {
+    _ttsService.init();
+    _ttsService.setCompletionHandler(() {
       if (mounted) setState(() => _playingMessageId = null);
     });
-    _tts.setCancelHandler(() {
+    _ttsService.setCancelHandler(() {
       if (mounted) setState(() => _playingMessageId = null);
     });
   }
 
   Future<void> _initStt() async {
     final available = await _stt.initialize(
-      onError: (_) {
-        if (mounted) setState(() => _isListening = false);
+      onError: (error) {
+        if (mounted) {
+          setState(() => _isListening = false);
+          ref.read(loggerProvider).w('STT error: ${error.errorMsg}');
+        }
       },
     );
     if (mounted) setState(() => _sttAvailable = available);
@@ -106,21 +113,32 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
 
   Future<void> _startListening() async {
     if (!_sttAvailable || _isListening) return;
-    await _tts.stop();
+    await _ttsService.stop();
     setState(() => _isListening = true);
     final langCode = ref.read(localeProvider).languageCode;
     await _stt.listen(
       localeId: langCode == 'ar' ? 'ar_EG' : 'en_US',
       listenFor: const Duration(seconds: 15),
-      pauseFor: const Duration(seconds: 3),
+      pauseFor: const Duration(seconds: 5),
       onResult: (result) {
         if (result.finalResult) {
           final text = result.recognizedWords.trim();
           setState(() => _isListening = false);
-          if (text.isNotEmpty) {
-            _textCtrl.text = text;
-            _sendMessage();
+          if (text.isEmpty) {
+            if (mounted) {
+              final l10n = AppLocalizations.of(context)!;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(l10n.sttEmptyResult),
+                  duration: const Duration(seconds: 2),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+            return;
           }
+          _textCtrl.text = text;
+          _sendMessage();
         }
       },
     );
@@ -133,18 +151,17 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
 
   Future<void> _speakMessage(int messageId, String text) async {
     if (_playingMessageId == messageId) {
-      await _tts.stop();
+      await _ttsService.stop();
       setState(() => _playingMessageId = null);
       return;
     }
-    await _tts.stop();
+    await _ttsService.stop();
+    setState(() => _playingMessageId = messageId);
     // Match the voice to the language of the message itself, not the app
     // locale. The AI buddy can reply in Arabic or English regardless of the
     // UI language, and reading text with the wrong voice makes the audio
     // sound nothing like the written words.
-    await _tts.setLanguage(_isArabic(text) ? 'ar-EG' : 'en-US');
-    setState(() => _playingMessageId = messageId);
-    await _tts.speak(text);
+    await _ttsService.speak(text, isArabic: _isArabic(text));
   }
 
   /// Returns true when [text] is predominantly Arabic, so we pick the right
@@ -159,7 +176,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
 
   @override
   void dispose() {
-    _tts.stop();
+    _ttsService.dispose();
     _stt.stop();
     _pulseCtrl.dispose();
     _textCtrl.dispose();

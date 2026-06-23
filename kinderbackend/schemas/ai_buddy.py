@@ -130,3 +130,18 @@ class AiBuddyDeleteHistoryOut(BaseModel):
     deleted_sessions: int
     deleted_messages: int
     deleted_at: str
+
+
+class AiBuddySafetyAlertOut(BaseModel):
+    id: int
+    occurred_at: str | None = None
+    classification: str
+    topic: str | None = None
+    action_taken: str | None = None
+    input_preview: str | None = None
+
+
+class AiBuddySafetyAlertsOut(BaseModel):
+    child_id: int
+    alerts: list[AiBuddySafetyAlertOut] = Field(default_factory=list)
+    total: int = 0
