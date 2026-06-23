@@ -28,8 +28,6 @@ import pytest
 import admin_models  # noqa: F401
 import core.admin_security as admin_security
 from admin_models import (
-    AdminUser,
-    AdminUserRole,
     AuditLog,
     Permission,
     Role,
