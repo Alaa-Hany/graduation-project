@@ -36,8 +36,53 @@ class AppCacheStore {
 
   final SharedPreferences _prefs;
 
-  String _metaKey(String scope, String key) => 'cache.meta.$scope.$key';
-  String _payloadKey(String scope, String key) => 'cache.payload.$scope.$key';
+  static const String _payloadPrefix = 'cache.payload.';
+  static const String _metaPrefix = 'cache.meta.';
+
+  /// Bump this whenever cached payloads written by older builds may be
+  /// unusable and must be discarded. It was raised to invalidate content
+  /// cached by a build that displayed mojibake from a stale local cache —
+  /// see [migrate].
+  static const int cacheSchemaVersion = 1;
+  static const String _schemaVersionKey = 'cache.schema_version';
+
+  /// One-time startup maintenance: if the persisted cache schema is older than
+  /// [cacheSchemaVersion], drop every server-backed cached payload so the app
+  /// refetches fresh data instead of replaying stale/corrupt content. Entries
+  /// holding unsynced local mutations (pendingSync / syncFailed) are kept so we
+  /// never discard data that has not reached the server yet.
+  ///
+  /// Call once, before any cache reads. Returns the number of payloads purged.
+  static Future<int> migrate(SharedPreferences prefs) async {
+    final stored = prefs.getInt(_schemaVersionKey) ?? 0;
+    if (stored >= cacheSchemaVersion) return 0;
+
+    var purged = 0;
+    final payloadKeys = prefs
+        .getKeys()
+        .where((k) => k.startsWith(_payloadPrefix))
+        .toList(growable: false);
+    for (final payloadKey in payloadKeys) {
+      final metaKey =
+          '$_metaPrefix${payloadKey.substring(_payloadPrefix.length)}';
+      final metaRaw = prefs.getString(metaKey);
+      if (metaRaw != null && metaRaw.isNotEmpty) {
+        final state = (jsonDecode(metaRaw) as Map)['sync_state'];
+        if (state == CacheSyncState.pendingSync.name ||
+            state == CacheSyncState.syncFailed.name) {
+          continue; // keep unsynced local data
+        }
+      }
+      await prefs.remove(payloadKey);
+      await prefs.remove(metaKey);
+      purged++;
+    }
+    await prefs.setInt(_schemaVersionKey, cacheSchemaVersion);
+    return purged;
+  }
+
+  String _metaKey(String scope, String key) => '$_metaPrefix$scope.$key';
+  String _payloadKey(String scope, String key) => '$_payloadPrefix$scope.$key';
 
   CacheSnapshot snapshot({
     required String scope,

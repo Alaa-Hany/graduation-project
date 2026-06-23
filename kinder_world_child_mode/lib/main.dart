@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:kinder_world/core/cache/app_cache_store.dart';
 import 'package:kinder_world/core/providers/shared_preferences_provider.dart';
 import 'package:kinder_world/core/storage/hive_boxes.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
@@ -106,6 +107,11 @@ class _AppBootstrapState extends State<AppBootstrap> {
       openChildModeBoxes(),
     ]);
     final sharedPreferences = await sharedPreferencesFuture;
+
+    // One-time purge of content cached by older builds (which could replay
+    // stale/mojibake content from local storage). Must run before any cache
+    // reads so the app refetches fresh data from the server.
+    await AppCacheStore.migrate(sharedPreferences);
 
     return _BootstrapResult(
       secureStorage: secureStorage,
