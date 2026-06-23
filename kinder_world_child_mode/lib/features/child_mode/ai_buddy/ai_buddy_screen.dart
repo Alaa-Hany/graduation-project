@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:speech_to_text/speech_to_text.dart';
@@ -52,6 +53,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
   final ScrollController _scrollCtrl = ScrollController();
   late final VoiceTtsService _ttsService;
   final SpeechToText _stt = SpeechToText();
+  final AudioPlayer _sfxPlayer = AudioPlayer();
   int? _playingMessageId;
   bool _isListening = false;
   bool _sttAvailable = false;
@@ -111,9 +113,20 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
     if (mounted) setState(() => _sttAvailable = available);
   }
 
+  /// Plays a short UI sound cue. Failure (e.g. missing asset) must never
+  /// interrupt listening, so it is swallowed silently.
+  Future<void> _playSfx(String assetPath) async {
+    try {
+      await _sfxPlayer.play(AssetSource(assetPath));
+    } catch (_) {
+      // Sound cues are a nice-to-have; ignore playback failures.
+    }
+  }
+
   Future<void> _startListening() async {
     if (!_sttAvailable || _isListening) return;
     await _ttsService.stop();
+    await _playSfx('sounds/mic_start.wav');
     setState(() => _isListening = true);
     final langCode = ref.read(localeProvider).languageCode;
     await _stt.listen(
@@ -146,6 +159,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
 
   Future<void> _stopListening() async {
     await _stt.stop();
+    await _playSfx('sounds/mic_stop.wav');
     if (mounted) setState(() => _isListening = false);
   }
 
@@ -156,12 +170,39 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
       return;
     }
     await _ttsService.stop();
+    // Strip markdown, emoji and repeated punctuation before speaking so the
+    // engine reads natural prose instead of stumbling over "*", "!!!" etc.
+    // Detect the language from the original text (emoji removal never changes
+    // the Arabic/Latin balance, but markdown asterisks could).
+    final cleanText = _cleanForTts(text);
     setState(() => _playingMessageId = messageId);
     // Match the voice to the language of the message itself, not the app
     // locale. The AI buddy can reply in Arabic or English regardless of the
     // UI language, and reading text with the wrong voice makes the audio
     // sound nothing like the written words.
-    await _ttsService.speak(text, isArabic: _isArabic(text));
+    await _ttsService.speak(cleanText, isArabic: _isArabic(text));
+  }
+
+  /// Strips markdown, repeated punctuation, and emoji before passing text to
+  /// the TTS engine so the voice sounds natural, not robotic.
+  String _cleanForTts(String text) {
+    return text
+        // Remove markdown bold/italic/code markers.
+        .replaceAll(RegExp(r'[*_`]'), '')
+        // Collapse runs of exclamation/question marks (keep Arabic variant).
+        .replaceAll(RegExp(r'!{2,}'), '!')
+        .replaceAll(RegExp(r'\?{2,}'), '؟')
+        // Remove emoji and pictographic symbols.
+        .replaceAll(
+          RegExp(
+            r'[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FEFF}]',
+            unicode: true,
+          ),
+          '',
+        )
+        // Collapse the whitespace the removals may have left behind.
+        .replaceAll(RegExp(r'\s{2,}'), ' ')
+        .trim();
   }
 
   /// Returns true when [text] is predominantly Arabic, so we pick the right
@@ -178,6 +219,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
   void dispose() {
     _ttsService.dispose();
     _stt.stop();
+    _sfxPlayer.dispose();
     _pulseCtrl.dispose();
     _textCtrl.dispose();
     _scrollCtrl.dispose();

@@ -183,6 +183,46 @@ def test_synthesize_uses_custom_voice_and_speed():
     assert result.raw["voice"] == "echo"
 
 
+def _settings_with_model(model: str) -> SimpleNamespace:
+    """A drop-in settings stub carrying just the fields synthesize reads."""
+    from core.settings import settings
+
+    return SimpleNamespace(
+        tts_model=model,
+        tts_voice_ar=settings.tts_voice_ar,
+        tts_voice_en=settings.tts_voice_en,
+    )
+
+
+def test_synthesize_sends_child_instructions_for_mini_tts(monkeypatch):
+    import services.voice_service as vs
+    from services.voice_service import _CHILD_TTS_INSTRUCTIONS
+
+    monkeypatch.setattr(vs, "settings", _settings_with_model("gpt-4o-mini-tts"))
+    service = VoiceService()
+    recorder: dict = {}
+    service._client = _FakeClient(recorder)
+
+    asyncio.run(service.synthesize(text="hi", language="en"))
+
+    # gpt-4o-mini-tts honours voice steering, so the child instructions go through.
+    assert recorder["speech_kwargs"]["instructions"] == _CHILD_TTS_INSTRUCTIONS
+
+
+def test_synthesize_omits_instructions_for_legacy_model(monkeypatch):
+    import services.voice_service as vs
+
+    monkeypatch.setattr(vs, "settings", _settings_with_model("tts-1"))
+    service = VoiceService()
+    recorder: dict = {}
+    service._client = _FakeClient(recorder)
+
+    asyncio.run(service.synthesize(text="hi", language="en"))
+
+    # tts-1 rejects the instructions parameter, so it must not be sent.
+    assert "instructions" not in recorder["speech_kwargs"]
+
+
 def test_synthesize_reraises_on_failure():
     service = VoiceService()
 

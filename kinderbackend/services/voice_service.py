@@ -15,6 +15,21 @@ logger = logging.getLogger(__name__)
 
 OpenAIClient: TypeAlias = Any
 
+# Steers the TTS voice towards a warm, calm, child-friendly delivery. Only the
+# ``gpt-4o-mini-tts`` model honours the ``instructions`` parameter; older models
+# such as ``tts-1`` ignore voice steering entirely, so we omit it for them.
+_CHILD_TTS_INSTRUCTIONS = (
+    "Speak in a very warm, gentle, and calm pace. "
+    "You are talking to a young child aged 4-10. "
+    "Use a nurturing and encouraging tone, like a kind teacher or a caring older friend. "
+    "Pause naturally between sentences. "
+    "Sound happy and curious, never rushed or robotic. "
+    "If the text is in Arabic, speak clearly and gently in a child-friendly way."
+)
+
+# The only TTS model that supports the ``instructions`` steering parameter.
+_INSTRUCTABLE_TTS_MODEL = "gpt-4o-mini-tts"
+
 
 @dataclass(slots=True)
 class ASRResult:
@@ -109,12 +124,18 @@ class VoiceService:
             voice_id: str = voice or self._voice_for_language(language)
             model = settings.tts_model
 
-            response = client.audio.speech.create(
-                model=model,
-                voice=voice_id,
-                input=text,
-                speed=speed,
-            )
+            # Voice steering is only honoured by gpt-4o-mini-tts; passing it to
+            # other models (e.g. tts-1) would be rejected, so guard on the model.
+            create_kwargs: dict[str, Any] = {
+                "model": model,
+                "voice": voice_id,
+                "input": text,
+                "speed": speed,
+            }
+            if model == _INSTRUCTABLE_TTS_MODEL:
+                create_kwargs["instructions"] = _CHILD_TTS_INSTRUCTIONS
+
+            response = client.audio.speech.create(**create_kwargs)
 
             audio_content: bytes = response.content
             audio_base64_value = base64.b64encode(audio_content).decode("utf-8")
