@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +13,7 @@ import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/providers/content_controller.dart';
 import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/core/providers/theme_provider.dart';
+import 'package:kinder_world/core/services/sound_effects_service.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
 import 'package:kinder_world/core/widgets/app_connection_status.dart';
@@ -116,6 +119,7 @@ class _ChildHomeScreenState extends ConsumerState<ChildHomeScreen>
   }
 
   void _onTap(int index) {
+    unawaited(SoundEffectsService.instance.playTap());
     widget.navigationShell.goBranch(
       index,
       initialLocation: index == widget.navigationShell.currentIndex,

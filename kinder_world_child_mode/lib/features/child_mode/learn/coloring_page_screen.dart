@@ -11,6 +11,7 @@ import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/providers/gamification_provider.dart';
 import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/core/services/gamification_service.dart';
+import 'package:kinder_world/core/services/sound_effects_service.dart';
 import 'package:kinder_world/core/utils/color_serialization.dart';
 import 'package:kinder_world/core/widgets/child_safe_ui.dart';
 import 'package:kinder_world/features/child_mode/learn/coloring_progress_storage.dart';
@@ -552,6 +553,7 @@ class _ColoringPageScreenState extends ConsumerState<ColoringPageScreen> {
 
   void _triggerSparkle(Offset position) {
     HapticFeedback.lightImpact();
+    unawaited(SoundEffectsService.instance.playTap());
     setState(() {
       _sparklePosition = position;
       _sparkleColor = _controller.selectedColor;

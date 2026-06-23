@@ -137,6 +137,13 @@ class FakeAiBuddyService implements AiBuddyService {
     throw UnimplementedError();
   }
 
+  @override
+  Future<AiBuddySafetyAlerts> getChildSafetyAlerts({
+    required int childId,
+  }) async {
+    throw UnimplementedError();
+  }
+
   AiBuddyConversation _buildConversation({required int childId}) {
     return AiBuddyConversation(
       session: AiBuddySession(

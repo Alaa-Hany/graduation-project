@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/services/sound_effects_service.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 
 /// Shows a small floating "+xp" toast after a child earns experience points.
@@ -8,6 +11,7 @@ import 'package:kinder_world/core/theme/theme_extensions.dart';
 /// not just reflected silently in the profile totals.
 void showXpGainPopup(BuildContext context, {required int xp, int coins = 0}) {
   if (xp <= 0) return;
+  unawaited(SoundEffectsService.instance.playReward());
   final l10n = AppLocalizations.of(context)!;
   final theme = Theme.of(context);
   ScaffoldMessenger.of(context).showSnackBar(

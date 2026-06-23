@@ -87,6 +87,7 @@ flutter:
     - assets/icons/
     - assets/animations/
     - assets/sounds/
+    - assets/sounds/games/
     # TODO: add real video files before release
     # - assets/videos/
 

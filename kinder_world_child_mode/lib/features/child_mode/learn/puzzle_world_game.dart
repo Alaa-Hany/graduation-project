@@ -744,7 +744,7 @@ class _ShufflePuzzleScreenState
       _isSolved = solved;
     });
     unawaited(_audio.playEffect(
-      'sounds/games/card_flip.mp3',
+      'sounds/games/puzzle_tap.mp3',
       fallback: SystemSoundType.click,
       volume: 0.55,
     ));
