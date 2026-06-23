@@ -78,6 +78,8 @@ def get_default_child_limit(db: Session) -> int | None:
     treated as "unset" so it never silently blocks all child creation."""
     defaults = get_dict_setting(db, "defaults", DEFAULT_SYSTEM_SETTINGS["defaults"])
     raw = defaults.get("default_child_limit")
+    if raw is None:
+        return None
     try:
         limit = int(raw)
     except (TypeError, ValueError):
