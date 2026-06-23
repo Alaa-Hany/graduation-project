@@ -97,8 +97,11 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
 
   Future<void> _initStt() async {
     final available = await _stt.initialize(
-      onError: (_) {
-        if (mounted) setState(() => _isListening = false);
+      onError: (error) {
+        if (mounted) {
+          setState(() => _isListening = false);
+          ref.read(loggerProvider).w('STT error: ${error.errorMsg}');
+        }
       },
     );
     if (mounted) setState(() => _sttAvailable = available);
@@ -112,15 +115,26 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
     await _stt.listen(
       localeId: langCode == 'ar' ? 'ar_EG' : 'en_US',
       listenFor: const Duration(seconds: 15),
-      pauseFor: const Duration(seconds: 3),
+      pauseFor: const Duration(seconds: 5),
       onResult: (result) {
         if (result.finalResult) {
           final text = result.recognizedWords.trim();
           setState(() => _isListening = false);
-          if (text.isNotEmpty) {
-            _textCtrl.text = text;
-            _sendMessage();
+          if (text.isEmpty) {
+            if (mounted) {
+              final l10n = AppLocalizations.of(context)!;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(l10n.sttEmptyResult),
+                  duration: const Duration(seconds: 2),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+            return;
           }
+          _textCtrl.text = text;
+          _sendMessage();
         }
       },
     );

@@ -3539,6 +3539,9 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   String get aiBuddyNoActiveChildSession => 'لا توجد جلسة طفل نشطة.';
 
   @override
+  String get sttEmptyResult => 'لم أسمعك جيداً — حاول مرة أخرى';
+
+  @override
   String get aiBuddyParentAccessRequired =>
       'هذه الشاشة تحتاج حاليًا إلى تسجيل دخول ولي الأمر.';
 

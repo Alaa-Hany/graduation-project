@@ -5588,6 +5588,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiBuddyNoActiveChildSession => 'No active child session.';
 
   @override
+  String get sttEmptyResult => "I didn't catch that — please try again";
+
+  @override
   String get aiBuddyParentAccessRequired =>
       'This screen currently needs parent sign-in to start AI Buddy.';
 
