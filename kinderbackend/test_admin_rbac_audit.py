@@ -27,12 +27,7 @@ import pytest
 
 import admin_models  # noqa: F401
 import core.admin_security as admin_security
-from admin_models import (
-    AuditLog,
-    Permission,
-    Role,
-    RolePermission,
-)
+from admin_models import AuditLog, Permission, Role, RolePermission
 from core.admin_rbac import PERMISSION_DEFS, ROLE_DEFS
 from core.two_factor import generate_totp_code
 
