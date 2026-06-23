@@ -347,7 +347,8 @@ def manage_subscription(
 
 
 def _payment_redirect_page(title: str, message: str) -> HTMLResponse:
-    return HTMLResponse(f"""<!DOCTYPE html>
+    return HTMLResponse(
+        f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -367,7 +368,8 @@ p {{ font-size: 14px; color: #cbd5e1; }}
 <p>{message}</p>
 </div>
 </body>
-</html>""")
+</html>"""
+    )
 
 
 @public_router.get("/payment/success", response_class=HTMLResponse, include_in_schema=False)

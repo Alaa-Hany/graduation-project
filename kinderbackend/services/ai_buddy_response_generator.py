@@ -321,9 +321,7 @@ class _InternalFallbackAiBuddyBackend:
     ) -> str:
         prefix = f"{child_name}، " if child_name else ""
         if intent == "recommend_lesson":
-            return (
-                f"{prefix}لنجرّب درسًا قصيرًا وممتعًا. " "عد خمسة أشياء حولك، ثم أخبرني أيها أكبر."
-            )
+            return f"{prefix}لنجرّب درسًا قصيرًا وممتعًا. " "عد خمسة أشياء حولك، ثم أخبرني أيها أكبر."
         if intent == "suggest_game":
             return (
                 f"{prefix}لعبة سريعة: ابحث عن شيء أحمر وشيء أزرق وشيء ناعم. "
