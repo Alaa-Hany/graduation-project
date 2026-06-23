@@ -253,8 +253,8 @@ void main() {
     });
 
     test('level-up grants bonus coins per level gained', () async {
-      // 180 XP -> a 50 XP lesson pushes to 230 (level 1 -> 2)
-      childRepo.profile = _child(xp: 180, level: 1);
+      // 950 XP -> a 50 XP lesson pushes to 1000 (level 1 -> 2)
+      childRepo.profile = _child(xp: 950, level: 1);
       gamiRepo.lastActivityDate = DateTime.now(); // no streak bonus
 
       final result = await service.recordActivity(
