@@ -126,7 +126,9 @@ def test_category_list_and_axis_filter(client, db, super_admin_headers):
     assert len(body["axes"]) == 4  # behavioral/educational/skillful/entertaining
 
     # filtering by a different axis returns nothing for our behavioral category
-    other = client.get("/admin/categories", params={"axis_key": "educational"}, headers=super_admin_headers)
+    other = client.get(
+        "/admin/categories", params={"axis_key": "educational"}, headers=super_admin_headers
+    )
     assert other.status_code == 200
     assert all(c["slug"] != "cat-a" for c in other.json()["items"])
 
@@ -333,7 +335,9 @@ def test_analytics_overview_shape(client, db, super_admin_headers):
 
 
 def test_analytics_usage_returns_points(client, db, super_admin_headers):
-    resp = client.get("/admin/analytics/usage", params={"range": "week"}, headers=super_admin_headers)
+    resp = client.get(
+        "/admin/analytics/usage", params={"range": "week"}, headers=super_admin_headers
+    )
     assert resp.status_code == 200
     body = resp.json()
     assert body["range"] == "week"
@@ -449,13 +453,11 @@ def test_subscription_cancel_reverts_to_free(client, db, super_admin_headers, cr
 
 
 @pytest.mark.skip(reason="Requires payment provider mocks for refund flow")
-def test_subscription_refund(client, db, super_admin_headers):
-    ...
+def test_subscription_refund(client, db, super_admin_headers): ...
 
 
 @pytest.mark.skip(reason="Requires payment provider mocks for reconciliation")
-def test_subscription_reconcile(client, db, super_admin_headers):
-    ...
+def test_subscription_reconcile(client, db, super_admin_headers): ...
 
 
 # ===========================================================================
@@ -508,9 +510,7 @@ def test_support_reply_saves_message_and_updates_status(
     row = db.query(SupportTicket).filter(SupportTicket.id == ticket.id).one()
     assert row.status == "in_progress"
     messages = (
-        db.query(SupportTicketMessage)
-        .filter(SupportTicketMessage.ticket_id == ticket.id)
-        .all()
+        db.query(SupportTicketMessage).filter(SupportTicketMessage.ticket_id == ticket.id).all()
     )
     assert any(m.message == "We are on it" for m in messages)
 
@@ -518,9 +518,7 @@ def test_support_reply_saves_message_and_updates_status(
 def test_support_resolve_sets_status(client, db, super_admin_headers, create_parent):
     parent = create_parent(email="support.resolve@example.com")
     ticket = _create_ticket(db, user_id=parent.id)
-    resp = client.post(
-        f"/admin/support/tickets/{ticket.id}/resolve", headers=super_admin_headers
-    )
+    resp = client.post(f"/admin/support/tickets/{ticket.id}/resolve", headers=super_admin_headers)
     assert resp.status_code == 200
     db.expire_all()
     row = db.query(SupportTicket).filter(SupportTicket.id == ticket.id).one()
@@ -695,7 +693,9 @@ def test_child_update_persists(client, db, super_admin_headers, create_parent, c
     assert row.name == "After Child"
 
 
-def test_child_deactivate_sets_inactive(client, db, super_admin_headers, create_parent, create_child):
+def test_child_deactivate_sets_inactive(
+    client, db, super_admin_headers, create_parent, create_child
+):
     parent = create_parent(email="child.deactivate@example.com")
     child = create_child(parent_id=parent.id)
     resp = client.post(f"/admin/children/{child.id}/deactivate", headers=super_admin_headers)
@@ -722,7 +722,9 @@ def test_child_progress_returns_data(client, db, super_admin_headers, create_par
     assert "child" in resp.json()
 
 
-def test_child_activity_log_returns_list(client, db, super_admin_headers, create_parent, create_child):
+def test_child_activity_log_returns_list(
+    client, db, super_admin_headers, create_parent, create_child
+):
     parent = create_parent(email="child.activity@example.com")
     child = create_child(parent_id=parent.id)
     resp = client.get(f"/admin/children/{child.id}/activity-log", headers=super_admin_headers)

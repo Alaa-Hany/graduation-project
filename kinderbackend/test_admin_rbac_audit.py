@@ -101,9 +101,9 @@ def test_read_endpoint_matrix_allows_and_denies_per_role(
     for permission, path in GET_ENDPOINT_BY_PERMISSION.items():
         resp = client.get(path, headers=headers)
         if permission in granted:
-            assert resp.status_code != 403, (
-                f"{role_name} should reach {path} (has {permission}); got 403"
-            )
+            assert (
+                resp.status_code != 403
+            ), f"{role_name} should reach {path} (has {permission}); got 403"
         else:
             assert resp.status_code == 403, (
                 f"{role_name} must be blocked from {path} (missing {permission}); "
@@ -337,9 +337,7 @@ def test_audit_log_records_all_rbac_mutations(
     )
 
     # disable + enable
-    assert (
-        client.post(f"/admin/admin-users/{new_id}/disable", headers=headers).status_code == 200
-    )
+    assert client.post(f"/admin/admin-users/{new_id}/disable", headers=headers).status_code == 200
     assert client.post(f"/admin/admin-users/{new_id}/enable", headers=headers).status_code == 200
 
     # role create / update / update-permissions
@@ -411,9 +409,7 @@ def test_roles_matrix_flags_builtin_drift(
 
     # Drift the content_admin role by stripping a permission directly in the DB.
     content_role = db.query(Role).filter(Role.name == "content_admin").one()
-    mapping = (
-        db.query(RolePermission).filter(RolePermission.role_id == content_role.id).first()
-    )
+    mapping = db.query(RolePermission).filter(RolePermission.role_id == content_role.id).first()
     db.delete(mapping)
     db.commit()
 
@@ -468,9 +464,7 @@ def test_bootstrap_creates_first_super_admin_then_is_locked(client, db):
 # ---------------------------------------------------------------------------
 
 
-def test_two_factor_full_lifecycle(
-    client, db, seed_builtin_rbac, create_admin, admin_headers
-):
+def test_two_factor_full_lifecycle(client, db, seed_builtin_rbac, create_admin, admin_headers):
     seed_builtin_rbac()
     admin = create_admin(email="twofa@kinderworld.app", role_names=["super_admin"])
     headers = admin_headers(admin)
