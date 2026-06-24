@@ -159,11 +159,7 @@ def test_list_parent_children_aggregates_progress(service, db, create_parent):
     from datetime import timedelta
 
     from core.time_utils import utc_now
-    from models import (
-        ChildActivityEvent,
-        ChildDailyActivitySummary,
-        ChildSessionLog,
-    )
+    from models import ChildActivityEvent, ChildDailyActivitySummary, ChildSessionLog
 
     parent = create_parent(email="cc-progress@example.com")
     child = _make_child(service, db, parent, name="BusyKid")
@@ -215,9 +211,7 @@ def test_list_parent_children_aggregates_progress(service, db, create_parent):
     db.add_all(
         [
             ChildDailyActivitySummary(child_id=child.id, summary_date=today),
-            ChildDailyActivitySummary(
-                child_id=child.id, summary_date=today - timedelta(days=1)
-            ),
+            ChildDailyActivitySummary(child_id=child.id, summary_date=today - timedelta(days=1)),
         ]
     )
     db.commit()
