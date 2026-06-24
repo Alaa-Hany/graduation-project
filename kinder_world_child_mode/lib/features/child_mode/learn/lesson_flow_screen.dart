@@ -382,28 +382,6 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
                   ),
                 ),
                 const SizedBox(height: 16),
-                Container(
-                  width: double.infinity,
-                  height: 200,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .primary
-                        .withValuesCompat(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: Text(
-                      '\u{1F4DA}\n${l10n.lessonContentPlaceholder}',
-                      style: TextStyle(
-                        fontSize: 24,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
                 Text(
                   lesson.content,
                   style: TextStyle(

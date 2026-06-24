@@ -405,7 +405,10 @@ class ChildService:
             avatar=payload.avatar,
         )
         if payload.age is not None and payload.date_of_birth is None:
-            # TODO: callers should pass a real date_of_birth instead of an integer age
+            # The child-create UI collects only an integer age (5-12), never a
+            # birth date, so we approximate date_of_birth as Jan 1 of the birth
+            # year. This keeps the displayed age consistent year-over-year;
+            # callers may pass an explicit date_of_birth when one is available.
             today = date.today()
             child.date_of_birth = date(today.year - int(payload.age), 1, 1)
         db.add(child)
@@ -569,7 +572,8 @@ class ChildService:
             child.date_of_birth = payload.date_of_birth
         if payload.age is not None:
             if payload.date_of_birth is None:
-                # TODO: callers should pass a real date_of_birth instead of an integer age
+                # See create_child: age-only input is approximated to Jan 1 of
+                # the birth year, since the UI never collects a real birth date.
                 today = date.today()
                 child.date_of_birth = date(today.year - int(payload.age), 1, 1)
         if payload.age is not None or payload.date_of_birth is not None:
@@ -712,10 +716,21 @@ class ChildService:
             device_id,
         )
 
+        # Backfill the child's local-first progress on login. Child mode keeps
+        # xp/level/streak/activities in local storage only, so on a fresh device
+        # (or after the browser drops its storage) it would otherwise reset to
+        # zero with no way to recover. We return the same all-time aggregate the
+        # parent dashboard shows, computed from analytics, and the client merges
+        # it into its local profile (taking the max, never regressing).
+        progress = self._progress_by_child(db=db, child_ids=[child.id]).get(
+            child.id, {}
+        )
+
         return {
             "success": True,
             "child_id": child.id,
             "name": child.name,
+            "progress": progress,
             **session_payload,
         }
 

@@ -118,24 +118,13 @@ Future<String?> appRedirect({
 
   // On the web, a page refresh restores the deep-linked URL and recreates the
   // app. If the entry URL points straight into a saved parent/child session
-  // (e.g. `/parent/dashboard` or `/child/home`), don't silently resume that
-  // mode — send the user back to the user-type chooser so the mode is picked
-  // explicitly. Auth, forgot/reset-password and email-verification deep links
-  // must stay reachable, so they are excluded. Only the very first redirect of
-  // the launch is affected, so in-app navigation after picking a mode works
-  // normally. Mobile is left untouched (it always boots at the splash route).
-  if (kIsWeb && !launchGuard.firstRedirectHandled) {
-    launchGuard.firstRedirectHandled = true;
-    final entersSavedMode = (isAnyParentRoute(path) || isAnyChildRoute(path)) &&
-        !isParentAuthRoute(path) &&
-        path != Routes.parentForgotPassword &&
-        path != Routes.parentResetPassword &&
-        path != Routes.childLogin &&
-        path != Routes.childForgotPassword;
-    if (entersSavedMode) {
-      return Routes.selectUserType;
-    }
-  }
+  // (e.g. `/parent/dashboard` or `/child/home`), resume that mode directly so
+  // the user lands back where they were instead of being bounced to the
+  // user-type chooser. The normal session-based redirect logic below still
+  // applies (e.g. parent routes remain PIN-protected), so this only skips the
+  // explicit re-selection step. The launch guard is retained for any future
+  // first-redirect needs but no longer forces a chooser detour.
+  launchGuard.firstRedirectHandled = true;
 
   final adminAuthState = ref.read(adminAuthProvider);
   final isMaintenanceMode = ref.read(maintenanceModeProvider);

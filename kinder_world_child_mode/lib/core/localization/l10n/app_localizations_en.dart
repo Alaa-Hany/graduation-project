@@ -455,109 +455,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chooseActivity => 'Choose an Activity';
 
   @override
-  String startingActivity(String title) => 'Starting $title';
-
-  @override
   String activityMinutes(int minutes) => '$minutes min';
 
   @override
   String activityXp(int xp) => '$xp XP';
-
-  @override
-  String get activityGame1Title => 'Math Puzzles';
-
-  @override
-  String get activityGame1Desc => 'Fun math challenges';
-
-  @override
-  String get activityGame2Title => 'Memory Match';
-
-  @override
-  String get activityGame2Desc => 'Test your memory';
-
-  @override
-  String get activityGame3Title => 'Word Builder';
-
-  @override
-  String get activityGame3Desc => 'Create words from letters';
-
-  @override
-  String get activityGame4Title => 'Color Match';
-
-  @override
-  String get activityGame4Desc => 'Match colors and shapes';
-
-  @override
-  String get activityStory1Title => 'The Brave Little Ant';
-
-  @override
-  String get activityStory1Desc => 'A story about courage';
-
-  @override
-  String get activityStory2Title => 'Rainbow Adventure';
-
-  @override
-  String get activityStory2Desc => 'Colors come to life';
-
-  @override
-  String get activityStory3Title => 'The Magic Tree';
-
-  @override
-  String get activityStory3Desc => 'A tale of friendship';
-
-  @override
-  String get activityStory4Title => 'Ocean Dreams';
-
-  @override
-  String get activityStory4Desc => 'Underwater adventure';
-
-  @override
-  String get activityMusic1Title => 'Sing Along';
-
-  @override
-  String get activityMusic1Desc => 'Fun children songs';
-
-  @override
-  String get activityMusic2Title => 'Instrument Sounds';
-
-  @override
-  String get activityMusic2Desc => 'Learn musical instruments';
-
-  @override
-  String get activityMusic3Title => 'Rhythm Time';
-
-  @override
-  String get activityMusic3Desc => 'Clap to the beat';
-
-  @override
-  String get activityMusic4Title => 'Dance Party';
-
-  @override
-  String get activityMusic4Desc => 'Move and groove';
-
-  @override
-  String get activityVideo1Title => 'Nature Explorer';
-
-  @override
-  String get activityVideo1Desc => 'Discover the natural world';
-
-  @override
-  String get activityVideo2Title => 'Science Wonders';
-
-  @override
-  String get activityVideo2Desc => 'Amazing science facts';
-
-  @override
-  String get activityVideo3Title => 'Animal Friends';
-
-  @override
-  String get activityVideo3Desc => 'Meet different animals';
-
-  @override
-  String get activityVideo4Title => 'Space Adventure';
-
-  @override
-  String get activityVideo4Desc => 'Journey to the stars';
 
   @override
   String get activityOfDayTreasureHuntTitle => 'Treasure Hunt';
@@ -3261,9 +3162,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get lessonContentFallback =>
       'This is where the main learning content appears. It can include text, pictures, videos, or interactive activities.';
-
-  @override
-  String get lessonContentPlaceholder => 'Learning Content';
 
   @override
   String get letsPractice => 'Let\'s Practice!';

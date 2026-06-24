@@ -223,7 +223,7 @@ void main() {
     expect(find.byType(UserTypeSelectionScreen), findsOneWidget);
   });
 
-  testWidgets('authenticated parent entering parent mode is sent to PIN', (
+  testWidgets('saved parent session resumes parent mode (sent to PIN)', (
     WidgetTester tester,
   ) async {
     final storage = _TestSecureStorage(
@@ -245,21 +245,44 @@ void main() {
       authRepository: authRepository,
     );
     await _pumpPastSplash(tester);
-
-    final l10n = AppLocalizations.of(
-      tester.element(find.byType(UserTypeSelectionScreen)),
-    )!;
-
-    await tester.tap(find.text(l10n.parentMode));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
     await tester.pumpAndSettle();
 
+    // The splash should resume the saved parent session directly without
+    // bouncing through the user-type chooser; the PIN guard still applies.
+    expect(find.byType(UserTypeSelectionScreen), findsNothing);
     final router = container.read(routerProvider);
     expect(find.byType(ParentPinScreen), findsOneWidget);
     expect(
       router.routerDelegate.currentConfiguration.uri.path,
       Routes.parentPin,
+    );
+  });
+
+  testWidgets('saved child session resumes child mode directly', (
+    WidgetTester tester,
+  ) async {
+    final storage = _TestSecureStorage(
+      authToken: 'child-token',
+      userRole: 'child',
+    );
+    final container = await _pumpApp(
+      tester,
+      preferences: const <String, Object>{
+        'app_locale': 'en',
+        'onboarding_completed': true,
+      },
+      storage: storage,
+    );
+    await _pumpPastSplash(tester);
+    await tester.pumpAndSettle();
+
+    // No saved child session token -> child mode resolves to child login,
+    // never the user-type chooser.
+    expect(find.byType(UserTypeSelectionScreen), findsNothing);
+    final router = container.read(routerProvider);
+    expect(
+      router.routerDelegate.currentConfiguration.uri.path,
+      Routes.childLogin,
     );
   });
 }

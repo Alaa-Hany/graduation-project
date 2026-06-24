@@ -11,6 +11,7 @@ import 'package:kinder_world/app.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/providers/app_launch_provider.dart';
 import 'package:kinder_world/router.dart';
+import 'package:kinder_world/core/storage/secure_storage.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -50,15 +51,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   Future<void> _navigateNext() async {
     if (!mounted) return;
 
+    final secureStorage = ref.read(secureStorageProvider);
     final appLaunch = ref.read(appLaunchProvider);
     if (!appLaunch.hasSavedLocale || !appLaunch.hasCompletedOnboarding) {
-      final secureStorage = ref.read(secureStorageProvider);
       final hasExistingSession = secureStorage.hasCachedAuthToken
           ? (secureStorage.cachedAuthToken?.isNotEmpty ?? false)
           : ((await secureStorage.getAuthToken())?.isNotEmpty ?? false);
       if (hasExistingSession) {
         if (!mounted) return;
-        context.go(Routes.selectUserType);
+        context.go(await _resolveSessionDestination(secureStorage));
         return;
       }
     }
@@ -72,7 +73,31 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       context.go(Routes.onboarding);
       return;
     }
-    context.go(Routes.selectUserType);
+    context.go(await _resolveSessionDestination(secureStorage));
+  }
+
+  /// Resolves where to land after the splash. If a saved session exists, resume
+  /// the user's last mode directly (parent or child) instead of forcing the
+  /// user-type chooser. The router's redirect guard still enforces parent PIN
+  /// and child-login requirements, so this only skips the re-selection step.
+  Future<String> _resolveSessionDestination(SecureStorage secureStorage) async {
+    final authToken = secureStorage.hasCachedAuthToken
+        ? secureStorage.cachedAuthToken
+        : await secureStorage.getAuthToken();
+    if (authToken == null || authToken.isEmpty) {
+      return Routes.selectUserType;
+    }
+    final userRole = await secureStorage.getUserRole();
+    if (userRole == 'parent') {
+      return Routes.parentDashboard;
+    }
+    if (userRole == 'child') {
+      final childSession = await secureStorage.getChildSession();
+      return (childSession != null && childSession.isNotEmpty)
+          ? Routes.childHome
+          : Routes.childLogin;
+    }
+    return Routes.selectUserType;
   }
 
   @override

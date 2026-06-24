@@ -3,12 +3,43 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hive/hive.dart';
 import 'package:kinder_world/core/api/auth_api.dart';
+import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/models/user.dart';
 import 'package:kinder_world/core/network/network_service.dart';
+import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/repositories/auth_repository.dart';
+import 'package:kinder_world/core/repositories/child_repository.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
 import 'package:logger/logger.dart';
+
+class _FakeChildBox extends Fake implements Box {
+  final Map<dynamic, dynamic> _store = {};
+
+  @override
+  Iterable get keys => _store.keys;
+
+  @override
+  int get length => _store.length;
+
+  @override
+  bool containsKey(dynamic key) => _store.containsKey(key);
+
+  @override
+  dynamic get(dynamic key, {dynamic defaultValue}) =>
+      _store.containsKey(key) ? _store[key] : defaultValue;
+
+  @override
+  Future<void> put(dynamic key, dynamic value) async {
+    _store[key] = value;
+  }
+
+  @override
+  Future<void> delete(dynamic key) async {
+    _store.remove(key);
+  }
+}
 
 class _MemorySecureStorage extends SecureStorage {
   String? authToken;
@@ -298,6 +329,55 @@ Map<String, dynamic> _parentAuthRaw({
 
 final _testRefProvider = Provider<Ref>((ref) => ref);
 Ref _testRef() => ProviderContainer().read(_testRefProvider);
+Ref _testRefWith(List<Override> overrides) =>
+    ProviderContainer(overrides: overrides).read(_testRefProvider);
+
+ChildProfile _childProfile({
+  required String id,
+  int xp = 0,
+  int level = 1,
+  int streak = 0,
+  int activitiesCompleted = 0,
+  int totalTimeSpent = 0,
+}) {
+  final now = DateTime(2025, 1, 1);
+  return ChildProfile(
+    id: id,
+    name: 'Mira',
+    age: 6,
+    avatar: '🦊',
+    interests: const [],
+    level: level,
+    xp: xp,
+    streak: streak,
+    favorites: const [],
+    parentId: 'local',
+    picturePassword: const [],
+    createdAt: now,
+    updatedAt: now,
+    totalTimeSpent: totalTimeSpent,
+    activitiesCompleted: activitiesCompleted,
+  );
+}
+
+ChildLoginPayload _childLoginWithProgress({
+  required String childId,
+  required String sessionToken,
+  required Map<String, dynamic> progress,
+}) {
+  return ChildLoginPayload(
+    success: true,
+    childId: childId,
+    name: 'Mira',
+    sessionToken: sessionToken,
+    raw: {
+      'name': 'Mira',
+      'child_id': childId,
+      'session_token': sessionToken,
+      'progress': progress,
+    },
+  );
+}
 
 void main() {
   late _MemorySecureStorage storage;
@@ -381,6 +461,130 @@ void main() {
     expect(storage.userId, 'child-7');
     expect(storage.childSession, 'child-7');
     expect(storage.parentPinVerified, isFalse);
+  });
+
+  test('loginChild backfills an existing local profile from server progress',
+      () async {
+    final box = _FakeChildBox();
+    final childRepo = ChildRepository(childBox: box, logger: Logger());
+    // Local profile lost its progress (fresh storage / old logout bug).
+    await childRepo.createChildProfile(_childProfile(id: 'child-7'));
+
+    final ref = _testRefWith([
+      childRepositoryProvider.overrideWithValue(childRepo),
+    ]);
+    final repo = AuthRepository(
+      secureStorage: storage,
+      authApi: authApi,
+      ref: ref,
+      logger: Logger(),
+    );
+
+    final sessionToken = _childSessionJwt();
+    authApi.childLoginPayload = _childLoginWithProgress(
+      childId: 'child-7',
+      sessionToken: sessionToken,
+      progress: const {
+        'xp': 995,
+        'level': 1,
+        'streak': 1,
+        'activities_completed': 16,
+        'total_time_spent': 16,
+      },
+    );
+
+    await repo.loginChild(
+      childId: 'child-7',
+      childName: 'Mira',
+      picturePassword: const ['apple', 'cat', 'dog'],
+    );
+
+    final restored = await childRepo.getChildProfile('child-7');
+    expect(restored, isNotNull);
+    expect(restored!.xp, 995);
+    expect(restored.streak, 1);
+    expect(restored.activitiesCompleted, 16);
+    expect(restored.totalTimeSpent, 16);
+  });
+
+  test('loginChild never regresses a fresher local progress value', () async {
+    final box = _FakeChildBox();
+    final childRepo = ChildRepository(childBox: box, logger: Logger());
+    // Local mode already recorded more than the server aggregate knows about.
+    await childRepo.createChildProfile(
+      _childProfile(id: 'child-7', xp: 2000, activitiesCompleted: 30),
+    );
+
+    final ref = _testRefWith([
+      childRepositoryProvider.overrideWithValue(childRepo),
+    ]);
+    final repo = AuthRepository(
+      secureStorage: storage,
+      authApi: authApi,
+      ref: ref,
+      logger: Logger(),
+    );
+
+    authApi.childLoginPayload = _childLoginWithProgress(
+      childId: 'child-7',
+      sessionToken: _childSessionJwt(),
+      progress: const {
+        'xp': 995,
+        'level': 1,
+        'activities_completed': 16,
+      },
+    );
+
+    await repo.loginChild(
+      childId: 'child-7',
+      childName: 'Mira',
+      picturePassword: const ['apple', 'cat', 'dog'],
+    );
+
+    final restored = await childRepo.getChildProfile('child-7');
+    expect(restored!.xp, 2000);
+    expect(restored.activitiesCompleted, 30);
+  });
+
+  test('loginChild seeds a local profile from server progress on a fresh device',
+      () async {
+    final box = _FakeChildBox();
+    final childRepo = ChildRepository(childBox: box, logger: Logger());
+    // No local profile exists yet — brand-new device.
+
+    final ref = _testRefWith([
+      childRepositoryProvider.overrideWithValue(childRepo),
+    ]);
+    final repo = AuthRepository(
+      secureStorage: storage,
+      authApi: authApi,
+      ref: ref,
+      logger: Logger(),
+    );
+
+    authApi.childLoginPayload = _childLoginWithProgress(
+      childId: 'child-7',
+      sessionToken: _childSessionJwt(),
+      progress: const {
+        'xp': 995,
+        'level': 1,
+        'streak': 1,
+        'activities_completed': 16,
+        'total_time_spent': 16,
+      },
+    );
+
+    await repo.loginChild(
+      childId: 'child-7',
+      childName: 'Mira',
+      picturePassword: const ['apple', 'cat', 'dog'],
+    );
+
+    final seeded = await childRepo.getChildProfile('child-7');
+    expect(seeded, isNotNull);
+    expect(seeded!.xp, 995);
+    expect(seeded.activitiesCompleted, 16);
+    expect(seeded.name, 'Mira');
   });
 
   test(

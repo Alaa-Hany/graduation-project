@@ -82,3 +82,20 @@ def test_parent_register_verify_otp_create_child_child_login(client, patched_otp
     assert login_body.get(
         "session_token"
     ), "expected a non-empty session_token in child login response"
+
+    # Child login returns the all-time progress aggregate so child mode can
+    # backfill its local-first profile on a fresh device / after a logout cycle.
+    progress = login_body.get("progress")
+    assert isinstance(progress, dict), "expected a progress object in child login response"
+    for key in (
+        "xp",
+        "level",
+        "streak",
+        "total_time_spent",
+        "activities_completed",
+    ):
+        assert key in progress, f"expected '{key}' in child login progress"
+    # A brand-new child has no analytics yet, so progress starts at the baseline.
+    assert progress["xp"] == 0
+    assert progress["level"] == 1
+    assert progress["activities_completed"] == 0

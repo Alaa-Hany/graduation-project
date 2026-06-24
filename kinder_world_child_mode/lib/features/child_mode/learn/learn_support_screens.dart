@@ -5468,17 +5468,30 @@ class SkillVideoScreen extends ConsumerStatefulWidget {
 class _SkillVideoScreenState extends ConsumerState<SkillVideoScreen> {
   bool _completing = false;
   bool _rewardGranted = false;
+  final _scrollController = ScrollController();
+  final _quizKey = GlobalKey();
 
   // Stable per-video id so finishing the same lesson only earns XP once.
   String get _activityId =>
       'video_${(widget.videoUrl ?? widget.videoTitle).trim().hashCode}';
 
-  /// Awards XP for finishing the video, then returns to the previous screen.
-  /// YouTube videos open in an external player so playback completion can't be
-  /// detected automatically — the "I'm done" button is what credits the lesson.
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  /// Awards XP for finishing the video. If the lesson has quizzes, scrolls
+  /// down to the quiz section instead of popping. YouTube videos open in an
+  /// external player so playback completion can't be detected automatically —
+  /// the "I'm done" button is what credits the lesson.
   Future<void> _completeVideo() async {
     if (_rewardGranted) {
-      if (mounted) Navigator.of(context).pop();
+      if (widget.quizzes.isNotEmpty) {
+        _scrollToQuiz();
+      } else if (mounted) {
+        Navigator.of(context).pop();
+      }
       return;
     }
     final child = ref.read(currentChildProvider);
@@ -5518,9 +5531,30 @@ class _SkillVideoScreenState extends ConsumerState<SkillVideoScreen> {
         showXpGainPopup(context, xp: xp);
         await Future<void>.delayed(const Duration(milliseconds: 900));
       }
+    } else {
+      _rewardGranted = true;
     }
 
-    if (mounted) Navigator.of(context).pop();
+    if (!mounted) return;
+    setState(() => _completing = false);
+
+    if (widget.quizzes.isNotEmpty) {
+      _scrollToQuiz();
+    } else {
+      Navigator.of(context).pop();
+    }
+  }
+
+  void _scrollToQuiz() {
+    final ctx = _quizKey.currentContext;
+    if (ctx != null) {
+      Scrollable.ensureVisible(
+        ctx,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+        alignment: 0.0,
+      );
+    }
   }
 
   @override
@@ -5565,6 +5599,7 @@ class _SkillVideoScreenState extends ConsumerState<SkillVideoScreen> {
             ),
             Expanded(
               child: SingleChildScrollView(
+                controller: _scrollController,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: Column(
@@ -5720,6 +5755,7 @@ class _SkillVideoScreenState extends ConsumerState<SkillVideoScreen> {
                       if (widget.quizzes.isNotEmpty) ...[
                         const SizedBox(height: 20),
                         CmsQuizCard(
+                          key: _quizKey,
                           quizzes: widget.quizzes,
                           axisKey: widget.axisKey,
                         ),

@@ -174,7 +174,7 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get learn => 'تعلم';
   @override
-  String get play => 'اكشبلور';
+  String get play => 'استكشف';
   @override
   String get explore => 'استكشف';
   @override
@@ -1642,71 +1642,7 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get aboutSubtitle => 'الإصدار والتراخيص وحقوق النشر';
   @override
-  String get activityGame1Desc => 'تحديات رياضيات ممتعة';
-  @override
-  String get activityGame1Title => 'ألغاز الرياضيات';
-  @override
-  String get activityGame2Desc => 'اختبر ذاكرتك';
-  @override
-  String get activityGame2Title => 'لعبة مطابقة الذاكرة';
-  @override
-  String get activityGame3Desc => 'كوّن كلمات من الحروف';
-  @override
-  String get activityGame3Title => 'بناء الكلمات';
-  @override
-  String get activityGame4Desc => 'طابق الألوان والأشكال';
-  @override
-  String get activityGame4Title => 'مطابقة الألوان';
-  @override
-  String get activityMusic1Desc => 'أغاني أطفال ممتعة';
-  @override
-  String get activityMusic1Title => 'غنِّ معنا';
-  @override
-  String get activityMusic2Desc => 'تعرّف على الآلات الموسيقية';
-  @override
-  String get activityMusic2Title => 'أصوات الآلات';
-  @override
-  String get activityMusic3Desc => 'صفّق على الإيقاع';
-  @override
-  String get activityMusic3Title => 'وقت الإيقاع';
-  @override
-  String get activityMusic4Desc => 'تحرّك وارقص';
-  @override
-  String get activityMusic4Title => 'حفلة الرقص';
-  @override
   String get activityRespectSharing => 'الاحترام والمشاركة';
-  @override
-  String get activityStory1Desc => 'قصة عن الشجاعة';
-  @override
-  String get activityStory1Title => 'النملة الصغيرة الشجاعة';
-  @override
-  String get activityStory2Desc => 'الألوان تنبض بالحياة';
-  @override
-  String get activityStory2Title => 'مغامرة قوس قزح';
-  @override
-  String get activityStory3Desc => 'حكاية عن الصداقة';
-  @override
-  String get activityStory3Title => 'الشجرة السحرية';
-  @override
-  String get activityStory4Desc => 'مغامرة تحت الماء';
-  @override
-  String get activityStory4Title => 'أحلام المحيط';
-  @override
-  String get activityVideo1Desc => 'اكتشف العالم الطبيعي';
-  @override
-  String get activityVideo1Title => 'مستكشف الطبيعة';
-  @override
-  String get activityVideo2Desc => 'حقائق علمية مذهلة';
-  @override
-  String get activityVideo2Title => 'روائع العلوم';
-  @override
-  String get activityVideo3Desc => 'تعرّف على حيوانات مختلفة';
-  @override
-  String get activityVideo3Title => 'أصدقاء الحيوانات';
-  @override
-  String get activityVideo4Desc => 'رحلة إلى النجوم';
-  @override
-  String get activityVideo4Title => 'مغامرة الفضاء';
   @override
   String get additionalResources => 'موارد إضافية';
   @override
