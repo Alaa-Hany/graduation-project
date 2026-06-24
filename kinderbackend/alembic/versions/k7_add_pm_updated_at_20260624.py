@@ -46,12 +46,13 @@ def upgrade() -> None:
         op.execute(
             "UPDATE payment_methods SET updated_at = created_at WHERE updated_at IS NULL"
         )
-        op.alter_column(
-            "payment_methods",
-            "updated_at",
-            nullable=False,
-            server_default=sa.text("now()"),
-        )
+        with op.batch_alter_table("payment_methods", schema=None) as batch_op:
+            batch_op.alter_column(
+                "updated_at",
+                existing_type=sa.DateTime(timezone=True),
+                nullable=False,
+                server_default=sa.func.now(),
+            )
 
 
 def downgrade() -> None:
