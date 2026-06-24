@@ -81,6 +81,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
 
     _ttsService = VoiceTtsService(
       network: ref.read(networkServiceProvider),
+      secureStorage: ref.read(secureStorageProvider),
       logger: ref.read(loggerProvider),
     );
     _initTts();
@@ -91,13 +92,17 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
   }
 
   void _initTts() {
-    _ttsService.init();
+    // Set completion/cancel handlers synchronously so they are ready before
+    // the first speak() call, even while init() is still probing locales.
     _ttsService.setCompletionHandler(() {
       if (mounted) setState(() => _playingMessageId = null);
     });
     _ttsService.setCancelHandler(() {
       if (mounted) setState(() => _playingMessageId = null);
     });
+    // init() configures TTS rates and probes Arabic locale availability.
+    // It does not need to complete before speak() is called.
+    _ttsService.init();
   }
 
   Future<void> _initStt() async {

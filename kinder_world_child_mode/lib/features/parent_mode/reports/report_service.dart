@@ -121,6 +121,31 @@ class ParentReportService {
         basicPayload: basicPayload,
         advancedPayload: advancedPayload,
       );
+
+      // Child-mode sessions are recorded locally and only push to the backend
+      // when a parent access token is available; a pure child login has none,
+      // so the server can legitimately have nothing recorded while the device
+      // holds the child's real progress. When the server reports no recorded
+      // activity but local records exist, show the on-device progress instead
+      // of an empty report (this is what made progress "disappear" for parents
+      // after a logout/login).
+      if (!report.usesRecordedSessions) {
+        final localRecords = await _loadProgressRecords(child.id);
+        if (localRecords.isNotEmpty) {
+          return ChildReportLoadResult(
+            report: ParentReportService.buildReportFromRecords(
+              child: child,
+              period: period,
+              allRecords: localRecords,
+            ),
+            source: ChildReportSource.localDevice,
+            cacheSnapshot: cacheSnapshot.hasData ? cacheSnapshot : null,
+            hasPendingLocalChanges:
+                localRecords.any((record) => record.needsSync),
+          );
+        }
+      }
+
       await cacheStore.storeMap(
         scope: _reportCacheScope,
         key: cacheKey,

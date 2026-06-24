@@ -14,7 +14,8 @@ class PremiumMemoryMatchGameScreen extends ConsumerStatefulWidget {
 }
 
 class _PremiumMemoryMatchGameScreenState
-    extends ConsumerState<PremiumMemoryMatchGameScreen> {
+    extends ConsumerState<PremiumMemoryMatchGameScreen>
+    with _GameVisibilityGuard {
   static final List<_MemoryLevel> _levels = List.generate(50, (index) {
     const accents = [
       Color(0xFFFFD76A),
@@ -160,6 +161,30 @@ class _PremiumMemoryMatchGameScreenState
     _timer?.cancel();
     unawaited(_audio.dispose());
     super.dispose();
+  }
+
+  @override
+  void onGameBecameHidden() {
+    // Stop counting down and silence the music while the child is on another
+    // tab, so leaving the game without pressing back doesn't drain the timer.
+    _timer?.cancel();
+    unawaited(_audio.stopBackground());
+  }
+
+  @override
+  void onGameBecameVisible() {
+    if (!kIsWeb) {
+      unawaited(
+        _audio.startBackground('sounds/games/memory_bg.mp3', volume: 0.18),
+      );
+    }
+    if (!_isPreviewing &&
+        !_finished &&
+        !_isLost &&
+        _canPlayCurrentLevel &&
+        _cards.isNotEmpty) {
+      _startTimer();
+    }
   }
 
   Future<void> _loadLevelAssets() async {
@@ -332,7 +357,7 @@ class _PremiumMemoryMatchGameScreenState
   void _startTimer() {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted || _finished || _isLost) return;
+      if (!mounted || _finished || _isLost || !isGameVisible) return;
       if (_remainingSeconds <= 1) {
         _timer?.cancel();
         setState(() {
@@ -658,6 +683,7 @@ class _PremiumMemoryMatchGameScreenState
 
   @override
   Widget build(BuildContext context) {
+    updateGameVisibility(context);
     final cardCount = _selectedLevel.pairCount * 2;
     final crossAxisCount = cardCount <= 8 ? 4 : (cardCount <= 16 ? 4 : 5);
 

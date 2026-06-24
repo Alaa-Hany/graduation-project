@@ -7,7 +7,6 @@ import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/repositories/progress_repository.dart';
 import 'package:kinder_world/core/repositories/child_repository.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
-import 'package:kinder_world/core/utils/session_token_utils.dart';
 import 'package:kinder_world/app.dart';
 import 'package:logger/logger.dart';
 
@@ -391,16 +390,17 @@ class ProgressController extends StateNotifier<ProgressState> {
     }
   }
 
-  Future<String?> _resolveParentAccessToken() async {
+  Future<String?> _resolveIngestToken() async {
     final storedParentToken = await _secureStorage.getParentAccessToken();
     if (storedParentToken != null && storedParentToken.isNotEmpty) {
       return storedParentToken;
     }
 
+    // Child mode has no parent token. The analytics ingest endpoints now accept
+    // the child_session token directly, so the child's own activity syncs to
+    // the backend in real time and is visible to the parent on any device.
     final authToken = await _secureStorage.getAuthToken();
-    if (authToken != null &&
-        authToken.isNotEmpty &&
-        !isChildSessionToken(authToken)) {
+    if (authToken != null && authToken.isNotEmpty) {
       return authToken;
     }
 
@@ -409,11 +409,9 @@ class ProgressController extends StateNotifier<ProgressState> {
 
   Future<ProgressRecord?> _syncRecordToBackend(ProgressRecord record) async {
     final childId = int.tryParse(record.childId);
-    final parentAccessToken = await _resolveParentAccessToken();
+    final ingestToken = await _resolveIngestToken();
 
-    if (childId == null ||
-        parentAccessToken == null ||
-        parentAccessToken.isEmpty) {
+    if (childId == null || ingestToken == null || ingestToken.isEmpty) {
       final failed = await _progressRepository.updateProgressRecord(
         record.copyWith(
           syncStatus: SyncStatus.failed,
@@ -424,8 +422,8 @@ class ProgressController extends StateNotifier<ProgressState> {
         _logger.w(
             'Skipping analytics sync for non-numeric child id: ${record.childId}');
       } else {
-        _logger
-            .w('Skipping analytics sync because no parent token is available');
+        _logger.w(
+            'Skipping analytics sync because no auth token is available');
       }
       return failed;
     }
@@ -462,7 +460,7 @@ class ProgressController extends StateNotifier<ProgressState> {
             'completion_status': currentRecord.completionStatus,
           },
         },
-        parentAccessToken: parentAccessToken,
+        parentAccessToken: ingestToken,
       );
 
       await _reportsApi.ingestActivityEvent(
@@ -499,7 +497,7 @@ class ProgressController extends StateNotifier<ProgressState> {
               'parent_approved': currentRecord.parentApproved,
           },
         },
-        parentAccessToken: parentAccessToken,
+        parentAccessToken: ingestToken,
       );
 
       return await _progressRepository.updateProgressRecord(

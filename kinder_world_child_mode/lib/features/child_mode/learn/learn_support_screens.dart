@@ -1271,7 +1271,8 @@ class PuzzleGameScreen extends ConsumerStatefulWidget {
   ConsumerState<PuzzleGameScreen> createState() => _PuzzleGameScreenState();
 }
 
-class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
+class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen>
+    with _GameVisibilityGuard {
   static final List<_PuzzleLevel> _levels = List.generate(50, (index) {
     const accents = [
       Color(0xFFFFA726),
@@ -1371,6 +1372,25 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
     super.dispose();
   }
 
+  @override
+  void onGameBecameHidden() {
+    // Stop counting down and silence the music while the child is on another
+    // tab, so leaving the game without pressing back doesn't drain the timer.
+    _timer?.cancel();
+    unawaited(_audio.stopBackground());
+  }
+
+  @override
+  void onGameBecameVisible() {
+    unawaited(_audio.startBackground('sounds/games/puzzle_bg.mp3'));
+    if (!_isSolved &&
+        !_isLost &&
+        _hasArtworkLibrary &&
+        (_availablePieces.isNotEmpty || _placedPieces.isNotEmpty)) {
+      _startTimer();
+    }
+  }
+
   Future<void> _loadArtworkLibrary() async {
     try {
       final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
@@ -1423,6 +1443,12 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
       _progressByLevel = map;
       _isLoadingProgress = false;
     });
+    // Resume at the highest unlocked level instead of always restarting at 1,
+    // so leaving and re-entering (or a web refresh) keeps the player's progress.
+    final resumeLevel = _levels[_puzzleUnlockedLevelIndex];
+    if (resumeLevel.id != _selectedLevel.id) {
+      _changeLevel(resumeLevel);
+    }
   }
 
   Future<void> _saveProgressIfNeeded(int earnedStars) async {
@@ -1495,7 +1521,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
   void _startTimer() {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted || _isSolved || _isLost) return;
+      if (!mounted || _isSolved || _isLost || !isGameVisible) return;
       if (_remainingSeconds <= 1) {
         setState(() {
           _remainingSeconds = 0;
@@ -1695,6 +1721,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen> {
 
   @override
   Widget build(BuildContext context) {
+    updateGameVisibility(context);
     final l10n = AppLocalizations.of(context)!;
     return _GameScaffold(
       title: l10n.picturePuzzleTitle,

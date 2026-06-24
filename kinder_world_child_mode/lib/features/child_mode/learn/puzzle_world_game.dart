@@ -424,8 +424,8 @@ class ShufflePuzzleScreen extends ConsumerStatefulWidget {
       _ShufflePuzzleScreenState();
 }
 
-class _ShufflePuzzleScreenState
-    extends _PremiumPuzzleState<ShufflePuzzleScreen> {
+class _ShufflePuzzleScreenState extends _PremiumPuzzleState<ShufflePuzzleScreen>
+    with _GameVisibilityGuard {
   static final List<_PuzzleLevel> _levels = List.generate(50, (index) {
     const accents = [
       Color(0xFFEF5350),
@@ -539,6 +539,22 @@ class _ShufflePuzzleScreenState
     _timer?.cancel();
     unawaited(_audio.dispose());
     super.dispose();
+  }
+
+  @override
+  void onGameBecameHidden() {
+    // Stop counting down and silence the music while the child is on another
+    // tab, so leaving the game without pressing back doesn't drain the timer.
+    _timer?.cancel();
+    unawaited(_audio.stopBackground());
+  }
+
+  @override
+  void onGameBecameVisible() {
+    unawaited(_audio.startBackground('sounds/games/puzzle_bg.mp3'));
+    if (!_isSolved && !_isLost && _hasArtworkLibrary && _tiles.isNotEmpty) {
+      _startTimer();
+    }
   }
 
   Future<void> _loadArtworkLibrary() async {
@@ -670,7 +686,7 @@ class _ShufflePuzzleScreenState
   void _startTimer() {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted || _isSolved || _isLost) {
+      if (!mounted || _isSolved || _isLost || !isGameVisible) {
         return;
       }
       if (_remainingSeconds <= 1) {
@@ -928,6 +944,7 @@ class _ShufflePuzzleScreenState
 
   @override
   Widget build(BuildContext context) {
+    updateGameVisibility(context);
     final l10n = AppLocalizations.of(context)!;
     return _GameScaffold(
       title: l10n.shufflePuzzleTitle,

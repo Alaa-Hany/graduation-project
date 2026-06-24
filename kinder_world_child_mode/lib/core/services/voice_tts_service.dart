@@ -2,9 +2,11 @@ import 'dart:convert';
 import 'dart:io' show Platform;
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:kinder_world/core/network/network_service.dart';
+import 'package:kinder_world/core/storage/secure_storage.dart';
 import 'package:logger/logger.dart';
 
 /// Speaks AI Buddy replies aloud.
@@ -20,11 +22,18 @@ import 'package:logger/logger.dart';
 class VoiceTtsService {
   VoiceTtsService({
     required NetworkService network,
+    required SecureStorage secureStorage,
     Logger? logger,
   })  : _network = network,
-        _logger = logger ?? Logger();
+        _secureStorage = secureStorage,
+        _logger = logger ?? Logger() {
+    // Subscribe once so backend audio completion always fires the handler,
+    // even if init() hasn't finished its async locale probe yet.
+    _player.onPlayerComplete.listen((_) => _completionHandler?.call());
+  }
 
   final NetworkService _network;
+  final SecureStorage _secureStorage;
   final Logger _logger;
 
   final FlutterTts _tts = FlutterTts();
@@ -33,7 +42,14 @@ class VoiceTtsService {
   /// Whether the device has an Arabic voice. Assume true until [init] checks so
   /// we never wrongly route to the backend before the probe completes.
   bool _arabicAvailable = true;
+
+  /// The best Arabic locale available on this device (e.g. 'ar-EG', 'ar-SA',
+  /// or 'ar'). Set by [init]; defaults to 'ar-EG' before the probe completes.
+  String _bestArabicLocale = 'ar-EG';
+
   VoidCallback? _completionHandler;
+
+  static const _arabicLocaleCandidates = ['ar-EG', 'ar-SA', 'ar'];
 
   Future<void> init() async {
     // iOS and Android use different speech-rate scales: the same numeric value
@@ -53,15 +69,21 @@ class VoiceTtsService {
       _logger.w('Native TTS error: $msg');
       _completionHandler?.call();
     });
-    try {
-      final available = await _tts.isLanguageAvailable('ar-EG');
-      _arabicAvailable = available == true;
-    } catch (_) {
-      _arabicAvailable = false;
+    // Probe Arabic locale availability; try several locale codes because
+    // devices vary (some report 'ar', some 'ar-SA', some 'ar-EG').
+    _arabicAvailable = false;
+    for (final locale in _arabicLocaleCandidates) {
+      try {
+        final available = await _tts.isLanguageAvailable(locale);
+        if (available == true) {
+          _arabicAvailable = true;
+          _bestArabicLocale = locale;
+          break;
+        }
+      } catch (_) {
+        // ignore individual probe failures and try the next candidate
+      }
     }
-    // Backend audio finishing must clear the "playing" state just like native
-    // TTS completion does.
-    _player.onPlayerComplete.listen((_) => _completionHandler?.call());
   }
 
   Future<void> speak(String text, {required bool isArabic}) async {
@@ -73,18 +95,26 @@ class VoiceTtsService {
       await _speakViaBackend(text, language: isArabic ? 'ar' : 'en');
       return;
     }
-    await _tts.setLanguage(isArabic ? 'ar-EG' : 'en-US');
+    await _tts.setLanguage(isArabic ? _bestArabicLocale : 'en-US');
     await _tts.speak(text);
   }
 
   Future<void> _speakViaBackend(String text, {required String language}) async {
     try {
-      // /voice/synthesize accepts the AI Buddy principal, so the active child
-      // session token that NetworkService attaches automatically is enough — no
-      // need to dig out a separate parent token that may already have expired.
+      // /voice/synthesize accepts both parent access tokens and child session
+      // tokens (AiBuddyPrincipal). NetworkService does not auto-attach child
+      // session tokens, so we fetch the stored token and attach it manually —
+      // the same pattern used by AiBuddyApi for every chat request.
+      final token = _secureStorage.hasCachedAuthToken
+          ? _secureStorage.cachedAuthToken
+          : await _secureStorage.getAuthToken();
+      final authOptions = token != null && token.isNotEmpty
+          ? Options(headers: {'Authorization': 'Bearer $token'})
+          : null;
       final response = await _network.post<Map<String, dynamic>>(
         '/voice/synthesize',
         data: {'text': text, 'language': language, 'speed': 1.0},
+        options: authOptions,
       );
       final data = response.data ?? const <String, dynamic>{};
       final audioBase64 = data['audio_base64'] as String?;

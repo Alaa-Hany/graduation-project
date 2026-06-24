@@ -1664,6 +1664,20 @@ class _AdminContentManagementScreenState
           .toList();
     }
 
+    List<AdminCmsContent> contentsForSelection() {
+      if (selectedCategoryId != null) {
+        return _contents
+            .where((content) => content.categoryId == selectedCategoryId)
+            .toList();
+      }
+      if (selectedAxisKey.isNotEmpty) {
+        return _contents
+            .where((content) => content.axisKey == selectedAxisKey)
+            .toList();
+      }
+      return _contents;
+    }
+
     String categoryTitle(AdminCmsCategory category) =>
         isArabic ? category.titleAr : category.titleEn;
 
@@ -1712,6 +1726,12 @@ class _AdminContentManagementScreenState
                                 .contains(selectedCategoryId)) {
                               selectedCategoryId = null;
                             }
+                            final validContentIds = contentsForSelection()
+                                .map((c) => c.id)
+                                .toSet();
+                            if (!validContentIds.contains(selectedContentId)) {
+                              selectedContentId = null;
+                            }
                           }),
                         ),
                         const SizedBox(height: 12),
@@ -1729,11 +1749,20 @@ class _AdminContentManagementScreenState
                                   value: category.id,
                                   child: Text(categoryTitle(category)))),
                         ],
-                        onChanged: (value) =>
-                            setStateDialog(() => selectedCategoryId = value),
+                        onChanged: (value) => setStateDialog(() {
+                          selectedCategoryId = value;
+                          final validContentIds = contentsForSelection()
+                              .map((c) => c.id)
+                              .toSet();
+                          if (!validContentIds.contains(selectedContentId)) {
+                            selectedContentId = null;
+                          }
+                        }),
                       ),
                       const SizedBox(height: 12),
                       DropdownButtonFormFieldCompat<int?>(
+                        key: ValueKey(
+                            'content_${selectedCategoryId}_$selectedAxisKey'),
                         initialValue: selectedContentId,
                         decoration: InputDecoration(
                             labelText: l10n.adminCmsLinkedContentLabel),
@@ -1741,8 +1770,10 @@ class _AdminContentManagementScreenState
                           DropdownMenuItem<int?>(
                               value: null,
                               child: Text(l10n.adminCmsNoLinkedContent)),
-                          ..._contents.map((content) => DropdownMenuItem<int?>(
-                              value: content.id, child: Text(content.titleEn))),
+                          ...contentsForSelection()
+                              .map((content) => DropdownMenuItem<int?>(
+                                  value: content.id,
+                                  child: Text(content.titleEn))),
                         ],
                         onChanged: (value) =>
                             setStateDialog(() => selectedContentId = value),

@@ -248,6 +248,86 @@ def test_session_log_increments_screen_time_in_daily_summary(
     assert summary.screen_time_minutes >= 20
 
 
+@pytest.fixture
+def child_session_headers():
+    """Bearer headers carrying a child_session token (what child mode holds)."""
+    from auth import create_token
+
+    def _headers(child):
+        token = create_token(
+            str(child.id),
+            minutes=60,
+            extra_claims={
+                "token_type": "child_session",
+                "child_id": child.id,
+                "child_name": child.name,
+            },
+        )
+        return {"Authorization": f"Bearer {token}"}
+
+    return _headers
+
+
+def test_child_session_token_can_ingest_own_event(
+    client, db, child, child_session_headers, api
+):
+    """A child logged in with a child_session token can sync its own activity,
+    so progress reaches the backend without a parent token (cross-device sync)."""
+    resp = client.post(
+        EVENTS_URL,
+        json={
+            "child_id": child.id,
+            "event_type": "activity_completed",
+            "activity_name": "Puzzle",
+            "duration_seconds": 90,
+        },
+        headers=child_session_headers(child),
+    )
+    assert resp.status_code == 200
+    body = api.parse(resp)
+    assert body["event"]["child_id"] == child.id
+    assert body["event"]["event_type"] == "activity_completed"
+
+    event = (
+        db.query(ChildActivityEvent)
+        .filter(ChildActivityEvent.child_id == child.id)
+        .first()
+    )
+    assert event is not None
+
+
+def test_child_session_token_can_ingest_own_session_log(
+    client, db, child, child_session_headers, api
+):
+    resp = client.post(
+        SESSIONS_URL,
+        json={
+            "child_id": child.id,
+            "session_id": "child-sess-1",
+            "source": "child_mode",
+            "started_at": "2026-06-17T10:00:00Z",
+            "ended_at": "2026-06-17T10:15:00Z",
+        },
+        headers=child_session_headers(child),
+    )
+    assert resp.status_code == 200
+    assert api.parse(resp)["session"]["duration_seconds"] == 15 * 60
+
+
+def test_child_session_token_cannot_ingest_for_a_sibling(
+    client, db, parent, child, create_child, child_session_headers
+):
+    """A child may only push its own analytics, never a sibling's, even though
+    both belong to the same parent."""
+    sibling = create_child(parent_id=parent.id, name="Sibling", age=6)
+    resp = client.post(
+        EVENTS_URL,
+        json={"child_id": sibling.id, "event_type": "activity_completed"},
+        headers=child_session_headers(child),
+    )
+    assert resp.status_code == 403
+
+
 def test_basic_reports_endpoint_reflects_ingested_events(client, db, parent, child, parent_headers):
     client.post(
         EVENTS_URL,

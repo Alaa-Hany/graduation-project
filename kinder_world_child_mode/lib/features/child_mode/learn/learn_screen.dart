@@ -286,3 +286,39 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
     }
   }
 }
+
+/// Pauses a game's countdown timer and background music while its screen is
+/// pushed off-stage by a bottom-nav tab switch.
+///
+/// The games live inside a `StatefulNavigationShell` branch, so switching tabs
+/// (without pressing the back button) keeps the game widget alive in the
+/// background. Without this guard the level timer keeps counting down and the
+/// looping background music keeps playing even though the child has left the
+/// game. go_router wraps inactive branches in a disabled [TickerMode], which we
+/// read in [updateGameVisibility] to detect when the screen becomes hidden or
+/// visible again.
+mixin _GameVisibilityGuard<T extends StatefulWidget> on State<T> {
+  bool _gameVisible = true;
+  bool get isGameVisible => _gameVisible;
+
+  /// Invoked (after the current frame) when the screen becomes visible again.
+  void onGameBecameVisible() {}
+
+  /// Invoked (after the current frame) when the screen is pushed off-stage.
+  void onGameBecameHidden() {}
+
+  /// Must be called from `build()` so visibility changes are observed.
+  void updateGameVisibility(BuildContext context) {
+    final visible = TickerMode.of(context);
+    if (visible == _gameVisible) return;
+    _gameVisible = visible;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (visible) {
+        onGameBecameVisible();
+      } else {
+        onGameBecameHidden();
+      }
+    });
+  }
+}

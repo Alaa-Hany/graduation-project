@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/auth_error_localizer.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
+import 'package:kinder_world/core/providers/maintenance_mode_provider.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/utils/email_validation.dart';
 import 'package:kinder_world/core/widgets/auth_widgets.dart';
@@ -110,7 +111,12 @@ class _ParentLoginScreenState extends ConsumerState<ParentLoginScreen>
   }
 
   void _showError(String message) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
+    final isInMaintenance = ref.read(maintenanceModeProvider);
+    final displayMessage = isInMaintenance
+        ? l10n.maintenanceMode
+        : localizeAuthErrorMessage(message, l10n);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -118,14 +124,7 @@ class _ParentLoginScreenState extends ConsumerState<ParentLoginScreen>
             const Icon(Icons.error_outline_rounded,
                 color: Colors.white, size: 18),
             const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                localizeAuthErrorMessage(
-                  message,
-                  AppLocalizations.of(context)!,
-                ),
-              ),
-            ),
+            Expanded(child: Text(displayMessage)),
           ],
         ),
         backgroundColor: colors.error,

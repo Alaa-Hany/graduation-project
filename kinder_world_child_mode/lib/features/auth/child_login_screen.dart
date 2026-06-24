@@ -12,6 +12,7 @@ import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
+import 'package:kinder_world/core/providers/maintenance_mode_provider.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/services/child_profiles_view_service.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
@@ -198,12 +199,16 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
 
   void _showError(String message) {
     if (!mounted) return;
+    final l10n = AppLocalizations.of(context)!;
+    final isInMaintenance = ref.read(maintenanceModeProvider);
+    final displayMessage =
+        isInMaintenance ? l10n.maintenanceMode : message;
 
     setState(() {
       _isLoading = false;
-      _error = message;
+      _error = displayMessage;
     });
-    _showTopMessage(message);
+    _showTopMessage(displayMessage);
   }
 
   void _resetSelection() {
@@ -266,6 +271,8 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
         return l10n.childLoginIncorrectPictures;
       case 'child_login_422':
         return l10n.childLoginMissingData;
+      case 'child_login_failed':
+        return l10n.connectionError;
       default:
         return l10n.loginError;
     }

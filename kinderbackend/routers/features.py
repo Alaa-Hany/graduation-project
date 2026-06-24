@@ -10,8 +10,14 @@ from core.report_cache import (
     invalidate_report_cache,
     report_cache_key,
 )
+from core.errors import http_error
 from core.system_settings import require_ai_buddy_enabled
-from deps import get_current_user, get_db, require_feature
+from deps import (
+    AnalyticsPrincipal,
+    get_analytics_principal,
+    get_db,
+    require_feature,
+)
 from models import User
 from schemas.analytics import ActivityEventIn, SessionLogIn
 from services.analytics_service import analytics_service
@@ -30,15 +36,28 @@ FEATURE_ERROR_CODE = "FEATURE_NOT_AVAILABLE_IN_PLAN"
 # ===============================
 
 
+def _authorize_child_scope(principal: AnalyticsPrincipal, child_id: int) -> None:
+    """A child_session caller may only push data for its own child id."""
+    if principal.child is not None and int(child_id) != int(principal.child.id):
+        raise http_error(
+            status_code=403,
+            message="Children can only submit their own analytics.",
+            code="CHILD_SCOPE_MISMATCH",
+        )
+
+
 @router.post("/analytics/events")
 def ingest_activity_event(
     payload: ActivityEventIn,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    principal: AnalyticsPrincipal = Depends(get_analytics_principal),
 ):
-    result = analytics_service.record_activity_event(db=db, parent=user, payload=payload)
+    _authorize_child_scope(principal, payload.child_id)
+    result = analytics_service.record_activity_event(
+        db=db, parent=principal.parent, payload=payload
+    )
     # New activity invalidates every cached report variant for this parent.
-    invalidate_report_cache(user.id)
+    invalidate_report_cache(principal.parent.id)
     return result
 
 
@@ -46,11 +65,14 @@ def ingest_activity_event(
 def ingest_session_log(
     payload: SessionLogIn,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    principal: AnalyticsPrincipal = Depends(get_analytics_principal),
 ):
-    result = analytics_service.record_session_log(db=db, parent=user, payload=payload)
+    _authorize_child_scope(principal, payload.child_id)
+    result = analytics_service.record_session_log(
+        db=db, parent=principal.parent, payload=payload
+    )
     # New screen-time data changes report aggregates → drop cached reports.
-    invalidate_report_cache(user.id)
+    invalidate_report_cache(principal.parent.id)
     return result
 
 

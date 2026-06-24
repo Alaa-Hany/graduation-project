@@ -120,20 +120,14 @@ mixin _AuthRepositoryStateMixin on _AuthRepositorySupportMixin {
       await _secureStorage.clearParentPinVerification();
       await _secureStorage.clearAuthOnly();
 
-      const hiveBoxNames = [
-        'child_profiles',
-        'activities',
-        'progress_records',
-        'gamification_data',
-        'mood_entries',
-      ];
-      for (final boxName in hiveBoxNames) {
-        try {
-          await Hive.box(boxName).clear();
-        } catch (e) {
-          _logger.d('Error clearing Hive box "$boxName" during logout: $e');
-        }
-      }
+      // NOTE: We intentionally do NOT clear the local data boxes
+      // (child_profiles, activities, progress_records, gamification_data,
+      // mood_entries) here. The app is local-first: those boxes are the source
+      // of truth for the child's progress, completed activities, daily goal and
+      // XP. Wiping them on logout meant every logout/login cycle deleted all of
+      // the child's history. Logout must clear the *session* (auth tokens) only;
+      // the cached profiles/progress are keyed by id and stay valid for the next
+      // login.
 
       _ref.invalidate(childSessionControllerProvider);
       _ref.invalidate(gamificationStateProvider);

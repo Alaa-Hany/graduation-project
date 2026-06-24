@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:kinder_world/core/api/auth_api.dart';
 import 'package:kinder_world/core/messages/app_messages.dart';
 import 'package:kinder_world/core/models/user.dart';

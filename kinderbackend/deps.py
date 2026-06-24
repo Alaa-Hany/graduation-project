@@ -33,6 +33,19 @@ class AiBuddyPrincipal:
     token_type: str
 
 
+@dataclass(frozen=True)
+class AnalyticsPrincipal:
+    """Resolved caller for analytics-ingest endpoints.
+
+    ``child`` is set only when the request was authenticated with a
+    ``child_session`` token; for parent access tokens it is ``None``.
+    """
+
+    parent: User
+    child: ChildProfile | None
+    token_type: str
+
+
 def _coerce_token_version(raw_token_version: object) -> int | None:
     if isinstance(raw_token_version, bool):
         return int(raw_token_version)
@@ -153,6 +166,65 @@ def get_ai_buddy_principal(
 
     parent = get_current_user(creds=creds, db=db)
     return AiBuddyPrincipal(parent=parent, child=None, token_type="access")
+
+
+def get_analytics_principal(
+    creds: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db),
+) -> AnalyticsPrincipal:
+    """Authorize an analytics-ingest request from a parent OR a child.
+
+    Child mode authenticates with a ``child_session`` token and never holds a
+    parent access token, so without this the child's own activity could never
+    reach the backend — only a parent replaying the same device could push it.
+    Accepting the child token here lets the child's progress sync in real time
+    and show up for the parent on any device.
+
+    The owning parent is resolved from the child record, so analytics stay
+    attributed to the right account. Endpoints must still verify that a child
+    only pushes data for itself (``payload.child_id == principal.child.id``).
+    """
+    if creds is None or not creds.credentials:
+        raise unauthorized(AuthMessages.AUTHENTICATION_REQUIRED)
+
+    token = creds.credentials
+    try:
+        payload = decode_token(token)
+        token_type = payload.get("token_type")
+    except JWTError:
+        raise unauthorized(AuthMessages.INVALID_TOKEN)
+
+    if token_type == ADMIN_TOKEN_TYPE:
+        raise unauthorized(AuthMessages.INVALID_TOKEN_TYPE)
+
+    if token_type == "child_session":
+        child_id = payload.get("child_id") or payload.get("sub")
+        if child_id is None:
+            raise unauthorized(AuthMessages.INVALID_TOKEN_PAYLOAD)
+
+        child = (
+            db.query(ChildProfile)
+            .filter(
+                ChildProfile.id == int(child_id),
+                ChildProfile.deleted_at.is_(None),
+            )
+            .first()
+        )
+        if child is None:
+            raise not_found("Child not found")
+
+        parent = db.query(User).filter(User.id == int(child.parent_id)).first()
+        if parent is None:
+            raise not_found(AuthMessages.USER_NOT_FOUND)
+
+        return AnalyticsPrincipal(
+            parent=parent,
+            child=child,
+            token_type="child_session",
+        )
+
+    parent = get_current_user(creds=creds, db=db)
+    return AnalyticsPrincipal(parent=parent, child=None, token_type="access")
 
 
 def require_feature(feature_name: str) -> Callable[[User], User]:
