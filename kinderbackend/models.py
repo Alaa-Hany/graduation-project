@@ -849,9 +849,7 @@ class ContentCategory(Base):
 
 class ContentItem(Base):
     __tablename__ = "contents"
-    __table_args__ = (
-        Index("ix_content_items_status_published_at", "status", "published_at"),
-    )
+    __table_args__ = (Index("ix_content_items_status_published_at", "status", "published_at"),)
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     category_id = Column(
@@ -903,9 +901,7 @@ class ContentItem(Base):
 
 class Quiz(Base):
     __tablename__ = "quizzes"
-    __table_args__ = (
-        Index("ix_quizzes_status_published_at", "status", "published_at"),
-    )
+    __table_args__ = (Index("ix_quizzes_status_published_at", "status", "published_at"),)
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     content_id = Column(

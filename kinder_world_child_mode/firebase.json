@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "kinder-world-bd9e3",
     "public": "build/web",
     "ignore": [
       "firebase.json",
