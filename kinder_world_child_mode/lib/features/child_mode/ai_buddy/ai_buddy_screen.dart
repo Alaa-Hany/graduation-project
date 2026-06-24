@@ -223,13 +223,24 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
       }
       return;
     }
+    // The web SpeechRecognition API assigns `recognition.lang` verbatim and
+    // expects a BCP-47 tag with a hyphen ("ar-EG"). An underscore ("ar_EG")
+    // is invalid, so the browser silently falls back to its default language
+    // and transcribes Arabic speech as garbled English. Native engines use
+    // the underscore form, so only rewrite on web.
+    final effectiveLocaleId = kIsWeb ? localeId.replaceAll('_', '-') : localeId;
     await _ttsService.stop();
     await _playSfx('sounds/mic_start.wav');
     setState(() => _isListening = true);
     await _stt.listen(
-      localeId: localeId,
+      localeId: effectiveLocaleId,
       listenFor: const Duration(seconds: 15),
       pauseFor: const Duration(seconds: 5),
+      // partialResults:false keeps the web recognizer non-continuous. With
+      // continuous recognition the plugin re-emits and concatenates every
+      // segment of the session ("notnot havingnot having..."); a single final
+      // result avoids that duplication. We only act on finalResult anyway.
+      listenOptions: SpeechListenOptions(partialResults: false),
       onResult: (result) {
         if (result.finalResult) {
           final text = result.recognizedWords.trim();

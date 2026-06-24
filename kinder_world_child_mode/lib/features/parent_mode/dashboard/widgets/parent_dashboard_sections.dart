@@ -193,14 +193,8 @@ class ParentDashboardAlertsSection extends StatelessWidget {
 
           final latest = latestByChild[child.id] ?? child.lastSession;
           if (latest == null) {
-            alerts.add(
-              _DashboardAlertItem(
-                message: l10n.notificationInactive(child.name, 2),
-                icon: Icons.bedtime_outlined,
-                color: parentTheme.info,
-                onTap: () => context.go(Routes.parentReports),
-              ),
-            );
+            // No session data yet (still loading, or genuinely never used) —
+            // we have no real timestamp to base an inactivity claim on.
             continue;
           }
 

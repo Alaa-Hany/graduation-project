@@ -481,6 +481,7 @@ abstract class AppLocalizations {
   String get home;
   String get learn;
   String get play;
+  String get explore;
   String get aiBuddy;
   String get profile;
   String get hello;

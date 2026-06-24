@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
+import 'package:kinder_world/core/models/achievement.dart';
 import 'package:kinder_world/core/models/activity.dart';
 import 'package:kinder_world/core/models/public_content.dart';
 import 'package:kinder_world/core/providers/gamification_provider.dart';

@@ -18,6 +18,7 @@ bool isPublicRoute(String path) {
       path == Routes.welcome ||
       path == Routes.selectUserType ||
       path == Routes.parentForgotPassword ||
+      path == Routes.parentResetPassword ||
       path == Routes.childForgotPassword ||
       path == Routes.error ||
       path == Routes.noInternet ||
@@ -57,6 +58,17 @@ bool isParentPinProtectedRoute(String path) {
       path != Routes.parentPin &&
       !isParentAuthRoute(path) &&
       path != Routes.parentForgotPassword;
+}
+
+/// Tracks whether the first router redirect of this app launch has run yet.
+///
+/// Created once per [routerProvider], so it resets on a fresh app launch — and
+/// crucially on a web page refresh, since that recreates the whole app. Used to
+/// detect when the app's entry URL points straight into a saved parent/child
+/// session (e.g. refreshing the page while on `/parent/dashboard`) so we can
+/// send the user back to the user-type chooser instead of silently resuming.
+class AppLaunchRedirectGuard {
+  bool firstRedirectHandled = false;
 }
 
 class RouterRefreshListenable extends ChangeNotifier {
@@ -100,8 +112,31 @@ Future<String?> appRedirect({
   required SecureStorage secureStorage,
   required Logger logger,
   required GoRouterState state,
+  required AppLaunchRedirectGuard launchGuard,
 }) async {
   final path = state.uri.path;
+
+  // On the web, a page refresh restores the deep-linked URL and recreates the
+  // app. If the entry URL points straight into a saved parent/child session
+  // (e.g. `/parent/dashboard` or `/child/home`), don't silently resume that
+  // mode — send the user back to the user-type chooser so the mode is picked
+  // explicitly. Auth, forgot/reset-password and email-verification deep links
+  // must stay reachable, so they are excluded. Only the very first redirect of
+  // the launch is affected, so in-app navigation after picking a mode works
+  // normally. Mobile is left untouched (it always boots at the splash route).
+  if (kIsWeb && !launchGuard.firstRedirectHandled) {
+    launchGuard.firstRedirectHandled = true;
+    final entersSavedMode = (isAnyParentRoute(path) || isAnyChildRoute(path)) &&
+        !isParentAuthRoute(path) &&
+        path != Routes.parentForgotPassword &&
+        path != Routes.parentResetPassword &&
+        path != Routes.childLogin &&
+        path != Routes.childForgotPassword;
+    if (entersSavedMode) {
+      return Routes.selectUserType;
+    }
+  }
+
   final adminAuthState = ref.read(adminAuthProvider);
   final isMaintenanceMode = ref.read(maintenanceModeProvider);
 
@@ -166,6 +201,7 @@ Future<String?> appRedirect({
         path == Routes.childLogin ||
         path == Routes.selectUserType ||
         path == Routes.parentForgotPassword ||
+        path == Routes.parentResetPassword ||
         path == Routes.childForgotPassword) {
       return null;
     }

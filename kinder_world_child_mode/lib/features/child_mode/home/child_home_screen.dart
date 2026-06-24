@@ -169,7 +169,7 @@ class _ChildBottomNav extends StatelessWidget {
     final items = [
       _NavItem(icon: Icons.home_rounded, label: l10n.home),
       _NavItem(icon: Icons.auto_stories_rounded, label: l10n.learn),
-      _NavItem(icon: Icons.sports_esports_rounded, label: l10n.play),
+      _NavItem(icon: Icons.explore_rounded, label: l10n.play),
       _NavItem(icon: Icons.smart_toy_rounded, label: l10n.aiBuddy),
       _NavItem(icon: Icons.face_rounded, label: l10n.profile),
     ];

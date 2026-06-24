@@ -174,7 +174,9 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get learn => 'تعلم';
   @override
-  String get play => 'العب';
+  String get play => 'اكشبلور';
+  @override
+  String get explore => 'استكشف';
   @override
   String get aiBuddy => 'رفيق الذكاء الاصطناعي';
   @override

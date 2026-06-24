@@ -775,7 +775,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get learn => 'Learn';
 
   @override
-  String get play => 'Play';
+  String get play => 'Explorer';
+
+  @override
+  String get explore => 'Explore';
 
   @override
   String get aiBuddy => 'AI Buddy';

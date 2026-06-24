@@ -206,6 +206,24 @@ String _localizedCmsItemDescription(
   return (preferred ?? fallback ?? '').trim();
 }
 
+/// Resolves the four-axis category key for a CMS item from whichever field the
+/// backend populated. Used so finishing a video/quiz advances the "Explorer"
+/// achievement (which needs all of educational/behavioral/skillful/entertaining).
+String? _resolveCmsItemAxisKey(PublicContentItem item) {
+  final candidates = <String?>[
+    item.axisKey,
+    item.category?.axisKey,
+    item.metadata['axis_key']?.toString(),
+  ];
+  for (final value in candidates) {
+    final trimmed = value?.trim();
+    if (trimmed != null && trimmed.isNotEmpty) {
+      return trimmed;
+    }
+  }
+  return null;
+}
+
 Color _axisColor(String axisKey) {
   return switch (axisKey) {
     ActivityAspects.behavioral => AppColors.behavioral,
@@ -579,6 +597,7 @@ class _CmsContentItemCard extends StatelessWidget {
                 videoUrl: item.preferredVideoUrl,
                 thumbnailUrl: item.effectiveThumbnailUrl,
                 description: description.isNotEmpty ? description : null,
+                axisKey: _resolveCmsItemAxisKey(item) ?? axisKey,
               ),
             ),
           );
@@ -992,8 +1011,9 @@ class _EntertainmentDetailScreenState
             videoTitle: title,
             videoUrl: item.preferredVideoUrl,
             thumbnailUrl: item.effectiveThumbnailUrl,
-            description: item.descriptionEn ?? item.descriptionAr,
+            description: _localizedCmsItemDescription(context, item),
             quizzes: item.quizzes,
+            axisKey: _resolveCmsItemAxisKey(item) ?? 'entertaining',
           ),
         ),
       ),
@@ -4829,6 +4849,7 @@ class _BehavioralContentDetailScreenState
                 CmsQuizCard(
                   quizzes: item.quizzes,
                   accentColor: AppColors.behavioral,
+                  axisKey: _resolveCmsItemAxisKey(item) ?? 'behavioral',
                 ),
               ],
             ],
@@ -5284,8 +5305,9 @@ class _SkillDetailScreenState extends ConsumerState<SkillDetailScreen> {
               videoTitle: title,
               videoUrl: item.preferredVideoUrl,
               thumbnailUrl: item.effectiveThumbnailUrl,
-              description: item.descriptionEn ?? item.descriptionAr,
+              description: _localizedCmsItemDescription(context, item),
               quizzes: item.quizzes,
+              axisKey: _resolveCmsItemAxisKey(item) ?? 'skillful',
             ),
           ),
         );
@@ -5419,12 +5441,16 @@ class _SkillDetailScreenState extends ConsumerState<SkillDetailScreen> {
 }
 
 // Skill Video Player Screen
-class SkillVideoScreen extends StatelessWidget {
+class SkillVideoScreen extends ConsumerStatefulWidget {
   final String videoTitle;
   final String? videoUrl;
   final String? thumbnailUrl;
   final String? description;
   final List<PublicQuiz> quizzes;
+
+  /// Four-axis category (educational/behavioral/skillful/entertaining) so the
+  /// completion advances the "Explorer" achievement.
+  final String? axisKey;
   const SkillVideoScreen({
     super.key,
     required this.videoTitle,
@@ -5432,7 +5458,70 @@ class SkillVideoScreen extends StatelessWidget {
     this.thumbnailUrl,
     this.description,
     this.quizzes = const [],
+    this.axisKey,
   });
+
+  @override
+  ConsumerState<SkillVideoScreen> createState() => _SkillVideoScreenState();
+}
+
+class _SkillVideoScreenState extends ConsumerState<SkillVideoScreen> {
+  bool _completing = false;
+  bool _rewardGranted = false;
+
+  // Stable per-video id so finishing the same lesson only earns XP once.
+  String get _activityId =>
+      'video_${(widget.videoUrl ?? widget.videoTitle).trim().hashCode}';
+
+  /// Awards XP for finishing the video, then returns to the previous screen.
+  /// YouTube videos open in an external player so playback completion can't be
+  /// detected automatically — the "I'm done" button is what credits the lesson.
+  Future<void> _completeVideo() async {
+    if (_rewardGranted) {
+      if (mounted) Navigator.of(context).pop();
+      return;
+    }
+    final child = ref.read(currentChildProvider);
+    if (child == null) {
+      if (mounted) Navigator.of(context).pop();
+      return;
+    }
+    setState(() => _completing = true);
+
+    // Mark completion for coins/achievements and once-per-video dedup. The XP
+    // itself is granted by recordActivityCompletion below so it also lands in
+    // the progress history that syncs to the parent dashboard.
+    final result =
+        await ref.read(gamificationStateProvider.notifier).recordActivity(
+              childId: child.id,
+              type: ActivityType.lesson,
+              category: widget.axisKey,
+              awardXp: false,
+              activityId: _activityId,
+            );
+
+    if (!result.alreadyCompleted) {
+      const xp = XPRewards.completeLesson;
+      await ref
+          .read(progressControllerProvider.notifier)
+          .recordActivityCompletion(
+            childId: child.id,
+            activityId: _activityId,
+            score: 100,
+            duration: 1,
+            xpEarned: xp,
+            notes: widget.videoTitle,
+            moodAfter: child.currentMood,
+          );
+      _rewardGranted = true;
+      if (mounted) {
+        showXpGainPopup(context, xp: xp);
+        await Future<void>.delayed(const Duration(milliseconds: 900));
+      }
+    }
+
+    if (mounted) Navigator.of(context).pop();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -5453,7 +5542,7 @@ class SkillVideoScreen extends StatelessWidget {
                   ),
                   Expanded(
                     child: Text(
-                      videoTitle,
+                      widget.videoTitle,
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -5480,14 +5569,15 @@ class SkillVideoScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: Column(
                     children: [
-                      if ((videoUrl ?? '').trim().isNotEmpty)
+                      if ((widget.videoUrl ?? '').trim().isNotEmpty)
                         Column(
                           children: [
-                            CloudinaryVideoPlayerView(videoUrl: videoUrl!),
+                            CloudinaryVideoPlayerView(
+                                videoUrl: widget.videoUrl!),
                             const SizedBox(height: 16),
-                            if ((description ?? '').trim().isNotEmpty)
+                            if ((widget.description ?? '').trim().isNotEmpty)
                               Text(
-                                description!,
+                                widget.description!,
                                 style: TextStyle(
                                   fontSize: 15,
                                   height: 1.5,
@@ -5584,7 +5674,7 @@ class SkillVideoScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 15),
                             Text(
-                              l10n.followStepsInVideo(videoTitle),
+                              l10n.followStepsInVideo(widget.videoTitle),
                               style: TextStyle(
                                 fontSize: 16,
                                 height: 1.5,
@@ -5595,7 +5685,8 @@ class SkillVideoScreen extends StatelessWidget {
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
-                                onPressed: () => Navigator.of(context).pop(),
+                                onPressed:
+                                    _completing ? null : _completeVideo,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.skillful,
                                   foregroundColor: Colors.white,
@@ -5604,20 +5695,34 @@ class SkillVideoScreen extends StatelessWidget {
                                   shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(20)),
                                 ),
-                                child: Text(
-                                  l10n.imDone,
-                                  style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold),
-                                ),
+                                child: _completing
+                                    ? const SizedBox(
+                                        height: 22,
+                                        width: 22,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.5,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                  Colors.white),
+                                        ),
+                                      )
+                                    : Text(
+                                        l10n.imDone,
+                                        style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold),
+                                      ),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      if (quizzes.isNotEmpty) ...[
+                      if (widget.quizzes.isNotEmpty) ...[
                         const SizedBox(height: 20),
-                        CmsQuizCard(quizzes: quizzes),
+                        CmsQuizCard(
+                          quizzes: widget.quizzes,
+                          axisKey: widget.axisKey,
+                        ),
                       ],
                       const SizedBox(height: 30),
                     ],
@@ -6301,8 +6406,9 @@ class _EducationalSubjectScreenState
               videoTitle: title,
               videoUrl: item.preferredVideoUrl,
               thumbnailUrl: item.effectiveThumbnailUrl,
-              description: item.descriptionEn ?? item.descriptionAr,
+              description: _localizedCmsItemDescription(context, item),
               quizzes: item.quizzes,
+              axisKey: _resolveCmsItemAxisKey(item) ?? 'educational',
             ),
           ),
         );
@@ -6975,10 +7081,15 @@ class CmsQuizCard extends StatelessWidget {
     super.key,
     required this.quizzes,
     this.accentColor = AppColors.skillful,
+    this.axisKey,
   });
 
   final List<PublicQuiz> quizzes;
   final Color accentColor;
+
+  /// Four-axis category forwarded to the quiz so solving it advances the
+  /// "Explorer" achievement.
+  final String? axisKey;
 
   @override
   Widget build(BuildContext context) {
@@ -7050,6 +7161,7 @@ class CmsQuizCard extends StatelessWidget {
                     builder: (context) => CmsQuizScreen(
                       quiz: quiz!,
                       accentColor: accentColor,
+                      axisKey: axisKey,
                     ),
                   ),
                 );
@@ -7078,25 +7190,30 @@ class CmsQuizCard extends StatelessWidget {
 
 /// Interactive quiz screen rendering the admin-authored questions with
 /// correct/incorrect feedback and a final score.
-class CmsQuizScreen extends StatefulWidget {
+class CmsQuizScreen extends ConsumerStatefulWidget {
   const CmsQuizScreen({
     super.key,
     required this.quiz,
     this.accentColor = AppColors.skillful,
+    this.axisKey,
   });
 
   final PublicQuiz quiz;
   final Color accentColor;
 
+  /// Four-axis category so a completed quiz advances the "Explorer" achievement.
+  final String? axisKey;
+
   @override
-  State<CmsQuizScreen> createState() => _CmsQuizScreenState();
+  ConsumerState<CmsQuizScreen> createState() => _CmsQuizScreenState();
 }
 
-class _CmsQuizScreenState extends State<CmsQuizScreen> {
+class _CmsQuizScreenState extends ConsumerState<CmsQuizScreen> {
   int _currentQuestionIndex = 0;
   int? _selectedAnswerIndex;
   bool _showResult = false;
   int _correctCount = 0;
+  bool _rewardGranted = false;
 
   List<_CmsQuizQuestion>? _questions;
 
@@ -7135,8 +7252,16 @@ class _CmsQuizScreenState extends State<CmsQuizScreen> {
       });
       return;
     }
+    unawaited(_finishQuiz(total));
+  }
+
+  /// Awards XP based on how many answers were correct (once per quiz), then
+  /// shows the completion dialog including the XP earned.
+  Future<void> _finishQuiz(int total) async {
+    final earnedXp = await _awardQuizXp(total);
+    if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
-    showDialog(
+    unawaited(showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -7160,6 +7285,17 @@ class _CmsQuizScreenState extends State<CmsQuizScreen> {
                 color: widget.accentColor,
               ),
             ),
+            if (earnedXp > 0) ...[
+              const SizedBox(height: 8),
+              Text(
+                '+$earnedXp XP',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green,
+                ),
+              ),
+            ],
           ],
         ),
         actions: [
@@ -7178,7 +7314,54 @@ class _CmsQuizScreenState extends State<CmsQuizScreen> {
           ),
         ],
       ),
-    );
+    ));
+  }
+
+  /// Grants quiz XP a single time, scaled by the score, and records it to the
+  /// progress history so the parent dashboard sees it. Returns the XP awarded
+  /// (0 if it was already earned on a previous attempt).
+  Future<int> _awardQuizXp(int total) async {
+    if (_rewardGranted) return 0;
+    final child = ref.read(currentChildProvider);
+    if (child == null) return 0;
+
+    final scorePct =
+        total == 0 ? 0 : ((_correctCount / total) * 100).round();
+    final isPerfect = total > 0 && _correctCount >= total;
+    final activityId = 'quiz_${widget.quiz.id}';
+    // Read the locale before any await so we don't touch context across a gap.
+    final isArabic =
+        Localizations.localeOf(context).languageCode.toLowerCase() == 'ar';
+
+    final result =
+        await ref.read(gamificationStateProvider.notifier).recordActivity(
+              childId: child.id,
+              type: isPerfect ? ActivityType.perfectQuiz : ActivityType.quiz,
+              category: widget.axisKey,
+              score: scorePct,
+              awardXp: false,
+              activityId: activityId,
+            );
+    if (result.alreadyCompleted) {
+      _rewardGranted = true;
+      return 0;
+    }
+
+    final xp =
+        XPRewards.completeQuiz + (isPerfect ? XPRewards.perfectScore : 0);
+    await ref
+        .read(progressControllerProvider.notifier)
+        .recordActivityCompletion(
+          childId: child.id,
+          activityId: activityId,
+          score: scorePct,
+          duration: 1,
+          xpEarned: xp,
+          notes: _quizTitle(isArabic),
+          moodAfter: child.currentMood,
+        );
+    _rewardGranted = true;
+    return xp;
   }
 
   @override

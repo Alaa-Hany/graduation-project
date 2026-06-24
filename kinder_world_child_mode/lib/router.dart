@@ -19,6 +19,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   final secureStorage = ref.read(secureStorageProvider);
   final logger = ref.read(loggerProvider);
   final refreshListenable = RouterRefreshListenable(ref);
+  final launchGuard = AppLaunchRedirectGuard();
   ref.onDispose(refreshListenable.dispose);
 
   return GoRouter(
@@ -30,6 +31,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       secureStorage: secureStorage,
       logger: logger,
       state: state,
+      launchGuard: launchGuard,
     ),
     routes: [
       ...buildPublicRoutes(),
