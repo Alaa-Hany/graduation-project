@@ -599,11 +599,7 @@ class AuthService:
 
             is_valid, error_msg = core_validate_password_policy(payload.new_password)
             if not is_valid:
-                logger.debug(
-                    "Password policy validation failed for user %s: %s",
-                    user_id,
-                    error_msg,
-                )
+                logger.debug("Password policy validation failed for user %s", user_id)
                 raise HTTPException(status_code=422, detail=error_msg)
 
             if payload.new_password != payload.confirm_password:

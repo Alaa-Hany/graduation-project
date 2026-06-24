@@ -150,7 +150,7 @@ class MediaService:
     def _sign(self, params: dict[str, str]) -> str:
         serialized = "&".join(f"{key}={params[key]}" for key in sorted(params))
         raw = f"{serialized}{settings.cloudinary_api_secret}"
-        return hashlib.sha1(raw.encode("utf-8")).hexdigest()
+        return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
     def _slugify(self, value: str) -> str:
         normalized = "".join(char.lower() if char.isalnum() else "-" for char in value.strip())

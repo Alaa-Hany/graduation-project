@@ -73,12 +73,12 @@ def test_build_public_id_falls_back_to_filename_stem(configured):
     assert public_id.startswith("counting-game-")
 
 
-def test_sign_is_deterministic_sorted_sha1(configured):
+def test_sign_is_deterministic_sorted_sha256(configured):
     params = {"timestamp": "100", "folder": "a", "public_id": "b"}
-    # sha1("folder=a&public_id=b&timestamp=100" + "secret-xyz")
+    # sha256("folder=a&public_id=b&timestamp=100" + "secret-xyz")
     import hashlib
 
-    expected = hashlib.sha1(b"folder=a&public_id=b&timestamp=100secret-xyz").hexdigest()
+    expected = hashlib.sha256(b"folder=a&public_id=b&timestamp=100secret-xyz").hexdigest()
     assert configured._sign(params) == expected
 
 
