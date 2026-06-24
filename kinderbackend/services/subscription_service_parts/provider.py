@@ -479,7 +479,22 @@ class SubscriptionProviderMixin:
             return
         try:
             references = provider.list_payment_methods(customer_id=profile.provider_customer_id)
-        except PaymentProviderError:
+        except Exception as exc:
+            # Payment-method sync is best-effort enrichment of the subscription
+            # snapshot. It must never break the core read: a stale/invalid
+            # provider_customer_id (e.g. a Stripe customer created under a
+            # different API key, or one that was deleted) makes the raw Stripe
+            # SDK raise a StripeError that is NOT a PaymentProviderError, so a
+            # narrow `except PaymentProviderError` let it bubble up as a 500 on
+            # GET /subscription/me. Swallow any provider/transport error here and
+            # serve the snapshot without the freshly-synced payment methods.
+            logger.warning(
+                "payment_method_sync_skipped user_id=%s provider=%s customer_id=%s error=%s",
+                user.id,
+                provider.provider_key,
+                profile.provider_customer_id,
+                exc,
+            )
             return
         self._replace_payment_methods(
             db=db,

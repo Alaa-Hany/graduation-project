@@ -68,6 +68,14 @@ class _SafetyRule:
 
 class AiBuddyModerationService:
     _arabic_pattern = re.compile(r"[\u0600-\u06ff]")
+    # OpenAI's own `flagged` boolean over-triggers the violence category on
+    # perfectly innocent kid prompts ("tell me a story" / "\u0627\u062d\u0643 \u0644\u064a \u0642\u0635\u0629" score
+    # ~0.35), while genuinely unsafe content scores >= ~0.85 in whichever
+    # category it trips. We therefore ignore the raw `flagged` boolean and only
+    # treat a category as a real hit once its calibrated score clears this
+    # threshold, which sits comfortably between the false-positive (~0.35) and
+    # the true-positive (~0.85+) bands.
+    _openai_score_threshold = 0.5
     # OpenAI moderation category prefix -> (classification, topic). Ordered so
     # the most serious mapping wins when several categories are flagged at once.
     _openai_category_map = (
@@ -252,13 +260,20 @@ class AiBuddyModerationService:
         )
 
     def _map_openai_categories(
-        self, categories: dict[str, bool]
+        self, category_scores: dict[str, float]
     ) -> tuple[str | None, str | None, list[str]]:
-        flagged = [name for name, value in categories.items() if value]
-        if not flagged:
+        # Only categories whose calibrated score clears the threshold count as a
+        # real hit, so a low-confidence violence score on a benign prompt does
+        # not trigger a refusal. (Booleans pass through fine: True >= 0.5.)
+        active = [
+            name
+            for name, score in category_scores.items()
+            if score >= self._openai_score_threshold
+        ]
+        if not active:
             return None, None, []
         for prefix, classification, topic in self._openai_category_map:
-            matched = [name for name in flagged if name.startswith(prefix)]
+            matched = [name for name in active if name.startswith(prefix)]
             if matched:
                 return classification, topic, matched
         return None, None, []
@@ -269,7 +284,7 @@ class AiBuddyModerationService:
         result = openai_moderation_service.moderate(text)
         if result is None or not result.flagged:
             return None
-        classification, topic, matched = self._map_openai_categories(result.categories)
+        classification, topic, matched = self._map_openai_categories(result.category_scores)
         if classification is None or topic is None:
             return None
         logger.info(

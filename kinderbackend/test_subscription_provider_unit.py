@@ -254,6 +254,33 @@ def test_sync_payment_methods_external_list_error_is_swallowed(db, create_parent
     assert result == []
 
 
+def test_sync_payment_methods_external_raw_error_is_swallowed(db, create_parent, use_provider):
+    # Regression: the raw Stripe SDK raises stripe.error.StripeError subclasses
+    # (e.g. InvalidRequestError "No such customer" when provider_customer_id is
+    # stale), which are NOT PaymentProviderError. A narrow except let them bubble
+    # up as a 500 on GET /subscription/me. Any provider error must be swallowed.
+    parent = create_parent(email="pm-sync-raw-err@example.com", plan=PLAN_PREMIUM)
+    _stripe_profile(db, parent)
+    use_provider(
+        FakeProvider(raise_on={"list"}, error=RuntimeError("stripe: No such customer 'cus_x'"))
+    )
+    result = subscription_service.sync_payment_methods(db=db, user=parent)
+    assert result == []
+
+
+def test_get_subscription_survives_raw_provider_error(db, create_parent, use_provider):
+    # GET /subscription/me must still return the snapshot even when the provider
+    # blows up while syncing payment methods for a stale provider_customer_id.
+    parent = create_parent(email="sub-me-raw-err@example.com", plan=PLAN_PREMIUM)
+    _stripe_profile(db, parent)
+    use_provider(
+        FakeProvider(raise_on={"list"}, error=RuntimeError("stripe: No such customer 'cus_x'"))
+    )
+    snapshot = subscription_service.get_subscription(db=db, user=parent)
+    assert snapshot["current_plan_id"] == PLAN_PREMIUM
+    assert "lifecycle" in snapshot
+
+
 # ---------------------------------------------------------------------------
 # billing_portal → _create_portal_session
 # ---------------------------------------------------------------------------

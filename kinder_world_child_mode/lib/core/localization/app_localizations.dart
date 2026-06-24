@@ -875,6 +875,7 @@ abstract class AppLocalizations {
   String get planExclusiveContent;
   String get planFamilyDashboard;
   String get freePlanChildLimit;
+  String get childLimitUpgradeNote;
   String get manageSubscription;
   String get paymentMethod;
   String get billingInfo;

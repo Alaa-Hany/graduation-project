@@ -37,6 +37,36 @@ def test_map_categories_none_when_unmapped():
     assert classification is None and topic is None and matched == []
 
 
+def test_low_confidence_score_does_not_trigger_refusal():
+    # OpenAI flags benign kid prompts ("tell me a story" / "احك لي قصة") with a
+    # low violence score (~0.35); that must not be treated as a real hit.
+    classification, topic, matched = service._map_openai_categories({"violence": 0.35})
+    assert classification is None and topic is None and matched == []
+
+
+def test_high_confidence_score_triggers_refusal():
+    classification, topic, matched = service._map_openai_categories({"violence": 0.95})
+    assert classification == "needs_refusal"
+    assert topic == "violence"
+    assert "violence" in matched
+
+
+def test_benign_story_request_allowed_despite_low_violence_flag(monkeypatch):
+    # Regression: OpenAI returns flagged=True with a low violence score on a
+    # harmless "tell me a story" request — we must still allow it.
+    monkeypatch.setattr(
+        moderation_module.openai_moderation_service,
+        "moderate",
+        lambda text: OpenAIModerationResult(
+            flagged=True,
+            categories={"violence": True},
+            category_scores={"violence": 0.35},
+        ),
+    )
+    decision = service.moderate_input(text="احك لي قصة")
+    assert decision.classification == "allowed"
+
+
 def test_openai_layer_flags_when_keywords_miss(monkeypatch):
     # A message with no keyword hits but flagged by the OpenAI layer.
     monkeypatch.setattr(

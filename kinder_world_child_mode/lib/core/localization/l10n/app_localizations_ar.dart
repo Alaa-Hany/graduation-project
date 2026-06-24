@@ -928,6 +928,9 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get freePlanChildLimit => 'الخطة المجانية تسمح بطفل واحد';
   @override
+  String get childLimitUpgradeNote =>
+      'كل حساب يشمل ملفًا واحدًا للطفل. لإضافة المزيد من الأطفال، قم بترقية خطتك.';
+  @override
   String get planFamilyPlus => 'عائلي بلس';
   @override
   String get planPremium => 'مميز';

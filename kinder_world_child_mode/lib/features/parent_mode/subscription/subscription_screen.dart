@@ -685,6 +685,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                   const SizedBox(height: 20),
                   ParentSectionHeader(title: l10n.availablePlans),
                   const SizedBox(height: 12),
+                  _buildChildLimitNote(l10n),
+                  const SizedBox(height: 12),
                   _buildBillingIntervalToggle(l10n),
                   const SizedBox(height: 12),
                   ...buildSubscriptionPlanCardConfigs(
@@ -721,6 +723,39 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
             );
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildChildLimitNote(AppLocalizations l10n) {
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.family_restroom_rounded,
+            size: 20,
+            color: colors.primary,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              l10n.childLimitUpgradeNote,
+              style: textTheme.bodySmall?.copyWith(
+                fontSize: 13,
+                height: 1.4,
+                color: colors.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

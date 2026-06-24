@@ -2111,6 +2111,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get freePlanChildLimit => 'Free plan allows 1 child';
 
   @override
+  String get childLimitUpgradeNote =>
+      'Every account includes 1 child profile. To add more children, upgrade your plan.';
+
+  @override
   String get planAdvancedReports => 'Advanced Learning Reports';
 
   @override
