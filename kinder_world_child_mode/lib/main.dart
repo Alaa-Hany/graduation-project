@@ -6,12 +6,24 @@ import 'package:kinder_world/core/cache/app_cache_store.dart';
 import 'package:kinder_world/core/providers/shared_preferences_provider.dart';
 import 'package:kinder_world/core/storage/hive_boxes.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
+import 'package:kinder_world/routing/route_guards.dart';
 import 'package:kinder_world/app.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Capture the route the web page was loaded at *before* any MaterialApp or
+  // go_router runs and rewrites the URL. With the hash URL strategy the app
+  // route lives in the fragment (e.g. `https://app/#/parent/dashboard`). The
+  // router uses this to send the user back to the user-type chooser after a
+  // refresh instead of silently resuming the saved parent/child session.
+  if (kIsWeb) {
+    final base = Uri.base;
+    final raw = base.fragment.isNotEmpty ? base.fragment : base.path;
+    webEntryRoutePath = Uri.parse(raw).path;
+  }
 
   // Initialize logger and global error handlers synchronously so they are
   // active before any async init runs.

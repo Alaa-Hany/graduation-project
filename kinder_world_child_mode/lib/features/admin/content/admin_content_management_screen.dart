@@ -1001,7 +1001,19 @@ class _AdminContentManagementScreenState
                                 labelText: l10n.adminCmsTypeLabel),
                             items: _contentTypeItems(l10n),
                             onChanged: (value) => setStateDialog(() {
-                              selectedType = value ?? 'lesson';
+                              final newType = value ?? 'lesson';
+                              // Videos are meant to publish straight away (the
+                              // dialog's initial default already special-cases
+                              // this). Mirror that when the admin switches the
+                              // type to "video" after the dialog opened, so a
+                              // freshly added video isn't silently left as a
+                              // draft that never reaches the child app.
+                              if (newType == 'video' &&
+                                  selectedType != 'video' &&
+                                  selectedStatus == 'draft') {
+                                selectedStatus = 'published';
+                              }
+                              selectedType = newType;
                             }),
                           ),
                         ),

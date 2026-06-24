@@ -67,3 +67,8 @@ run_*.ps1
 
 # Debug scripts
 kinderbackend/debug_create_user.py
+
+# Local-only DB export (contains real user/child data + was run with the
+# production DATABASE_URL in plaintext on the command line)
+kinderbackend/backups/
+kinderbackend/export_db_local.py

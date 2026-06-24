@@ -60,15 +60,42 @@ bool isParentPinProtectedRoute(String path) {
       path != Routes.parentForgotPassword;
 }
 
-/// Tracks whether the first router redirect of this app launch has run yet.
+/// The app route the web page was first loaded at, captured once in `main()`
+/// before any in-app navigation can change the URL. Null on native platforms
+/// (and until set). With the hash URL strategy the route lives in the URL
+/// fragment, so this is derived from [Uri.base] at launch.
+String? webEntryRoutePath;
+
+/// Returns true when [path] is a parent/child *session* route (i.e. a screen
+/// you only reach after picking a mode), as opposed to a login / register /
+/// forgot- or reset-password / verify-email deep link, which must stay
+/// reachable directly.
+bool isSavedModeSessionRoute(String path) {
+  return (isAnyParentRoute(path) || isAnyChildRoute(path)) &&
+      !isParentAuthRoute(path) &&
+      path != Routes.parentForgotPassword &&
+      path != Routes.parentResetPassword &&
+      path != Routes.childLogin &&
+      path != Routes.childForgotPassword;
+}
+
+/// Per-launch guard that forces the user-type chooser after a web refresh.
 ///
 /// Created once per [routerProvider], so it resets on a fresh app launch — and
-/// crucially on a web page refresh, since that recreates the whole app. Used to
-/// detect when the app's entry URL points straight into a saved parent/child
-/// session (e.g. refreshing the page while on `/parent/dashboard`) so we can
-/// send the user back to the user-type chooser instead of silently resuming.
+/// crucially on a web page refresh, which recreates the whole app. If the web
+/// page was loaded straight into a saved parent/child session (e.g. refreshing
+/// while on `/parent/dashboard`), [modeChoicePending] starts true and every
+/// redirect into a session route is bounced to the chooser until the user
+/// actually lands there. This is robust to whatever order go_router evaluates
+/// the splash vs the restored deep link in.
 class AppLaunchRedirectGuard {
-  bool firstRedirectHandled = false;
+  AppLaunchRedirectGuard() {
+    final entry = webEntryRoutePath;
+    modeChoicePending =
+        kIsWeb && entry != null && isSavedModeSessionRoute(entry);
+  }
+
+  bool modeChoicePending = false;
 }
 
 class RouterRefreshListenable extends ChangeNotifier {
@@ -116,15 +143,22 @@ Future<String?> appRedirect({
 }) async {
   final path = state.uri.path;
 
-  // On the web, a page refresh restores the deep-linked URL and recreates the
-  // app. If the entry URL points straight into a saved parent/child session
-  // (e.g. `/parent/dashboard` or `/child/home`), resume that mode directly so
-  // the user lands back where they were instead of being bounced to the
-  // user-type chooser. The normal session-based redirect logic below still
-  // applies (e.g. parent routes remain PIN-protected), so this only skips the
-  // explicit re-selection step. The launch guard is retained for any future
-  // first-redirect needs but no longer forces a chooser detour.
-  launchGuard.firstRedirectHandled = true;
+  // On the web, a page refresh restores the deep-linked URL (the route lives in
+  // the URL fragment with the hash strategy). If the page was loaded straight
+  // into a saved parent/child session, don't silently resume that mode — keep
+  // bouncing every session route to the user-type chooser until the user
+  // actually reaches it and picks a mode explicitly. We can't rely on "the
+  // first redirect is the deep route" because the bootstrap splash can make
+  // go_router evaluate `/splash` first, so this stays pending across redirects.
+  // Auth / forgot- / reset-password / verify-email deep links are excluded via
+  // [isSavedModeSessionRoute]. Native platforms are untouched.
+  if (launchGuard.modeChoicePending) {
+    if (path == Routes.selectUserType) {
+      launchGuard.modeChoicePending = false;
+    } else if (isSavedModeSessionRoute(path)) {
+      return Routes.selectUserType;
+    }
+  }
 
   final adminAuthState = ref.read(adminAuthProvider);
   final isMaintenanceMode = ref.read(maintenanceModeProvider);
