@@ -247,6 +247,21 @@ def password_change_rate_limit():
     )
 
 
+def two_factor_rate_limit():
+    """Per-user throttling for two-factor (TOTP) enablement attempts.
+
+    Caps brute-force guessing of the 6-digit verification code against the
+    /auth/2fa/enable endpoint.
+    """
+    return user_rate_limit(
+        max_requests=5,
+        window_seconds=300,
+        message="Too many two-factor attempts. Please try again later.",
+        scope="two_factor",
+        fail_open=False,
+    )
+
+
 def parent_pin_mutation_rate_limit():
     """Per-user throttling for parent PIN creation, change, and reset requests."""
     return user_rate_limit(

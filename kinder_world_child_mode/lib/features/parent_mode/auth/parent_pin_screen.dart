@@ -60,7 +60,15 @@ class _ParentPinScreenState extends ConsumerState<ParentPinScreen>
     if (raw == null || raw.isEmpty) {
       return Routes.parentDashboard;
     }
-    return Uri.decodeComponent(raw);
+    final decoded = Uri.decodeComponent(raw);
+    // Only allow redirecting back into the parent area. The redirect target
+    // arrives as a raw query parameter, so an attacker could craft a link that
+    // sends the user somewhere unexpected after a successful PIN entry. Reject
+    // anything that isn't a parent route and fall back to the dashboard.
+    if (!decoded.startsWith('/parent/')) {
+      return Routes.parentDashboard;
+    }
+    return decoded;
   }
 
   String get _backFallbackPath {

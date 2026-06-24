@@ -5,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kinder_world/app.dart';
 import 'package:kinder_world/core/api/admin_api.dart';
 import 'package:kinder_world/core/api/auth_api.dart';
-import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/network/network_service.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
 import 'package:kinder_world/core/providers/connectivity_provider.dart';

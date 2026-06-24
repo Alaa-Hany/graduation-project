@@ -4,11 +4,18 @@ from sqlalchemy.orm import Session
 
 from deps import get_current_user, get_db
 from models import PrivacySetting, User
+from schemas.common import SuccessResponse
 
-router = APIRouter(prefix="/privacy", tags=["privacy"])
+router = APIRouter(prefix="/privacy", tags=["Privacy"])
 
 
 class PrivacyUpdate(BaseModel):
+    analytics_enabled: bool
+    personalized_recommendations: bool
+    data_collection_opt_out: bool
+
+
+class PrivacySettingsResponse(BaseModel):
     analytics_enabled: bool
     personalized_recommendations: bool
     data_collection_opt_out: bool
@@ -24,7 +31,11 @@ def _get_privacy_settings(user: User, db: Session) -> PrivacySetting:
     return setting
 
 
-@router.get("/settings")
+@router.get(
+    "/settings",
+    response_model=PrivacySettingsResponse,
+    summary="Get privacy settings",
+)
 def get_settings(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     setting = _get_privacy_settings(user, db)
     return {
@@ -34,7 +45,11 @@ def get_settings(user: User = Depends(get_current_user), db: Session = Depends(g
     }
 
 
-@router.put("/settings")
+@router.put(
+    "/settings",
+    response_model=SuccessResponse,
+    summary="Update privacy settings",
+)
 def update_settings(
     payload: PrivacyUpdate,
     user: User = Depends(get_current_user),

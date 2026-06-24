@@ -4,6 +4,7 @@ import asyncio
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import or_
 from sqlalchemy.orm import Session, joinedload
 
 from admin_utils import normalize_content_axis_key, serialize_content_axis_summary
@@ -423,33 +424,24 @@ def list_child_content_items(
             | ContentItem.description_ar.ilike(term)
         )
 
-    items = query.order_by(ContentItem.published_at.desc(), ContentItem.id.desc()).all()
     if age is not None:
-        filtered: list[ContentItem] = []
-        for item in items:
-            age_group = (item.age_group or "").strip()
-            if not age_group:
-                filtered.append(item)
-                continue
-            if age_group.endswith("+"):
-                minimum = int(age_group[:-1])
-                if age >= minimum:
-                    filtered.append(item)
-                continue
-            if "-" in age_group:
-                start_raw, end_raw = age_group.split("-", 1)
-                start, end = int(start_raw), int(end_raw)
-                if start <= age <= end:
-                    filtered.append(item)
-        items = filtered
+        # Range-check against the structured min_age/max_age columns. NULL on
+        # either bound means "unbounded" on that side (treated as all ages), so
+        # legacy rows that only ever had a free-text age_group still match.
+        query = query.filter(
+            or_(ContentItem.min_age.is_(None), ContentItem.min_age <= age),
+            or_(ContentItem.max_age.is_(None), ContentItem.max_age >= age),
+        )
 
-    # Age filtering happens in Python (age_group is a free-text range string,
-    # not something SQL can range-check), so pagination is applied to the
-    # final filtered list rather than at the query level. This still caps
-    # response payload size, which is the actual risk being mitigated here.
-    total = len(items)
-    start = (page - 1) * limit
-    page_items = items[start : start + limit]
+    # Count and paginate at the database level so we never materialize the whole
+    # published catalog into memory just to slice one page out of it.
+    total = query.count()
+    page_items = (
+        query.order_by(ContentItem.published_at.desc(), ContentItem.id.desc())
+        .offset((page - 1) * limit)
+        .limit(limit)
+        .all()
+    )
 
     return {
         "items": [

@@ -618,7 +618,7 @@ These points are based on the current codebase behavior:
   - priority support metadata
 - Coverage gates are intentionally conservative today:
   - backend source coverage floor is `70%`
-  - Flutter non-generated coverage floor is `28%`
+  - Flutter non-generated coverage floor is `35%`
 
 ## Future Improvements
 

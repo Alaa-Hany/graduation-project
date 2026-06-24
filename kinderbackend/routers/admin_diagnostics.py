@@ -53,7 +53,7 @@ def _ai_readiness() -> dict[str, object]:
 @router.get("/health")
 def diagnostics_health(
     db: Session = Depends(get_db),
-    admin=Depends(require_permission("admin.settings.edit")),
+    admin=Depends(require_permission("admin.diagnostics.view")),
 ):
     webhook_failures = (
         db.query(func.count(PaymentWebhookEvent.id))
@@ -100,7 +100,7 @@ def diagnostics_events(
     category: str = Query(""),
     name_prefix: str = Query(""),
     min_severity: str = Query("info"),
-    admin=Depends(require_permission("admin.settings.edit")),
+    admin=Depends(require_permission("admin.diagnostics.view")),
 ):
     events = get_recent_events(
         limit=limit,
@@ -124,7 +124,7 @@ def diagnostics_metrics(
     limit: int = Query(200, ge=1, le=1000),
     category: str = Query(""),
     name_prefix: str = Query(""),
-    admin=Depends(require_permission("admin.settings.edit")),
+    admin=Depends(require_permission("admin.diagnostics.view")),
 ):
     metrics = get_metrics(
         limit=limit,

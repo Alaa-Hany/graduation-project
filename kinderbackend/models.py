@@ -849,6 +849,9 @@ class ContentCategory(Base):
 
 class ContentItem(Base):
     __tablename__ = "contents"
+    __table_args__ = (
+        Index("ix_content_items_status_published_at", "status", "published_at"),
+    )
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     category_id = Column(
@@ -872,7 +875,12 @@ class ContentItem(Base):
     video_provider = Column(String, nullable=True)
     video_public_id = Column(String, nullable=True, index=True)
     video_duration_seconds = Column(Integer, nullable=True)
+    # Deprecated: free-text age range (e.g. "3-5", "6+"). Kept for backward
+    # compatibility; prefer the structured min_age/max_age columns below, which
+    # allow SQL-side range filtering. NULL min_age/max_age means "all ages".
     age_group = Column(String, nullable=True)
+    min_age = Column(Integer, nullable=True)
+    max_age = Column(Integer, nullable=True)
     metadata_json = Column(JSON, nullable=True)
     created_by = Column(
         Integer, ForeignKey("admin_users.id", ondelete="SET NULL"), nullable=True, index=True
@@ -895,6 +903,9 @@ class ContentItem(Base):
 
 class Quiz(Base):
     __tablename__ = "quizzes"
+    __table_args__ = (
+        Index("ix_quizzes_status_published_at", "status", "published_at"),
+    )
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     content_id = Column(

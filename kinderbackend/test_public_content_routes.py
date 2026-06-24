@@ -16,6 +16,16 @@ def _create_category(db, *, slug: str, title_en: str, title_ar: str):
     return category
 
 
+def _age_bounds_from_group(age_group):
+    """Mirror the admin API: derive (min_age, max_age) from an age_group string."""
+    if not age_group:
+        return None, None
+    if age_group.endswith("+"):
+        return int(age_group[:-1]), None
+    start_raw, end_raw = age_group.split("-", 1)
+    return int(start_raw), int(end_raw)
+
+
 def _create_content(
     db,
     *,
@@ -28,6 +38,7 @@ def _create_content(
     metadata_json: dict | None = None,
     age_group: str | None = None,
 ):
+    min_age, max_age = _age_bounds_from_group(age_group)
     content = ContentItem(
         slug=slug,
         category_id=category_id,
@@ -39,6 +50,8 @@ def _create_content(
         body_ar=body_en,
         metadata_json=metadata_json or {},
         age_group=age_group,
+        min_age=min_age,
+        max_age=max_age,
         published_at=db_utc_now(),
         created_at=db_utc_now(),
         updated_at=db_utc_now(),

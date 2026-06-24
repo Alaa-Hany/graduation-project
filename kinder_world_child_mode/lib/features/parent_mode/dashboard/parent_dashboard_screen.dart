@@ -10,6 +10,7 @@ import 'package:kinder_world/core/models/progress_record.dart';
 import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/core/services/child_profiles_view_service.dart';
 import 'package:kinder_world/core/widgets/app_skeleton_widgets.dart';
+import 'package:kinder_world/core/widgets/app_state_widgets.dart';
 import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/features/parent_mode/dashboard/widgets/parent_dashboard_app_bar.dart';
 import 'package:kinder_world/features/parent_mode/dashboard/widgets/parent_dashboard_sections.dart';
@@ -108,6 +109,20 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
         );
   }
 
+  void _retryLoadChildren() {
+    final parentId = _cachedParentId;
+    if (parentId == null || parentId.isEmpty) {
+      // No resolved parent id yet — re-run the resolution flow from scratch.
+      _resolveParentContext();
+      return;
+    }
+    setState(() {
+      _childrenFuture = _loadChildrenForParent(parentId);
+      _recentActivitiesFuture = null;
+      _recentActivitiesKey = null;
+    });
+  }
+
   Future<List<ProgressRecord>> _recentActivitiesForChildren(
     List<ChildProfile> children,
   ) {
@@ -157,6 +172,20 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
                                 ConnectionState.waiting &&
                             childrenSnapshot.data == null) {
                           return const ParentDashboardSkeleton();
+                        }
+
+                        // Surface load failures explicitly so a connection
+                        // problem doesn't masquerade as "no children yet".
+                        // Guarded on data == null to preserve the local-first
+                        // behavior: if we still have cached children, keep
+                        // showing them even when a background refresh fails.
+                        if (childrenSnapshot.hasError &&
+                            childrenSnapshot.data == null) {
+                          return AppErrorState.parent(
+                            message: l10n.connectionError,
+                            buttonLabel: l10n.tryAgain,
+                            onRetry: _retryLoadChildren,
+                          );
                         }
 
                         final children = childrenSnapshot.data ?? [];

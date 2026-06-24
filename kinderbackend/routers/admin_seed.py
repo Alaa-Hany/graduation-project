@@ -13,6 +13,7 @@ It seeds:
 """
 
 import os
+import secrets
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
@@ -135,7 +136,7 @@ def seed_admin_system(body: SeedRequest, db: Session = Depends(get_db)):
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Admin seed password is not configured",
         )
-    if body.secret != SEED_SECRET:
+    if not secrets.compare_digest(body.secret, SEED_SECRET):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid seed secret",

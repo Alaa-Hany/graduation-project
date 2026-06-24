@@ -234,6 +234,24 @@ def _validate_age_group(value: Optional[str]) -> Optional[str]:
     return re.sub(r"\s+", "", trimmed)
 
 
+def _age_bounds_from_group(
+    age_group: Optional[str],
+) -> tuple[Optional[int], Optional[int]]:
+    """Derive structured (min_age, max_age) from a validated age_group string.
+
+    ``age_group`` is expected to already be normalized by ``_validate_age_group``
+    (``"5-7"`` or ``"8+"``). A ``"N+"`` group leaves ``max_age`` unbounded
+    (``None``); a missing group leaves both bounds ``None`` ("all ages"). These
+    columns are what GET /content/child/items range-filters on in SQL.
+    """
+    if not age_group:
+        return None, None
+    if age_group.endswith("+"):
+        return int(age_group[:-1]), None
+    start_raw, end_raw = age_group.split("-", 1)
+    return int(start_raw), int(end_raw)
+
+
 def _validate_metadata_json(value: Optional[dict[str, Any]]) -> dict[str, Any]:
     if value is None:
         return {}
@@ -810,6 +828,7 @@ def create_content(
     body_ar = _trim_or_none(payload.body_ar)
     thumbnail_url = _validate_thumbnail_url(payload.thumbnail_url)
     age_group = _validate_age_group(payload.age_group)
+    min_age, max_age = _age_bounds_from_group(age_group)
     metadata_json = _validate_metadata_json(payload.metadata_json)
     (
         video_url,
@@ -852,6 +871,8 @@ def create_content(
         video_public_id=video_public_id,
         video_duration_seconds=video_duration_seconds,
         age_group=age_group,
+        min_age=min_age,
+        max_age=max_age,
         metadata_json=metadata_json,
         created_by=admin.id,
         updated_by=admin.id,
@@ -1028,6 +1049,7 @@ def update_content(
         )
     if payload.age_group is not None:
         content.age_group = _validate_age_group(payload.age_group)
+        content.min_age, content.max_age = _age_bounds_from_group(content.age_group)
     if payload.metadata_json is not None:
         content.metadata_json = _validate_metadata_json(payload.metadata_json)
     (

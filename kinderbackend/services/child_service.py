@@ -722,9 +722,7 @@ class ChildService:
         # zero with no way to recover. We return the same all-time aggregate the
         # parent dashboard shows, computed from analytics, and the client merges
         # it into its local profile (taking the max, never regressing).
-        progress = self._progress_by_child(db=db, child_ids=[child.id]).get(
-            child.id, {}
-        )
+        progress = self._progress_by_child(db=db, child_ids=[child.id]).get(child.id, {})
 
         return {
             "success": True,

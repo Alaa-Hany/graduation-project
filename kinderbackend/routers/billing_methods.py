@@ -6,7 +6,11 @@ from deps import get_current_user, get_db
 from models import User
 from services.subscription_service import subscription_service
 
-router = APIRouter(prefix="/billing", tags=["billing"])
+# Own the dedicated /billing/methods subtree rather than sharing the bare
+# /billing prefix with subscription.billing_router. The public paths are
+# unchanged (/billing/methods, /billing/methods/{id}); this just makes prefix
+# ownership explicit so the two routers can't silently collide on a future route.
+router = APIRouter(prefix="/billing/methods", tags=["billing"])
 
 
 class PaymentMethodIn(BaseModel):
@@ -15,7 +19,7 @@ class PaymentMethodIn(BaseModel):
     set_default: bool = False
 
 
-@router.get("/methods")
+@router.get("")
 def list_methods(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
@@ -24,7 +28,7 @@ def list_methods(
     return {"methods": methods}
 
 
-@router.post("/methods")
+@router.post("")
 def add_method(
     payload: PaymentMethodIn,
     db: Session = Depends(get_db),
@@ -40,7 +44,7 @@ def add_method(
     return {"method": method}
 
 
-@router.delete("/methods/{method_id}")
+@router.delete("/{method_id}")
 def delete_method(
     method_id: int,
     db: Session = Depends(get_db),

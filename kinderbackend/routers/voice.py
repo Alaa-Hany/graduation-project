@@ -88,7 +88,17 @@ async def synthesize_speech(
         return TTSResponse(audio_base64="", content_type="audio/mp3", success=False, error=str(exc))
 
 
-@router.get("/languages")
+class LanguageOption(BaseModel):
+    code: str
+    name: str
+    native_name: Optional[str] = None
+
+
+class LanguageListResponse(BaseModel):
+    languages: list[LanguageOption]
+
+
+@router.get("/languages", response_model=LanguageListResponse)
 async def get_supported_languages():
     return {
         "languages": [

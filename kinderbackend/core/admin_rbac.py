@@ -24,6 +24,7 @@ PERMISSION_DEFS: Final[list[tuple[str, str]]] = [
     ("admin.subscription.view", "View subscription records"),
     ("admin.subscription.override", "Override subscription status"),
     ("admin.settings.edit", "Edit global app settings"),
+    ("admin.diagnostics.view", "View operational diagnostics (health, events, metrics)"),
     ("admin.audit.view", "View audit logs"),
     ("admin.admins.manage", "Create, edit, disable admin accounts"),
 ]

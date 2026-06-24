@@ -8,6 +8,7 @@ from rate_limit import (
     parent_pin_mutation_rate_limit,
     parent_pin_verify_rate_limit,
     password_change_rate_limit,
+    two_factor_rate_limit,
 )
 from schemas.common import SuccessResponse
 from services.auth_service import auth_service
@@ -16,6 +17,7 @@ router = APIRouter(tags=["auth"])
 password_change_rate_limit_check = Depends(password_change_rate_limit())
 parent_pin_mutation_rate_limit_check = Depends(parent_pin_mutation_rate_limit())
 parent_pin_verify_rate_limit_check = Depends(parent_pin_verify_rate_limit())
+two_factor_rate_limit_check = Depends(two_factor_rate_limit())
 
 PARENT_PIN_LENGTH = 4
 
@@ -323,6 +325,7 @@ def enable_two_factor_endpoint(
     payload: TwoFactorEnableRequest,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
+    rate_limit_check: None = two_factor_rate_limit_check,
 ):
     return auth_service.enable_two_factor(db=db, user=user, code=payload.code)
 

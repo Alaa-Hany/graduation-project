@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/public_content.dart';
+import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/repositories/public_content_repository.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
@@ -22,10 +23,17 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
   String _searchQuery = '';
   late Future<List<PublicContentItem>> _itemsFuture;
 
+  int? get _childAge {
+    final age = ref.read(childSessionControllerProvider).childProfile?.age;
+    return (age != null && age > 0) ? age : null;
+  }
+
   @override
   void initState() {
     super.initState();
-    _itemsFuture = ref.read(publicContentRepositoryProvider).fetchItems();
+    _itemsFuture = ref
+        .read(publicContentRepositoryProvider)
+        .fetchItems(age: _childAge);
   }
 
   @override
@@ -39,8 +47,9 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
         child: RefreshIndicator(
           onRefresh: () async {
             setState(() {
-              _itemsFuture =
-                  ref.read(publicContentRepositoryProvider).fetchItems();
+              _itemsFuture = ref
+                  .read(publicContentRepositoryProvider)
+                  .fetchItems(age: _childAge);
             });
             await _itemsFuture;
           },
