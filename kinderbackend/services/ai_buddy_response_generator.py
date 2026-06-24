@@ -14,6 +14,32 @@ logger = logging.getLogger(__name__)
 _ARABIC_PATTERN = re.compile(r"[؀-ۿ]")
 
 
+def _select_diverse_activities(
+    activities: list[dict], *, limit: int = 16
+) -> list[dict]:
+    """Pick a spread of activities across every category.
+
+    The provider is only shown a slice of the catalog, and a plain ``[:limit]``
+    would always surface the first category (e.g. only "Behavioral" items),
+    making the buddy recommend the same narrow set every time. Round-robining
+    across categories lets the model see options from every part of the app.
+    """
+    from collections import OrderedDict
+
+    buckets: "OrderedDict[str, list[dict]]" = OrderedDict()
+    for activity in activities:
+        buckets.setdefault(activity.get("category", ""), []).append(activity)
+
+    selected: list[dict] = []
+    while len(selected) < limit and any(buckets.values()):
+        for items in buckets.values():
+            if items:
+                selected.append(items.pop(0))
+                if len(selected) >= limit:
+                    break
+    return selected
+
+
 def _resolve_is_arabic(locale: str | None, *texts: str) -> bool:
     """Decide the reply language for AI Buddy.
 
@@ -443,6 +469,7 @@ class _EnhancedAiBuddyBackend:
     ) -> AiBuddyGeneratedResponse:
         is_arabic = _resolve_is_arabic(locale, message)
         activities = self._content_service.get_activities_for_age(child_age or 0)
+        activities = _select_diverse_activities(activities)
         generated = self._provider.generate(
             child_name=child_name,
             message=message,
@@ -458,7 +485,7 @@ class _EnhancedAiBuddyBackend:
                     "category": activity.get("category", ""),
                     "category_title_en": activity.get("category_title_en", ""),
                 }
-                for activity in activities[:8]
+                for activity in activities
             ],
         )
         provider_state = self.provider_state()
@@ -476,7 +503,7 @@ class _EnhancedAiBuddyBackend:
                 "tokens_used": generated.tokens_used,
                 "finish_reason": generated.finish_reason,
                 "suggested_activities": generated.suggested_activities,
-                "available_activity_slugs": [activity["slug"] for activity in activities[:8]],
+                "available_activity_slugs": [activity["slug"] for activity in activities],
             },
         )
 

@@ -60,8 +60,15 @@ class _CloudinaryVideoPlayerViewState extends State<CloudinaryVideoPlayerView> {
 
   @override
   void dispose() {
-    if (_playerElement is web.HTMLVideoElement) {
-      (_playerElement as web.HTMLVideoElement).pause();
+    final element = _playerElement;
+    if (element is web.HTMLVideoElement) {
+      element.pause();
+    } else if (element is web.HTMLIFrameElement) {
+      // A YouTube embed keeps playing (and its audio keeps coming through) even
+      // after the Flutter view is gone. Blanking the iframe src tears down the
+      // embedded player so the sound doesn't linger in the background once the
+      // child leaves the page.
+      element.src = 'about:blank';
     }
     super.dispose();
   }

@@ -19,11 +19,24 @@ class SoundEffectsService {
   /// child's "music" toggle in the home header (see [soundControllerProvider]).
   bool enabled = true;
 
+  /// Other audio sources (e.g. per-game background music players) that want to
+  /// honour the same global mute toggle. Each is invoked when the child mutes
+  /// so their currently-playing audio stops immediately, not just future plays.
+  final Set<void Function()> _muteListeners = {};
+
+  void addMuteListener(void Function() listener) => _muteListeners.add(listener);
+
+  void removeMuteListener(void Function() listener) =>
+      _muteListeners.remove(listener);
+
   void setEnabled(bool value) {
     enabled = value;
     if (!value) {
       // Stop anything currently playing the moment the child mutes.
       _player.stop().catchError((_) {});
+      for (final listener in _muteListeners.toList()) {
+        listener();
+      }
     }
   }
 

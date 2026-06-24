@@ -29,34 +29,75 @@ class ActivitySuggestionPayload(ActivityCatalogEntry):
     category_title_ar: str
 
 
+# This catalog MUST mirror the activities the child actually sees in the Flutter
+# app (kinder_world_child_mode/lib/features/child_mode/learn/data/learn_catalog.dart).
+# The AI buddy is told to recommend ONLY from this list, so anything that is not
+# a real, openable in-app activity will make it suggest things the child cannot
+# find. Keep the four category keys aligned with the app's learn routes
+# (behavioral / educational / skillful / entertaining) and use the same names.
 ACTIVITY_CATEGORIES: dict[str, ActivityCatalogCategory] = {
+    "behavioral": {
+        "title_en": "Behavioral",
+        "title_ar": "السلوكي",
+        "activities": [
+            # Values
+            {"title_en": "Giving", "title_ar": "العطاء", "slug": "behavior_giving"},
+            {"title_en": "Respect", "title_ar": "الاحترام", "slug": "behavior_respect"},
+            {"title_en": "Tolerance", "title_ar": "التسامح", "slug": "behavior_tolerance"},
+            {"title_en": "Kindness", "title_ar": "اللطف", "slug": "behavior_kindness"},
+            {"title_en": "Cooperation", "title_ar": "التعاون", "slug": "behavior_cooperation"},
+            {"title_en": "Responsibility", "title_ar": "المسؤولية", "slug": "behavior_responsibility"},
+            {"title_en": "Honesty", "title_ar": "الأمانة", "slug": "behavior_honesty"},
+            {"title_en": "Patience", "title_ar": "الصبر", "slug": "behavior_patience"},
+            {"title_en": "Courage", "title_ar": "الشجاعة", "slug": "behavior_courage"},
+            {"title_en": "Gratitude", "title_ar": "الامتنان", "slug": "behavior_gratitude"},
+            {"title_en": "Peace", "title_ar": "السلام", "slug": "behavior_peace"},
+            {"title_en": "Love", "title_ar": "الحب", "slug": "behavior_love"},
+            # Methods
+            {"title_en": "Relaxation", "title_ar": "الاسترخاء", "slug": "method_relaxation"},
+            {"title_en": "Imagination", "title_ar": "الخيال", "slug": "method_imagination"},
+            {"title_en": "Meditation", "title_ar": "التأمل", "slug": "method_meditation"},
+            {"title_en": "Art Expression", "title_ar": "التعبير الفني", "slug": "method_art"},
+        ],
+    },
     "educational": {
         "title_en": "Educational",
-        "title_ar": "تعليمي",
+        "title_ar": "التعليمي",
         "activities": [
-            {"title_en": "Math", "title_ar": "رياضيات", "slug": "edu_math"},
-            {"title_en": "Arabic", "title_ar": "عربي", "slug": "edu_arabic"},
-            {"title_en": "English", "title_ar": "إنجليزي", "slug": "edu_english"},
-            {"title_en": "Science - Animals", "title_ar": "علوم - حيوانات", "slug": "edu_animals"},
-            {"title_en": "Science - Plants", "title_ar": "علوم - نباتات", "slug": "edu_plants"},
+            {"title_en": "English", "title_ar": "الإنجليزية", "slug": "edu_english"},
+            {"title_en": "Arabic", "title_ar": "العربية", "slug": "edu_arabic"},
+            {"title_en": "Geography", "title_ar": "الجغرافيا", "slug": "edu_geography"},
+            {"title_en": "History", "title_ar": "التاريخ", "slug": "edu_history"},
+            {"title_en": "Science", "title_ar": "العلوم", "slug": "edu_science"},
+            {"title_en": "Math", "title_ar": "الرياضيات", "slug": "edu_math"},
+            {"title_en": "Animals", "title_ar": "الحيوانات", "slug": "edu_animals"},
+            {"title_en": "Plants", "title_ar": "النباتات", "slug": "edu_plants"},
         ],
     },
     "skillful": {
-        "title_en": "Skill Building",
-        "title_ar": "مهارات",
+        "title_en": "Skillful",
+        "title_ar": "المهاري",
         "activities": [
-            {"title_en": "Drawing", "title_ar": "رسم", "slug": "skill_drawing"},
-            {"title_en": "Coloring", "title_ar": "تلوين", "slug": "skill_coloring"},
-            {"title_en": "Music", "title_ar": "موسيقى", "slug": "skill_music"},
-            {"title_en": "Sports", "title_ar": "رياضة", "slug": "skill_sports"},
+            {"title_en": "Cooking", "title_ar": "الطبخ", "slug": "skill_cooking"},
+            {"title_en": "Drawing", "title_ar": "الرسم", "slug": "skill_drawing"},
+            {"title_en": "Coloring", "title_ar": "التلوين", "slug": "skill_coloring"},
+            {"title_en": "Music", "title_ar": "الموسيقى", "slug": "skill_music"},
+            {"title_en": "Singing", "title_ar": "الغناء", "slug": "skill_singing"},
+            {"title_en": "Handcrafts", "title_ar": "الأشغال اليدوية", "slug": "skill_handcrafts"},
+            {"title_en": "Sports", "title_ar": "الرياضة", "slug": "skill_sports"},
         ],
     },
-    "entertainment": {
-        "title_en": "Entertainment",
-        "title_ar": "ترفيه",
+    "entertaining": {
+        "title_en": "Entertaining",
+        "title_ar": "الترفيهي",
         "activities": [
+            {"title_en": "Puppet Show", "title_ar": "عروض الدمى", "slug": "ent_puppet_show"},
+            {"title_en": "Interactive Stories", "title_ar": "قصص تفاعلية", "slug": "ent_stories"},
+            {"title_en": "Songs & Music", "title_ar": "أغاني وموسيقى", "slug": "ent_music"},
+            {"title_en": "Funny Clips", "title_ar": "مقاطع مضحكة", "slug": "ent_clips"},
+            {"title_en": "Brain Teasers", "title_ar": "ألغاز ذهنية", "slug": "ent_teasers"},
             {"title_en": "Games", "title_ar": "ألعاب", "slug": "ent_games"},
-            {"title_en": "Stories", "title_ar": "قصص", "slug": "ent_stories"},
+            {"title_en": "Cartoons", "title_ar": "رسوم متحركة", "slug": "ent_cartoons"},
         ],
     },
 }

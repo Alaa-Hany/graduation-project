@@ -18,6 +18,7 @@ import 'package:kinder_world/core/providers/content_controller.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/core/repositories/public_content_repository.dart';
+import 'package:kinder_world/core/services/sound_effects_service.dart';
 import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';

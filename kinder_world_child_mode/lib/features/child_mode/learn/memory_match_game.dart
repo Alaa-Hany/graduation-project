@@ -214,6 +214,12 @@ class _PremiumMemoryMatchGameScreenState
       _bestStarsByLevel = map;
       _bestStars = map[_selectedLevel.id] ?? 0;
     });
+    // Resume at the highest unlocked level instead of always restarting at 1,
+    // so leaving and re-entering (or a web refresh) keeps the player's progress.
+    final resumeLevel = _levels[_memoryUnlockedLevelIndex];
+    if (resumeLevel.id != _selectedLevel.id) {
+      _changeLevel(resumeLevel);
+    }
   }
 
   Future<void> _saveBestStars(int stars) async {

@@ -11,8 +11,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from deps import get_current_user, get_db
-from models import User
+from deps import AiBuddyPrincipal, get_ai_buddy_principal, get_db
 from services.voice_service import voice_service
 
 logger = logging.getLogger(__name__)
@@ -49,7 +48,9 @@ class TTSResponse(BaseModel):
 
 @router.post("/transcribe", response_model=ASRResponse)
 async def transcribe_audio(
-    request: ASRRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)
+    request: ASRRequest,
+    db: Session = Depends(get_db),
+    principal: AiBuddyPrincipal = Depends(get_ai_buddy_principal),
 ):
     try:
         result = await voice_service.transcribe(
@@ -67,7 +68,9 @@ async def transcribe_audio(
 
 @router.post("/synthesize", response_model=TTSResponse)
 async def synthesize_speech(
-    request: TTSRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)
+    request: TTSRequest,
+    db: Session = Depends(get_db),
+    principal: AiBuddyPrincipal = Depends(get_ai_buddy_principal),
 ):
     try:
         language = request.language

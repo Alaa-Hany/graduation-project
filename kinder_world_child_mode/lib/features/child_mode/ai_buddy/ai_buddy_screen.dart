@@ -81,7 +81,6 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
 
     _ttsService = VoiceTtsService(
       network: ref.read(networkServiceProvider),
-      secureStorage: ref.read(secureStorageProvider),
       logger: ref.read(loggerProvider),
     );
     _initTts();

@@ -581,6 +581,12 @@ class _ShufflePuzzleScreenState
     }
     if (!mounted) return;
     setState(() => _progressByLevel = next);
+    // Resume at the highest unlocked level instead of always restarting at 1,
+    // so leaving and re-entering (or a web refresh) keeps the player's progress.
+    final resumeLevel = _levels[_unlockedLevelIndex];
+    if (resumeLevel.id != _selectedLevel.id) {
+      _changeLevel(resumeLevel);
+    }
   }
 
   Future<void> _saveProgressIfNeeded(int earnedStars) async {

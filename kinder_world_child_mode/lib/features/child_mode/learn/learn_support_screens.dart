@@ -2448,10 +2448,17 @@ class _PuzzleLevel {
 }
 
 class _GameAudioController {
+  _GameAudioController() {
+    // Honour the global "music" toggle from the home header so muting there
+    // also silences in-game music/effects, both future and currently playing.
+    SoundEffectsService.instance.addMuteListener(_handleGlobalMute);
+  }
+
   final AudioPlayer _bgPlayer = AudioPlayer();
   final AudioPlayer _fxPlayer = AudioPlayer();
 
   Future<void> startBackground(String assetPath, {double volume = 0.25}) async {
+    if (!SoundEffectsService.instance.enabled) return;
     try {
       await _bgPlayer.setReleaseMode(ReleaseMode.loop);
       await _bgPlayer.setVolume(volume);
@@ -2466,6 +2473,7 @@ class _GameAudioController {
     SystemSoundType? fallback,
     double volume = 1,
   }) async {
+    if (!SoundEffectsService.instance.enabled) return;
     try {
       await _fxPlayer.setVolume(volume);
       await _fxPlayer.play(AssetSource(assetPath));
@@ -2474,6 +2482,11 @@ class _GameAudioController {
         unawaited(SystemSound.play(fallback));
       }
     }
+  }
+
+  void _handleGlobalMute() {
+    _bgPlayer.stop().catchError((_) {});
+    _fxPlayer.stop().catchError((_) {});
   }
 
   Future<void> stopBackground() async {
@@ -2485,6 +2498,7 @@ class _GameAudioController {
   }
 
   Future<void> dispose() async {
+    SoundEffectsService.instance.removeMuteListener(_handleGlobalMute);
     try {
       await _bgPlayer.dispose();
       await _fxPlayer.dispose();

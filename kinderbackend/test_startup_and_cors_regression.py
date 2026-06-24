@@ -273,6 +273,8 @@ def _cors_behavior_client(
             "X-Requested-With",
             "X-CSRF-Token",
             "X-Request-ID",
+            "X-Admin-Confirm",
+            "X-Admin-Confirm-Action",
         ],
         expose_headers=["X-Request-ID"],
         max_age=86400,

@@ -216,6 +216,8 @@ app.add_middleware(
         "X-Requested-With",
         "X-CSRF-Token",
         "X-Request-ID",
+        "X-Admin-Confirm",
+        "X-Admin-Confirm-Action",
     ],
     expose_headers=["X-Request-ID"],
     allow_credentials=bool(cors_config["allow_credentials"]),

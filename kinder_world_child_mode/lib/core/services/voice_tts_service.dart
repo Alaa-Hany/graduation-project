@@ -2,32 +2,29 @@ import 'dart:convert';
 import 'dart:io' show Platform;
 
 import 'package:audioplayers/audioplayers.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:kinder_world/core/network/network_service.dart';
-import 'package:kinder_world/core/storage/secure_storage.dart';
 import 'package:logger/logger.dart';
 
 /// Speaks AI Buddy replies aloud.
 ///
-/// Prefers the device-native [FlutterTts] engine because it is instant, free,
-/// and works offline. When a reply is Arabic but the device has no Arabic voice
-/// installed, native TTS fails silently, so we fall back to the backend OpenAI
-/// TTS endpoint (`/voice/synthesize`) and play the returned audio with
-/// [AudioPlayer]. Speaking aloud is a nice-to-have, so every backend path fails
-/// silently rather than interrupting the chat.
+/// On mobile it prefers the device-native [FlutterTts] engine because it is
+/// instant, free, and works offline. On web, browser speech synthesis is
+/// unreliable (it often has no Arabic voice and can silently play nothing), so
+/// there we always use the backend OpenAI TTS endpoint (`/voice/synthesize`)
+/// and play the returned audio with [AudioPlayer]. The same backend path also
+/// covers Arabic replies on devices with no installed Arabic voice. Speaking
+/// aloud is a nice-to-have, so every backend path fails silently rather than
+/// interrupting the chat.
 class VoiceTtsService {
   VoiceTtsService({
     required NetworkService network,
-    required SecureStorage secureStorage,
     Logger? logger,
   })  : _network = network,
-        _secureStorage = secureStorage,
         _logger = logger ?? Logger();
 
   final NetworkService _network;
-  final SecureStorage _secureStorage;
   final Logger _logger;
 
   final FlutterTts _tts = FlutterTts();
@@ -69,8 +66,11 @@ class VoiceTtsService {
 
   Future<void> speak(String text, {required bool isArabic}) async {
     await stop();
-    if (isArabic && !_arabicAvailable) {
-      await _speakViaBackend(text, language: 'ar');
+    // On web the browser engine is unreliable, so always use the backend. On
+    // mobile, only fall back to the backend when an Arabic reply has no native
+    // Arabic voice available.
+    if (kIsWeb || (isArabic && !_arabicAvailable)) {
+      await _speakViaBackend(text, language: isArabic ? 'ar' : 'en');
       return;
     }
     await _tts.setLanguage(isArabic ? 'ar-EG' : 'en-US');
@@ -79,15 +79,12 @@ class VoiceTtsService {
 
   Future<void> _speakViaBackend(String text, {required String language}) async {
     try {
-      // The synthesize endpoint requires a parent (User) token; child-session
-      // tokens are rejected and are not auto-attached by NetworkService.
-      final token = await _secureStorage.getParentAccessToken();
+      // /voice/synthesize accepts the AI Buddy principal, so the active child
+      // session token that NetworkService attaches automatically is enough — no
+      // need to dig out a separate parent token that may already have expired.
       final response = await _network.post<Map<String, dynamic>>(
         '/voice/synthesize',
         data: {'text': text, 'language': language, 'speed': 1.0},
-        options: (token == null || token.isEmpty)
-            ? null
-            : Options(headers: {'Authorization': 'Bearer $token'}),
       );
       final data = response.data ?? const <String, dynamic>{};
       final audioBase64 = data['audio_base64'] as String?;
