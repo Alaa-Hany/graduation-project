@@ -281,6 +281,29 @@ def test_get_subscription_survives_raw_provider_error(db, create_parent, use_pro
     assert "lifecycle" in snapshot
 
 
+def test_get_subscription_survives_db_error_during_sync(
+    db, create_parent, use_provider, monkeypatch
+):
+    # Regression for the production 500: the provider call succeeds (Stripe
+    # returns 200) but the local payment_methods write fails — e.g. a schema
+    # drift where payment_methods.expires_at does not exist raises a DB
+    # ProgrammingError mid-query. The sync runs inside a SAVEPOINT, so the error
+    # is rolled back and swallowed and GET /subscription/me still serves the
+    # snapshot instead of returning a 500.
+    parent = create_parent(email="sub-me-db-err@example.com", plan=PLAN_PREMIUM)
+    _stripe_profile(db, parent)
+    use_provider(FakeProvider(methods=[_method_ref("pm_new")]))
+
+    def _boom(*args, **kwargs):
+        raise RuntimeError("column payment_methods.expires_at does not exist")
+
+    monkeypatch.setattr(subscription_service, "_replace_payment_methods", _boom)
+
+    snapshot = subscription_service.get_subscription(db=db, user=parent)
+    assert snapshot["current_plan_id"] == PLAN_PREMIUM
+    assert "lifecycle" in snapshot
+
+
 # ---------------------------------------------------------------------------
 # billing_portal → _create_portal_session
 # ---------------------------------------------------------------------------

@@ -477,17 +477,29 @@ class SubscriptionProviderMixin:
         provider = self._payment_provider()
         if not provider.is_external or not profile.provider_customer_id:
             return
+        # Payment-method sync is best-effort enrichment of the subscription
+        # snapshot and must NEVER break the core read (GET /subscription/me).
+        # Both the provider call and the local DB writes are wrapped in a single
+        # SAVEPOINT so any failure rolls back only this sub-work and leaves the
+        # outer transaction usable to still serve the snapshot. Failures we must
+        # tolerate here include:
+        #   * a stale/invalid provider_customer_id (Stripe raises a raw
+        #     StripeError, not a PaymentProviderError), and
+        #   * a schema drift such as a missing payment_methods column, which
+        #     raises a DB ProgrammingError mid-query.
         try:
-            references = provider.list_payment_methods(customer_id=profile.provider_customer_id)
+            with db.begin_nested():
+                references = provider.list_payment_methods(
+                    customer_id=profile.provider_customer_id
+                )
+                self._replace_payment_methods(
+                    db=db,
+                    user=user,
+                    provider_key=provider.provider_key,
+                    customer_id=profile.provider_customer_id,
+                    references=references,
+                )
         except Exception as exc:
-            # Payment-method sync is best-effort enrichment of the subscription
-            # snapshot. It must never break the core read: a stale/invalid
-            # provider_customer_id (e.g. a Stripe customer created under a
-            # different API key, or one that was deleted) makes the raw Stripe
-            # SDK raise a StripeError that is NOT a PaymentProviderError, so a
-            # narrow `except PaymentProviderError` let it bubble up as a 500 on
-            # GET /subscription/me. Swallow any provider/transport error here and
-            # serve the snapshot without the freshly-synced payment methods.
             logger.warning(
                 "payment_method_sync_skipped user_id=%s provider=%s customer_id=%s error=%s",
                 user.id,
@@ -495,15 +507,6 @@ class SubscriptionProviderMixin:
                 profile.provider_customer_id,
                 exc,
             )
-            return
-        self._replace_payment_methods(
-            db=db,
-            user=user,
-            provider_key=provider.provider_key,
-            customer_id=profile.provider_customer_id,
-            references=references,
-        )
-        db.flush()
 
     def _replace_payment_methods(
         self,
