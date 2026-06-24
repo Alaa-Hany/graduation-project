@@ -1,7 +1,7 @@
 """seed admin.diagnostics.view permission and grant it to super_admin
 
-Revision ID: n10_add_admin_diagnostics_view_perm_20260624
-Revises: m9_add_published_at_indexes_20260624
+Revision ID: n10_diag_view_perm_20260624
+Revises: m9_published_at_idx_20260624
 Create Date: 2026-06-24 10:00:00.000000
 
 The /admin/diagnostics health/events/metrics GET endpoints used to require the
@@ -24,8 +24,8 @@ import sqlalchemy as sa
 
 from alembic import op
 
-revision: str = "n10_add_admin_diagnostics_view_perm_20260624"
-down_revision: Union[str, Sequence[str], None] = "m9_add_published_at_indexes_20260624"
+revision: str = "n10_diag_view_perm_20260624"
+down_revision: Union[str, Sequence[str], None] = "m9_published_at_idx_20260624"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

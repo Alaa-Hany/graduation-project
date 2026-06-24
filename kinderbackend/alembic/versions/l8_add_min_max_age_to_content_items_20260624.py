@@ -1,6 +1,6 @@
 """add min_age and max_age to content_items
 
-Revision ID: l8_add_min_max_age_to_content_items_20260624
+Revision ID: l8_min_max_age_20260624
 Revises: k7_add_pm_updated_at_20260624
 Create Date: 2026-06-24 09:00:00.000000
 
@@ -21,7 +21,7 @@ import sqlalchemy as sa
 
 from alembic import op
 
-revision: str = "l8_add_min_max_age_to_content_items_20260624"
+revision: str = "l8_min_max_age_20260624"
 down_revision: Union[str, Sequence[str], None] = "k7_add_pm_updated_at_20260624"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

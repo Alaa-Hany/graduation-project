@@ -1,7 +1,7 @@
 """add (status, published_at) indexes to contents and quizzes
 
-Revision ID: m9_add_published_at_indexes_20260624
-Revises: l8_add_min_max_age_to_content_items_20260624
+Revision ID: m9_published_at_idx_20260624
+Revises: l8_min_max_age_20260624
 Create Date: 2026-06-24 09:30:00.000000
 
 Published-content listings filter by `status == 'published'` and order by
@@ -19,10 +19,8 @@ import sqlalchemy as sa
 
 from alembic import op
 
-revision: str = "m9_add_published_at_indexes_20260624"
-down_revision: Union[str, Sequence[str], None] = (
-    "l8_add_min_max_age_to_content_items_20260624"
-)
+revision: str = "m9_published_at_idx_20260624"
+down_revision: Union[str, Sequence[str], None] = "l8_min_max_age_20260624"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
