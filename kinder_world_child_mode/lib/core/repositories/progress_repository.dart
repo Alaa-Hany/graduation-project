@@ -22,9 +22,15 @@ class ProgressRepository {
 
   ProgressRecord? _decodeRecord(dynamic data) {
     if (data == null) return null;
+    // Hive returns stored maps with nested maps typed as Map<dynamic, dynamic>.
+    // ProgressRecord.fromJson casts performance_metrics to Map<String, dynamic>,
+    // which throws for those — so a shallow Map.from() left every game record
+    // (they all carry performance_metrics) undecodable after an app refresh,
+    // silently wiping today's progress and the daily goal. Round-trip through
+    // JSON to rebuild clean, deeply-typed maps.
     final Map<String, dynamic> json = data is String
         ? jsonDecode(data) as Map<String, dynamic>
-        : Map<String, dynamic>.from(data as Map);
+        : jsonDecode(jsonEncode(data)) as Map<String, dynamic>;
     return ProgressRecord.fromJson(json);
   }
 

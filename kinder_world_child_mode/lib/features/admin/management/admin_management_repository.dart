@@ -566,8 +566,9 @@ class AdminManagementRepository {
     String axisKey = '',
     String contentType = '',
     int page = 1,
+    int pageSize = 20,
   }) async {
-    final query = <String, dynamic>{'page': page};
+    final query = <String, dynamic>{'page': page, 'page_size': pageSize};
     if (search.isNotEmpty) query['search'] = search;
     if (status.isNotEmpty) query['status'] = status;
     if (categoryId != null) query['category_id'] = categoryId;

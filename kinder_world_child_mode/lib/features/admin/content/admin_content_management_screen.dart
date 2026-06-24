@@ -1655,6 +1655,41 @@ class _AdminContentManagementScreenState
         quiz?.axisKey ?? quiz?.category?.axisKey ?? _selectedAxisKey;
     final isArabic =
         Localizations.localeOf(context).languageCode.toLowerCase() == 'ar';
+
+    // content fetched for the current category/axis selection in the dialog
+    List<AdminCmsContent> dialogContents = _contents;
+    bool loadingDialogContents = false;
+    bool dialogInitialized = false;
+
+    Future<void> fetchDialogContents({
+      int? categoryId,
+      String axisKey = '',
+      required void Function(void Function()) setState,
+    }) async {
+      setState(() => loadingDialogContents = true);
+      try {
+        final result = await ref
+            .read(adminManagementRepositoryProvider)
+            .fetchContents(
+              categoryId: categoryId,
+              axisKey: categoryId == null ? axisKey : '',
+              pageSize: 100,
+            );
+        if (!mounted) return;
+        setState(() {
+          dialogContents = result.items;
+          loadingDialogContents = false;
+          if (selectedContentId != null &&
+              !result.items.any((c) => c.id == selectedContentId)) {
+            selectedContentId = null;
+          }
+        });
+      } catch (_) {
+        if (!mounted) return;
+        setState(() => loadingDialogContents = false);
+      }
+    }
+
     List<AdminCmsCategory> categoriesForAxis() {
       if (selectedAxisKey.isEmpty) {
         return _categories;
@@ -1662,20 +1697,6 @@ class _AdminContentManagementScreenState
       return _categories
           .where((category) => category.axisKey == selectedAxisKey)
           .toList();
-    }
-
-    List<AdminCmsContent> contentsForSelection() {
-      if (selectedCategoryId != null) {
-        return _contents
-            .where((content) => content.categoryId == selectedCategoryId)
-            .toList();
-      }
-      if (selectedAxisKey.isNotEmpty) {
-        return _contents
-            .where((content) => content.axisKey == selectedAxisKey)
-            .toList();
-      }
-      return _contents;
     }
 
     String categoryTitle(AdminCmsCategory category) =>
@@ -1698,7 +1719,18 @@ class _AdminContentManagementScreenState
                   preferredWidth: 680,
                 ),
                 child: SingleChildScrollView(
-                  child: Column(
+                  child: Builder(builder: (context) {
+                    if (!dialogInitialized) {
+                      dialogInitialized = true;
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        fetchDialogContents(
+                          categoryId: selectedCategoryId,
+                          axisKey: selectedAxisKey,
+                          setState: setStateDialog,
+                        );
+                      });
+                    }
+                    return Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (_axes.isNotEmpty) ...[
@@ -1717,22 +1749,23 @@ class _AdminContentManagementScreenState
                                 ),
                               )
                               .toList(),
-                          onChanged: (value) => setStateDialog(() {
-                            selectedAxisKey = value ?? '';
-                            final availableCategoryIds = categoriesForAxis()
-                                .map((category) => category.id)
-                                .toSet();
-                            if (!availableCategoryIds
-                                .contains(selectedCategoryId)) {
-                              selectedCategoryId = null;
-                            }
-                            final validContentIds = contentsForSelection()
-                                .map((c) => c.id)
-                                .toSet();
-                            if (!validContentIds.contains(selectedContentId)) {
+                          onChanged: (value) {
+                            setStateDialog(() {
+                              selectedAxisKey = value ?? '';
+                              final availableCategoryIds = categoriesForAxis()
+                                  .map((category) => category.id)
+                                  .toSet();
+                              if (!availableCategoryIds
+                                  .contains(selectedCategoryId)) {
+                                selectedCategoryId = null;
+                              }
                               selectedContentId = null;
-                            }
-                          }),
+                            });
+                            fetchDialogContents(
+                              axisKey: selectedAxisKey,
+                              setState: setStateDialog,
+                            );
+                          },
                         ),
                         const SizedBox(height: 12),
                       ],
@@ -1749,35 +1782,45 @@ class _AdminContentManagementScreenState
                                   value: category.id,
                                   child: Text(categoryTitle(category)))),
                         ],
-                        onChanged: (value) => setStateDialog(() {
-                          selectedCategoryId = value;
-                          final validContentIds = contentsForSelection()
-                              .map((c) => c.id)
-                              .toSet();
-                          if (!validContentIds.contains(selectedContentId)) {
+                        onChanged: (value) {
+                          setStateDialog(() {
+                            selectedCategoryId = value;
                             selectedContentId = null;
-                          }
-                        }),
+                          });
+                          fetchDialogContents(
+                            categoryId: value,
+                            axisKey: selectedAxisKey,
+                            setState: setStateDialog,
+                          );
+                        },
                       ),
                       const SizedBox(height: 12),
-                      DropdownButtonFormFieldCompat<int?>(
-                        key: ValueKey(
-                            'content_${selectedCategoryId}_$selectedAxisKey'),
-                        initialValue: selectedContentId,
-                        decoration: InputDecoration(
-                            labelText: l10n.adminCmsLinkedContentLabel),
-                        items: [
-                          DropdownMenuItem<int?>(
-                              value: null,
-                              child: Text(l10n.adminCmsNoLinkedContent)),
-                          ...contentsForSelection()
-                              .map((content) => DropdownMenuItem<int?>(
-                                  value: content.id,
-                                  child: Text(content.titleEn))),
-                        ],
-                        onChanged: (value) =>
-                            setStateDialog(() => selectedContentId = value),
-                      ),
+                      if (loadingDialogContents)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 8),
+                          child: LinearProgressIndicator(),
+                        )
+                      else
+                        DropdownButtonFormFieldCompat<int?>(
+                          key: ValueKey(
+                              'content_${selectedCategoryId}_$selectedAxisKey'),
+                          initialValue: selectedContentId,
+                          decoration: InputDecoration(
+                              labelText: l10n.adminCmsLinkedContentLabel),
+                          items: [
+                            DropdownMenuItem<int?>(
+                                value: null,
+                                child: Text(l10n.adminCmsNoLinkedContent)),
+                            ...dialogContents
+                                .map((content) => DropdownMenuItem<int?>(
+                                    value: content.id,
+                                    child: Text(isArabic
+                                        ? content.titleAr
+                                        : content.titleEn))),
+                          ],
+                          onChanged: (value) =>
+                              setStateDialog(() => selectedContentId = value),
+                        ),
                       const SizedBox(height: 12),
                       DropdownButtonFormFieldCompat<String>(
                         initialValue: selectedStatus,
@@ -1818,7 +1861,8 @@ class _AdminContentManagementScreenState
                           decoration: InputDecoration(
                               labelText: l10n.adminCmsQuestionsJsonLabel)),
                     ],
-                  ),
+                  );
+                }),
                 ),
               ),
               actions: [

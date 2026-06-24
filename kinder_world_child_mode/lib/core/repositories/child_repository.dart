@@ -19,9 +19,14 @@ class ChildRepository {
 
   ChildProfile? _decodeProfile(dynamic data) {
     if (data == null) return null;
+    // Round-trip through JSON so any nested maps Hive returns as
+    // Map<dynamic, dynamic> become deeply-typed Map<String, dynamic>. A shallow
+    // Map.from() would make fromJson throw (and the profile silently vanish on
+    // refresh) the moment a nested map field is added — the same class of bug
+    // that wiped progress records. See ProgressRepository._decodeRecord.
     final Map<String, dynamic> json = data is String
         ? jsonDecode(data) as Map<String, dynamic>
-        : Map<String, dynamic>.from(data as Map);
+        : jsonDecode(jsonEncode(data)) as Map<String, dynamic>;
     return ChildProfile.fromJson(json);
   }
 
@@ -103,8 +108,8 @@ class ChildRepository {
         if (data == null) continue;
         try {
           final json = data is String
-              ? jsonDecode(data)
-              : Map<String, dynamic>.from(data);
+              ? jsonDecode(data) as Map<String, dynamic>
+              : jsonDecode(jsonEncode(data)) as Map<String, dynamic>;
           final child = ChildProfile.fromJson(json);
           if (child.parentEmail == parentEmail && child.parentId != parentId) {
             final updated = child.copyWith(parentId: parentId);

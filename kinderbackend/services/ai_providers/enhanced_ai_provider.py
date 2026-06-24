@@ -197,29 +197,6 @@ class EnhancedAIProvider:
         """Build the messages list for the AI API."""
         messages = [{"role": "system", "content": ENHANCED_CHILD_FRIENDLY_SYSTEM_PROMPT}]
 
-        if is_arabic:
-            messages.append(
-                {
-                    "role": "system",
-                    "content": (
-                        "Reply in clear, simple Modern Standard Arabic suitable for a young child. "
-                        "Reply in Arabic even if the child's message is in English or contains English "
-                        "names or words. Do not reply in any other language."
-                    ),
-                }
-            )
-        else:
-            messages.append(
-                {
-                    "role": "system",
-                    "content": (
-                        "Reply in simple English suitable for a young child. Reply in English even if "
-                        "the child's message is in Arabic or contains Arabic names or words. Do not "
-                        "reply in any other language."
-                    ),
-                }
-            )
-
         if child_name:
             messages.append(
                 {
@@ -265,6 +242,35 @@ class EnhancedAIProvider:
             for msg in recent_messages[-4:]:
                 context += f"- {msg}\n"
             messages.append({"role": "system", "content": context})
+
+        # Language enforcement goes LAST — placing it immediately before the user
+        # message maximises its weight in the model's attention, which prevents
+        # smaller models (gpt-4o-mini) from drifting into the wrong language when
+        # the user writes in a different language than the app locale.
+        if is_arabic:
+            messages.append(
+                {
+                    "role": "system",
+                    "content": (
+                        "LANGUAGE RULE (highest priority): You MUST reply entirely in Arabic. "
+                        "Do NOT use English in your response under any circumstances, even if "
+                        "the child's message is in English or contains English words or names. "
+                        "Use clear, simple Modern Standard Arabic suitable for a young child."
+                    ),
+                }
+            )
+        else:
+            messages.append(
+                {
+                    "role": "system",
+                    "content": (
+                        "LANGUAGE RULE (highest priority): You MUST reply entirely in English. "
+                        "Do NOT use Arabic in your response under any circumstances, even if "
+                        "the child's message is in Arabic or contains Arabic words or names. "
+                        "Use simple English suitable for a young child."
+                    ),
+                }
+            )
 
         messages.append({"role": "user", "content": message})
         return messages
@@ -313,12 +319,16 @@ class EnhancedAIProvider:
     def generate_greeting(
         self, *, child_name: str | None = None, is_arabic: bool = False
     ) -> EnhancedAIResponse:
-        prompt = "Say a friendly, short greeting to start a conversation"
-        if child_name:
-            prompt += f" with a child named {child_name}"
-        prompt += ". Keep it brief and welcoming (1-2 sentences)."
         if is_arabic:
-            prompt += " Respond in Arabic."
+            prompt = "قل تحية ودودة وقصيرة لبدء المحادثة"
+            if child_name:
+                prompt += f" مع طفل اسمه {child_name}"
+            prompt += ". اجعلها مرحبة ومشجعة في جملة أو جملتين."
+        else:
+            prompt = "Say a friendly, short greeting to start a conversation"
+            if child_name:
+                prompt += f" with a child named {child_name}"
+            prompt += ". Keep it brief and welcoming (1-2 sentences)."
 
         return self.generate(child_name=child_name, message=prompt, is_arabic=is_arabic)
 
