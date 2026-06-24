@@ -266,9 +266,7 @@ class AiBuddyModerationService:
         # real hit, so a low-confidence violence score on a benign prompt does
         # not trigger a refusal. (Booleans pass through fine: True >= 0.5.)
         active = [
-            name
-            for name, score in category_scores.items()
-            if score >= self._openai_score_threshold
+            name for name, score in category_scores.items() if score >= self._openai_score_threshold
         ]
         if not active:
             return None, None, []

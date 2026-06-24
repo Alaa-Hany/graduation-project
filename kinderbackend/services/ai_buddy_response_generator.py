@@ -14,9 +14,7 @@ logger = logging.getLogger(__name__)
 _ARABIC_PATTERN = re.compile(r"[؀-ۿ]")
 
 
-def _select_diverse_activities(
-    activities: list[dict], *, limit: int = 16
-) -> list[dict]:
+def _select_diverse_activities(activities: list[dict], *, limit: int = 16) -> list[dict]:
     """Pick a spread of activities across every category.
 
     The provider is only shown a slice of the catalog, and a plain ``[:limit]``

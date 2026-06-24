@@ -268,9 +268,7 @@ def child_session_headers():
     return _headers
 
 
-def test_child_session_token_can_ingest_own_event(
-    client, db, child, child_session_headers, api
-):
+def test_child_session_token_can_ingest_own_event(client, db, child, child_session_headers, api):
     """A child logged in with a child_session token can sync its own activity,
     so progress reaches the backend without a parent token (cross-device sync)."""
     resp = client.post(
@@ -288,11 +286,7 @@ def test_child_session_token_can_ingest_own_event(
     assert body["event"]["child_id"] == child.id
     assert body["event"]["event_type"] == "activity_completed"
 
-    event = (
-        db.query(ChildActivityEvent)
-        .filter(ChildActivityEvent.child_id == child.id)
-        .first()
-    )
+    event = db.query(ChildActivityEvent).filter(ChildActivityEvent.child_id == child.id).first()
     assert event is not None
 
 

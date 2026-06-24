@@ -4,20 +4,15 @@ import logging
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
+from core.errors import http_error
 from core.report_cache import (
     cache_report,
     get_cached_report,
     invalidate_report_cache,
     report_cache_key,
 )
-from core.errors import http_error
 from core.system_settings import require_ai_buddy_enabled
-from deps import (
-    AnalyticsPrincipal,
-    get_analytics_principal,
-    get_db,
-    require_feature,
-)
+from deps import AnalyticsPrincipal, get_analytics_principal, get_db, require_feature
 from models import User
 from schemas.analytics import ActivityEventIn, SessionLogIn
 from services.analytics_service import analytics_service
@@ -68,9 +63,7 @@ def ingest_session_log(
     principal: AnalyticsPrincipal = Depends(get_analytics_principal),
 ):
     _authorize_child_scope(principal, payload.child_id)
-    result = analytics_service.record_session_log(
-        db=db, parent=principal.parent, payload=payload
-    )
+    result = analytics_service.record_session_log(db=db, parent=principal.parent, payload=payload)
     # New screen-time data changes report aggregates → drop cached reports.
     invalidate_report_cache(principal.parent.id)
     return result

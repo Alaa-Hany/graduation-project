@@ -46,7 +46,11 @@ ACTIVITY_CATEGORIES: dict[str, ActivityCatalogCategory] = {
             {"title_en": "Tolerance", "title_ar": "التسامح", "slug": "behavior_tolerance"},
             {"title_en": "Kindness", "title_ar": "اللطف", "slug": "behavior_kindness"},
             {"title_en": "Cooperation", "title_ar": "التعاون", "slug": "behavior_cooperation"},
-            {"title_en": "Responsibility", "title_ar": "المسؤولية", "slug": "behavior_responsibility"},
+            {
+                "title_en": "Responsibility",
+                "title_ar": "المسؤولية",
+                "slug": "behavior_responsibility",
+            },
             {"title_en": "Honesty", "title_ar": "الأمانة", "slug": "behavior_honesty"},
             {"title_en": "Patience", "title_ar": "الصبر", "slug": "behavior_patience"},
             {"title_en": "Courage", "title_ar": "الشجاعة", "slug": "behavior_courage"},

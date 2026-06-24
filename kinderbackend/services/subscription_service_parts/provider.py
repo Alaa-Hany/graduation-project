@@ -489,9 +489,7 @@ class SubscriptionProviderMixin:
         #     raises a DB ProgrammingError mid-query.
         try:
             with db.begin_nested():
-                references = provider.list_payment_methods(
-                    customer_id=profile.provider_customer_id
-                )
+                references = provider.list_payment_methods(customer_id=profile.provider_customer_id)
                 self._replace_payment_methods(
                     db=db,
                     user=user,
