@@ -6,6 +6,7 @@ from collections import defaultdict
 from datetime import date, datetime, timedelta, timezone
 
 from jwt import PyJWTError as JWTError
+from sqlalchemy import case, func
 from sqlalchemy.orm import Session
 
 from auth import create_token, decode_token, hash_password, verify_password
@@ -14,7 +15,13 @@ from core.redis_client import get_redis_client
 from core.system_settings import get_default_child_limit
 from core.time_utils import db_utc_now, utc_now
 from core.validators import resolve_child_age, validate_child_age, validate_picture_password_length
-from models import ChildProfile, User
+from models import (
+    ChildActivityEvent,
+    ChildDailyActivitySummary,
+    ChildProfile,
+    ChildSessionLog,
+    User,
+)
 from plan_service import PLAN_FREE, PLAN_LIMITS, get_user_plan
 from schemas.auth import (
     ChildChangePasswordIn,
@@ -29,6 +36,43 @@ logger = logging.getLogger(__name__)
 
 PREMIUM_PRICE_USD = 10
 PICTURE_PASSWORD_HASH_SCHEME = "bcrypt_json_v1"
+
+# Event types that count as a completed activity for progress aggregation.
+# Mirrors COMPLETION_EVENT_TYPES in the analytics services.
+_COMPLETION_EVENT_TYPES = ("activity_completed", "lesson_completed")
+
+# XP→level mapping, mirrors LevelThresholds in the Flutter client
+# (lib/core/models/achievement.dart): a new level every 1000 XP, capped at 10.
+_XP_PER_LEVEL = 1000
+_MAX_LEVEL = 10
+
+
+def _level_for_xp(xp: int) -> int:
+    """Return the 1-based level for a total XP, matching the client formula."""
+    level = (max(xp, 0) // _XP_PER_LEVEL) + 1
+    return max(1, min(level, _MAX_LEVEL))
+
+
+def _current_streak(active_dates: list[date]) -> int:
+    """Length of the consecutive-day run ending at the most recent active day.
+
+    Mirrors the client's stored streak, which counts back from the latest day
+    the child was active and only breaks on a gap of more than one day. We anchor
+    on the latest active day (rather than "today") because the client's stored
+    streak does not decay until the next activity.
+    """
+    if not active_dates:
+        return 0
+    ordered = sorted(set(active_dates), reverse=True)
+    streak = 1
+    previous = ordered[0]
+    for day in ordered[1:]:
+        if (previous - day).days == 1:
+            streak += 1
+            previous = day
+        else:
+            break
+    return streak
 
 
 # Redis key helpers — module-level dicts removed; state lives in Redis.
@@ -369,6 +413,99 @@ class ChildService:
         db.refresh(child)
         return {"child": child_to_json(child)}
 
+    def _progress_by_child(self, *, db: Session, child_ids: list[int]) -> dict[int, dict]:
+        """Aggregate all-time progress per child from the analytics tables.
+
+        Returns ``{child_id: {xp, level, streak, total_time_spent,
+        activities_completed}}``. Computed from the same events/sessions the
+        child app already streams to the backend, so no extra columns or
+        client changes are needed.
+        """
+        progress = {
+            cid: {
+                "xp": 0,
+                "level": 1,
+                "streak": 0,
+                "total_time_spent": 0,
+                "activities_completed": 0,
+            }
+            for cid in child_ids
+        }
+        if not child_ids:
+            return progress
+
+        # XP (sum of points on completion events) + activity count, per child.
+        event_rows = (
+            db.query(
+                ChildActivityEvent.child_id,
+                func.coalesce(
+                    func.sum(
+                        case(
+                            (
+                                ChildActivityEvent.event_type.in_(_COMPLETION_EVENT_TYPES),
+                                ChildActivityEvent.points,
+                            ),
+                            else_=0,
+                        )
+                    ),
+                    0,
+                ).label("xp"),
+                func.count(
+                    case((ChildActivityEvent.event_type.in_(_COMPLETION_EVENT_TYPES), 1))
+                ).label("activities"),
+            )
+            .filter(
+                ChildActivityEvent.child_id.in_(child_ids),
+                ChildActivityEvent.archived_at.is_(None),
+            )
+            .group_by(ChildActivityEvent.child_id)
+            .all()
+        )
+        for row in event_rows:
+            entry = progress[row.child_id]
+            entry["xp"] = int(row.xp or 0)
+            entry["activities_completed"] = int(row.activities or 0)
+
+        # Total screen time (minutes) from session logs, per child.
+        session_rows = (
+            db.query(
+                ChildSessionLog.child_id,
+                func.coalesce(func.sum(ChildSessionLog.duration_seconds), 0).label("seconds"),
+            )
+            .filter(
+                ChildSessionLog.child_id.in_(child_ids),
+                ChildSessionLog.archived_at.is_(None),
+            )
+            .group_by(ChildSessionLog.child_id)
+            .all()
+        )
+        for row in session_rows:
+            progress[row.child_id]["total_time_spent"] = int((row.seconds or 0) // 60)
+
+        # Active days for the streak, from the daily-summary rollup.
+        date_rows = (
+            db.query(
+                ChildDailyActivitySummary.child_id,
+                ChildDailyActivitySummary.summary_date,
+            )
+            .filter(
+                ChildDailyActivitySummary.child_id.in_(child_ids),
+                ChildDailyActivitySummary.archived_at.is_(None),
+            )
+            .all()
+        )
+        dates_by_child: dict[int, list[date]] = defaultdict(list)
+        for child_id, summary_date in date_rows:
+            if summary_date is not None:
+                dates_by_child[child_id].append(summary_date)
+
+        for cid in child_ids:
+            entry = progress[cid]
+            entry["streak"] = _current_streak(dates_by_child.get(cid, []))
+            entry["level"] = _level_for_xp(entry["xp"])
+
+        return progress
+
     def list_parent_children(self, *, parent: User, db: Session) -> dict:
         children = (
             db.query(ChildProfile)
@@ -378,7 +515,16 @@ class ChildService:
             )
             .all()
         )
-        return {"children": [child_to_json(child) for child in children]}
+        progress = self._progress_by_child(
+            db=db,
+            child_ids=[child.id for child in children],
+        )
+        serialized = []
+        for child in children:
+            data = child_to_json(child)
+            data.update(progress.get(child.id, {}))
+            serialized.append(data)
+        return {"children": serialized}
 
     def delete_child_profile(self, *, child_id: int, parent: User, db: Session) -> dict:
         child = (

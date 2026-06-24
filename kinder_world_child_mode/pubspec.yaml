@@ -60,6 +60,8 @@ dependencies:
   # JSON Serialization
   json_annotation: ^4.8.0
   freezed_annotation: ^2.4.1
+  app_settings: ^7.0.0
+  android_intent_plus: ^6.0.0
 
 dev_dependencies:
   flutter_test:

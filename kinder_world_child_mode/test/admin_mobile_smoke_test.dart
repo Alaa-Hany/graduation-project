@@ -147,6 +147,7 @@ class _FakeAdminManagementRepository extends AdminManagementRepository {
     String axisKey = '',
     String contentType = '',
     int page = 1,
+    int pageSize = 20,
   }) async {
     return const AdminPagedResponse(items: [], pagination: {});
   }

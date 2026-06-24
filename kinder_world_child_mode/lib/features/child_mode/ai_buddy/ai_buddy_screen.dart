@@ -1,6 +1,11 @@
 // ignore_for_file: deprecated_member_use
 
+import 'dart:io' show Platform;
+
+import 'package:android_intent_plus/android_intent.dart';
+import 'package:app_settings/app_settings.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:speech_to_text/speech_to_text.dart';
@@ -57,6 +62,11 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
   int? _playingMessageId;
   bool _isListening = false;
   bool _sttAvailable = false;
+  // Speech locales actually installed on the device. Hardcoding "ar_EG" makes
+  // speech_to_text fall back silently to the device default (usually English)
+  // when that exact locale is missing, which turns Arabic speech into garbled
+  // Latin text. We resolve against this list instead.
+  List<LocaleName> _sttLocales = const [];
 
   AiBuddyConversation? _conversation;
   bool _isLoading = true;
@@ -114,7 +124,61 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
         }
       },
     );
+    if (available) {
+      // Cache the device's installed speech locales so we can match the app
+      // language to a locale that actually exists on this device.
+      try {
+        _sttLocales = await _stt.locales();
+      } catch (_) {
+        // Some platforms don't expose the locale list; we fall back to a
+        // sensible default locale id in that case.
+      }
+    }
     if (mounted) setState(() => _sttAvailable = available);
+  }
+
+  /// Resolves [langCode] (e.g. "ar" or "en") to a speech locale id that is
+  /// actually installed on this device. Prefers the regional variant we ship
+  /// for, then any variant of the same language. Returns null when the device
+  /// has no speech engine for that language at all — transcribing in that case
+  /// produces garbled output, so the caller should warn instead of listening.
+  String? _resolveSttLocaleId(String langCode) {
+    final preferred = langCode == 'ar' ? 'ar_eg' : 'en_us';
+    String norm(String id) => id.toLowerCase().replaceAll('-', '_');
+    if (_sttLocales.isEmpty) {
+      // Locale list is unknown on this platform; keep prior behaviour.
+      return langCode == 'ar' ? 'ar_EG' : 'en_US';
+    }
+    String? fallback;
+    for (final locale in _sttLocales) {
+      final id = norm(locale.localeId);
+      if (id == preferred) return locale.localeId;
+      if (fallback == null &&
+          (id == langCode || id.startsWith('${langCode}_'))) {
+        fallback = locale.localeId;
+      }
+    }
+    return fallback;
+  }
+
+  /// Opens the device's voice input settings so the user can install a
+  /// missing speech-recognition language. Android exposes a real settings
+  /// screen for this (`ACTION_VOICE_INPUT_SETTINGS`); iOS has no public deep
+  /// link to Siri & Dictation, so we fall back to this app's own settings
+  /// page, and web has no OS settings to open at all.
+  Future<void> _openSttLanguageSettings() async {
+    try {
+      if (!kIsWeb && Platform.isAndroid) {
+        const intent = AndroidIntent(
+          action: 'android.settings.VOICE_INPUT_SETTINGS',
+        );
+        await intent.launch();
+      } else if (!kIsWeb && Platform.isIOS) {
+        await AppSettings.openAppSettings();
+      }
+    } catch (e) {
+      ref.read(loggerProvider).w('Failed to open voice input settings: $e');
+    }
   }
 
   /// Plays a short UI sound cue. Failure (e.g. missing asset) must never
@@ -129,12 +193,41 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
 
   Future<void> _startListening() async {
     if (!_sttAvailable || _isListening) return;
+    final langCode = ref.read(localeProvider).languageCode;
+    final localeId = _resolveSttLocaleId(langCode);
+    if (localeId == null) {
+      // No speech engine for the app language is installed on this device.
+      // Listening anyway would transcribe Arabic speech as garbled Latin text,
+      // so we tell the child to type instead.
+      ref
+          .read(loggerProvider)
+          .w('No STT locale for "$langCode" on device; available: '
+              '${_sttLocales.map((l) => l.localeId).toList()}');
+      if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.sttLanguageUnavailable),
+            duration: const Duration(seconds: 5),
+            behavior: SnackBarBehavior.floating,
+            // Web has no OS-level voice settings to deep link to, so the
+            // action would be a dead button there.
+            action: kIsWeb
+                ? null
+                : SnackBarAction(
+                    label: l10n.sttOpenLanguageSettings,
+                    onPressed: _openSttLanguageSettings,
+                  ),
+          ),
+        );
+      }
+      return;
+    }
     await _ttsService.stop();
     await _playSfx('sounds/mic_start.wav');
     setState(() => _isListening = true);
-    final langCode = ref.read(localeProvider).languageCode;
     await _stt.listen(
-      localeId: langCode == 'ar' ? 'ar_EG' : 'en_US',
+      localeId: localeId,
       listenFor: const Duration(seconds: 15),
       pauseFor: const Duration(seconds: 5),
       onResult: (result) {

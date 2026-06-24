@@ -142,6 +142,94 @@ def test_list_parent_children(service, db, create_parent):
     assert len(result["children"]) == 1
 
 
+def test_list_parent_children_zero_progress_defaults(service, db, create_parent):
+    # A child with no analytics yet still gets the progress keys, all zeroed
+    # (level defaults to 1) so the parent card renders without errors.
+    parent = create_parent(email="cc-progress-zero@example.com")
+    _make_child(service, db, parent, name="FreshKid")
+    item = service.list_parent_children(parent=parent, db=db)["children"][0]
+    assert item["xp"] == 0
+    assert item["level"] == 1
+    assert item["streak"] == 0
+    assert item["total_time_spent"] == 0
+    assert item["activities_completed"] == 0
+
+
+def test_list_parent_children_aggregates_progress(service, db, create_parent):
+    from datetime import timedelta
+
+    from core.time_utils import utc_now
+    from models import (
+        ChildActivityEvent,
+        ChildDailyActivitySummary,
+        ChildSessionLog,
+    )
+
+    parent = create_parent(email="cc-progress@example.com")
+    child = _make_child(service, db, parent, name="BusyKid")
+    now = utc_now()
+    today = now.date()
+
+    # Two completed activities worth 600 + 700 XP → 1300 XP → level 2.
+    db.add_all(
+        [
+            ChildActivityEvent(
+                child_id=child.id,
+                event_type="activity_completed",
+                occurred_at=now,
+                source="child_mode",
+                points=600,
+                duration_seconds=300,
+            ),
+            ChildActivityEvent(
+                child_id=child.id,
+                event_type="lesson_completed",
+                occurred_at=now,
+                source="child_mode",
+                points=700,
+                duration_seconds=300,
+            ),
+            # A non-completion event must not count toward activities or XP.
+            ChildActivityEvent(
+                child_id=child.id,
+                event_type="mood_entry",
+                occurred_at=now,
+                source="child_mode",
+                points=999,
+                mood_value=5,
+            ),
+        ]
+    )
+    # 10 minutes of screen time from a session log.
+    db.add(
+        ChildSessionLog(
+            child_id=child.id,
+            session_id="s1",
+            source="child_mode",
+            started_at=now - timedelta(minutes=10),
+            ended_at=now,
+            duration_seconds=600,
+        )
+    )
+    # Active today and yesterday → streak of 2.
+    db.add_all(
+        [
+            ChildDailyActivitySummary(child_id=child.id, summary_date=today),
+            ChildDailyActivitySummary(
+                child_id=child.id, summary_date=today - timedelta(days=1)
+            ),
+        ]
+    )
+    db.commit()
+
+    item = service.list_parent_children(parent=parent, db=db)["children"][0]
+    assert item["xp"] == 1300
+    assert item["level"] == 2
+    assert item["activities_completed"] == 2
+    assert item["total_time_spent"] == 10
+    assert item["streak"] == 2
+
+
 def test_delete_child_profile_success(service, db, create_parent):
     parent = create_parent(email="cc-del@example.com")
     child = _make_child(service, db, parent, name="ToDelete")

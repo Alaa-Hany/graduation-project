@@ -147,6 +147,57 @@ void main() {
     expect(result.snapshot.freshness, CacheFreshness.freshServerBacked);
   });
 
+  test('adopts server progress for a fresh parent-device child', () async {
+    storage.token = 'parent-token';
+    // Parent device has no local progress yet; server returns the aggregated
+    // values streamed from child mode.
+    api.children = [
+      {
+        'id': 'c1',
+        'name': 'Kid',
+        'age': 6,
+        'xp': 1300,
+        'level': 2,
+        'streak': 4,
+        'total_time_spent': 25,
+        'activities_completed': 7,
+      },
+    ];
+
+    await service.loadChildrenForParent('p1', forceRefresh: true);
+    final merged = repo.profiles['c1']!;
+    expect(merged.xp, 1300);
+    expect(merged.level, 2);
+    expect(merged.streak, 4);
+    expect(merged.totalTimeSpent, 25);
+    expect(merged.activitiesCompleted, 7);
+  });
+
+  test('keeps fresher local progress over a lagging server value', () async {
+    storage.token = 'parent-token';
+    // Shared device: child mode just updated Hive ahead of the server sync.
+    repo.profiles['c1'] = _child().copyWith(
+      xp: 2000,
+      level: 3,
+      activitiesCompleted: 12,
+    );
+    api.children = [
+      {
+        'id': 'c1',
+        'name': 'Kid',
+        'xp': 1300,
+        'level': 2,
+        'activities_completed': 7,
+      },
+    ];
+
+    await service.loadChildrenForParent('p1', forceRefresh: true);
+    final merged = repo.profiles['c1']!;
+    expect(merged.xp, 2000);
+    expect(merged.level, 3);
+    expect(merged.activitiesCompleted, 12);
+  });
+
   test('links children by email before loading', () async {
     storage.token = 'parent-token';
     api.children = const [];

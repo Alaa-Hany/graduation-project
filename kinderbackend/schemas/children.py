@@ -53,6 +53,11 @@ class ChildListItem(BaseModel):
     ``created_at``/``updated_at`` audit timestamps that the list card never
     renders. Used as ``response_model`` so Pydantic drops the extra fields
     from each serialized child, trimming both CPU and wire payload.
+
+    The progress fields (``xp``..``activities_completed``) are aggregated
+    server-side from the child's analytics events/sessions so the parent
+    dashboard and child-management cards show the same real progress the
+    child sees in child mode, even on a fresh parent device.
     """
 
     id: int
@@ -60,6 +65,11 @@ class ChildListItem(BaseModel):
     age: Optional[int] = None
     avatar: Optional[str] = None
     is_active: bool = True
+    xp: int = 0
+    level: int = 1
+    streak: int = 0
+    total_time_spent: int = 0
+    activities_completed: int = 0
 
 
 class ChildListResponse(BaseModel):

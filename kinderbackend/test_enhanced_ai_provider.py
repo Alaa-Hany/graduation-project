@@ -237,10 +237,12 @@ def test_generate_greeting_uses_generate(provider):
     provider._client = fake
     result = provider.generate_greeting(child_name="Noor", is_arabic=True)
     assert result.content == "Welcome!"
-    # The greeting prompt mentions the child's name and Arabic instruction.
-    user_msg = fake.captured["messages"][-1]["content"]
+    # The greeting prompt (last message) mentions the child's name; the
+    # language-rule system message enforces Arabic.
+    messages = fake.captured["messages"]
+    user_msg = messages[-1]["content"]
     assert "Noor" in user_msg
-    assert "Arabic" in user_msg
+    assert any("Arabic" in m["content"] for m in messages if m["role"] == "system")
 
 
 def test_enhanced_ai_response_defaults():

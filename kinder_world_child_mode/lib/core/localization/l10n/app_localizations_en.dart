@@ -5602,6 +5602,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sttEmptyResult => "I didn't catch that — please try again";
 
   @override
+  String get sttLanguageUnavailable =>
+      "Voice input for this language isn't available on this device — type your message instead";
+
+  @override
+  String get sttOpenLanguageSettings => 'Install language';
+
+  @override
   String get aiBuddySafetyAlertsTitle => 'AI Buddy Safety';
 
   @override

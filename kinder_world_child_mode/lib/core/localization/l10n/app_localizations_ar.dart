@@ -3550,6 +3550,13 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   String get sttEmptyResult => 'لم أسمعك جيداً — حاول مرة أخرى';
 
   @override
+  String get sttLanguageUnavailable =>
+      'التعرّف على الكلام بالعربية غير متاح على هذا الجهاز — اكتب رسالتك بدلاً من ذلك';
+
+  @override
+  String get sttOpenLanguageSettings => 'تثبيت اللغة';
+
+  @override
   String get aiBuddySafetyAlertsTitle => 'أمان مساعد الأطفال';
 
   @override

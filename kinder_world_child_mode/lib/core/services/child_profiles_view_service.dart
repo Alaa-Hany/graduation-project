@@ -283,9 +283,8 @@ class ChildProfilesViewService {
       existing,
       preserveExistingAgeIfValid: preserveExistingAgeIfValid,
     );
-    final existingLevel = existing?.level ?? 0;
-    final level =
-        existingLevel > 0 ? existingLevel : _parseInt(data['level'], 1);
+    final mergedLevel = _mergeProgress(data, 'level', existing?.level ?? 0);
+    final level = mergedLevel > 0 ? mergedLevel : 1;
     final avatar =
         existing?.avatar ?? data['avatar']?.toString() ?? defaultAvatar;
     final resolvedAvatarPath = existing?.avatarPath.isNotEmpty == true
@@ -308,8 +307,8 @@ class ChildProfilesViewService {
       avatarPath: resolvedAvatarPath,
       interests: existing?.interests ?? _parseStringList(data['interests']),
       level: level,
-      xp: existing?.xp ?? _parseInt(data['xp'], 0),
-      streak: existing?.streak ?? _parseInt(data['streak'], 0),
+      xp: _mergeProgress(data, 'xp', existing?.xp ?? 0),
+      streak: _mergeProgress(data, 'streak', existing?.streak ?? 0),
       favorites: existing?.favorites ?? _parseStringList(data['favorites']),
       parentId: parentId ?? existing?.parentId ?? 'local',
       parentEmail: existing?.parentEmail ??
@@ -320,9 +319,9 @@ class ChildProfilesViewService {
       updatedAt: updatedAt,
       lastSession: lastSession,
       totalTimeSpent:
-          existing?.totalTimeSpent ?? _parseInt(data['total_time_spent'], 0),
-      activitiesCompleted: existing?.activitiesCompleted ??
-          _parseInt(data['activities_completed'], 0),
+          _mergeProgress(data, 'total_time_spent', existing?.totalTimeSpent ?? 0),
+      activitiesCompleted: _mergeProgress(
+          data, 'activities_completed', existing?.activitiesCompleted ?? 0),
       currentMood: existing?.currentMood ?? data['current_mood']?.toString(),
       learningStyle:
           existing?.learningStyle ?? data['learning_style']?.toString(),
@@ -384,6 +383,19 @@ class ChildProfilesViewService {
     if (value is double) return value.round();
     if (value is String) return int.tryParse(value) ?? fallback;
     return fallback;
+  }
+
+  /// Resolves a progress counter (xp/level/streak/time/activities) in parent
+  /// mode. The backend aggregates these from the child's analytics, so the
+  /// server is the source of truth — but we never regress below a fresher local
+  /// value (e.g. on a shared device where child mode just updated Hive). When
+  /// the key is absent (older backend) the local value is kept unchanged.
+  int _mergeProgress(Map<String, dynamic> data, String key, int existingValue) {
+    if (!data.containsKey(key) || data[key] == null) {
+      return existingValue;
+    }
+    final apiValue = _parseInt(data[key], existingValue);
+    return apiValue > existingValue ? apiValue : existingValue;
   }
 
   DateTime _parseDate(dynamic value, DateTime fallback) {
