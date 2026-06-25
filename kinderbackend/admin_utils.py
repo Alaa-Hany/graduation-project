@@ -551,11 +551,7 @@ def build_user_activity(
 
     notification_count = len(getattr(user, "notifications", None) or [])
     support_ticket_count = len(
-        [
-            item
-            for item in (getattr(user, "support_tickets", None) or [])
-            if item.deleted_at is None
-        ]
+        [item for item in (getattr(user, "support_tickets", None) or []) if item.deleted_at is None]
     )
 
     return {

@@ -676,24 +676,18 @@ def test_children_list(client, db, super_admin_headers, create_parent, create_ch
     assert any(c["id"] == child.id for c in resp.json()["items"])
 
 
-def test_children_list_filters_by_age(
-    client, db, super_admin_headers, create_parent, create_child
-):
+def test_children_list_filters_by_age(client, db, super_admin_headers, create_parent, create_child):
     parent = create_parent(email="child.age.filter@example.com")
     young = create_child(parent_id=parent.id, name="Young Six", age=6)
     target = create_child(parent_id=parent.id, name="Target Nine", age=9)
     create_child(parent_id=parent.id, name="Old Twelve", age=12)
 
-    resp = client.get(
-        "/api/v1/admin/children", params={"age": 9}, headers=super_admin_headers
-    )
+    resp = client.get("/api/v1/admin/children", params={"age": 9}, headers=super_admin_headers)
     assert resp.status_code == 200
     items = resp.json()["items"]
     assert {c["id"] for c in items} == {target.id}
 
-    resp_six = client.get(
-        "/api/v1/admin/children", params={"age": 6}, headers=super_admin_headers
-    )
+    resp_six = client.get("/api/v1/admin/children", params={"age": 6}, headers=super_admin_headers)
     assert resp_six.status_code == 200
     assert {c["id"] for c in resp_six.json()["items"]} == {young.id}
 

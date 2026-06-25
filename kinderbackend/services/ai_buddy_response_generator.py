@@ -315,9 +315,7 @@ class _InternalFallbackAiBuddyBackend:
         """
         if not conversation_history:
             return 0
-        return sum(
-            1 for item in conversation_history if (item or {}).get("role") == "assistant"
-        )
+        return sum(1 for item in conversation_history if (item or {}).get("role") == "assistant")
 
     def _build_english_response(
         self,

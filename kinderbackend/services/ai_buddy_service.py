@@ -317,9 +317,7 @@ class AiBuddyService:
             if item.id != user_message.id
         ]
         conversation_history = [
-            {"role": item.role, "content": item.content}
-            for item in recent_turns
-            if item.content
+            {"role": item.role, "content": item.content} for item in recent_turns if item.content
         ]
         recent_messages = [item.content for item in recent_turns if item.role == "child"]
 
