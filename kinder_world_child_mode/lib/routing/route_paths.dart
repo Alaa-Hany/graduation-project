@@ -14,6 +14,7 @@ class Routes {
   static const parentResetPassword = '/parent/reset-password';
   static const childLogin = '/child/login';
   static const childForgotPassword = '/child/forgot-password';
+  static const parentResetChildPassword = '/parent/reset-child-password';
 
   // Child shell tabs
   static const childHome = '/child/home';

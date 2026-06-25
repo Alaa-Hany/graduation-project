@@ -53,6 +53,12 @@ class AuthMessages:
     INVALID_OR_EXPIRED_RESET_TOKEN = "Invalid or expired password reset link"
     PASSWORD_RESET_SUCCESSFUL = "Password reset successfully"
     PASSWORD_RESET_SEND_FAILED = "Failed to send password reset email"
+    CHILD_PASSWORD_RESET_EMAIL_SENT = (
+        "If those details match a child profile, a reset link has been sent to the parent"
+    )
+    CHILD_PASSWORD_RESET_SEND_FAILED = "Failed to send the child password reset email"
+    INVALID_OR_EXPIRED_CHILD_RESET_TOKEN = "Invalid or expired child password reset link"
+    CHILD_PASSWORD_RESET_SUCCESSFUL = "Child picture password reset successfully"
 
 
 class AdminAuthMessages:

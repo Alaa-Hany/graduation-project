@@ -12,8 +12,10 @@ from rate_limit import (
 from schemas.auth import (
     AuthTokenResponse,
     ChildChangePasswordIn,
+    ChildForgotPasswordIn,
     ChildLoginIn,
     ChildRegisterIn,
+    ChildResetPicturePasswordIn,
     ChildSessionValidateIn,
     CurrentUserResponse,
     ForgotPasswordIn,
@@ -31,8 +33,10 @@ from serializers import user_to_json
 from services.auth_service import auth_service
 from services.child_service import (
     change_child_password,
+    confirm_picture_password_reset,
     login_child,
     register_child,
+    request_picture_password_reset,
     validate_child_session,
 )
 
@@ -175,6 +179,38 @@ def child_change_password(
     rate_limit_check: None = auth_rate_limit_check,
 ):
     return change_child_password(payload, db)
+
+
+@router.post(
+    "/auth/child/forgot-password",
+    summary="Request Child Picture Password Reset",
+    description=(
+        "Send the parent a link to reset their child's picture password if the child id "
+        "matches a profile owned by the supplied verified parent email. Always returns "
+        "success to prevent enumeration."
+    ),
+    response_description="Success acknowledgment.",
+)
+def child_forgot_password(
+    payload: ChildForgotPasswordIn,
+    db: Session = Depends(get_db),
+    rate_limit_check: None = password_reset_rate_limit_check,
+):
+    return request_picture_password_reset(payload, db)
+
+
+@router.post(
+    "/auth/child/reset-picture-password",
+    summary="Reset Child Picture Password",
+    description="Verify a child picture-password reset token and set a new picture password.",
+    response_description="Picture password reset result.",
+)
+def child_reset_picture_password(
+    payload: ChildResetPicturePasswordIn,
+    db: Session = Depends(get_db),
+    rate_limit_check: None = password_reset_rate_limit_check,
+):
+    return confirm_picture_password_reset(payload, db)
 
 
 @router.post(

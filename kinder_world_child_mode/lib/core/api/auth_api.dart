@@ -337,6 +337,34 @@ class AuthApi {
     return Map<String, dynamic>.from(response.data ?? const {});
   }
 
+  Future<Map<String, dynamic>> childForgotPassword({
+    required int childId,
+    required String parentEmail,
+  }) async {
+    final response = await _network.post<Map<String, dynamic>>(
+      '/auth/child/forgot-password',
+      data: {
+        'child_id': childId,
+        'parent_email': parentEmail.trim().toLowerCase(),
+      },
+    );
+    return Map<String, dynamic>.from(response.data ?? const {});
+  }
+
+  Future<Map<String, dynamic>> resetChildPicturePassword({
+    required String token,
+    required List<String> newPicturePassword,
+  }) async {
+    final response = await _network.post<Map<String, dynamic>>(
+      '/auth/child/reset-picture-password',
+      data: {
+        'token': token,
+        'new_picture_password': newPicturePassword,
+      },
+    );
+    return Map<String, dynamic>.from(response.data ?? const {});
+  }
+
   Future<Map<String, dynamic>> resetPassword({
     required String token,
     required String newPassword,

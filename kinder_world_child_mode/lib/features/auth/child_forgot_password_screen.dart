@@ -1,22 +1,26 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kinder_world/core/api/api_providers.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/utils/email_validation.dart';
 import 'package:kinder_world/core/widgets/auth_widgets.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
 
-class ChildForgotPasswordScreen extends StatefulWidget {
+class ChildForgotPasswordScreen extends ConsumerStatefulWidget {
   const ChildForgotPasswordScreen({super.key});
 
   @override
-  State<ChildForgotPasswordScreen> createState() =>
+  ConsumerState<ChildForgotPasswordScreen> createState() =>
       _ChildForgotPasswordScreenState();
 }
 
-class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
+class _ChildForgotPasswordScreenState
+    extends ConsumerState<ChildForgotPasswordScreen>
     with SingleTickerProviderStateMixin {
   final _childIdController = TextEditingController();
   final _parentEmailController = TextEditingController();
@@ -52,8 +56,14 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
   }
 
   Future<void> _sendHelp(AppLocalizations l10n) async {
-    if (_childIdController.text.trim().isEmpty) {
+    final childIdText = _childIdController.text.trim();
+    if (childIdText.isEmpty) {
       _showError(l10n.childIdRequired);
+      return;
+    }
+    final childId = int.tryParse(childIdText);
+    if (childId == null || childId <= 0) {
+      _showError(l10n.childIdInvalid);
       return;
     }
     if (_parentEmailController.text.trim().isEmpty ||
@@ -63,16 +73,33 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
     }
 
     setState(() => _sending = true);
-    await Future.delayed(const Duration(milliseconds: 250));
 
-    if (!mounted) return;
-    setState(() {
-      _sending = false;
-      _sent = true;
-    });
+    try {
+      final authApi = ref.read(authApiProvider);
+      await authApi.childForgotPassword(
+        childId: childId,
+        parentEmail: _parentEmailController.text,
+      );
 
-    _animController.reset();
-    unawaited(_animController.forward());
+      if (!mounted) return;
+      setState(() {
+        _sending = false;
+        _sent = true;
+      });
+
+      _animController.reset();
+      unawaited(_animController.forward());
+    } on DioException catch (e) {
+      if (!mounted) return;
+      setState(() => _sending = false);
+      final detail = e.response?.data;
+      final raw = detail is Map ? detail['detail']?.toString() ?? '' : '';
+      _showError(raw.isNotEmpty ? raw : l10n.connectionError);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _sending = false);
+      _showError(l10n.connectionError);
+    }
   }
 
   void _showError(String message) {

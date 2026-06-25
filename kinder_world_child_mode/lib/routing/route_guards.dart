@@ -19,6 +19,7 @@ bool isPublicRoute(String path) {
       path == Routes.selectUserType ||
       path == Routes.parentForgotPassword ||
       path == Routes.parentResetPassword ||
+      path == Routes.parentResetChildPassword ||
       path == Routes.childForgotPassword ||
       path == Routes.error ||
       path == Routes.noInternet ||
@@ -57,7 +58,8 @@ bool isParentPinProtectedRoute(String path) {
   return isAnyParentRoute(path) &&
       path != Routes.parentPin &&
       !isParentAuthRoute(path) &&
-      path != Routes.parentForgotPassword;
+      path != Routes.parentForgotPassword &&
+      path != Routes.parentResetChildPassword;
 }
 
 /// The app route the web page was first loaded at, captured once in `main()`
@@ -208,6 +210,7 @@ Future<String?> appRedirect({
         path == Routes.selectUserType ||
         path == Routes.parentForgotPassword ||
         path == Routes.parentResetPassword ||
+        path == Routes.parentResetChildPassword ||
         path == Routes.childForgotPassword) {
       return null;
     }

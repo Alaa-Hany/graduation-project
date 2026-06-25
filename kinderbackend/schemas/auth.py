@@ -222,6 +222,47 @@ class ChildChangePasswordIn(AuthSchemaBase):
     )
 
 
+class ChildForgotPasswordIn(AuthSchemaBase):
+    child_id: int = Field(..., gt=0)
+    parent_email: EmailStr = Field(
+        ...,
+        validation_alias=AliasChoices("parent_email", "parentEmail"),
+    )
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        json_schema_extra={
+            "example": {
+                "child_id": 1,
+                "parent_email": "parent@example.com",
+            }
+        },
+    )
+
+
+class ChildResetPicturePasswordIn(AuthSchemaBase):
+    token: str = Field(..., min_length=1)
+    new_picture_password: List[str] = Field(
+        ...,
+        min_length=3,
+        max_length=3,
+        validation_alias=AliasChoices(
+            "new_picture_password",
+            "newPicturePassword",
+        ),
+    )
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        json_schema_extra={
+            "example": {
+                "token": "child-reset-token-here",
+                "new_picture_password": ["sun", "moon", "star"],
+            }
+        },
+    )
+
+
 class ChildSessionValidateIn(AuthSchemaBase):
     session_token: str = Field(..., min_length=1)
     device_id: Optional[str] = None

@@ -306,6 +306,8 @@ class ChildProfile(Base):
     avatar = Column(String, nullable=True)
     is_active = Column(Boolean, default=True, nullable=False, server_default=true())
     deleted_at = Column(UTCDateTime(), nullable=True, index=True)
+    picture_password_reset_token_hash = Column(String, nullable=True)
+    picture_password_reset_token_expires_at = Column(UTCDateTime(), nullable=True)
 
     @property
     def picture_password(self) -> object:

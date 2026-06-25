@@ -2789,6 +2789,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get childIdRequired => 'Please enter your Child ID';
 
   @override
+  String get childIdInvalid => 'Child ID must be a number';
+
+  @override
+  String get resetChildPasswordTitle => 'Reset Picture Password';
+
+  @override
+  String get resetChildPasswordSubtitle => "Your child's account";
+
+  @override
+  String get resetChildPasswordInstruction =>
+      'Choose 3 new pictures for your child to use as their password.';
+
+  @override
+  String get picturePasswordNeedsThree => 'Please pick exactly 3 pictures';
+
+  @override
   String get parentsEmail => 'Parent\'s Email';
 
   @override

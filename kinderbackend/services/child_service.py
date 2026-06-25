@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import secrets
 import time
 from collections import defaultdict
 from datetime import date, datetime, timedelta, timezone
@@ -10,11 +11,17 @@ from sqlalchemy import case, func
 from sqlalchemy.orm import Session
 
 from auth import create_token, decode_token, hash_password, verify_password
-from core.errors import forbidden, http_error, not_found, unauthorized, unprocessable
+from core.errors import bad_request, forbidden, http_error, not_found, unauthorized, unprocessable
+from core.message_catalog import AuthMessages
 from core.redis_client import get_redis_client
 from core.system_settings import get_default_child_limit
-from core.time_utils import db_utc_now, utc_now
-from core.validators import resolve_child_age, validate_child_age, validate_picture_password_length
+from core.time_utils import db_utc_now, ensure_utc, utc_now
+from core.validators import (
+    normalize_email,
+    resolve_child_age,
+    validate_child_age,
+    validate_picture_password_length,
+)
 from models import (
     ChildActivityEvent,
     ChildDailyActivitySummary,
@@ -25,12 +32,15 @@ from models import (
 from plan_service import PLAN_FREE, PLAN_LIMITS, get_user_plan
 from schemas.auth import (
     ChildChangePasswordIn,
+    ChildForgotPasswordIn,
     ChildLoginIn,
     ChildRegisterIn,
+    ChildResetPicturePasswordIn,
     ChildSessionValidateIn,
 )
 from schemas.children import ChildCreate, ChildUpdate
 from serializers import child_to_json
+from services.email_delivery_service import email_delivery_service
 
 logger = logging.getLogger(__name__)
 
@@ -815,6 +825,196 @@ class ChildService:
 
         return {"success": True, "message": "Picture password changed successfully"}
 
+    # ── Child picture-password reset (parent-assisted via email link) ──────────
+
+    def _picture_password_reset_expiry_minutes(self) -> int:
+        return max(int(os.getenv("CHILD_PASSWORD_RESET_EXPIRES_MINUTES", "60")), 5)
+
+    def _store_picture_password_reset_token(self, *, child: ChildProfile, token: str) -> None:
+        now = db_utc_now()
+        child.picture_password_reset_token_hash = hash_password(token)
+        child.picture_password_reset_token_expires_at = now + timedelta(
+            minutes=self._picture_password_reset_expiry_minutes()
+        )
+        child.updated_at = now
+
+    @staticmethod
+    def _clear_picture_password_reset_token(child: ChildProfile) -> None:
+        child.picture_password_reset_token_hash = None
+        child.picture_password_reset_token_expires_at = None
+
+    def _picture_password_reset_token_expired(self, child: ChildProfile) -> bool:
+        expires_at = getattr(child, "picture_password_reset_token_expires_at", None)
+        return expires_at is None or ensure_utc(expires_at) <= utc_now()
+
+    def _send_picture_password_reset_email(
+        self,
+        *,
+        email: str,
+        parent_name: str | None,
+        child_name: str,
+        token: str,
+        app_base_url: str,
+    ) -> None:
+        reset_url = f"{app_base_url.rstrip('/')}/#/parent/reset-child-password?token={token}"
+        greeting_name = (parent_name or "there").strip() or "there"
+        safe_child = (child_name or "your child").strip() or "your child"
+        expiry = self._picture_password_reset_expiry_minutes()
+        subject = "Reset Your Child's Kinder World Picture Password"
+        body = (
+            f"Hello {greeting_name},\n\n"
+            f"We received a request to reset the picture password for {safe_child}.\n"
+            f"Click the link below to choose a new picture password:\n{reset_url}\n\n"
+            f"This link expires in {expiry} minutes.\n"
+            "If you did not request this, you can safely ignore this email.\n\n"
+            "— The Kinder World Team"
+        )
+        html_body = f"""<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#f4f7fb;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 0;">
+    <tr><td align="center">
+      <table width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;padding:40px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+        <tr><td align="center" style="padding-bottom:24px;">
+          <h1 style="margin:0;font-size:26px;color:#1a3a6b;">Kinder World</h1>
+        </td></tr>
+        <tr><td style="font-size:16px;color:#333333;padding-bottom:16px;">
+          Hello <strong>{greeting_name}</strong>,
+        </td></tr>
+        <tr><td style="font-size:16px;color:#333333;padding-bottom:24px;">
+          We received a request to reset the picture password for <strong>{safe_child}</strong>. Click the button below to choose a new one:
+        </td></tr>
+        <tr><td align="center" style="padding-bottom:24px;">
+          <a href="{reset_url}" style="display:inline-block;background:linear-gradient(135deg,#1a3a6b,#4a6cf7);color:#ffffff;text-decoration:none;border-radius:10px;padding:14px 36px;font-size:16px;font-weight:bold;">
+            Reset Picture Password
+          </a>
+        </td></tr>
+        <tr><td style="font-size:14px;color:#888888;padding-bottom:8px;">
+          This link expires in <strong>{expiry} minutes</strong>.
+        </td></tr>
+        <tr><td style="font-size:13px;color:#aaaaaa;">
+          If you did not request this, you can safely ignore this email.
+        </td></tr>
+        <tr><td style="padding-top:32px;font-size:13px;color:#aaaaaa;text-align:center;">
+          The Kinder World Team
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>"""
+        email_delivery_service.send_email(
+            to_email=email, subject=subject, body=body, html_body=html_body
+        )
+
+    def request_picture_password_reset(
+        self, *, payload: ChildForgotPasswordIn, db: Session
+    ) -> dict:
+        normalized_email = normalize_email(payload.parent_email)
+        child = (
+            db.query(ChildProfile)
+            .filter(
+                ChildProfile.id == payload.child_id,
+                ChildProfile.deleted_at.is_(None),
+            )
+            .first()
+        )
+
+        parent: User | None = None
+        if child is not None:
+            parent = db.query(User).filter(User.id == child.parent_id).first()
+
+        # Anti-enumeration: always return the same generic success message. The
+        # diagnostics below are server-side only and never leak to the response.
+        if child is None:
+            logger.info(
+                "Child picture-password reset requested for child_id=%s but no profile exists; skipping send.",
+                payload.child_id,
+            )
+        elif parent is None:
+            logger.info(
+                "Child picture-password reset requested for child_id=%s but parent is missing; skipping send.",
+                payload.child_id,
+            )
+        elif (parent.email or "").strip().lower() != normalized_email:
+            logger.info(
+                "Child picture-password reset requested for child_id=%s but parent email did not match; skipping send.",
+                payload.child_id,
+            )
+        elif not bool(getattr(parent, "email_verified", False)):
+            logger.info(
+                "Child picture-password reset requested for child_id=%s but parent email is not verified; skipping send.",
+                payload.child_id,
+            )
+
+        if (
+            child is not None
+            and parent is not None
+            and (parent.email or "").strip().lower() == normalized_email
+            and bool(getattr(parent, "email_verified", False))
+        ):
+            token = secrets.token_urlsafe(32)
+            self._store_picture_password_reset_token(child=child, token=token)
+            db.add(child)
+            db.commit()
+
+            app_base_url = os.getenv("APP_BASE_URL", "http://localhost:44377")
+            try:
+                self._send_picture_password_reset_email(
+                    email=parent.email,
+                    parent_name=parent.name,
+                    child_name=child.name,
+                    token=token,
+                    app_base_url=app_base_url,
+                )
+                logger.info(
+                    "Child picture-password reset email dispatched for child_id=%s to %s.",
+                    child.id,
+                    parent.email,
+                )
+            except Exception as exc:
+                logger.error(
+                    "Failed to send child picture-password reset email for child_id=%s: %s",
+                    child.id,
+                    exc,
+                    exc_info=True,
+                )
+                db.rollback()
+                raise http_error(503, AuthMessages.CHILD_PASSWORD_RESET_SEND_FAILED)
+
+        return {"success": True, "message": AuthMessages.CHILD_PASSWORD_RESET_EMAIL_SENT}
+
+    def confirm_picture_password_reset(
+        self, *, payload: ChildResetPicturePasswordIn, db: Session
+    ) -> dict:
+        validate_picture_password_length(payload.new_picture_password, length=3)
+
+        candidates = (
+            db.query(ChildProfile)
+            .filter(
+                ChildProfile.picture_password_reset_token_hash.isnot(None),
+                ChildProfile.deleted_at.is_(None),
+            )
+            .all()
+        )
+        matching_child: ChildProfile | None = None
+        for candidate in candidates:
+            token_hash = getattr(candidate, "picture_password_reset_token_hash", None)
+            if token_hash and verify_password(payload.token, token_hash):
+                matching_child = candidate
+                break
+
+        if matching_child is None or self._picture_password_reset_token_expired(matching_child):
+            raise bad_request(AuthMessages.INVALID_OR_EXPIRED_CHILD_RESET_TOKEN)
+
+        matching_child.picture_password = self._hash_picture_password(payload.new_picture_password)
+        self._clear_picture_password_reset_token(matching_child)
+        matching_child.updated_at = db_utc_now()
+        db.add(matching_child)
+        db.commit()
+
+        return {"success": True, "message": AuthMessages.CHILD_PASSWORD_RESET_SUCCESSFUL}
+
 
 child_service = ChildService()
 
@@ -881,3 +1081,11 @@ def validate_child_session(payload: ChildSessionValidateIn, db: Session) -> dict
 
 def change_child_password(payload: ChildChangePasswordIn, db: Session) -> dict:
     return child_service.change_child_password(payload=payload, db=db)
+
+
+def request_picture_password_reset(payload: ChildForgotPasswordIn, db: Session) -> dict:
+    return child_service.request_picture_password_reset(payload=payload, db=db)
+
+
+def confirm_picture_password_reset(payload: ChildResetPicturePasswordIn, db: Session) -> dict:
+    return child_service.confirm_picture_password_reset(payload=payload, db=db)

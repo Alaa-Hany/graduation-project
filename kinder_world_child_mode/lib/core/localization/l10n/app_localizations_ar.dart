@@ -2462,6 +2462,17 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get childIdRequired => 'يرجى إدخال معرّف الطفل';
   @override
+  String get childIdInvalid => 'معرّف الطفل يجب أن يكون رقمًا';
+  @override
+  String get resetChildPasswordTitle => 'إعادة تعيين كلمة المرور المصورة';
+  @override
+  String get resetChildPasswordSubtitle => 'حساب طفلك';
+  @override
+  String get resetChildPasswordInstruction =>
+      'اختر 3 صور جديدة ليستخدمها طفلك كلمة مرور.';
+  @override
+  String get picturePasswordNeedsThree => 'يرجى اختيار 3 صور بالضبط';
+  @override
   String get childLoginIncorrectPictures => 'صور تسجيل الدخول غير صحيحة';
   @override
   String get childLoginInvalidName => 'الاسم غير صحيح';

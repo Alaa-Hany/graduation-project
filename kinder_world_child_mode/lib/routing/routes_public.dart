@@ -9,6 +9,7 @@ import 'package:kinder_world/features/auth/child_forgot_password_screen.dart';
 import 'package:kinder_world/features/auth/child_login_screen.dart';
 import 'package:kinder_world/features/auth/parent_forgot_password_screen.dart';
 import 'package:kinder_world/features/auth/parent_login_screen.dart';
+import 'package:kinder_world/features/auth/parent_reset_child_password_screen.dart';
 import 'package:kinder_world/features/auth/parent_reset_password_screen.dart';
 import 'package:kinder_world/features/auth/parent_register_screen.dart';
 import 'package:kinder_world/features/auth/parent_verify_email_screen.dart';
@@ -71,6 +72,13 @@ List<RouteBase> buildPublicRoutes() {
       builder: (context, state) {
         final token = state.uri.queryParameters['token'] ?? '';
         return ParentResetPasswordScreen(token: token);
+      },
+    ),
+    GoRoute(
+      path: Routes.parentResetChildPassword,
+      builder: (context, state) {
+        final token = state.uri.queryParameters['token'] ?? '';
+        return ParentResetChildPasswordScreen(token: token);
       },
     ),
     GoRoute(

@@ -962,6 +962,11 @@ abstract class AppLocalizations {
   String get yourChildId;
   String get childIdHint;
   String get childIdRequired;
+  String get childIdInvalid;
+  String get resetChildPasswordTitle;
+  String get resetChildPasswordSubtitle;
+  String get resetChildPasswordInstruction;
+  String get picturePasswordNeedsThree;
   String get parentsEmail;
   String get parentEmailHint;
   String get parentEmailRequired;

@@ -244,6 +244,22 @@ IconData _axisIcon(String axisKey) {
   };
 }
 
+/// Pushes [screen] and, once the child returns, refreshes
+/// [completedActivityIdsProvider] so any newly-finished video/quiz shows its
+/// green "done" badge immediately — without the child having to pull-to-refresh
+/// or re-enter the list. The push is awaited so the badge updates the moment
+/// they pop back from the activity.
+Future<void> _openActivityAndRefresh(
+  BuildContext context,
+  WidgetRef ref,
+  Widget screen,
+) async {
+  await Navigator.of(context).push(
+    MaterialPageRoute(builder: (_) => screen),
+  );
+  ref.invalidate(completedActivityIdsProvider);
+}
+
 /// True when the child has already finished this CMS item's video and/or
 /// quiz, by reconstructing the same `activityId` formulas used when
 /// recording completion (see [SkillVideoScreen] and [CmsQuizScreen]) and
@@ -639,25 +655,25 @@ class _CmsContentItemCard extends ConsumerWidget {
     return InkWell(
       onTap: () {
         if (item.hasVideo) {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => SkillVideoScreen(
-                videoTitle: title,
-                videoUrl: item.preferredVideoUrl,
-                thumbnailUrl: item.effectiveThumbnailUrl,
-                description: description.isNotEmpty ? description : null,
-                axisKey: _resolveCmsItemAxisKey(item) ?? axisKey,
-              ),
+          _openActivityAndRefresh(
+            context,
+            ref,
+            SkillVideoScreen(
+              videoTitle: title,
+              videoUrl: item.preferredVideoUrl,
+              thumbnailUrl: item.effectiveThumbnailUrl,
+              description: description.isNotEmpty ? description : null,
+              axisKey: _resolveCmsItemAxisKey(item) ?? axisKey,
             ),
           );
           return;
         }
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => _GenericCmsTextContentScreen(
-              item: item,
-              axisKey: axisKey,
-            ),
+        _openActivityAndRefresh(
+          context,
+          ref,
+          _GenericCmsTextContentScreen(
+            item: item,
+            axisKey: axisKey,
           ),
         );
       },
@@ -1068,16 +1084,16 @@ class _EntertainmentDetailScreenState
         ref.watch(completedActivityIdsProvider).valueOrNull ?? const <String>{};
     final isCompleted = _isCmsItemCompleted(item, completedIds);
     return InkWell(
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => SkillVideoScreen(
-            videoTitle: title,
-            videoUrl: item.preferredVideoUrl,
-            thumbnailUrl: item.effectiveThumbnailUrl,
-            description: _localizedCmsItemDescription(context, item),
-            quizzes: item.quizzes,
-            axisKey: _resolveCmsItemAxisKey(item) ?? 'entertaining',
-          ),
+      onTap: () => _openActivityAndRefresh(
+        context,
+        ref,
+        SkillVideoScreen(
+          videoTitle: title,
+          videoUrl: item.preferredVideoUrl,
+          thumbnailUrl: item.effectiveThumbnailUrl,
+          description: _localizedCmsItemDescription(context, item),
+          quizzes: item.quizzes,
+          axisKey: _resolveCmsItemAxisKey(item) ?? 'entertaining',
         ),
       ),
       borderRadius: BorderRadius.circular(16),
@@ -4703,13 +4719,11 @@ class _MethodContentScreenState extends ConsumerState<MethodContentScreen> {
         ref.watch(completedActivityIdsProvider).valueOrNull ?? const <String>{};
     final isCompleted = _isCmsItemCompleted(item, completedIds);
     return InkWell(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => _BehavioralContentDetailScreen(item: item),
-          ),
-        );
-      },
+      onTap: () => _openActivityAndRefresh(
+        context,
+        ref,
+        _BehavioralContentDetailScreen(item: item),
+      ),
       borderRadius: BorderRadius.circular(20),
       child: Container(
         decoration: BoxDecoration(
@@ -5386,20 +5400,18 @@ class _SkillDetailScreenState extends ConsumerState<SkillDetailScreen> {
         ref.watch(completedActivityIdsProvider).valueOrNull ?? const <String>{};
     final isCompleted = _isCmsItemCompleted(item, completedIds);
     return InkWell(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => SkillVideoScreen(
-              videoTitle: title,
-              videoUrl: item.preferredVideoUrl,
-              thumbnailUrl: item.effectiveThumbnailUrl,
-              description: _localizedCmsItemDescription(context, item),
-              quizzes: item.quizzes,
-              axisKey: _resolveCmsItemAxisKey(item) ?? 'skillful',
-            ),
-          ),
-        );
-      },
+      onTap: () => _openActivityAndRefresh(
+        context,
+        ref,
+        SkillVideoScreen(
+          videoTitle: title,
+          videoUrl: item.preferredVideoUrl,
+          thumbnailUrl: item.effectiveThumbnailUrl,
+          description: _localizedCmsItemDescription(context, item),
+          quizzes: item.quizzes,
+          axisKey: _resolveCmsItemAxisKey(item) ?? 'skillful',
+        ),
+      ),
       borderRadius: BorderRadius.circular(20),
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
@@ -5714,10 +5726,40 @@ class _SkillVideoScreenState extends ConsumerState<SkillVideoScreen> {
                       if ((widget.videoUrl ?? '').trim().isNotEmpty)
                         Column(
                           children: [
-                            CloudinaryVideoPlayerView(
-                              videoUrl: widget.videoUrl!,
-                              active: !_videoStopped,
-                            ),
+                            // Once the child taps "I'm done" we fully remove the
+                            // player from the tree (rather than just pausing it)
+                            // so Flutter tears the YouTube iframe out of the DOM
+                            // and its audio can't keep playing in the background.
+                            if (_videoStopped)
+                              Container(
+                                width: double.infinity,
+                                height: 200,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                alignment: Alignment.center,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.check_circle,
+                                        color: AppColors.skillful, size: 56),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      l10n.greatJob,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.skillful,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            else
+                              CloudinaryVideoPlayerView(
+                                videoUrl: widget.videoUrl!,
+                              ),
                             const SizedBox(height: 16),
                             if ((widget.description ?? '').trim().isNotEmpty)
                               Text(
@@ -6547,20 +6589,18 @@ class _EducationalSubjectScreenState
         ref.watch(completedActivityIdsProvider).valueOrNull ?? const <String>{};
     final isCompleted = _isCmsItemCompleted(item, completedIds);
     return InkWell(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => SkillVideoScreen(
-              videoTitle: title,
-              videoUrl: item.preferredVideoUrl,
-              thumbnailUrl: item.effectiveThumbnailUrl,
-              description: _localizedCmsItemDescription(context, item),
-              quizzes: item.quizzes,
-              axisKey: _resolveCmsItemAxisKey(item) ?? 'educational',
-            ),
-          ),
-        );
-      },
+      onTap: () => _openActivityAndRefresh(
+        context,
+        ref,
+        SkillVideoScreen(
+          videoTitle: title,
+          videoUrl: item.preferredVideoUrl,
+          thumbnailUrl: item.effectiveThumbnailUrl,
+          description: _localizedCmsItemDescription(context, item),
+          quizzes: item.quizzes,
+          axisKey: _resolveCmsItemAxisKey(item) ?? 'educational',
+        ),
+      ),
       borderRadius: BorderRadius.circular(20),
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
@@ -7329,17 +7369,15 @@ class CmsQuizCard extends ConsumerWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => CmsQuizScreen(
-                      quiz: quiz!,
-                      accentColor: accentColor,
-                      axisKey: axisKey,
-                    ),
-                  ),
-                );
-              },
+              onPressed: () => _openActivityAndRefresh(
+                context,
+                ref,
+                CmsQuizScreen(
+                  quiz: quiz!,
+                  accentColor: accentColor,
+                  axisKey: axisKey,
+                ),
+              ),
               icon: Icon(
                   isCompleted ? Icons.refresh_rounded : Icons.play_circle_fill),
               label: Text(

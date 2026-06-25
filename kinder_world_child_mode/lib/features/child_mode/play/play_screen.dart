@@ -305,7 +305,7 @@ class _FeaturedContentCard extends ConsumerWidget {
       child: KinderCard(
         padding: EdgeInsets.zero,
         borderRadius: 18,
-        onTap: () => _openDetail(context),
+        onTap: () => _openDetail(context, ref),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -367,11 +367,11 @@ class _FeaturedContentCard extends ConsumerWidget {
     );
   }
 
-  void _openDetail(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => _PlayContentDetailScreen(initialItem: item),
-      ),
+  void _openDetail(BuildContext context, WidgetRef ref) {
+    _openPlayItemAndRefresh(
+      context,
+      ref,
+      _PlayContentDetailScreen(initialItem: item),
     );
   }
 }
@@ -392,13 +392,11 @@ class _PlayableContentCard extends ConsumerWidget {
     return KinderCard(
       padding: EdgeInsets.zero,
       borderRadius: 18,
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => _PlayContentDetailScreen(initialItem: item),
-          ),
-        );
-      },
+      onTap: () => _openPlayItemAndRefresh(
+        context,
+        ref,
+        _PlayContentDetailScreen(initialItem: item),
+      ),
       child: Row(
         children: [
           Stack(
@@ -805,6 +803,20 @@ class _Thumbnail extends StatelessWidget {
       child: Icon(icon, size: 30, color: color),
     );
   }
+}
+
+/// Pushes [screen] and, once the child returns, refreshes
+/// [completedActivityIdsProvider] so a newly-finished video/quiz shows its
+/// green "done" badge immediately — without a pull-to-refresh.
+Future<void> _openPlayItemAndRefresh(
+  BuildContext context,
+  WidgetRef ref,
+  Widget screen,
+) async {
+  await Navigator.of(context).push(
+    MaterialPageRoute(builder: (_) => screen),
+  );
+  ref.invalidate(completedActivityIdsProvider);
 }
 
 /// True when the child has already finished this content's video and/or

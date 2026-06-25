@@ -38,6 +38,20 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
   String? _cachedParentId;
   OverlayEntry? _topMessageEntry;
 
+  @override
+  void initState() {
+    super.initState();
+    // The plan snapshot (Free/Premium, child limit) is a non-autodispose
+    // FutureProvider, so Riverpod caches its first result for the whole
+    // session. An admin-side upgrade therefore wouldn't show here until a
+    // manual refresh. Invalidate it on entry so the plan banner and the
+    // child-limit check always reflect the latest plan straight away.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.invalidate(subscriptionSnapshotProvider);
+    });
+  }
+
   bool _isOfflineDioError(DioException e) {
     return e.type == DioExceptionType.connectionError ||
         e.type == DioExceptionType.connectionTimeout ||
