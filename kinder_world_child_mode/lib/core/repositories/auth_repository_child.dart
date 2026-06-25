@@ -212,6 +212,11 @@ mixin _AuthRepositoryChildMixin on _AuthRepositorySupportMixin {
             : 'srv-$eventId';
         final activityId =
             raw['activity_id']?.toString() ?? 'event_$eventId';
+        // The human-readable title the child saw when completing this activity.
+        // Stored as `notes` so the history feed shows the real name instead of a
+        // raw (often numeric CMS) activity id when the activity can't be resolved
+        // from the local content catalog.
+        final activityName = raw['activity_name']?.toString().trim();
         final points = raw['points'] is num
             ? (raw['points'] as num).toInt()
             : int.tryParse('${raw['points']}') ?? 0;
@@ -227,6 +232,9 @@ mixin _AuthRepositoryChildMixin on _AuthRepositorySupportMixin {
           score: 100,
           duration: (durationSeconds / 60).round(),
           xpEarned: points,
+          notes: (activityName != null && activityName.isNotEmpty)
+              ? activityName
+              : null,
           completionStatus: CompletionStatus.completed,
           syncStatus: SyncStatus.synced,
           createdAt: occurred,

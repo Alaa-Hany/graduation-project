@@ -364,6 +364,9 @@ def test_login_child_returns_recent_activity(service, db, create_parent):
     by_activity = {r["activity_id"]: r for r in recent}
     assert by_activity["game_memory_1"]["client_record_id"] == "local-rec-1"
     assert by_activity["game_memory_1"]["points"] == 120
+    # The human-readable title rides along so the client history feed can show it
+    # instead of the raw activity id when the activity isn't in the local catalog.
+    assert by_activity["game_memory_1"]["activity_name"] == "Memory Match"
     assert "lesson_math_1" in by_activity  # all-time, not windowed
 
 

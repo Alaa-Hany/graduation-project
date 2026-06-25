@@ -559,11 +559,16 @@ class ChildService:
             activity_id = (
                 meta.get("activity_id") or row.lesson_id or row.activity_name or f"event_{row.id}"
             )
+            # The human-readable title the child saw. Without it, a restored
+            # record falls back to rendering the raw (often numeric CMS)
+            # activity_id in the history feed.
+            activity_name = row.activity_name or meta.get("activity_name")
             records.append(
                 {
                     "event_id": row.id,
                     "client_record_id": meta.get("client_record_id"),
                     "activity_id": activity_id,
+                    "activity_name": activity_name,
                     "event_type": row.event_type,
                     "points": int(row.points or 0),
                     "duration_seconds": int(row.duration_seconds or 0),

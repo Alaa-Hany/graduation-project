@@ -140,8 +140,23 @@ class ProgressRepository {
   Future<bool> restoreRecord(ProgressRecord record) async {
     try {
       await _warmRecords();
-      if (_recordCache.containsKey(record.id) ||
-          _progressBox.containsKey(record.id)) {
+      final existing = _recordCache[record.id] ??
+          (_progressBox.containsKey(record.id)
+              ? _decodeRecord(_progressBox.get(record.id))
+              : null);
+      if (existing != null) {
+        // The record already exists, so don't duplicate it or regress a fresher
+        // local copy. Do heal one thing in place: an empty title. Older restores
+        // wrote no `notes`, leaving the history feed showing the raw (numeric
+        // CMS) activity id; backfill it when the server now provides a name.
+        final hasTitle =
+            existing.notes != null && existing.notes!.trim().isNotEmpty;
+        final incomingTitle = record.notes?.trim();
+        if (!hasTitle && incomingTitle != null && incomingTitle.isNotEmpty) {
+          final healed = existing.copyWith(notes: incomingTitle);
+          await _progressBox.put(healed.id, healed.toJson());
+          _cacheRecord(healed);
+        }
         return false;
       }
       await _progressBox.put(record.id, record.toJson());
