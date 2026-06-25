@@ -277,29 +277,6 @@ class _UserTypeSelectionScreenState
                           ),
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      Align(
-                        alignment: Alignment.center,
-                        child: TextButton(
-                          onPressed: () => context.go(Routes.adminLogin),
-                          style: TextButton.styleFrom(
-                            minimumSize: const Size(0, 32),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: Text(
-                            'Admin',
-                            style: textTheme.bodySmall?.copyWith(
-                              color: auth.textMuted,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
