@@ -203,6 +203,7 @@ def test_ai_buddy_generator_uses_provider_backend_when_ready() -> None:
             message: str,
             quick_action: str | None,
             recent_messages,
+            conversation_history=None,
             locale: str | None = None,
         ) -> AiBuddyGeneratedResponse:
             return AiBuddyGeneratedResponse(
@@ -257,6 +258,7 @@ def test_ai_buddy_generator_falls_back_when_provider_backend_fails() -> None:
             message: str,
             quick_action: str | None,
             recent_messages,
+            conversation_history=None,
             locale: str | None = None,
         ) -> AiBuddyGeneratedResponse:
             raise RuntimeError("provider offline")
@@ -315,6 +317,7 @@ def test_ai_buddy_service_recovers_safe_story_when_provider_output_is_blocked(
             message: str,
             quick_action: str | None,
             recent_messages,
+            conversation_history=None,
             locale: str | None = None,
         ) -> AiBuddyGeneratedResponse:
             return AiBuddyGeneratedResponse(

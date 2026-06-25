@@ -1413,6 +1413,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lessonsCompletedLabel => 'Lessons Completed';
 
   @override
+  String get activeDaysLabel => 'Active Days';
+
+  @override
   String get mostUsedContentLabel => 'Most Used Content';
 
   @override
@@ -4086,6 +4089,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminUsersUpdatedMessage => 'User updated successfully';
 
   @override
+  String adminUsersActionFailedMessage(String reason) =>
+      'Action failed: $reason';
+
+  @override
   String get adminUsersDisableTitle => 'Disable user';
 
   @override
@@ -4905,6 +4912,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Refunds are not supported by the current payment model';
 
   @override
+  String adminSubscriptionsActionFailedMessage(String reason) =>
+      'Action failed: $reason';
+
+  @override
   String get adminSystemSettingsTitle => 'System settings';
 
   @override
@@ -5082,6 +5093,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get adminAdminsPermissionsUpdatedMessage =>
       'Role permissions updated successfully';
+
+  @override
+  String adminAdminsActionFailedMessage(String reason) =>
+      'Action failed: $reason';
 
   @override
   String get adminAdminsRolesSection => 'Assigned roles';

@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from admin_deps import require_permission
 from admin_utils import (
+    age_to_date_of_birth_range,
     build_child_activity_log,
     build_child_progress,
     build_pagination_payload,
@@ -68,8 +69,11 @@ def list_admin_children(
 
     if parent_id is not None:
         query = query.filter(ChildProfile.parent_id == parent_id)
-    # Age is now a computed property; filtering by age requires loading all records
-    # and filtering in Python. For large datasets, consider filtering by date_of_birth instead.
+    if age is not None:
+        # Age is a computed property (from date_of_birth), so it can't be
+        # compared directly in SQL; translate it to the equivalent dob range.
+        min_dob, max_dob = age_to_date_of_birth_range(age)
+        query = query.filter(ChildProfile.date_of_birth.between(min_dob, max_dob))
     if active is not None and hasattr(ChildProfile, "is_active"):
         query = query.filter(ChildProfile.is_active.is_(active))
 

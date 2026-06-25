@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -73,6 +74,24 @@ class _AdminSubscriptionsScreenState
         .where((part) => part.isNotEmpty)
         .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
         .join(' ');
+  }
+
+  String _describeError(Object error) {
+    if (error is DioException) {
+      final data = error.response?.data;
+      if (data is Map) {
+        final detail = data['detail'];
+        if (detail is String && detail.trim().isNotEmpty) return detail;
+        if (detail is Map) {
+          final message = detail['message'];
+          if (message is String && message.trim().isNotEmpty) return message;
+          final code = detail['code'];
+          if (code is String && code.trim().isNotEmpty) return code;
+        }
+      }
+      return error.message ?? error.toString();
+    }
+    return error.toString();
   }
 
   Future<void> _load({int? selectId}) async {
@@ -185,11 +204,21 @@ class _AdminSubscriptionsScreenState
         ) ??
         false;
     if (!confirmed) return;
-    await ref
-        .read(adminManagementRepositoryProvider)
-        .overrideSubscriptionPlan(subscription.id, plan);
-    if (!mounted) return;
-    await _load(selectId: subscription.id);
+    try {
+      await ref
+          .read(adminManagementRepositoryProvider)
+          .overrideSubscriptionPlan(subscription.id, plan);
+      if (!mounted) return;
+      await _load(selectId: subscription.id);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              l10n.adminSubscriptionsActionFailedMessage(_describeError(e))),
+        ),
+      );
+    }
   }
 
   Future<void> _cancelSubscription() async {
@@ -217,27 +246,47 @@ class _AdminSubscriptionsScreenState
         ) ??
         false;
     if (!confirmed) return;
-    await ref
-        .read(adminManagementRepositoryProvider)
-        .cancelSubscription(subscription.id);
-    if (!mounted) return;
-    await _load(selectId: subscription.id);
+    try {
+      await ref
+          .read(adminManagementRepositoryProvider)
+          .cancelSubscription(subscription.id);
+      if (!mounted) return;
+      await _load(selectId: subscription.id);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              l10n.adminSubscriptionsActionFailedMessage(_describeError(e))),
+        ),
+      );
+    }
   }
 
   Future<void> _refundSubscription() async {
     final l10n = AppLocalizations.of(context)!;
     final subscription = _selected;
     if (subscription == null) return;
-    final message = await ref
-        .read(adminManagementRepositoryProvider)
-        .refundSubscription(subscription.id);
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content: Text(message.isEmpty
-              ? l10n.adminSubscriptionsRefundNotSupported
-              : message)),
-    );
+    try {
+      final message = await ref
+          .read(adminManagementRepositoryProvider)
+          .refundSubscription(subscription.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(message.isEmpty
+                ? l10n.adminSubscriptionsRefundNotSupported
+                : message)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              l10n.adminSubscriptionsActionFailedMessage(_describeError(e))),
+        ),
+      );
+    }
   }
 
   @override

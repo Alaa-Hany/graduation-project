@@ -1,3 +1,4 @@
+import 'dart:js_interop';
 import 'dart:ui_web' as ui_web;
 
 import 'package:flutter/material.dart';
@@ -23,16 +24,25 @@ class _CloudinaryVideoPlayerViewState extends State<CloudinaryVideoPlayerView> {
   late final String _viewType;
   late final web.HTMLElement _playerElement;
 
+  /// The YouTube embed URL (null for a direct Cloudinary video), kept so we can
+  /// restore the iframe after blanking it to silence background audio.
+  String? _youtubeEmbedUrl;
+
   /// Collapsed/expanded height of the embedded player on the page.
   static const double _collapsedHeight = 320;
   static const double _expandedHeight = 540;
   bool _expanded = false;
+
+  /// The host route's secondary animation, watched so we can pause the video
+  /// when another page (e.g. the quiz) is pushed on top of this one.
+  Animation<double>? _secondaryAnimation;
 
   @override
   void initState() {
     super.initState();
     _viewType = 'cloudinary-video-${widget.videoUrl.hashCode}-${_nextViewId++}';
     final youtubeEmbed = youtubeEmbedUrl(widget.videoUrl);
+    _youtubeEmbedUrl = youtubeEmbed;
     if (youtubeEmbed != null) {
       _playerElement = web.HTMLIFrameElement()
         ..src = youtubeEmbed
@@ -59,7 +69,66 @@ class _CloudinaryVideoPlayerViewState extends State<CloudinaryVideoPlayerView> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Watch the host route's secondary animation: it drives forward (0 -> 1)
+    // when another page is pushed on top of this one. That page (e.g. the quiz)
+    // covers — but does not dispose — this widget, so we pause the video here to
+    // stop its audio leaking through in the background.
+    final secondary = ModalRoute.of(context)?.secondaryAnimation;
+    if (!identical(secondary, _secondaryAnimation)) {
+      _secondaryAnimation?.removeStatusListener(_onSecondaryAnimationStatus);
+      _secondaryAnimation = secondary;
+      _secondaryAnimation?.addStatusListener(_onSecondaryAnimationStatus);
+    }
+  }
+
+  void _onSecondaryAnimationStatus(AnimationStatus status) {
+    switch (status) {
+      case AnimationStatus.forward:
+      case AnimationStatus.completed:
+        // Another page (e.g. the quiz) is covering this one — silence the video.
+        _silencePlayback();
+      case AnimationStatus.reverse:
+      case AnimationStatus.dismissed:
+        // The page on top was popped — bring the player back.
+        _restorePlayback();
+    }
+  }
+
+  /// Stops the embedded player's audio while this page is covered by another.
+  void _silencePlayback() {
+    final element = _playerElement;
+    if (element is web.HTMLVideoElement) {
+      element.pause();
+    } else if (element is web.HTMLIFrameElement) {
+      // Ask the YouTube player to pause first (keeps the playback position when
+      // it lands), then blank the iframe so the audio is guaranteed to stop even
+      // if the postMessage command isn't honoured.
+      element.contentWindow?.postMessage(
+        '{"event":"command","func":"pauseVideo","args":""}'.toJS,
+        '*'.toJS,
+      );
+      if (element.src != 'about:blank') {
+        element.src = 'about:blank';
+      }
+    }
+  }
+
+  /// Restores the iframe player after [_silencePlayback] blanked it.
+  void _restorePlayback() {
+    final element = _playerElement;
+    final embed = _youtubeEmbedUrl;
+    if (element is web.HTMLIFrameElement &&
+        embed != null &&
+        element.src != embed) {
+      element.src = embed;
+    }
+  }
+
+  @override
   void dispose() {
+    _secondaryAnimation?.removeStatusListener(_onSecondaryAnimationStatus);
     final element = _playerElement;
     if (element is web.HTMLVideoElement) {
       element.pause();

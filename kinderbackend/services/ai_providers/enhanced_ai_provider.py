@@ -39,6 +39,11 @@ RECOMMENDING APP ACTIVITIES (very important):
 - Do NOT invent activities that are not in that list, and do not promise features that are not there.
 - When a child is bored or asks "what can I do?", pick 1-2 fitting activities from the list and invite them warmly. Example: "Would you like to try Coloring? It's in the Skillful section!"
 
+VARIETY (never repeat yourself):
+- The recent conversation is provided to you as real chat turns, including YOUR own previous replies. Read them.
+- NEVER tell the same story, fun fact, game, or activity suggestion you already gave earlier in this conversation. Each time, make it clearly new and different (a different character, topic, or idea).
+- If the child asks for "another one" or the same thing again, treat it as a request for something fresh, not a repeat.
+
 SAFETY (you are talking to a young child):
 - Never describe violence, weapons, blood, scary/horror content, or anything adult or sexual, even if asked. Gently steer to a safe, fun topic instead.
 - If a child sounds upset, scared, or in danger, comfort them kindly and suggest talking to a parent or a trusted grown-up.
@@ -59,10 +64,13 @@ QUICK_ACTION_PROMPTS_ENHANCED = {
     ),
     "tell_story": (
         "Tell a tiny 3-4 sentence story with a gentle positive lesson (kindness, courage, or "
-        "curiosity). End by asking the child what they think happens next."
+        "curiosity). Make it clearly DIFFERENT from any story you already told in this conversation "
+        "(new characters and a new idea). If it fits naturally, you may link the story's theme to one "
+        "of the available activities. End by asking the child what they think happens next."
     ),
     "fun_fact": (
         "Share ONE surprising, age-appropriate fact about animals, space, or nature in 1-2 sentences. "
+        "Make it a DIFFERENT fact from any you already shared in this conversation. "
         "Then ask a curious follow-up question to keep the child thinking."
     ),
     "motivation": (
@@ -138,6 +146,7 @@ class EnhancedAIProvider:
         message: str,
         quick_action: str | None = None,
         recent_messages: list[str] | None = None,
+        conversation_history: list[dict] | None = None,
         is_arabic: bool = False,
         child_age: int | None = None,
         available_activities: list[dict] | None = None,
@@ -150,6 +159,7 @@ class EnhancedAIProvider:
             message=message,
             quick_action=quick_action,
             recent_messages=recent_messages,
+            conversation_history=conversation_history,
             is_arabic=is_arabic,
             child_age=child_age,
             available_activities=available_activities,
@@ -193,6 +203,7 @@ class EnhancedAIProvider:
         is_arabic: bool,
         child_age: int | None,
         available_activities: list[dict] | None,
+        conversation_history: list[dict] | None = None,
     ) -> list[dict[str, str]]:
         """Build the messages list for the AI API."""
         messages = [{"role": "system", "content": ENHANCED_CHILD_FRIENDLY_SYSTEM_PROMPT}]
@@ -237,7 +248,18 @@ class EnhancedAIProvider:
                 activity_context += f"- {names} (section: {category})\n"
             messages.append({"role": "system", "content": activity_context})
 
-        if recent_messages:
+        if conversation_history:
+            # Replay the recent turns as real chat messages so the model can see
+            # its OWN previous replies (the stories/facts it already gave) and
+            # avoid repeating them. Child turns map to "user", buddy turns to
+            # "assistant".
+            for turn in conversation_history[-8:]:
+                content = (turn.get("content") or "").strip()
+                if not content:
+                    continue
+                role = "assistant" if turn.get("role") == "assistant" else "user"
+                messages.append({"role": role, "content": content})
+        elif recent_messages:
             context = "Here are the recent messages from this conversation:\n"
             for msg in recent_messages[-4:]:
                 context += f"- {msg}\n"

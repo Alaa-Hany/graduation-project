@@ -39,8 +39,11 @@ String? youtubeEmbedUrl(String? rawUrl) {
   if (id == null) {
     return null;
   }
+  // `enablejsapi=1` lets us drive the player over postMessage (e.g. to pause it
+  // when the child navigates to a page on top of the video) so its audio does
+  // not keep playing in the background.
   return 'https://www.youtube-nocookie.com/embed/$id'
-      '?rel=0&modestbranding=1&iv_load_policy=3&playsinline=1';
+      '?rel=0&modestbranding=1&iv_load_policy=3&playsinline=1&enablejsapi=1';
 }
 
 String? youtubeThumbnailUrl(String? rawUrl) {

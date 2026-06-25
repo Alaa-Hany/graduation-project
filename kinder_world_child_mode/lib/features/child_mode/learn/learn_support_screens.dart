@@ -244,6 +244,52 @@ IconData _axisIcon(String axisKey) {
   };
 }
 
+/// True when the child has already finished this CMS item's video and/or
+/// quiz, by reconstructing the same `activityId` formulas used when
+/// recording completion (see [SkillVideoScreen] and [CmsQuizScreen]) and
+/// checking them against the precomputed [completedActivityIdsProvider] set.
+bool _isCmsItemCompleted(PublicContentItem item, Set<String> completedIds) {
+  if (completedIds.isEmpty) return false;
+  if (item.hasVideo) {
+    final videoId = 'video_${item.preferredVideoUrl!.trim().hashCode}';
+    if (completedIds.contains(videoId)) return true;
+  }
+  for (final quiz in item.quizzes) {
+    if (completedIds.contains('quiz_${quiz.id}')) return true;
+  }
+  return false;
+}
+
+/// Small green checkmark badge overlaid on a thumbnail to mark a finished
+/// activity, matching the green "Complete" styling already used for lessons
+/// ([subject_screen.dart]) and game levels ([_LevelBadge]).
+class _CompletedBadge extends StatelessWidget {
+  const _CompletedBadge({this.size = 22});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: Colors.green,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValuesCompat(alpha: 0.18),
+            blurRadius: 3,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Icon(Icons.check_rounded, color: Colors.white, size: size * 0.65),
+    );
+  }
+}
+
 class _CmsAxisCategoryGrid extends StatelessWidget {
   const _CmsAxisCategoryGrid({
     required this.categoriesState,
@@ -569,7 +615,7 @@ class _CmsCategoryContentScreenState
   }
 }
 
-class _CmsContentItemCard extends StatelessWidget {
+class _CmsContentItemCard extends ConsumerWidget {
   const _CmsContentItemCard({
     required this.item,
     required this.axisKey,
@@ -579,13 +625,16 @@ class _CmsContentItemCard extends StatelessWidget {
   final String axisKey;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final color = _axisColor(axisKey);
     final title = _localizedCmsItemTitle(context, item);
     final description = _localizedCmsItemDescription(context, item);
     final thumbnailUrl = item.effectiveThumbnailUrl;
     final hasRemoteImage =
         thumbnailUrl != null && thumbnailUrl.trim().isNotEmpty;
+    final completedIds =
+        ref.watch(completedActivityIdsProvider).valueOrNull ?? const <String>{};
+    final isCompleted = _isCmsItemCompleted(item, completedIds);
 
     return InkWell(
       onTap: () {
@@ -628,20 +677,31 @@ class _CmsContentItemCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: SizedBox(
-                width: 92,
-                height: 92,
-                child: hasRemoteImage
-                    ? CachedNetworkImage(
-                        imageUrl: thumbnailUrl,
-                        fit: BoxFit.cover,
-                        errorWidget: (_, __, ___) =>
-                            _CmsContentFallbackIcon(axisKey: axisKey),
-                      )
-                    : _CmsContentFallbackIcon(axisKey: axisKey),
-              ),
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: SizedBox(
+                    width: 92,
+                    height: 92,
+                    child: hasRemoteImage
+                        ? CachedNetworkImage(
+                            imageUrl: thumbnailUrl,
+                            fit: BoxFit.cover,
+                            errorWidget: (_, __, ___) =>
+                                _CmsContentFallbackIcon(axisKey: axisKey),
+                          )
+                        : _CmsContentFallbackIcon(axisKey: axisKey),
+                  ),
+                ),
+                if (isCompleted)
+                  const Positioned(
+                    top: -4,
+                    right: -4,
+                    child: _CompletedBadge(),
+                  ),
+              ],
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -1004,6 +1064,9 @@ class _EntertainmentDetailScreenState
         thumbnailUrl.trim().isNotEmpty &&
         (thumbnailUrl.startsWith('http://') ||
             thumbnailUrl.startsWith('https://'));
+    final completedIds =
+        ref.watch(completedActivityIdsProvider).valueOrNull ?? const <String>{};
+    final isCompleted = _isCmsItemCompleted(item, completedIds);
     return InkWell(
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(
@@ -1080,6 +1143,12 @@ class _EntertainmentDetailScreenState
                   size: 46,
                 ),
               ),
+              if (isCompleted)
+                const Positioned(
+                  top: 8,
+                  right: 8,
+                  child: _CompletedBadge(),
+                ),
             ],
           ),
         ),
@@ -4628,6 +4697,9 @@ class _MethodContentScreenState extends ConsumerState<MethodContentScreen> {
         thumbnailUrl.trim().isNotEmpty &&
         (thumbnailUrl.startsWith('http://') ||
             thumbnailUrl.startsWith('https://'));
+    final completedIds =
+        ref.watch(completedActivityIdsProvider).valueOrNull ?? const <String>{};
+    final isCompleted = _isCmsItemCompleted(item, completedIds);
     return InkWell(
       onTap: () {
         Navigator.of(context).push(
@@ -4651,32 +4723,43 @@ class _MethodContentScreenState extends ConsumerState<MethodContentScreen> {
         ),
         child: Row(
           children: [
-            ClipRRect(
-              borderRadius: const BorderRadiusDirectional.horizontal(
-                start: Radius.circular(20),
-              ),
-              child: Container(
-                width: 112,
-                height: 128,
-                color: AppColors.behavioral.withValuesCompat(alpha: 0.1),
-                child: hasRemoteImage
-                    ? CachedNetworkImage(
-                        imageUrl: thumbnailUrl,
-                        fit: BoxFit.cover,
-                        errorWidget: (_, __, ___) => Icon(
-                          Icons.extension,
-                          color: AppColors.behavioral,
-                          size: 36,
-                        ),
-                      )
-                    : Icon(
-                        item.hasVideo
-                            ? Icons.play_circle_fill_rounded
-                            : Icons.extension,
-                        color: AppColors.behavioral,
-                        size: 42,
-                      ),
-              ),
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadiusDirectional.horizontal(
+                    start: Radius.circular(20),
+                  ),
+                  child: Container(
+                    width: 112,
+                    height: 128,
+                    color: AppColors.behavioral.withValuesCompat(alpha: 0.1),
+                    child: hasRemoteImage
+                        ? CachedNetworkImage(
+                            imageUrl: thumbnailUrl,
+                            fit: BoxFit.cover,
+                            errorWidget: (_, __, ___) => Icon(
+                              Icons.extension,
+                              color: AppColors.behavioral,
+                              size: 36,
+                            ),
+                          )
+                        : Icon(
+                            item.hasVideo
+                                ? Icons.play_circle_fill_rounded
+                                : Icons.extension,
+                            color: AppColors.behavioral,
+                            size: 42,
+                          ),
+                  ),
+                ),
+                if (isCompleted)
+                  const Positioned(
+                    top: 6,
+                    right: 6,
+                    child: _CompletedBadge(),
+                  ),
+              ],
             ),
             Expanded(
               child: Padding(
@@ -5297,6 +5380,9 @@ class _SkillDetailScreenState extends ConsumerState<SkillDetailScreen> {
         thumbnailUrl.trim().isNotEmpty &&
         (thumbnailUrl.startsWith('http://') ||
             thumbnailUrl.startsWith('https://'));
+    final completedIds =
+        ref.watch(completedActivityIdsProvider).valueOrNull ?? const <String>{};
+    final isCompleted = _isCmsItemCompleted(item, completedIds);
     return InkWell(
       onTap: () {
         Navigator.of(context).push(
@@ -5328,30 +5414,41 @@ class _SkillDetailScreenState extends ConsumerState<SkillDetailScreen> {
         ),
         child: Row(
           children: [
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                color: Colors.teal[50],
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  bottomLeft: Radius.circular(20),
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: Colors.teal[50],
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      bottomLeft: Radius.circular(20),
+                    ),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      bottomLeft: Radius.circular(20),
+                    ),
+                    child: hasRemoteImage
+                        ? CachedNetworkImage(
+                            imageUrl: thumbnailUrl,
+                            fit: BoxFit.cover,
+                            errorWidget: (_, __, ___) =>
+                                _buildCmsVideoFallbackIcon(),
+                          )
+                        : _buildCmsVideoFallbackIcon(),
+                  ),
                 ),
-              ),
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  bottomLeft: Radius.circular(20),
-                ),
-                child: hasRemoteImage
-                    ? CachedNetworkImage(
-                        imageUrl: thumbnailUrl,
-                        fit: BoxFit.cover,
-                        errorWidget: (_, __, ___) =>
-                            _buildCmsVideoFallbackIcon(),
-                      )
-                    : _buildCmsVideoFallbackIcon(),
-              ),
+                if (isCompleted)
+                  const Positioned(
+                    top: 6,
+                    right: 6,
+                    child: _CompletedBadge(),
+                  ),
+              ],
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -6434,6 +6531,9 @@ class _EducationalSubjectScreenState
         thumbnailUrl.trim().isNotEmpty &&
         (thumbnailUrl.startsWith('http://') ||
             thumbnailUrl.startsWith('https://'));
+    final completedIds =
+        ref.watch(completedActivityIdsProvider).valueOrNull ?? const <String>{};
+    final isCompleted = _isCmsItemCompleted(item, completedIds);
     return InkWell(
       onTap: () {
         Navigator.of(context).push(
@@ -6465,30 +6565,41 @@ class _EducationalSubjectScreenState
         ),
         child: Row(
           children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: Colors.indigo[50],
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  bottomLeft: Radius.circular(20),
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.indigo[50],
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      bottomLeft: Radius.circular(20),
+                    ),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      bottomLeft: Radius.circular(20),
+                    ),
+                    child: hasRemoteImage
+                        ? CachedNetworkImage(
+                            imageUrl: thumbnailUrl,
+                            fit: BoxFit.cover,
+                            errorWidget: (_, __, ___) =>
+                                _buildCmsLessonFallbackIcon(),
+                          )
+                        : _buildCmsLessonFallbackIcon(),
+                  ),
                 ),
-              ),
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  bottomLeft: Radius.circular(20),
-                ),
-                child: hasRemoteImage
-                    ? CachedNetworkImage(
-                        imageUrl: thumbnailUrl,
-                        fit: BoxFit.cover,
-                        errorWidget: (_, __, ___) =>
-                            _buildCmsLessonFallbackIcon(),
-                      )
-                    : _buildCmsLessonFallbackIcon(),
-              ),
+                if (isCompleted)
+                  const Positioned(
+                    top: 6,
+                    right: 6,
+                    child: _CompletedBadge(),
+                  ),
+              ],
             ),
             Expanded(
               child: Padding(
@@ -7112,7 +7223,7 @@ List<_CmsQuizQuestion> _parseCmsQuizQuestions(
 
 /// Card rendered after a video. Shows nothing unless the content item has a
 /// published quiz with at least one answerable question.
-class CmsQuizCard extends StatelessWidget {
+class CmsQuizCard extends ConsumerWidget {
   const CmsQuizCard({
     super.key,
     required this.quizzes,
@@ -7128,7 +7239,7 @@ class CmsQuizCard extends StatelessWidget {
   final String? axisKey;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final isArabic =
         Localizations.localeOf(context).languageCode.toLowerCase() == 'ar';
@@ -7141,6 +7252,10 @@ class CmsQuizCard extends StatelessWidget {
       }
     }
     if (quiz == null) return const SizedBox.shrink();
+
+    final completedIds =
+        ref.watch(completedActivityIdsProvider).valueOrNull ?? const <String>{};
+    final isCompleted = completedIds.contains('quiz_${quiz.id}');
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -7159,19 +7274,30 @@ class CmsQuizCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: accentColor.withValuesCompat(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.quiz, color: accentColor),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: accentColor.withValuesCompat(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.quiz, color: accentColor),
+                  ),
+                  if (isCompleted)
+                    const Positioned(
+                      top: -4,
+                      right: -4,
+                      child: _CompletedBadge(size: 18),
+                    ),
+                ],
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  l10n.readyForFunQuiz,
+                  isCompleted ? l10n.youCompletedQuiz : l10n.readyForFunQuiz,
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -7202,9 +7328,10 @@ class CmsQuizCard extends StatelessWidget {
                   ),
                 );
               },
-              icon: const Icon(Icons.play_circle_fill),
+              icon: Icon(
+                  isCompleted ? Icons.refresh_rounded : Icons.play_circle_fill),
               label: Text(
-                l10n.startQuiz,
+                isCompleted ? l10n.tryAgain : l10n.startQuiz,
                 style:
                     const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),

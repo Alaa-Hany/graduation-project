@@ -306,11 +306,22 @@ class AiBuddyService:
             client_message_id=client_message_id,
             metadata_json=user_metadata,
         )
-        recent_messages = [
-            item.content
-            for item in self._persistence_service.list_messages(db=db, session=session, limit=6)
-            if item.role == "child"
+        # Build the conversation memory window. We include BOTH the child's and
+        # the buddy's own past messages so the AI can see what it already said
+        # (e.g. stories it told) and avoid repeating itself within this session.
+        recent_turns = [
+            item
+            for item in self._persistence_service.list_recent_messages(
+                db=db, session=session, limit=12
+            )
+            if item.id != user_message.id
         ]
+        conversation_history = [
+            {"role": item.role, "content": item.content}
+            for item in recent_turns
+            if item.content
+        ]
+        recent_messages = [item.content for item in recent_turns if item.role == "child"]
 
         provider_state = self._response_generator.provider_state()
         with observe_duration(
@@ -337,6 +348,7 @@ class AiBuddyService:
                     message=content,
                     quick_action=quick_action,
                     recent_messages=recent_messages,
+                    conversation_history=conversation_history,
                     locale=locale,
                 )
                 output_moderation = self._moderation_service.moderate_output(text=generated.content)

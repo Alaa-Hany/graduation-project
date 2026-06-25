@@ -17,12 +17,18 @@ Future<void> main() async {
   // Capture the route the web page was loaded at *before* any MaterialApp or
   // go_router runs and rewrites the URL. With the hash URL strategy the app
   // route lives in the fragment (e.g. `https://app/#/parent/dashboard`). The
-  // router uses this to send the user back to the user-type chooser after a
-  // refresh instead of silently resuming the saved parent/child session.
+  // router uses this (via resolveInitialLocation) as its initial location so a
+  // refresh resumes the saved parent/child mode where the user was, and so deep
+  // links (e.g. a password-reset `?token=...`) survive the bootstrap splash.
   if (kIsWeb) {
     final base = Uri.base;
     final raw = base.fragment.isNotEmpty ? base.fragment : base.path;
-    webEntryRoutePath = Uri.parse(raw).path;
+    final parsed = Uri.parse(raw);
+    webEntryRoutePath = parsed.path;
+    // Preserve the query string (e.g. the password-reset `?token=...`) so the
+    // router can honour the full deep link, not just its path.
+    webEntryLocation =
+        parsed.hasQuery ? '${parsed.path}?${parsed.query}' : parsed.path;
   }
 
   // Initialize logger and global error handlers synchronously so they are

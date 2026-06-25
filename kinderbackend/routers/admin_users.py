@@ -345,4 +345,4 @@ def get_admin_user_activity(
         .order_by(AuditLog.created_at.desc())
         .all()
     )
-    return build_user_activity(user, audit_logs)
+    return build_user_activity(user, audit_logs, db=db)

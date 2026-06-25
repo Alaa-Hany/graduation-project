@@ -30,7 +30,6 @@ class AdminRoleRecord {
     required this.description,
     required this.permissionCount,
     required this.adminCount,
-    required this.permissionNames,
     required this.permissions,
   });
 
@@ -39,8 +38,7 @@ class AdminRoleRecord {
   final String description;
   final int permissionCount;
   final int adminCount;
-  final List<String> permissionNames;
-  final List<AdminPermissionRecord> permissions;
+  final List<String> permissions;
 
   factory AdminRoleRecord.fromJson(Map<String, dynamic> json) {
     return AdminRoleRecord(
@@ -49,14 +47,9 @@ class AdminRoleRecord {
       description: (json['description'] as String?) ?? '',
       permissionCount: (json['permission_count'] as num?)?.toInt() ?? 0,
       adminCount: (json['admin_count'] as num?)?.toInt() ?? 0,
-      permissionNames: List<String>.from(
-        (json['permission_names'] as List<dynamic>?) ?? const [],
+      permissions: List<String>.from(
+        (json['permissions'] as List<dynamic>?) ?? const [],
       ),
-      permissions: (json['permissions'] as List<dynamic>? ?? const [])
-          .map((item) => AdminPermissionRecord.fromJson(
-                Map<String, dynamic>.from(item as Map),
-              ))
-          .toList(),
     );
   }
 }

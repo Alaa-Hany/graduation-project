@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Any
 
 from fastapi import Request
@@ -14,11 +14,13 @@ from models import (
     ContentCategory,
     ContentItem,
     LessonProgress,
+    Notification,
     Quiz,
     SupportTicket,
     SystemSetting,
     User,
 )
+from plan_service import PLAN_FREE, get_plan_features, get_plan_limits
 from serializers import child_to_json, user_to_json
 
 CONTENT_AXIS_METADATA = {
@@ -44,6 +46,26 @@ def parse_optional_date(value: str | None) -> date | None:
     if not normalized:
         return None
     return date.fromisoformat(normalized)
+
+
+def age_to_date_of_birth_range(age: int, today: date | None = None) -> tuple[date, date]:
+    """Inclusive date_of_birth range matching ChildProfile.age == age on `today`.
+
+    Mirrors ChildProfile.age's year/month/day comparison so the SQL filter
+    stays consistent with the computed property used everywhere else.
+    """
+    today = today or date.today()
+
+    def _shift_years(d: date, years: int) -> date:
+        try:
+            return d.replace(year=d.year - years)
+        except ValueError:
+            # Feb 29 with no matching leap year in the target year.
+            return d.replace(month=2, day=28, year=d.year - years)
+
+    max_dob = _shift_years(today, age)
+    min_dob = _shift_years(today, age + 1) + timedelta(days=1)
+    return min_dob, max_dob
 
 
 def base_admin(admin: AdminUser | None) -> dict[str, Any] | None:
@@ -496,14 +518,74 @@ def serialize_user_detail(user: User, db: Session | None = None) -> dict[str, An
 def build_user_activity(
     user: User, audit_logs: list[AuditLog], db: Session | None = None
 ) -> dict[str, Any]:
+    if db is not None:
+        notifications = (
+            db.query(Notification)
+            .filter(Notification.user_id == user.id)
+            .order_by(Notification.created_at.desc())
+            .limit(20)
+            .all()
+        )
+        support_tickets = (
+            db.query(SupportTicket)
+            .filter(SupportTicket.user_id == user.id, SupportTicket.deleted_at.is_(None))
+            .order_by(SupportTicket.created_at.desc())
+            .limit(20)
+            .all()
+        )
+    else:
+        notifications = sorted(
+            getattr(user, "notifications", None) or [],
+            key=lambda item: item.created_at,
+            reverse=True,
+        )[:20]
+        support_tickets = sorted(
+            (
+                item
+                for item in (getattr(user, "support_tickets", None) or [])
+                if item.deleted_at is None
+            ),
+            key=lambda item: item.created_at,
+            reverse=True,
+        )[:20]
+
+    notification_count = len(getattr(user, "notifications", None) or [])
+    support_ticket_count = len(
+        [
+            item
+            for item in (getattr(user, "support_tickets", None) or [])
+            if item.deleted_at is None
+        ]
+    )
+
     return {
-        "user": serialize_user_detail(user, db),
+        "user_id": user.id,
         "summary": {
-            "audit_count": len(audit_logs),
-            "children_count": len(getattr(user, "children", None) or []),
-            "support_ticket_count": len(getattr(user, "support_tickets", None) or []),
+            "child_count": len(getattr(user, "children", None) or []),
+            "notification_count": notification_count,
+            "support_ticket_count": support_ticket_count,
+            "last_updated_at": to_iso(getattr(user, "updated_at", None)),
         },
-        "activity": [serialize_audit_log(item) for item in audit_logs],
+        "notifications": [
+            {
+                "id": item.id,
+                "title": item.title,
+                "type": item.type,
+                "is_read": bool(item.is_read),
+                "created_at": to_iso(item.created_at),
+            }
+            for item in notifications
+        ],
+        "support_tickets": [
+            {
+                "id": item.id,
+                "subject": item.subject,
+                "email": item.email,
+                "created_at": to_iso(item.created_at),
+            }
+            for item in support_tickets
+        ],
+        "admin_audit": [serialize_audit_log(item) for item in audit_logs],
     }
 
 
@@ -612,15 +694,34 @@ def serialize_support_ticket(
 
 def serialize_subscription_record(user: User, db: Session | None = None) -> dict[str, Any]:
     profile = getattr(user, "subscription_profile", None)
+    plan = profile.current_plan_id if profile is not None else user.plan
     history_summary = {
         "event_count": len(getattr(user, "subscription_events", None) or []),
         "billing_transaction_count": len(getattr(user, "billing_transactions", None) or []),
         "payment_attempt_count": len(getattr(user, "payment_attempts", None) or []),
     }
+    is_active = bool(user.is_active)
+    if not is_active:
+        status = "disabled"
+    elif plan and plan != PLAN_FREE:
+        status = "active"
+    else:
+        status = "free"
     return {
+        "id": user.id,
         "user": serialize_user_detail(user, db),
         "user_id": user.id,
-        "plan": profile.current_plan_id if profile is not None else user.plan,
+        "email": user.email,
+        "name": user.name,
+        "status": status,
+        "is_active": is_active,
+        "child_count": len(getattr(user, "children", None) or []),
+        "payment_method_count": len(getattr(user, "payment_methods", None) or []),
+        "limits": get_plan_limits(plan),
+        "features": get_plan_features(plan),
+        "created_at": to_iso(getattr(user, "created_at", None)),
+        "updated_at": to_iso(getattr(user, "updated_at", None)),
+        "plan": plan,
         "lifecycle": (
             {
                 "current_plan_id": profile.current_plan_id,

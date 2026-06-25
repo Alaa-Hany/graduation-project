@@ -7,13 +7,14 @@ import 'package:kinder_world/app.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/models/progress_record.dart';
-import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/core/services/child_profiles_view_service.dart';
 import 'package:kinder_world/core/widgets/app_skeleton_widgets.dart';
 import 'package:kinder_world/core/widgets/app_state_widgets.dart';
 import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/features/parent_mode/dashboard/widgets/parent_dashboard_app_bar.dart';
 import 'package:kinder_world/features/parent_mode/dashboard/widgets/parent_dashboard_sections.dart';
+import 'package:kinder_world/features/parent_mode/reports/report_models.dart';
+import 'package:kinder_world/features/parent_mode/reports/report_service.dart';
 
 class ParentDashboardScreen extends ConsumerStatefulWidget {
   const ParentDashboardScreen({super.key});
@@ -239,12 +240,100 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
   Future<List<ProgressRecord>> _getRecentActivitiesForAllChildren(
     List<ChildProfile> children,
   ) async {
-    final progressRepository = ref.read(progressRepositoryProvider);
-    final allRecords = await progressRepository.getProgressForChildren(
-      children.map((child) => child.id),
+    // The parent device never holds the child's raw progress: it is created on
+    // the child's device and only syncs to the backend as analytics. So the
+    // dashboard sources recent activity from the parent report (server-backed,
+    // with the service's own local/cache fallbacks) instead of the local Hive
+    // box, which is empty on a fresh parent login or a different device.
+    final reportService = ref.read(parentReportServiceProvider);
+
+    final reports = await Future.wait(
+      children.map((child) async {
+        try {
+          return await reportService.buildChildReport(
+            child: child,
+            period: ReportPeriod.week,
+            includeAdvancedReports: false,
+          );
+        } catch (e) {
+          return null;
+        }
+      }),
     );
+
+    final allRecords = <ProgressRecord>[];
+    for (final report in reports) {
+      if (report == null) continue;
+      allRecords.addAll(_recordsFromReport(report));
+    }
 
     allRecords.sort((a, b) => b.date.compareTo(a.date));
     return allRecords;
+  }
+
+  /// Expands a child's backend-aggregated weekly report into the per-activity
+  /// [ProgressRecord]s the dashboard sections consume (recent list, weekly
+  /// chart, today/week counts). Daily points are the authoritative count source
+  /// so days are never double-counted.
+  List<ProgressRecord> _recordsFromReport(ChildReportData report) {
+    final records = <ProgressRecord>[];
+    for (final point in report.dailyPoints) {
+      final activities = point.activitiesCompleted;
+      final screenTime = point.screenTimeMinutes;
+
+      if (activities <= 0) {
+        // A day with screen time but no completed activity still contributes to
+        // the "minutes today" stat without inflating the activity counts/chart.
+        if (screenTime > 0) {
+          records.add(
+            _syntheticReportRecord(
+              childId: report.child.id,
+              date: point.date,
+              index: 0,
+              duration: screenTime,
+              status: CompletionStatus.inProgress,
+            ),
+          );
+        }
+        continue;
+      }
+
+      for (var i = 0; i < activities; i++) {
+        records.add(
+          _syntheticReportRecord(
+            childId: report.child.id,
+            date: point.date,
+            index: i,
+            // Attribute the whole day's screen time to its first activity so
+            // the per-day minutes total stays accurate without double counting.
+            duration: i == 0 ? screenTime : 0,
+            status: CompletionStatus.completed,
+          ),
+        );
+      }
+    }
+    return records;
+  }
+
+  ProgressRecord _syntheticReportRecord({
+    required String childId,
+    required DateTime date,
+    required int index,
+    required int duration,
+    required String status,
+  }) {
+    return ProgressRecord(
+      id: 'report-$childId-${date.toIso8601String()}-$index',
+      childId: childId,
+      activityId: 'reported_activity',
+      date: date,
+      score: 0,
+      duration: duration,
+      xpEarned: 0,
+      completionStatus: status,
+      syncStatus: SyncStatus.synced,
+      createdAt: date,
+      updatedAt: date,
+    );
   }
 }

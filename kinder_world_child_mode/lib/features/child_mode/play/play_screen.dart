@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/public_content.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
+import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/core/repositories/public_content_repository.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
@@ -286,16 +287,19 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
   }
 }
 
-class _FeaturedContentCard extends StatelessWidget {
+class _FeaturedContentCard extends ConsumerWidget {
   const _FeaturedContentCard({required this.item});
 
   final PublicContentItem item;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = Theme.of(context).colorScheme;
     final accent =
         _categoryColor(item.category?.slug ?? item.contentType, context);
+    final completedIds =
+        ref.watch(completedActivityIdsProvider).valueOrNull ?? const <String>{};
+    final isCompleted = _isPlayItemCompleted(item, completedIds);
     return SizedBox(
       width: 220,
       child: KinderCard(
@@ -335,6 +339,12 @@ class _FeaturedContentCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (isCompleted)
+                    const Positioned(
+                      top: 8,
+                      right: 8,
+                      child: _PlayCompletedBadge(),
+                    ),
                 ],
               ),
             ),
@@ -366,16 +376,19 @@ class _FeaturedContentCard extends StatelessWidget {
   }
 }
 
-class _PlayableContentCard extends StatelessWidget {
+class _PlayableContentCard extends ConsumerWidget {
   const _PlayableContentCard({required this.item});
 
   final PublicContentItem item;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = Theme.of(context).colorScheme;
     final tagColor =
         _categoryColor(item.category?.slug ?? item.contentType, context);
+    final completedIds =
+        ref.watch(completedActivityIdsProvider).valueOrNull ?? const <String>{};
+    final isCompleted = _isPlayItemCompleted(item, completedIds);
     return KinderCard(
       padding: EdgeInsets.zero,
       borderRadius: 18,
@@ -388,10 +401,21 @@ class _PlayableContentCard extends StatelessWidget {
       },
       child: Row(
         children: [
-          _Thumbnail(
-            url: item.effectiveThumbnailUrl,
-            icon: _contentIcon(item.contentType),
-            color: tagColor,
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              _Thumbnail(
+                url: item.effectiveThumbnailUrl,
+                icon: _contentIcon(item.contentType),
+                color: tagColor,
+              ),
+              if (isCompleted)
+                const Positioned(
+                  top: -4,
+                  right: -4,
+                  child: _PlayCompletedBadge(),
+                ),
+            ],
           ),
           Expanded(
             child: Padding(
@@ -779,6 +803,52 @@ class _Thumbnail extends StatelessWidget {
         ),
       ),
       child: Icon(icon, size: 30, color: color),
+    );
+  }
+}
+
+/// True when the child has already finished this content's video and/or
+/// quiz, by reconstructing the same `activityId` formulas used when
+/// recording completion (`video_<urlHash>` / `quiz_<id>`) and checking them
+/// against the precomputed [completedActivityIdsProvider] set.
+bool _isPlayItemCompleted(PublicContentItem item, Set<String> completedIds) {
+  if (completedIds.isEmpty) return false;
+  if (item.hasVideo) {
+    final videoId = 'video_${item.preferredVideoUrl!.trim().hashCode}';
+    if (completedIds.contains(videoId)) return true;
+  }
+  for (final quiz in item.quizzes) {
+    if (completedIds.contains('quiz_${quiz.id}')) return true;
+  }
+  return false;
+}
+
+/// Small green checkmark badge overlaid on a thumbnail to mark a finished
+/// activity.
+class _PlayCompletedBadge extends StatelessWidget {
+  const _PlayCompletedBadge();
+
+  static const double size = 22;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: Colors.green,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValuesCompat(alpha: 0.18),
+            blurRadius: 3,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child:
+          const Icon(Icons.check_rounded, color: Colors.white, size: size * 0.65),
     );
   }
 }

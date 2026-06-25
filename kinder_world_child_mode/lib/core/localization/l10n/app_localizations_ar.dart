@@ -595,6 +595,8 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get lessonsCompletedLabel => 'الدروس المكتملة';
   @override
+  String get activeDaysLabel => 'أيام النشاط';
+  @override
   String get mostUsedContentLabel => 'أكثر نوع محتوى استخدامًا';
   @override
   String get completionRateLabel => 'معدل الإكمال';
@@ -1648,6 +1650,9 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get adminAccessDenied => 'تم رفض الوصول';
   @override
+  String adminAdminsActionFailedMessage(String reason) =>
+      'فشلت العملية: $reason';
+  @override
   String get adminAdminsAssignRoleAction => 'تعيين دور';
   @override
   String get adminAdminsAssignRoleTitle => 'تعيين دور';
@@ -2158,6 +2163,9 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get adminSignIn => 'تسجيل الدخول';
   @override
+  String adminSubscriptionsActionFailedMessage(String reason) =>
+      'فشلت العملية: $reason';
+  @override
   String get adminSubscriptionsCancelAction => 'إلغاء';
   @override
   String get adminSubscriptionsCancelConfirm =>
@@ -2351,6 +2359,9 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   String get adminUsersTitle => 'إدارة المستخدمين';
   @override
   String get adminUsersUpdatedMessage => 'تم تحديث المستخدم بنجاح';
+  @override
+  String adminUsersActionFailedMessage(String reason) =>
+      'فشلت العملية: $reason';
   @override
   String get adminUsersResetPasswordTitle => 'إعادة تعيين كلمة المرور';
   @override

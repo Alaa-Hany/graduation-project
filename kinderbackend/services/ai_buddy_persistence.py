@@ -171,5 +171,31 @@ class AiBuddyPersistenceService:
             .all()
         )
 
+    def list_recent_messages(
+        self,
+        *,
+        db: Session,
+        session: AiBuddySession,
+        limit: int = 12,
+    ) -> list[AiBuddyMessage]:
+        """Return the most recent ``limit`` messages in chronological order.
+
+        ``list_messages`` orders ascending then limits, which yields the OLDEST
+        rows for a long session. For conversation memory we need the latest
+        turns, so we order descending, take ``limit``, and reverse back into
+        chronological order for the AI provider.
+        """
+        rows = (
+            db.query(AiBuddyMessage)
+            .filter(
+                AiBuddyMessage.session_id == session.id,
+                AiBuddyMessage.archived_at.is_(None),
+            )
+            .order_by(AiBuddyMessage.created_at.desc(), AiBuddyMessage.id.desc())
+            .limit(max(limit, 1))
+            .all()
+        )
+        return list(reversed(rows))
+
 
 ai_buddy_persistence_service = AiBuddyPersistenceService()

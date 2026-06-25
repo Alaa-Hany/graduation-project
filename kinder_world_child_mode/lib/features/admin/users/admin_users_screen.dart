@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -98,6 +99,24 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
     }
   }
 
+  String _describeError(Object error) {
+    if (error is DioException) {
+      final data = error.response?.data;
+      if (data is Map) {
+        final detail = data['detail'];
+        if (detail is String && detail.trim().isNotEmpty) return detail;
+        if (detail is Map) {
+          final message = detail['message'];
+          if (message is String && message.trim().isNotEmpty) return message;
+          final code = detail['code'];
+          if (code is String && code.trim().isNotEmpty) return code;
+        }
+      }
+      return error.message ?? error.toString();
+    }
+    return error.toString();
+  }
+
   Future<void> _showEditDialog(AdminParentUser user) async {
     final l10n = AppLocalizations.of(context)!;
     final nameController = TextEditingController(text: user.name);
@@ -147,17 +166,27 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
 
     if (saved != true) return;
 
-    await ref.read(adminManagementRepositoryProvider).updateUser(
-          user.id,
-          name: nameController.text.trim(),
-          email: emailController.text.trim(),
-          plan: plan,
-        );
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.adminUsersUpdatedMessage)),
-    );
-    await _loadUsers();
+    try {
+      await ref.read(adminManagementRepositoryProvider).updateUser(
+            user.id,
+            name: nameController.text.trim(),
+            email: emailController.text.trim(),
+            plan: plan,
+          );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.adminUsersUpdatedMessage)),
+      );
+      await _loadUsers();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text(l10n.adminUsersActionFailedMessage(_describeError(e))),
+        ),
+      );
+    }
   }
 
   Future<void> _showCreateDialog() async {
@@ -218,17 +247,27 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
 
     if (saved != true) return;
 
-    await ref.read(adminManagementRepositoryProvider).createUser(
-          name: nameController.text.trim(),
-          email: emailController.text.trim(),
-          password: passwordController.text.trim(),
-          plan: plan,
-        );
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.adminUsersCreatedMessage)),
-    );
-    await _loadUsers();
+    try {
+      await ref.read(adminManagementRepositoryProvider).createUser(
+            name: nameController.text.trim(),
+            email: emailController.text.trim(),
+            password: passwordController.text.trim(),
+            plan: plan,
+          );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.adminUsersCreatedMessage)),
+      );
+      await _loadUsers();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text(l10n.adminUsersActionFailedMessage(_describeError(e))),
+        ),
+      );
+    }
   }
 
   Future<void> _toggleEnabled(AdminParentUser user, bool enabled) async {

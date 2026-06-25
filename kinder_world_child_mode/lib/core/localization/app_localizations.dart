@@ -632,6 +632,7 @@ abstract class AppLocalizations {
   String get noChildSelected;
   String get addChildToViewReports;
   String get lessonsCompletedLabel;
+  String get activeDaysLabel;
   String get mostUsedContentLabel;
   String get completionRateLabel;
   String get dailyTrendLabel;
@@ -1501,6 +1502,7 @@ abstract class AppLocalizations {
   String get adminAdminsEditRoleAction;
   String get adminAdminsRoleUpdatedMessage;
   String get adminAdminsPermissionsUpdatedMessage;
+  String adminAdminsActionFailedMessage(String reason);
   String get adminAdminsRolesSection;
   String get adminAdminsPermissionsSection;
   String get adminAdminsSavePermissionsAction;
@@ -1539,6 +1541,7 @@ abstract class AppLocalizations {
   String get adminSubscriptionsCancelAction;
   String get adminSubscriptionsRefundAction;
   String get adminSubscriptionsRefundNotSupported;
+  String adminSubscriptionsActionFailedMessage(String reason);
 
   // Users Details & Management
   String adminUsersDetailTitle(String email);
@@ -1569,6 +1572,7 @@ abstract class AppLocalizations {
   String get adminUsersCreatedMessage;
   String get adminUsersPlanField;
   String get adminUsersUpdatedMessage;
+  String adminUsersActionFailedMessage(String reason);
   String get adminUsersEnableTitle;
   String get adminUsersDisableTitle;
   String get adminUsersEnableConfirm;

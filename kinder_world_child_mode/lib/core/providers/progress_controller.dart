@@ -606,6 +606,23 @@ final progressStatsProvider = Provider<Map<String, dynamic>>((ref) {
   return ref.watch(progressControllerProvider).stats;
 });
 
+/// Set of `activityId`s the current child has already completed, used to
+/// show a "done" badge on activity/content cards without opening them.
+final completedActivityIdsProvider =
+    FutureProvider.autoDispose<Set<String>>((ref) async {
+  final childId = ref.watch(currentChildIdProvider);
+  if (childId == null || childId.isEmpty) {
+    return const <String>{};
+  }
+
+  final repo = ref.watch(progressRepositoryProvider);
+  final records = await repo.getProgressForChild(childId);
+  return records
+      .where((record) => record.completionStatus == CompletionStatus.completed)
+      .map((record) => record.activityId)
+      .toSet();
+});
+
 // Async providers
 final weeklySummaryProvider = FutureProvider.autoDispose
     .family<Map<String, dynamic>, String>((ref, childId) async {

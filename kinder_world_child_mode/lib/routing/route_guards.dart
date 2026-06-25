@@ -66,36 +66,31 @@ bool isParentPinProtectedRoute(String path) {
 /// fragment, so this is derived from [Uri.base] at launch.
 String? webEntryRoutePath;
 
-/// Returns true when [path] is a parent/child *session* route (i.e. a screen
-/// you only reach after picking a mode), as opposed to a login / register /
-/// forgot- or reset-password / verify-email deep link, which must stay
-/// reachable directly.
-bool isSavedModeSessionRoute(String path) {
-  return (isAnyParentRoute(path) || isAnyChildRoute(path)) &&
-      !isParentAuthRoute(path) &&
-      path != Routes.parentForgotPassword &&
-      path != Routes.parentResetPassword &&
-      path != Routes.childLogin &&
-      path != Routes.childForgotPassword;
-}
-
-/// Per-launch guard that forces the user-type chooser after a web refresh.
+/// The full launch location (path + query string) of the web deep link,
+/// captured alongside [webEntryRoutePath] in `main()`. Unlike that path-only
+/// value, this preserves query parameters (e.g. the `?token=...` on a password
+/// reset link) so the router can honour the deep link as its initial location.
 ///
-/// Created once per [routerProvider], so it resets on a fresh app launch — and
-/// crucially on a web page refresh, which recreates the whole app. If the web
-/// page was loaded straight into a saved parent/child session (e.g. refreshing
-/// while on `/parent/dashboard`), [modeChoicePending] starts true and every
-/// redirect into a session route is bounced to the chooser until the user
-/// actually lands there. This is robust to whatever order go_router evaluates
-/// the splash vs the restored deep link in.
-class AppLaunchRedirectGuard {
-  AppLaunchRedirectGuard() {
-    final entry = webEntryRoutePath;
-    modeChoicePending =
-        kIsWeb && entry != null && isSavedModeSessionRoute(entry);
-  }
+/// This is needed because the bootstrap's first `MaterialApp` consumes the
+/// platform's initial route, so by the time the real router mounts the browser
+/// deep link is gone and go_router would otherwise fall back to the splash.
+String? webEntryLocation;
 
-  bool modeChoicePending = false;
+/// Resolves the router's initial location on launch. On web, if the page was
+/// opened straight at a real deep link (e.g. a password-reset email link), use
+/// that — including its query string — so it isn't lost to the bootstrap splash.
+/// Otherwise (normal launch, root URL, or native) start at the animated splash.
+String resolveInitialLocation() {
+  final location = webEntryLocation;
+  final path = webEntryRoutePath;
+  if (location == null ||
+      path == null ||
+      path.isEmpty ||
+      path == '/' ||
+      path == Routes.splash) {
+    return Routes.splash;
+  }
+  return location;
 }
 
 class RouterRefreshListenable extends ChangeNotifier {
@@ -139,26 +134,14 @@ Future<String?> appRedirect({
   required SecureStorage secureStorage,
   required Logger logger,
   required GoRouterState state,
-  required AppLaunchRedirectGuard launchGuard,
 }) async {
   final path = state.uri.path;
 
-  // On the web, a page refresh restores the deep-linked URL (the route lives in
-  // the URL fragment with the hash strategy). If the page was loaded straight
-  // into a saved parent/child session, don't silently resume that mode — keep
-  // bouncing every session route to the user-type chooser until the user
-  // actually reaches it and picks a mode explicitly. We can't rely on "the
-  // first redirect is the deep route" because the bootstrap splash can make
-  // go_router evaluate `/splash` first, so this stays pending across redirects.
-  // Auth / forgot- / reset-password / verify-email deep links are excluded via
-  // [isSavedModeSessionRoute]. Native platforms are untouched.
-  if (launchGuard.modeChoicePending) {
-    if (path == Routes.selectUserType) {
-      launchGuard.modeChoicePending = false;
-    } else if (isSavedModeSessionRoute(path)) {
-      return Routes.selectUserType;
-    }
-  }
+  // A web page refresh restores the deep-linked URL (the route lives in the URL
+  // fragment with the hash strategy). The session-based logic below resumes the
+  // saved parent/child mode directly so the user lands back where they were
+  // (parent routes still go through the PIN gate). [resolveInitialLocation]
+  // preserves the deep link across the bootstrap splash on launch.
 
   final adminAuthState = ref.read(adminAuthProvider);
   final isMaintenanceMode = ref.read(maintenanceModeProvider);

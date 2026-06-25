@@ -91,6 +91,7 @@ class _AiBuddyBackend(Protocol):
         message: str,
         quick_action: str | None,
         recent_messages: Iterable[str],
+        conversation_history: Iterable[dict] | None = None,
         locale: str | None = None,
     ) -> AiBuddyGeneratedResponse: ...
 
@@ -98,6 +99,55 @@ class _AiBuddyBackend(Protocol):
 class _InternalFallbackAiBuddyBackend:
     _default_reason = (
         "AI Buddy is running in safe fallback mode. " "No external AI provider is configured yet."
+    )
+
+    # Pools of canned content rotated by the conversation's reply count so the
+    # safe fallback does not repeat the same story/fact/game every time.
+    _STORIES_EN = (
+        "Here is a tiny story: A brave little star felt scared of the dark sky, "
+        "but it kept shining until other stars joined in. Soon the whole sky looked friendly.",
+        "Here is a tiny story: A small turtle wanted to win a race. He went slow and steady, "
+        "never gave up, and crossed the line with a big proud smile.",
+        "Here is a tiny story: A little cloud was sad it could not play. Then it rained gently, "
+        "and flowers grew everywhere. The cloud learned its gift made the world bloom.",
+        "Here is a tiny story: A tiny ant found a crumb too big to carry. She asked her friends, "
+        "and together they moved it home. Helping each other made the job easy and fun.",
+    )
+    _STORIES_AR = (
+        "قصة قصيرة: كان نجم صغير يخاف من الظلام، لكنه ظل يلمع حتى اجتمعت حوله نجوم أخرى، "
+        "فصار الليل جميلًا ومطمئنًا.",
+        "قصة قصيرة: أرادت سلحفاة صغيرة أن تفوز في السباق. مشت بهدوء وثبات ولم تستسلم، "
+        "ووصلت إلى خط النهاية وهي فخورة وسعيدة.",
+        "قصة قصيرة: حزنت سحابة صغيرة لأنها لا تستطيع اللعب، ثم أمطرت بلطف فنمت الزهور في كل مكان، "
+        "وتعلمت أن هديتها تجعل العالم أجمل.",
+        "قصة قصيرة: وجدت نملة صغيرة كسرة كبيرة لا تقدر على حملها، فنادت أصدقاءها وحملوها معًا إلى البيت، "
+        "وتعلموا أن التعاون يجعل العمل سهلًا وممتعًا.",
+    )
+    _FACTS_EN = (
+        "Fun fact: octopuses have three hearts.",
+        "Fun fact: a group of flamingos is called a flamboyance.",
+        "Fun fact: honey never spoils — it can last for thousands of years.",
+        "Fun fact: butterflies taste with their feet.",
+    )
+    _FACTS_AR = (
+        "معلومة لطيفة: للأخطبوط ثلاثة قلوب.",
+        "معلومة لطيفة: قلب الجمبري موجود في رأسه.",
+        "معلومة لطيفة: العسل لا يفسد أبدًا، وقد يبقى صالحًا لآلاف السنين.",
+        "معلومة لطيفة: الفراشة تتذوق الطعام بأقدامها.",
+    )
+    _GAMES_EN = (
+        "here is a simple game: find one red thing, one blue thing, and one soft thing. "
+        "When you finish, tell me what you found.",
+        "here is a simple game: clap once for every animal you can name in ten seconds. Ready, go!",
+        "here is a simple game: look around and find three things that are round. "
+        "Which one is your favorite?",
+        "here is a simple game: hop on one foot and count how high you can go. Tell me your number!",
+    )
+    _GAMES_AR = (
+        "لعبة سريعة: ابحث عن شيء أحمر وشيء أزرق وشيء ناعم، وعندما تنتهي أخبرني ماذا وجدت.",
+        "لعبة سريعة: صفّق مرة لكل حيوان تعرف اسمه خلال عشر ثوانٍ. استعد، هيا!",
+        "لعبة سريعة: انظر حولك وابحث عن ثلاثة أشياء دائرية. أيها يعجبك أكثر؟",
+        "لعبة سريعة: اقفز على قدم واحدة وعُدّ كم مرة تقدر. أخبرني الرقم!",
     )
 
     def __init__(self, *, content_service=ai_buddy_content_service) -> None:
@@ -164,6 +214,7 @@ class _InternalFallbackAiBuddyBackend:
         message: str,
         quick_action: str | None,
         recent_messages: Iterable[str],
+        conversation_history: Iterable[dict] | None = None,
         locale: str | None = None,
     ) -> AiBuddyGeneratedResponse:
         normalized = message.strip()
@@ -177,6 +228,7 @@ class _InternalFallbackAiBuddyBackend:
             intent=intent,
             is_arabic=is_arabic,
             recent_messages=recent_messages,
+            conversation_history=conversation_history,
         )
         return AiBuddyGeneratedResponse(
             content=content,
@@ -236,12 +288,15 @@ class _InternalFallbackAiBuddyBackend:
         intent: str,
         is_arabic: bool,
         recent_messages: Iterable[str],
+        conversation_history: Iterable[dict] | None = None,
     ) -> str:
+        variant = self._rotation_index(conversation_history)
         if is_arabic:
             return self._build_arabic_response(
                 child_name=child_name,
                 intent=intent,
                 message=message,
+                variant=variant,
             )
         return self._build_english_response(
             child_name=child_name,
@@ -249,6 +304,19 @@ class _InternalFallbackAiBuddyBackend:
             intent=intent,
             message=message,
             recent_messages=recent_messages,
+            variant=variant,
+        )
+
+    def _rotation_index(self, conversation_history: Iterable[dict] | None) -> int:
+        """How many buddy replies came before this one.
+
+        Used to rotate canned stories/facts/games so the safe fallback does not
+        repeat the same story every time within a session.
+        """
+        if not conversation_history:
+            return 0
+        return sum(
+            1 for item in conversation_history if (item or {}).get("role") == "assistant"
         )
 
     def _build_english_response(
@@ -259,6 +327,7 @@ class _InternalFallbackAiBuddyBackend:
         intent: str,
         message: str,
         recent_messages: Iterable[str],
+        variant: int = 0,
     ) -> str:
         prefix = f"{child_name}, " if child_name else ""
         activity = self._recommended_activity(intent=intent, child_age=child_age)
@@ -279,25 +348,17 @@ class _InternalFallbackAiBuddyBackend:
                     f"{prefix}you could open the {activity['title_en']} activity in the "
                     f"{activity['category_title_en']} section, then come back and tell me your favorite part."
                 )
-            return (
-                f"{prefix}here is a simple game: find one red thing, one blue thing, and one soft thing. "
-                "When you finish, tell me what you found."
-            )
+            return f"{prefix}{self._pick(self._GAMES_EN, variant)}"
         if intent == "tell_story":
-            return (
-                "Here is a tiny story: A brave little star felt scared of the dark sky, "
-                "but it kept shining until other stars joined in. Soon the whole sky looked friendly."
-            )
+            return self._pick(self._STORIES_EN, variant)
         if intent == "fun_fact":
+            fact = self._pick(self._FACTS_EN, variant)
             if activity is not None:
                 return (
-                    "Fun fact: octopuses have three hearts. "
+                    f"{fact} "
                     f"If you want, we can also explore the {activity['title_en']} activity in the app."
                 )
-            return (
-                "Fun fact: octopuses have three hearts. "
-                "If you want, I can give you another fact about animals or space."
-            )
+            return f"{fact} If you want, I can give you another fact about animals or space."
         if intent == "motivation":
             return (
                 f"{prefix}it is okay to feel tired or sad sometimes. Take one deep breath, wiggle your shoulders, "
@@ -314,6 +375,13 @@ class _InternalFallbackAiBuddyBackend:
             f'{prefix}I heard you say: "{message[:80]}". '
             "I can help with learning, stories, games, and kind encouragement."
         )
+
+    @staticmethod
+    def _pick(pool: tuple[str, ...], variant: int) -> str:
+        """Rotate through a pool so repeated requests get different content."""
+        if not pool:
+            return ""
+        return pool[variant % len(pool)]
 
     def _recommended_activity(
         self,
@@ -342,6 +410,7 @@ class _InternalFallbackAiBuddyBackend:
         child_name: str | None,
         intent: str,
         message: str,
+        variant: int = 0,
     ) -> str:
         prefix = f"{child_name}، " if child_name else ""
         if intent == "recommend_lesson":
@@ -349,19 +418,12 @@ class _InternalFallbackAiBuddyBackend:
                 f"{prefix}لنجرّب درسًا قصيرًا وممتعًا. " "عد خمسة أشياء حولك، ثم أخبرني أيها أكبر."
             )
         if intent == "suggest_game":
-            return (
-                f"{prefix}لعبة سريعة: ابحث عن شيء أحمر وشيء أزرق وشيء ناعم. "
-                "وعندما تنتهي أخبرني ماذا وجدت."
-            )
+            return f"{prefix}{self._pick(self._GAMES_AR, variant)}"
         if intent == "tell_story":
-            return (
-                "قصة قصيرة: كان نجم صغير يخاف من الظلام، "
-                "لكنه ظل يلمع حتى اجتمعت حوله نجوم أخرى، "
-                "فصار الليل جميلًا ومطمئنًا."
-            )
+            return self._pick(self._STORIES_AR, variant)
         if intent == "fun_fact":
             return (
-                "معلومة لطيفة: للأخطبوط ثلاثة قلوب. "
+                f"{self._pick(self._FACTS_AR, variant)} "
                 "إذا أردت، أقول لك معلومة أخرى عن الحيوانات أو الفضاء."
             )
         if intent == "motivation":
@@ -465,6 +527,7 @@ class _EnhancedAiBuddyBackend:
         message: str,
         quick_action: str | None,
         recent_messages: Iterable[str],
+        conversation_history: Iterable[dict] | None = None,
         locale: str | None = None,
     ) -> AiBuddyGeneratedResponse:
         is_arabic = _resolve_is_arabic(locale, message)
@@ -475,6 +538,7 @@ class _EnhancedAiBuddyBackend:
             message=message,
             quick_action=quick_action,
             recent_messages=list(recent_messages),
+            conversation_history=list(conversation_history) if conversation_history else None,
             is_arabic=is_arabic,
             child_age=child_age,
             available_activities=[
@@ -564,6 +628,7 @@ class AiBuddyResponseGenerator:
         message: str,
         quick_action: str | None,
         recent_messages: Iterable[str],
+        conversation_history: Iterable[dict] | None = None,
         locale: str | None = None,
     ) -> AiBuddyGeneratedResponse:
         response = self._run_with_fallback(
@@ -573,6 +638,7 @@ class AiBuddyResponseGenerator:
                 message=message,
                 quick_action=quick_action,
                 recent_messages=recent_messages,
+                conversation_history=conversation_history,
                 locale=locale,
             )
         )

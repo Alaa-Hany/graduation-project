@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
@@ -206,6 +207,24 @@ class _AdminAdminManagementScreenState
     }
   }
 
+  String _describeError(Object error) {
+    if (error is DioException) {
+      final data = error.response?.data;
+      if (data is Map) {
+        final detail = data['detail'];
+        if (detail is String && detail.trim().isNotEmpty) return detail;
+        if (detail is Map) {
+          final message = detail['message'];
+          if (message is String && message.trim().isNotEmpty) return message;
+          final code = detail['code'];
+          if (code is String && code.trim().isNotEmpty) return code;
+        }
+      }
+      return error.message ?? error.toString();
+    }
+    return error.toString();
+  }
+
   Future<void> _showCreateAdminDialog() async {
     final l10n = AppLocalizations.of(context)!;
     final emailController = TextEditingController();
@@ -297,23 +316,33 @@ class _AdminAdminManagementScreenState
         ) ??
         false;
     if (!confirmed) return;
-    final created =
-        await ref.read(adminManagementRepositoryProvider).createAdminUser(
-              email: emailController.text.trim(),
-              password: passwordController.text.trim(),
-              name: nameController.text.trim(),
-              roleIds: selectedRoleIds.toList(),
-            );
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          l10n.adminAdminsCreatedMessage,
+    try {
+      final created =
+          await ref.read(adminManagementRepositoryProvider).createAdminUser(
+                email: emailController.text.trim(),
+                password: passwordController.text.trim(),
+                name: nameController.text.trim(),
+                roleIds: selectedRoleIds.toList(),
+              );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n.adminAdminsCreatedMessage,
+          ),
         ),
-      ),
-    );
-    await _loadUsers(selectId: created.id);
-    await _loadRoles();
+      );
+      await _loadUsers(selectId: created.id);
+      await _loadRoles();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text(l10n.adminAdminsActionFailedMessage(_describeError(e))),
+        ),
+      );
+    }
   }
 
   Future<void> _showEditAdminDialog(AdminUser adminUser) async {
@@ -378,22 +407,32 @@ class _AdminAdminManagementScreenState
         ) ??
         false;
     if (!confirmed) return;
-    final updated =
-        await ref.read(adminManagementRepositoryProvider).updateAdminUser(
-              adminUser.id,
-              email: emailController.text.trim(),
-              name: nameController.text.trim(),
-              password: passwordController.text.trim(),
-            );
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          l10n.adminAdminsUpdatedMessage,
+    try {
+      final updated =
+          await ref.read(adminManagementRepositoryProvider).updateAdminUser(
+                adminUser.id,
+                email: emailController.text.trim(),
+                name: nameController.text.trim(),
+                password: passwordController.text.trim(),
+              );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n.adminAdminsUpdatedMessage,
+          ),
         ),
-      ),
-    );
-    await _loadUsers(selectId: updated.id);
+      );
+      await _loadUsers(selectId: updated.id);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text(l10n.adminAdminsActionFailedMessage(_describeError(e))),
+        ),
+      );
+    }
   }
 
   Future<void> _setAdminEnabled(AdminUser adminUser, bool enabled) async {
@@ -429,20 +468,30 @@ class _AdminAdminManagementScreenState
         ) ??
         false;
     if (!confirmed) return;
-    final updated = await ref
-        .read(adminManagementRepositoryProvider)
-        .setAdminUserEnabled(adminUser.id, enabled);
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          enabled
-              ? l10n.adminAdminsEnabledMessage
-              : l10n.adminAdminsDisabledMessage,
+    try {
+      final updated = await ref
+          .read(adminManagementRepositoryProvider)
+          .setAdminUserEnabled(adminUser.id, enabled);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            enabled
+                ? l10n.adminAdminsEnabledMessage
+                : l10n.adminAdminsDisabledMessage,
+          ),
         ),
-      ),
-    );
-    await _loadUsers(selectId: updated.id);
+      );
+      await _loadUsers(selectId: updated.id);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text(l10n.adminAdminsActionFailedMessage(_describeError(e))),
+        ),
+      );
+    }
   }
 
   Future<void> _showAssignRoleDialog(AdminUser adminUser) async {
@@ -486,19 +535,29 @@ class _AdminAdminManagementScreenState
         ) ??
         false;
     if (!confirmed) return;
-    final updated = await ref
-        .read(adminManagementRepositoryProvider)
-        .assignAdminRole(adminUser.id, selectedRoleId);
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          l10n.adminAdminsRoleAssignedMessage,
+    try {
+      final updated = await ref
+          .read(adminManagementRepositoryProvider)
+          .assignAdminRole(adminUser.id, selectedRoleId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n.adminAdminsRoleAssignedMessage,
+          ),
         ),
-      ),
-    );
-    await _loadUsers(selectId: updated.id);
-    await _loadRoles();
+      );
+      await _loadUsers(selectId: updated.id);
+      await _loadRoles();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text(l10n.adminAdminsActionFailedMessage(_describeError(e))),
+        ),
+      );
+    }
   }
 
   Future<void> _removeRole(AdminUser adminUser, AdminRoleRecord role) async {
@@ -526,19 +585,29 @@ class _AdminAdminManagementScreenState
         ) ??
         false;
     if (!confirmed) return;
-    final updated = await ref
-        .read(adminManagementRepositoryProvider)
-        .removeAdminRole(adminUser.id, role.id);
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          l10n.adminAdminsRoleRemovedMessage,
+    try {
+      final updated = await ref
+          .read(adminManagementRepositoryProvider)
+          .removeAdminRole(adminUser.id, role.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n.adminAdminsRoleRemovedMessage,
+          ),
         ),
-      ),
-    );
-    await _loadUsers(selectId: updated.id);
-    await _loadRoles();
+      );
+      await _loadUsers(selectId: updated.id);
+      await _loadRoles();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text(l10n.adminAdminsActionFailedMessage(_describeError(e))),
+        ),
+      );
+    }
   }
 
   Future<void> _showCreateRoleDialog() async {
@@ -595,20 +664,30 @@ class _AdminAdminManagementScreenState
         ) ??
         false;
     if (!confirmed) return;
-    final created =
-        await ref.read(adminManagementRepositoryProvider).createRole(
-              name: nameController.text.trim(),
-              description: descriptionController.text.trim(),
-            );
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          l10n.adminAdminsRoleCreatedMessage,
+    try {
+      final created =
+          await ref.read(adminManagementRepositoryProvider).createRole(
+                name: nameController.text.trim(),
+                description: descriptionController.text.trim(),
+              );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n.adminAdminsRoleCreatedMessage,
+          ),
         ),
-      ),
-    );
-    await _loadRoles(selectId: created.id);
+      );
+      await _loadRoles(selectId: created.id);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text(l10n.adminAdminsActionFailedMessage(_describeError(e))),
+        ),
+      );
+    }
   }
 
   Future<void> _showEditRoleDialog(AdminRoleRecord role) async {
@@ -663,21 +742,31 @@ class _AdminAdminManagementScreenState
         ) ??
         false;
     if (!confirmed) return;
-    final updated =
-        await ref.read(adminManagementRepositoryProvider).updateRole(
-              role.id,
-              name: nameController.text.trim(),
-              description: descriptionController.text.trim(),
-            );
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          l10n.adminAdminsRoleUpdatedMessage,
+    try {
+      final updated =
+          await ref.read(adminManagementRepositoryProvider).updateRole(
+                role.id,
+                name: nameController.text.trim(),
+                description: descriptionController.text.trim(),
+              );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n.adminAdminsRoleUpdatedMessage,
+          ),
         ),
-      ),
-    );
-    await _loadRoles(selectId: updated.id);
+      );
+      await _loadRoles(selectId: updated.id);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text(l10n.adminAdminsActionFailedMessage(_describeError(e))),
+        ),
+      );
+    }
   }
 
   Future<void> _saveRolePermissions(
@@ -685,18 +774,28 @@ class _AdminAdminManagementScreenState
     Set<int> permissionIds,
   ) async {
     final l10n = AppLocalizations.of(context)!;
-    final updated = await ref
-        .read(adminManagementRepositoryProvider)
-        .updateRolePermissions(role.id, permissionIds.toList());
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          l10n.adminAdminsPermissionsUpdatedMessage,
+    try {
+      final updated = await ref
+          .read(adminManagementRepositoryProvider)
+          .updateRolePermissions(role.id, permissionIds.toList());
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n.adminAdminsPermissionsUpdatedMessage,
+          ),
         ),
-      ),
-    );
-    await _loadRoles(selectId: updated.id);
+      );
+      await _loadRoles(selectId: updated.id);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text(l10n.adminAdminsActionFailedMessage(_describeError(e))),
+        ),
+      );
+    }
   }
 
   @override
@@ -1159,8 +1258,10 @@ class _AdminAdminManagementScreenState
         ),
       );
     }
-    final selectedPermissionIds =
-        role.permissions.map((permission) => permission.id).toSet();
+    final selectedPermissionIds = permissionsPayload.items
+        .where((permission) => role.permissions.contains(permission.name))
+        .map((permission) => permission.id)
+        .toSet();
     return StatefulBuilder(
       builder: (context, setRoleState) => Card(
         child: Padding(

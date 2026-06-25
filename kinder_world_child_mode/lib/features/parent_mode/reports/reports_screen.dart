@@ -816,6 +816,15 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   Widget _buildSummaryGrid(BuildContext context, ChildReportData report) {
     final l10n = AppLocalizations.of(context)!;
     final parent = context.parentTheme;
+    // Active days = calendar days in the period with at least one completed
+    // activity. This is always meaningful, unlike "lessons" which only counts
+    // learning-path lessons and is 0 for children who mostly play games/stories.
+    final totalDays = report.dailyPoints.isNotEmpty
+        ? report.dailyPoints.length
+        : report.period.days;
+    final activeDays = report.dailyPoints
+        .where((point) => point.activitiesCompleted > 0)
+        .length;
     final cards = [
       ParentStatCard(
         value: '${report.totalActivitiesCompleted}',
@@ -823,12 +832,22 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
         icon: Icons.task_alt_rounded,
         color: parent.primary,
       ),
-      ParentStatCard(
-        value: '${report.totalLessonsCompleted}',
-        label: l10n.lessonsCompletedLabel,
-        icon: Icons.menu_book_rounded,
-        color: context.infoColor,
-      ),
+      // Show real lesson count only when the child actually completed lessons;
+      // otherwise show active days so the slot is never a confusing "0".
+      if (report.totalLessonsCompleted > 0)
+        ParentStatCard(
+          value: '${report.totalLessonsCompleted}',
+          label: l10n.lessonsCompletedLabel,
+          icon: Icons.menu_book_rounded,
+          color: context.infoColor,
+        )
+      else
+        ParentStatCard(
+          value: '$activeDays/$totalDays',
+          label: l10n.activeDaysLabel,
+          icon: Icons.event_available_rounded,
+          color: context.infoColor,
+        ),
       ParentStatCard(
         value: _formatMinutes(report.totalScreenTimeMinutes),
         label: l10n.screenTime,
@@ -858,6 +877,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
 
   Widget _buildProgressCard(BuildContext context, ChildReportData report) {
     final l10n = AppLocalizations.of(context)!;
+    final totalDays = report.dailyPoints.isNotEmpty
+        ? report.dailyPoints.length
+        : report.period.days;
+    final activeDays = report.dailyPoints
+        .where((point) => point.activitiesCompleted > 0)
+        .length;
     return ParentCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -872,22 +897,24 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
             runSpacing: 12,
             children: [
               _MetaPill(
+                icon: Icons.check_circle_rounded,
+                label: '${(report.completionRate * 100).round()}%',
+              ),
+              _MetaPill(
                 icon: Icons.task_alt_rounded,
                 label: '${report.totalActivitiesCompleted} ${l10n.activities}',
               ),
               _MetaPill(
-                icon: Icons.menu_book_rounded,
-                label:
-                    '${report.totalLessonsCompleted} ${l10n.lessonsCompletedLabel}',
+                icon: Icons.event_available_rounded,
+                label: '$activeDays/$totalDays ${l10n.activeDaysLabel}',
               ),
-              _MetaPill(
-                icon: Icons.history_rounded,
-                label: '${report.totalSessions} ${l10n.recentActivities}',
-              ),
-              _MetaPill(
-                icon: Icons.check_circle_rounded,
-                label: '${(report.completionRate * 100).round()}%',
-              ),
+              // Only surface lessons when the child actually completed some.
+              if (report.totalLessonsCompleted > 0)
+                _MetaPill(
+                  icon: Icons.menu_book_rounded,
+                  label:
+                      '${report.totalLessonsCompleted} ${l10n.lessonsCompletedLabel}',
+                ),
             ],
           ),
           const SizedBox(height: 16),

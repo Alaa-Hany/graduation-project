@@ -7,7 +7,6 @@ import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/features/system_pages/error_screen.dart';
 
 import 'routing/route_guards.dart';
-import 'routing/route_paths.dart';
 import 'routing/routes_admin.dart';
 import 'routing/routes_child.dart';
 import 'routing/routes_parent.dart';
@@ -19,11 +18,10 @@ final routerProvider = Provider<GoRouter>((ref) {
   final secureStorage = ref.read(secureStorageProvider);
   final logger = ref.read(loggerProvider);
   final refreshListenable = RouterRefreshListenable(ref);
-  final launchGuard = AppLaunchRedirectGuard();
   ref.onDispose(refreshListenable.dispose);
 
   return GoRouter(
-    initialLocation: Routes.splash,
+    initialLocation: resolveInitialLocation(),
     debugLogDiagnostics: kDebugMode,
     refreshListenable: refreshListenable,
     redirect: (context, state) => appRedirect(
@@ -31,7 +29,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       secureStorage: secureStorage,
       logger: logger,
       state: state,
-      launchGuard: launchGuard,
     ),
     routes: [
       ...buildPublicRoutes(),
