@@ -10,9 +10,15 @@ class CloudinaryVideoPlayerView extends StatefulWidget {
   const CloudinaryVideoPlayerView({
     super.key,
     required this.videoUrl,
+    this.active = true,
   });
 
   final String videoUrl;
+
+  /// When set to `false` the player is silenced (and a YouTube iframe blanked)
+  /// so its audio stops even though the widget stays mounted — e.g. once the
+  /// child taps "I'm done" and moves on to the quiz on the same page.
+  final bool active;
 
   @override
   State<CloudinaryVideoPlayerView> createState() =>
@@ -80,6 +86,18 @@ class _CloudinaryVideoPlayerViewState extends State<CloudinaryVideoPlayerView> {
       _secondaryAnimation?.removeStatusListener(_onSecondaryAnimationStatus);
       _secondaryAnimation = secondary;
       _secondaryAnimation?.addStatusListener(_onSecondaryAnimationStatus);
+    }
+  }
+
+  @override
+  void didUpdateWidget(CloudinaryVideoPlayerView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.active != oldWidget.active) {
+      if (widget.active) {
+        _restorePlayback();
+      } else {
+        _silencePlayback();
+      }
     }
   }
 

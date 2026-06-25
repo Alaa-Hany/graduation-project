@@ -301,10 +301,13 @@ def test_enhanced_state_ready(patch_settings):
 
 
 def test_enhanced_greeting(patch_settings):
+    # The greeting is templated locally (no live API call) so opening the buddy
+    # is instant and never fails on a network hiccup.
     patch_settings(ai_provider_mode="openai")
     response = _enhanced(_FakeProvider()).greeting(child_name="Lina")
-    assert response.content == "Hi Lina"
-    assert response.metadata_json["tokens_used"] == 12
+    assert "Lina" in response.content
+    assert response.intent == "greeting"
+    assert response.metadata_json["generation_mode"] == "templated_greeting"
 
 
 def test_enhanced_generate(patch_settings):

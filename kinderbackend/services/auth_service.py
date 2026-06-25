@@ -892,6 +892,21 @@ class AuthService:
         normalized_email = normalize_email(payload.email)
         user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
 
+        # These diagnostics are server-side only and never leak to the API
+        # response, so the anti-enumeration guarantee (always returning success)
+        # is preserved. They make it possible to tell from the logs whether an
+        # email was actually dispatched or silently skipped.
+        if user is None:
+            logger.info(
+                "Password reset requested for %s but no matching account exists; skipping send.",
+                normalized_email,
+            )
+        elif not self._user_has_verified_email(user):
+            logger.info(
+                "Password reset requested for %s but the account email is not verified; skipping send.",
+                normalized_email,
+            )
+
         if user and self._user_has_verified_email(user):
             token = secrets.token_urlsafe(32)
             self._store_password_reset_token(user=user, token=token)
@@ -903,6 +918,7 @@ class AuthService:
                 self._send_password_reset_email(
                     email=user.email, name=user.name, token=token, app_base_url=app_base_url
                 )
+                logger.info("Password reset email dispatched to %s.", user.email)
             except Exception as exc:
                 logger.error(
                     "Failed to send password reset email to %s: %s",

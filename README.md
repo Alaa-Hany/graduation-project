@@ -564,6 +564,8 @@ AI provider:
 - `AI_MODEL`
 - `AI_MAX_TOKENS`
 - `AI_TEMPERATURE`
+- `AI_FREQUENCY_PENALTY` (optional, default 0.4 — reduces repeated wording)
+- `AI_PRESENCE_PENALTY` (optional, default 0.6 — encourages fresh topics)
 
 Media uploads (Cloudinary):
 

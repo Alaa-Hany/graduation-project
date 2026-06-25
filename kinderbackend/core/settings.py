@@ -131,6 +131,8 @@ class Settings:
     ai_model: str
     ai_max_tokens: int
     ai_temperature: float
+    ai_frequency_penalty: float
+    ai_presence_penalty: float
     tts_model: str
     tts_voice_ar: str
     tts_voice_en: str
@@ -242,6 +244,12 @@ class Settings:
         ai_model = (os.getenv("AI_MODEL") or "gpt-4o-mini").strip() or "gpt-4o-mini"
         ai_max_tokens = max(_as_int(os.getenv("AI_MAX_TOKENS"), 500), 64)
         ai_temperature = min(max(_as_float(os.getenv("AI_TEMPERATURE"), 0.7), 0.0), 2.0)
+        # Penalties nudge the model away from repeating words/topics it already
+        # used, which keeps stories/facts/games fresh across a conversation.
+        ai_frequency_penalty = min(
+            max(_as_float(os.getenv("AI_FREQUENCY_PENALTY"), 0.4), -2.0), 2.0
+        )
+        ai_presence_penalty = min(max(_as_float(os.getenv("AI_PRESENCE_PENALTY"), 0.6), -2.0), 2.0)
         # Text-to-speech: model plus a child-friendly voice per language.
         tts_model = (os.getenv("TTS_MODEL") or "gpt-4o-mini-tts").strip() or "gpt-4o-mini-tts"
         tts_voice_ar = (os.getenv("TTS_VOICE_AR") or "shimmer").strip() or "shimmer"
@@ -400,6 +408,8 @@ class Settings:
             ai_model=ai_model,
             ai_max_tokens=ai_max_tokens,
             ai_temperature=ai_temperature,
+            ai_frequency_penalty=ai_frequency_penalty,
+            ai_presence_penalty=ai_presence_penalty,
             tts_model=tts_model,
             tts_voice_ar=tts_voice_ar,
             tts_voice_en=tts_voice_en,

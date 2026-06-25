@@ -137,6 +137,24 @@ def test_admin_override_to_premium(db, create_parent):
     assert result["current_plan_id"] == PLAN_PREMIUM
 
 
+def test_admin_override_to_premium_in_production(db, create_parent, monkeypatch):
+    """Internal admin grant must not generate a mock checkout id in production.
+
+    Regression: admin dashboard upgrade (free -> premium) raised
+    ``RuntimeError: Mock checkout session ids are not allowed in production``.
+    """
+    from core.settings import settings
+
+    monkeypatch.setattr(type(settings), "is_production", property(lambda self: True))
+    assert settings.is_production is True
+
+    parent = create_parent(email="ao-prem-prod@example.com", plan=PLAN_FREE)
+    result = subscription_service.admin_override_subscription(
+        db=db, user=parent, plan=PLAN_PREMIUM, source="admin"
+    )
+    assert result["current_plan_id"] == PLAN_PREMIUM
+
+
 # ---------------------------------------------------------------------------
 # cancel_subscription
 # ---------------------------------------------------------------------------

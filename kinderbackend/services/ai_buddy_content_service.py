@@ -107,6 +107,112 @@ ACTIVITY_CATEGORIES: dict[str, ActivityCatalogCategory] = {
 }
 
 
+# Real lessons the child can actually open inside the app. This MUST mirror the
+# Flutter lesson catalog
+# (kinder_world_child_mode/lib/features/child_mode/learn/data/lesson_catalog.dart)
+# so the AI buddy can recommend a concrete lesson BY NAME ("try the Counting
+# Numbers 1-10 lesson") instead of only naming a section. Anything listed here
+# must be a real, openable lesson.
+FEATURED_LESSONS: list[dict[str, str]] = [
+    # Math
+    {
+        "id": "math_01",
+        "title_en": "Counting Numbers 1-10",
+        "title_ar": "العدّ من ١ إلى ١٠",
+        "subject": "Math",
+        "subject_ar": "الرياضيات",
+    },
+    {
+        "id": "math_02",
+        "title_en": "Addition Basics",
+        "title_ar": "أساسيات الجمع",
+        "subject": "Math",
+        "subject_ar": "الرياضيات",
+    },
+    {
+        "id": "math_03",
+        "title_en": "Shapes and Patterns",
+        "title_ar": "الأشكال والأنماط",
+        "subject": "Math",
+        "subject_ar": "الرياضيات",
+    },
+    # Science
+    {
+        "id": "sci_01",
+        "title_en": "Parts of a Plant",
+        "title_ar": "أجزاء النبات",
+        "subject": "Science",
+        "subject_ar": "العلوم",
+    },
+    {
+        "id": "sci_02",
+        "title_en": "Weather and Seasons",
+        "title_ar": "الطقس والفصول",
+        "subject": "Science",
+        "subject_ar": "العلوم",
+    },
+    {
+        "id": "sci_03",
+        "title_en": "Animal Habitats",
+        "title_ar": "بيوت الحيوانات",
+        "subject": "Science",
+        "subject_ar": "العلوم",
+    },
+    # Reading
+    {
+        "id": "read_01",
+        "title_en": "Alphabet Fun",
+        "title_ar": "متعة الحروف",
+        "subject": "Reading",
+        "subject_ar": "القراءة",
+    },
+    {
+        "id": "read_02",
+        "title_en": "Short Vowel Sounds",
+        "title_ar": "أصوات الحروف المتحركة",
+        "subject": "Reading",
+        "subject_ar": "القراءة",
+    },
+    {
+        "id": "read_03",
+        "title_en": "Simple Words",
+        "title_ar": "كلمات بسيطة",
+        "subject": "Reading",
+        "subject_ar": "القراءة",
+    },
+    # History
+    {
+        "id": "history_01",
+        "title_en": "Yesterday and Today",
+        "title_ar": "الأمس واليوم",
+        "subject": "History",
+        "subject_ar": "التاريخ",
+    },
+    {
+        "id": "history_02",
+        "title_en": "Helpers from the Past",
+        "title_ar": "مساعدون من الماضي",
+        "subject": "History",
+        "subject_ar": "التاريخ",
+    },
+    # Geography
+    {
+        "id": "geography_01",
+        "title_en": "Maps Around Us",
+        "title_ar": "الخرائط من حولنا",
+        "subject": "Geography",
+        "subject_ar": "الجغرافيا",
+    },
+    {
+        "id": "geography_02",
+        "title_en": "Land and Water",
+        "title_ar": "اليابسة والماء",
+        "subject": "Geography",
+        "subject_ar": "الجغرافيا",
+    },
+]
+
+
 @dataclass(slots=True)
 class ActivitySuggestion:
     title_en: str
@@ -141,6 +247,10 @@ class AiBuddyContentService:
     def get_activities_by_category(self, category: str) -> list[ActivitySuggestionPayload]:
         all_activities = self.get_all_activities()
         return [activity for activity in all_activities if activity["category"] == category]
+
+    def get_featured_lessons(self) -> list[dict[str, str]]:
+        """Real, openable lessons the buddy may recommend by name."""
+        return list(FEATURED_LESSONS)
 
 
 ai_buddy_content_service = AiBuddyContentService()

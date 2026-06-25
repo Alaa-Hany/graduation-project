@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:kinder_world/core/cache/app_cache_store.dart';
 import 'package:kinder_world/core/providers/shared_preferences_provider.dart';
+import 'package:kinder_world/core/services/sound_effects_service.dart';
 import 'package:kinder_world/core/storage/hive_boxes.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
 import 'package:kinder_world/routing/route_guards.dart';
@@ -130,6 +133,11 @@ class _AppBootstrapState extends State<AppBootstrap> {
     // stale/mojibake content from local storage). Must run before any cache
     // reads so the app refetches fresh data from the server.
     await AppCacheStore.migrate(sharedPreferences);
+
+    // Preload + decode all UI sound effects in the background so the very first
+    // tap/reward fires instantly and stays in sync with the on-screen event.
+    // Fire-and-forget: never block bootstrap (or fail it) on audio warm-up.
+    unawaited(SoundEffectsService.instance.warmUp());
 
     return _BootstrapResult(
       secureStorage: secureStorage,

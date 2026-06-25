@@ -2570,8 +2570,9 @@ class _GameAudioController {
     SoundEffectsService.instance.addMuteListener(_handleGlobalMute);
   }
 
+  // One-shot effects play through the shared low-latency pool
+  // (SoundEffectsService.playOneShot); only background music is owned here.
   final AudioPlayer _bgPlayer = AudioPlayer();
-  final AudioPlayer _fxPlayer = AudioPlayer();
 
   Future<void> startBackground(String assetPath, {double volume = 0.25}) async {
     if (!SoundEffectsService.instance.enabled) return;
@@ -2591,8 +2592,9 @@ class _GameAudioController {
   }) async {
     if (!SoundEffectsService.instance.enabled) return;
     try {
-      await _fxPlayer.setVolume(volume);
-      await _fxPlayer.play(AssetSource(assetPath));
+      // Route through the shared preloaded low-latency pool so the effect fires
+      // in sync with the event instead of waiting on a fresh decode each time.
+      await SoundEffectsService.instance.playOneShot(assetPath, volume: volume);
     } catch (_) {
       if (fallback != null) {
         unawaited(SystemSound.play(fallback));
@@ -2601,8 +2603,9 @@ class _GameAudioController {
   }
 
   void _handleGlobalMute() {
+    // Shared one-shot players are stopped by SoundEffectsService.setEnabled;
+    // here we only need to stop this game's background music.
     _bgPlayer.stop().catchError((_) {});
-    _fxPlayer.stop().catchError((_) {});
   }
 
   Future<void> stopBackground() async {
@@ -2617,7 +2620,6 @@ class _GameAudioController {
     SoundEffectsService.instance.removeMuteListener(_handleGlobalMute);
     try {
       await _bgPlayer.dispose();
-      await _fxPlayer.dispose();
     } catch (_) {
       // Ignore.
     }
@@ -5565,6 +5567,9 @@ class SkillVideoScreen extends ConsumerStatefulWidget {
 class _SkillVideoScreenState extends ConsumerState<SkillVideoScreen> {
   bool _completing = false;
   bool _rewardGranted = false;
+  // Set once the child taps "I'm done": stops the video so its audio doesn't
+  // keep playing in the background while they move on to the quiz below.
+  bool _videoStopped = false;
   final _scrollController = ScrollController();
   final _quizKey = GlobalKey();
 
@@ -5583,6 +5588,11 @@ class _SkillVideoScreenState extends ConsumerState<SkillVideoScreen> {
   /// external player so playback completion can't be detected automatically —
   /// the "I'm done" button is what credits the lesson.
   Future<void> _completeVideo() async {
+    // The child is done watching — stop the video so it doesn't keep playing
+    // (audio included) in the background once we move on to the quiz.
+    if (!_videoStopped) {
+      setState(() => _videoStopped = true);
+    }
     if (_rewardGranted) {
       if (widget.quizzes.isNotEmpty) {
         _scrollToQuiz();
@@ -5705,7 +5715,9 @@ class _SkillVideoScreenState extends ConsumerState<SkillVideoScreen> {
                         Column(
                           children: [
                             CloudinaryVideoPlayerView(
-                                videoUrl: widget.videoUrl!),
+                              videoUrl: widget.videoUrl!,
+                              active: !_videoStopped,
+                            ),
                             const SizedBox(height: 16),
                             if ((widget.description ?? '').trim().isNotEmpty)
                               Text(

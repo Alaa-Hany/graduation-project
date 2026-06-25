@@ -1035,7 +1035,7 @@ class SubscriptionLifecycleMixin:
                 requested_at=now,
                 completed_at=now,
                 metadata_json={"request_origin": request_origin, "mode": "internal"},
-                provider_reference=self._mock_session_id(plan=plan, user_id=user.id),
+                provider_reference=self._internal_provider_reference(plan=plan, user_id=user.id),
             )
 
         has_recurring_subscription = False

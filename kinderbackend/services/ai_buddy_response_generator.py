@@ -112,6 +112,14 @@ class _InternalFallbackAiBuddyBackend:
         "and flowers grew everywhere. The cloud learned its gift made the world bloom.",
         "Here is a tiny story: A tiny ant found a crumb too big to carry. She asked her friends, "
         "and together they moved it home. Helping each other made the job easy and fun.",
+        "Here is a tiny story: A shy little bird was afraid to sing. One morning it tried one note, "
+        "then another, and the whole garden smiled. Trying a little was all it took.",
+        "Here is a tiny story: A puppy lost its favorite ball. Instead of crying, it looked carefully "
+        "everywhere and found it under a leaf. Staying calm helped it solve the puzzle.",
+        "Here is a tiny story: Two friends both wanted the same swing. They decided to take turns, "
+        "and ended up laughing together. Sharing turned a problem into fun.",
+        "Here is a tiny story: A little seed was buried in the dark soil and felt alone. It kept "
+        "growing day by day until it became a tall sunflower reaching the warm sun.",
     )
     _STORIES_AR = (
         "قصة قصيرة: كان نجم صغير يخاف من الظلام، لكنه ظل يلمع حتى اجتمعت حوله نجوم أخرى، "
@@ -122,18 +130,34 @@ class _InternalFallbackAiBuddyBackend:
         "وتعلمت أن هديتها تجعل العالم أجمل.",
         "قصة قصيرة: وجدت نملة صغيرة كسرة كبيرة لا تقدر على حملها، فنادت أصدقاءها وحملوها معًا إلى البيت، "
         "وتعلموا أن التعاون يجعل العمل سهلًا وممتعًا.",
+        "قصة قصيرة: كان عصفور صغير خجولًا يخاف أن يغرّد، فجرّب نغمة واحدة ثم أخرى حتى ابتسمت الحديقة كلها، "
+        "وتعلّم أن المحاولة الصغيرة تكفي.",
+        "قصة قصيرة: أضاع جرو كرته المفضلة، لكنه بدل أن يبكي بحث بهدوء في كل مكان فوجدها تحت ورقة شجر، "
+        "وتعلّم أن الهدوء يساعده على حلّ المشكلة.",
+        "قصة قصيرة: أراد صديقان اللعب على نفس الأرجوحة، فاتفقا أن يتناوبا، وانتهى بهما الأمر يضحكان معًا، "
+        "فحوّلت المشاركة المشكلة إلى متعة.",
+        "قصة قصيرة: كانت بذرة صغيرة مدفونة في التراب تشعر بالوحدة، لكنها ظلت تنمو يومًا بعد يوم "
+        "حتى صارت زهرة عبّاد شمس طويلة تعانق الشمس الدافئة.",
     )
     _FACTS_EN = (
         "Fun fact: octopuses have three hearts.",
         "Fun fact: a group of flamingos is called a flamboyance.",
         "Fun fact: honey never spoils — it can last for thousands of years.",
         "Fun fact: butterflies taste with their feet.",
+        "Fun fact: a baby kangaroo is as small as a jellybean when it is born.",
+        "Fun fact: the Sun is so big that about one million Earths could fit inside it.",
+        "Fun fact: snails can sleep for up to three years if the weather is dry.",
+        "Fun fact: a bolt of lightning is about five times hotter than the surface of the Sun.",
     )
     _FACTS_AR = (
         "معلومة لطيفة: للأخطبوط ثلاثة قلوب.",
         "معلومة لطيفة: قلب الجمبري موجود في رأسه.",
         "معلومة لطيفة: العسل لا يفسد أبدًا، وقد يبقى صالحًا لآلاف السنين.",
         "معلومة لطيفة: الفراشة تتذوق الطعام بأقدامها.",
+        "معلومة لطيفة: صغير الكنغر عند ولادته بحجم حبة الفول الصغيرة.",
+        "معلومة لطيفة: الشمس كبيرة جدًا حتى إنه يمكن أن تتسع لمليون كوكب مثل الأرض.",
+        "معلومة لطيفة: يستطيع الحلزون أن ينام إلى ثلاث سنوات إذا كان الجو جافًا.",
+        "معلومة لطيفة: البرق أسخن من سطح الشمس بنحو خمس مرات.",
     )
     _GAMES_EN = (
         "here is a simple game: find one red thing, one blue thing, and one soft thing. "
@@ -142,12 +166,22 @@ class _InternalFallbackAiBuddyBackend:
         "here is a simple game: look around and find three things that are round. "
         "Which one is your favorite?",
         "here is a simple game: hop on one foot and count how high you can go. Tell me your number!",
+        "here is a simple game: think of an animal and make its sound. I will try to guess it!",
+        "here is a simple game: find something that starts with the same letter as your name. "
+        "What did you pick?",
+        "here is a simple game: name three things you can see that are green. Go!",
+        "here is a simple game: stand up and stretch tall like a tree, then curl up small like a "
+        "seed. How many times can you do it?",
     )
     _GAMES_AR = (
         "لعبة سريعة: ابحث عن شيء أحمر وشيء أزرق وشيء ناعم، وعندما تنتهي أخبرني ماذا وجدت.",
         "لعبة سريعة: صفّق مرة لكل حيوان تعرف اسمه خلال عشر ثوانٍ. استعد، هيا!",
         "لعبة سريعة: انظر حولك وابحث عن ثلاثة أشياء دائرية. أيها يعجبك أكثر؟",
         "لعبة سريعة: اقفز على قدم واحدة وعُدّ كم مرة تقدر. أخبرني الرقم!",
+        "لعبة سريعة: فكّر في حيوان وقلّد صوته، وأنا سأحاول تخمينه!",
+        "لعبة سريعة: ابحث عن شيء يبدأ بأول حرف من اسمك. ماذا اخترت؟",
+        "لعبة سريعة: سمِّ ثلاثة أشياء خضراء تراها حولك. هيا!",
+        "لعبة سريعة: قف ومُدّ جسمك عاليًا مثل الشجرة، ثم انكمش صغيرًا مثل البذرة. كم مرة تقدر تكررها؟",
     )
 
     def __init__(self, *, content_service=ai_buddy_content_service) -> None:
@@ -294,6 +328,7 @@ class _InternalFallbackAiBuddyBackend:
         if is_arabic:
             return self._build_arabic_response(
                 child_name=child_name,
+                child_age=child_age,
                 intent=intent,
                 message=message,
                 variant=variant,
@@ -329,7 +364,13 @@ class _InternalFallbackAiBuddyBackend:
     ) -> str:
         prefix = f"{child_name}, " if child_name else ""
         activity = self._recommended_activity(intent=intent, child_age=child_age)
+        lesson = self._recommended_lesson(variant)
         if intent == "recommend_lesson":
+            if lesson is not None:
+                return (
+                    f"{prefix}let's try the \"{lesson['title_en']}\" lesson in {lesson['subject']}. "
+                    "When you finish, tell me one new thing you learned!"
+                )
             if activity is not None:
                 return (
                     f"{prefix}let's try the {activity['title_en']} activity in the "
@@ -402,32 +443,78 @@ class _InternalFallbackAiBuddyBackend:
                     return activity
         return activities[0]
 
+    def _recommended_lesson(self, variant: int) -> dict[str, str] | None:
+        """Pick a real, openable lesson to recommend by name, rotating by turn."""
+        get_lessons = getattr(self._content_service, "get_featured_lessons", None)
+        lessons = list(get_lessons()) if callable(get_lessons) else []
+        if not lessons:
+            return None
+        return lessons[variant % len(lessons)]
+
     def _build_arabic_response(
         self,
         *,
         child_name: str | None,
+        child_age: int | None,
         intent: str,
         message: str,
         variant: int = 0,
     ) -> str:
         prefix = f"{child_name}، " if child_name else ""
+        activity = self._recommended_activity(intent=intent, child_age=child_age)
+        lesson = self._recommended_lesson(variant)
+        # The catalog is Arabic-first, but be defensive: fall back to the English
+        # label if an Arabic title is missing so we never raise on a stray entry.
+        act_title = ""
+        act_section = ""
+        if activity is not None:
+            act_title = activity.get("title_ar") or activity.get("title_en") or ""
+            act_section = (
+                activity.get("category_title_ar") or activity.get("category_title_en") or ""
+            )
+        has_activity = bool(act_title)
         if intent == "recommend_lesson":
+            if lesson is not None:
+                lesson_title = lesson.get("title_ar") or lesson.get("title_en") or ""
+                lesson_subject = lesson.get("subject_ar") or lesson.get("subject") or ""
+                return (
+                    f'{prefix}لنجرّب درس "{lesson_title}" في {lesson_subject}. '
+                    "وبعد ما تخلّص، قُل لي معلومة جديدة اتعلمتها!"
+                )
             return (
-                f"{prefix}لنجرّب درسًا قصيرًا وممتعًا. " "عد خمسة أشياء حولك، ثم أخبرني أيها أكبر."
+                f"{prefix}لنجرّب درسًا قصيرًا وممتعًا. عُدّ خمسة أشياء حولك، ثم أخبرني أيها أكبر."
             )
         if intent == "suggest_game":
+            if has_activity:
+                return (
+                    f'{prefix}ممكن تفتح نشاط "{act_title}" في قسم '
+                    f"{act_section}، وبعدها ترجع تقول لي أكتر حاجة عجبتك فيه."
+                )
             return f"{prefix}{self._pick(self._GAMES_AR, variant)}"
         if intent == "tell_story":
-            return self._pick(self._STORIES_AR, variant)
+            story = self._pick(self._STORIES_AR, variant)
+            if has_activity:
+                return (
+                    f'{story} ولو حابب قصص أكتر، تقدر تفتح "{act_title}" في قسم '
+                    f"{act_section}. في رأيك إيه اللي حصل بعد كده؟"
+                )
+            return story
         if intent == "fun_fact":
-            return (
-                f"{self._pick(self._FACTS_AR, variant)} "
-                "إذا أردت، أقول لك معلومة أخرى عن الحيوانات أو الفضاء."
-            )
+            fact = self._pick(self._FACTS_AR, variant)
+            if has_activity:
+                return (
+                    f'{fact} ولو حابب تعرف أكتر، تقدر تجرّب "{act_title}" في قسم ' f"{act_section}."
+                )
+            return f"{fact} إذا أردت، أقول لك معلومة أخرى عن الحيوانات أو الفضاء."
         if intent == "motivation":
             return (
                 f"{prefix}من الطبيعي أن تشعر بالتعب أحيانًا. "
                 "خذ نفسًا عميقًا، ثم جرّب خطوة صغيرة، وأنا سأساعدك."
+            )
+        if has_activity:
+            return (
+                f'{prefix}أنا هنا لمساعدتك. ممكن نجرّب نشاط "{act_title}" في قسم '
+                f"{act_section}، أو أحكي لك قصة أو أقترح لعبة أو معلومة ممتعة."
             )
         return (
             f"{prefix}أنا هنا لمساعدتك. "
@@ -495,26 +582,37 @@ class _EnhancedAiBuddyBackend:
         child_name: str | None = None,
         locale: str | None = None,
     ) -> AiBuddyGeneratedResponse:
+        # The greeting is formulaic ("Hi, ask me for a story/game/lesson"), so we
+        # template it locally instead of spending a live API call on every new
+        # session. That makes opening the buddy instant and removes a network
+        # failure point at the exact moment the child arrives; the provider is
+        # still used for every real reply afterwards.
         is_arabic = _resolve_is_arabic(locale, child_name or "")
-        generated = self._provider.generate_greeting(
-            child_name=child_name,
-            is_arabic=is_arabic,
-        )
+        content = self._build_greeting(child_name=child_name, is_arabic=is_arabic)
         provider_state = self.provider_state()
         return AiBuddyGeneratedResponse(
-            content=generated.content,
+            content=content,
             intent="greeting",
             response_source=f"provider_{provider_state.provider_key or provider_state.mode}",
             status="completed",
             safety_status="allowed",
             provider_state=provider_state,
             metadata_json={
-                "generation_mode": "provider_greeting",
+                "generation_mode": "templated_greeting",
                 "provider_key": provider_state.provider_key,
-                "model": generated.model,
-                "tokens_used": generated.tokens_used,
-                "finish_reason": generated.finish_reason,
+                "model": provider_state.model,
             },
+        )
+
+    @staticmethod
+    def _build_greeting(*, child_name: str | None, is_arabic: bool) -> str:
+        name = (child_name or "").strip()
+        if is_arabic:
+            who = f"مرحبًا {name}! " if name else "مرحبًا! "
+            return f"{who}أنا رفيقك كيندر. اطلب مني قصة قصيرة أو لعبة ممتعة أو فكرة درس!"
+        who = f"Hi {name}! " if name else "Hi there! "
+        return (
+            f"{who}I'm Kinder, your buddy. Ask me for a short story, a fun game, or a lesson idea!"
         )
 
     def generate(
@@ -531,6 +629,8 @@ class _EnhancedAiBuddyBackend:
         is_arabic = _resolve_is_arabic(locale, message)
         activities = self._content_service.get_activities_for_age(child_age or 0)
         activities = _select_diverse_activities(activities)
+        get_lessons = getattr(self._content_service, "get_featured_lessons", None)
+        featured_lessons = list(get_lessons()) if callable(get_lessons) else []
         generated = self._provider.generate(
             child_name=child_name,
             message=message,
@@ -549,6 +649,7 @@ class _EnhancedAiBuddyBackend:
                 }
                 for activity in activities
             ],
+            featured_lessons=featured_lessons,
         )
         provider_state = self.provider_state()
         return AiBuddyGeneratedResponse(

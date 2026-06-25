@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from datetime import timedelta
 
 from core.settings import settings
@@ -54,6 +55,17 @@ class SubscriptionPlansMixin:
             raise RuntimeError("Mock checkout session ids are not allowed in production.")
         normalized_plan = plan.lower()
         return f"mock_session_{user_id}_{normalized_plan}"
+
+    @staticmethod
+    def _internal_provider_reference(*, plan: str, user_id: int) -> str:
+        """Reference for plans granted internally (admin override, manual grant).
+
+        Unlike :meth:`_mock_session_id`, this is a real, production-safe reference:
+        these activations never go through a payment provider checkout, so they need
+        their own non-mock provider reference.
+        """
+        normalized_plan = plan.lower()
+        return f"internal_{user_id}_{normalized_plan}_{uuid.uuid4().hex}"
 
     @classmethod
     def _build_mock_checkout(cls, *, plan: str, user_id: int) -> dict[str, str]:

@@ -150,6 +150,7 @@ class EnhancedAIProvider:
         is_arabic: bool = False,
         child_age: int | None = None,
         available_activities: list[dict] | None = None,
+        featured_lessons: list[dict] | None = None,
     ) -> EnhancedAIResponse:
         """Generate a child-friendly response."""
         client = self._get_client()
@@ -163,6 +164,7 @@ class EnhancedAIProvider:
             is_arabic=is_arabic,
             child_age=child_age,
             available_activities=available_activities,
+            featured_lessons=featured_lessons,
         )
 
         try:
@@ -171,6 +173,11 @@ class EnhancedAIProvider:
                 messages=messages,
                 max_tokens=settings.ai_max_tokens,
                 temperature=settings.ai_temperature,
+                # Penalties discourage the model from echoing words/topics it has
+                # already used in the conversation, which is the main lever
+                # against the buddy repeating the same story/fact/game.
+                frequency_penalty=getattr(settings, "ai_frequency_penalty", 0.4),
+                presence_penalty=getattr(settings, "ai_presence_penalty", 0.6),
             )
 
             choice = completion.choices[0] if completion.choices else None
@@ -185,13 +192,40 @@ class EnhancedAIProvider:
                 model=settings.ai_model,
                 tokens_used=completion.usage.total_tokens if completion.usage else 0,
                 finish_reason=choice.finish_reason if choice else "stop",
-                suggested_activities=[],
+                suggested_activities=self._detect_suggested_activities(
+                    content, available_activities
+                ),
                 raw={"model": settings.ai_model, "intent": intent},
             )
 
         except Exception as exc:
             logger.error("AI generation failed: %s", str(exc))
             raise
+
+    @staticmethod
+    def _detect_suggested_activities(
+        content: str, available_activities: list[dict] | None
+    ) -> list[str]:
+        """Find which real activities the reply actually named.
+
+        Lets the client deep-link the child straight to the activity the buddy
+        recommended, instead of leaving the suggestion as plain text. Matches the
+        English or Arabic title as a substring (titles are distinctive enough
+        that false positives are unlikely) and returns their slugs in order.
+        """
+        if not content or not available_activities:
+            return []
+        slugs: list[str] = []
+        for activity in available_activities:
+            slug = activity.get("slug")
+            if not slug:
+                continue
+            for key in ("title_en", "title_ar"):
+                title = (activity.get(key) or "").strip()
+                if title and title in content and slug not in slugs:
+                    slugs.append(slug)
+                    break
+        return slugs
 
     def _build_messages(
         self,
@@ -204,6 +238,7 @@ class EnhancedAIProvider:
         child_age: int | None,
         available_activities: list[dict] | None,
         conversation_history: list[dict] | None = None,
+        featured_lessons: list[dict] | None = None,
     ) -> list[dict[str, str]]:
         """Build the messages list for the AI API."""
         messages = [{"role": "system", "content": ENHANCED_CHILD_FRIENDLY_SYSTEM_PROMPT}]
@@ -247,6 +282,20 @@ class EnhancedAIProvider:
                     names = f"{title_en} / {title_ar}"
                 activity_context += f"- {names} (section: {category})\n"
             messages.append({"role": "system", "content": activity_context})
+
+        if featured_lessons:
+            lesson_context = (
+                "Real lessons the child can open in the app. You may invite them "
+                "to try ONE by its exact name when it fits (use the name in the "
+                "child's language). Do NOT invent lessons that are not listed:\n"
+            )
+            for lesson in featured_lessons:
+                title_en = lesson.get("title_en") or ""
+                title_ar = lesson.get("title_ar") or ""
+                subject = lesson.get("subject") or ""
+                names = f"{title_en} / {title_ar}" if title_ar else title_en
+                lesson_context += f"- {names} ({subject})\n"
+            messages.append({"role": "system", "content": lesson_context})
 
         if conversation_history:
             # Replay the recent turns as real chat messages so the model can see

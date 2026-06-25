@@ -9,9 +9,15 @@ class CloudinaryVideoPlayerView extends StatefulWidget {
   const CloudinaryVideoPlayerView({
     super.key,
     required this.videoUrl,
+    this.active = true,
   });
 
   final String videoUrl;
+
+  /// When set to `false` the player pauses so it stops while the widget stays
+  /// mounted (e.g. once the child taps "I'm done" and moves to the quiz). For a
+  /// YouTube link playback happens in an external browser, so this is a no-op.
+  final bool active;
 
   @override
   State<CloudinaryVideoPlayerView> createState() =>
@@ -46,6 +52,14 @@ class _CloudinaryVideoPlayerViewState extends State<CloudinaryVideoPlayerView> {
         setState(() => _initializeError = true);
       }
     });
+  }
+
+  @override
+  void didUpdateWidget(CloudinaryVideoPlayerView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!widget.active && oldWidget.active) {
+      _controller?.pause();
+    }
   }
 
   @override

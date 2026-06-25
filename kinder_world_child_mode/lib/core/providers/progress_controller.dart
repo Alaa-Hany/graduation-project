@@ -608,6 +608,11 @@ final progressStatsProvider = Provider<Map<String, dynamic>>((ref) {
 
 /// Set of `activityId`s the current child has already completed, used to
 /// show a "done" badge on activity/content cards without opening them.
+///
+/// Watches [progressControllerProvider] (rather than just the repository) so
+/// it automatically recomputes right after `recordActivityCompletion` runs —
+/// the badge then appears as soon as the child finishes a video/quiz, with
+/// no manual pull-to-refresh needed.
 final completedActivityIdsProvider =
     FutureProvider.autoDispose<Set<String>>((ref) async {
   final childId = ref.watch(currentChildIdProvider);
@@ -615,6 +620,7 @@ final completedActivityIdsProvider =
     return const <String>{};
   }
 
+  ref.watch(progressControllerProvider);
   final repo = ref.watch(progressRepositoryProvider);
   final records = await repo.getProgressForChild(childId);
   return records
