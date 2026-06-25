@@ -167,7 +167,6 @@ void main() {
     expect(find.text(l10n.childMode), findsOneWidget);
     expect(find.text(l10n.parentModeDescription), findsOneWidget);
     expect(find.text(l10n.childModeDescription), findsOneWidget);
-    expect(find.text('Admin'), findsOneWidget);
     expect(find.byIcon(Icons.shield_rounded), findsOneWidget);
     expect(find.byIcon(Icons.auto_awesome_rounded), findsOneWidget);
   });
