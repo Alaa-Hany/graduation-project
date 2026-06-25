@@ -29,14 +29,28 @@ class ChildHeader extends ConsumerWidget {
         : (resolvedChild?.id ?? l10n.friendFallback);
     final level = resolvedChild?.level ?? 1;
     final theme = Theme.of(context);
+
+    // Several child screens hardcode a light pastel Scaffold background that
+    // does not follow the dark theme. Resolve the header text color from the
+    // actual background the header sits on (its Scaffold) instead of the global
+    // theme, so the text stays readable on those screens in dark mode while
+    // still following the theme on screens that have no explicit background.
+    final scaffoldBackground = Scaffold.maybeOf(context)?.widget.backgroundColor ??
+        theme.scaffoldBackgroundColor;
+    final isOnDarkBackground =
+        ThemeData.estimateBrightnessForColor(scaffoldBackground) ==
+            Brightness.dark;
+    final titleColor = isOnDarkBackground ? Colors.white : Colors.black87;
+    final subtitleColor = isOnDarkBackground ? Colors.white70 : Colors.black54;
+
     final titleStyle = theme.textTheme.titleMedium?.copyWith(
       fontSize: compact ? AppConstants.fontSize : AppConstants.largeFontSize,
       fontWeight: FontWeight.bold,
-      color: theme.colorScheme.onSurface,
+      color: titleColor,
     );
     final subtitleStyle = theme.textTheme.bodySmall?.copyWith(
       fontSize: compact ? 12 : 14,
-      color: theme.colorScheme.onSurfaceVariant,
+      color: subtitleColor,
       fontWeight: FontWeight.w600,
     );
     final avatarRadius = compact ? 20.0 : 28.0;
