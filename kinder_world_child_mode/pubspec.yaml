@@ -112,6 +112,9 @@ flutter_native_splash:
   image: assets/icons/kinderworld-logo.png
   android: true
   ios: true
+  # Web uses the in-app Flutter SplashScreen widget only — no native web splash
+  # (the blue logo page lingered until the engine's first frame, which felt slow).
+  web: false
 
 flutter_icons:
   android: true
