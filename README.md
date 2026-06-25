@@ -36,7 +36,7 @@ Main user contexts:
 - Child profile creation, update, listing, and deletion
 - Parent dashboard, reports, notifications, privacy settings, and parental controls
 - Support ticket creation, history, detail, and replies
-- One-time purchase flow with provider checkout and lifetime premium entitlement
+- Recurring subscription flow (monthly/yearly) with provider checkout and premium entitlement
 
 ### Child
 
@@ -62,23 +62,24 @@ Main user contexts:
 
 ## Payments
 
-The current paid-access model is:
+The current paid-access model is a recurring subscription:
 
-- `one-time purchase`
-- `lifetime access`
+- `billing_type = recurring`
+- `access_type = subscription`
+- billing intervals: `monthly` and `yearly` (yearly carries a discount)
 
-Parent-facing recurring semantics are intentionally disabled in the main flow:
+Paid plans exposed by backend plan metadata (`plan_service.py`):
 
-- `POST /subscription/cancel` returns `410`
-- `POST /subscription/manage` returns `410`
-- `POST /billing/portal` returns `410`
+- Premium: `$3 / month` or `$27 / year`
+- Family Plus: `$5 / month` or `$45 / year`
 
-Backend plan metadata currently exposes:
+Recurring lifecycle endpoints are active:
 
-- `billing_type = one_time`
-- `access_type = lifetime` for paid plans
+- `POST /subscription/checkout` starts a recurring provider checkout session
+- `POST /subscription/cancel` cancels the active recurring subscription (returns `410` only when there is no active subscription to cancel)
+- `POST /subscription/manage` and `POST /billing/portal` open the provider billing portal
 
-The Flutter purchase UI is aligned to this model and avoids parent-facing monthly or renewal language in the presentation flow.
+Payments go through a pluggable provider (`internal` by default, or `stripe` via `PAYMENT_PROVIDER`), with idempotent webhook handling and a reconciliation job that keeps subscription state consistent.
 
 ## Architecture Summary
 
@@ -99,7 +100,7 @@ Notable backend modules:
 - `services/child_service.py`: child registration/login/session/password and child profile operations
 - `services/support_ticket_service.py`: parent/admin support flows
 - `services/admin_auth_service.py`: admin auth and security logic
-- `services/subscription_service.py`: one-time purchase state, entitlement unlock, refunds, and plan selection logic
+- `services/subscription_service.py`: recurring subscription state, entitlement unlock, refunds, and plan selection logic
 - `services/analytics_service.py` / `analytics_ingestion_service.py` / `analytics_report_service.py`: analytics ingestion and report construction
 - `services/ai_buddy_service.py` and sub-modules: AI buddy orchestration, content, moderation, persistence, response generation, and visibility
 - `services/voice_service.py`: ASR and TTS for the voice feature
@@ -136,7 +137,7 @@ Current presentation-focused behavior:
 
 - Parent reports use short interpretation instead of raw metrics only
 - Child home hides unsupported cards instead of showing misleading placeholders
-- Purchase screens present one-time purchase and lifetime access only
+- Purchase screens present recurring monthly/yearly subscription plans
 
 ## Project Structure
 
@@ -334,7 +335,7 @@ It covers:
 - child activity flow
 - parent reports
 - admin login
-- one-time purchase success
+- recurring subscription purchase success
 - premium entitlement unlock
 
 ### Flutter
@@ -368,7 +369,7 @@ It covers:
 - child activity flow
 - parent reports
 - admin login
-- one-time purchase success
+- recurring subscription purchase success
 - premium entitlement unlock
 
 ## Running Locally
@@ -610,7 +611,7 @@ These points are based on the current codebase behavior:
 
 - Backend test coverage is stronger than the full Flutter test surface.
 - Flutter API configuration is environment-driven, but staging and production still require explicit `--dart-define` values.
-- Parent-facing paid access is one-time purchase with lifetime entitlement.
+- Parent-facing paid access is a recurring subscription (monthly/yearly) with premium entitlement.
 - Recurring parent billing semantics are intentionally disabled in the current parent flow.
 - Some billing lifecycle fields still exist in backend and admin models for compatibility.
 - Some content, legal, and help endpoints are still static data rather than a full managed CMS flow.
@@ -627,7 +628,7 @@ These points are based on the current codebase behavior:
 Reasonable next improvements based on the current code structure:
 
 - raise coverage thresholds gradually
-- continue cleaning legacy recurring-payment compatibility fields after the one-time purchase migration
+- continue cleaning transitional billing compatibility fields left from the subscription-model migration
 - replace placeholder or static legal/help content where needed
 - continue extracting complex Flutter UI and state logic into smaller units
 - expand backend coverage into weaker admin, content, and data-lifecycle areas
