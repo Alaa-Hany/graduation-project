@@ -503,7 +503,7 @@ class _ArcadeHeroCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-          color: Colors.white,
+          color: _adaptiveCardSurface(context),
           borderRadius: BorderRadius.circular(24),
           border:
               Border.all(color: config.accent.withValuesCompat(alpha: 0.14))),

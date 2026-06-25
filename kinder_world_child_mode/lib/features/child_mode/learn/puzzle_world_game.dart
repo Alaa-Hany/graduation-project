@@ -1056,7 +1056,7 @@ class _ShufflePuzzleScreenState extends _PremiumPuzzleState<ShufflePuzzleScreen>
         width: double.infinity,
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _adaptiveCardSurface(context),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: _selectedLevel.accent.withValuesCompat(alpha: 0.18),
@@ -1107,7 +1107,7 @@ class _ShufflePuzzleScreenState extends _PremiumPuzzleState<ShufflePuzzleScreen>
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _adaptiveCardSurface(context),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: _selectedLevel.accent.withValuesCompat(alpha: 0.18),
@@ -1339,7 +1339,7 @@ class _ShufflePuzzleScreenState extends _PremiumPuzzleState<ShufflePuzzleScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _adaptiveCardSurface(context),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: _selectedLevel.accent.withValuesCompat(alpha: 0.14),
@@ -1394,7 +1394,7 @@ class _ShufflePuzzleScreenState extends _PremiumPuzzleState<ShufflePuzzleScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _adaptiveCardSurface(context),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: _selectedLevel.accent.withValuesCompat(alpha: 0.14),

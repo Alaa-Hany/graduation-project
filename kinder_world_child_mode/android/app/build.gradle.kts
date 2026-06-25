@@ -59,8 +59,14 @@ android {
 
     buildTypes {
         release {
-            if (hasReleaseSigning) {
-                signingConfig = signingConfigs.getByName("release")
+            // Use the real release key when configured; otherwise fall back to the
+            // debug key so the APK is still signed and installable (e.g. for
+            // sideloading test builds). An unsigned APK fails to install with
+            // "package appears to be invalid".
+            signingConfig = if (hasReleaseSigning) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
             }
         }
     }

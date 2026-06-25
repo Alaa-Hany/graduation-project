@@ -21,6 +21,17 @@ Color _adaptiveCardSurface(BuildContext context) {
       : Colors.white;
 }
 
+/// Primary text/icon color that was hardcoded dark (e.g. Colors.black87 on a
+/// white card). Flips to a light color in dark mode so it stays readable on the
+/// dark card surfaces above.
+Color _adaptiveTextPrimary(BuildContext context) =>
+    Theme.of(context).colorScheme.onSurface;
+
+/// Muted/secondary text color that was hardcoded (e.g. Colors.grey[600]).
+/// Adapts to the theme so it never disappears against a dark surface.
+Color _adaptiveTextSecondary(BuildContext context) =>
+    Theme.of(context).colorScheme.onSurfaceVariant;
+
 class EntertainingScreen extends ConsumerWidget {
   const EntertainingScreen({super.key});
 
@@ -117,7 +128,7 @@ class EntertainingScreen extends ConsumerWidget {
       borderRadius: BorderRadius.circular(16),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _adaptiveCardSurface(context),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -426,7 +437,7 @@ class _CmsCategoryCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _adaptiveCardSurface(context),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -450,10 +461,10 @@ class _CmsCategoryCard extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                color: _adaptiveTextPrimary(context),
               ),
             ),
             if (count > 0) ...[
@@ -489,7 +500,7 @@ class _CmsCategoryListTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _adaptiveCardSurface(context),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -519,10 +530,10 @@ class _CmsCategoryListTile extends StatelessWidget {
                     _localizedCmsCategoryTitle(context, category),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 19,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: _adaptiveTextPrimary(context),
                     ),
                   ),
                   if (description.isNotEmpty) ...[
@@ -531,7 +542,7 @@ class _CmsCategoryListTile extends StatelessWidget {
                       description,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: Colors.grey[600]),
+                      style: TextStyle(color: _adaptiveTextSecondary(context)),
                     ),
                   ],
                 ],
@@ -627,7 +638,7 @@ class _CmsCategoryContentScreenState
                     return Center(
                       child: Text(
                         AppLocalizations.of(context)!.noPagesFound,
-                        style: TextStyle(color: Colors.grey[600]),
+                        style: TextStyle(color: _adaptiveTextSecondary(context)),
                       ),
                     );
                   }
@@ -701,7 +712,7 @@ class _CmsContentItemCard extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _adaptiveCardSurface(context),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -759,7 +770,7 @@ class _CmsContentItemCard extends ConsumerWidget {
                       description,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: Colors.grey[600]),
+                      style: TextStyle(color: _adaptiveTextSecondary(context)),
                     ),
                   ],
                   const SizedBox(height: 8),
@@ -835,7 +846,7 @@ class _GenericCmsTextContentScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: _adaptiveCardSurface(context),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
@@ -1058,7 +1069,7 @@ class _EntertainmentDetailScreenState
                     return Center(
                       child: Text(
                         l10n.noLessonsFound,
-                        style: TextStyle(color: Colors.grey[500]),
+                        style: TextStyle(color: _adaptiveTextSecondary(context)),
                       ),
                     );
                   }
@@ -1119,7 +1130,7 @@ class _EntertainmentDetailScreenState
       borderRadius: BorderRadius.circular(16),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _adaptiveCardSurface(context),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -1223,7 +1234,7 @@ class _EntertainmentDetailScreenState
       borderRadius: BorderRadius.circular(16),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _adaptiveCardSurface(context),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -1972,7 +1983,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen>
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _adaptiveCardSurface(context),
           borderRadius: BorderRadius.circular(22),
           border: Border.all(
               color: _selectedLevel.accent.withValuesCompat(alpha: 0.16)),
@@ -2021,7 +2032,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen>
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _adaptiveCardSurface(context),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
             color: _selectedLevel.accent.withValuesCompat(alpha: 0.16)),
@@ -2070,7 +2081,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _adaptiveCardSurface(context),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
           color: _selectedLevel.accent.withValuesCompat(alpha: 0.12),
@@ -2107,7 +2118,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _adaptiveCardSurface(context),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
             color: _selectedLevel.accent.withValuesCompat(alpha: 0.12)),
@@ -2190,7 +2201,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen>
             height: boardSizePx,
             padding: EdgeInsets.zero,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: _adaptiveCardSurface(context),
               borderRadius: BorderRadius.circular(28),
               boxShadow: [
                 BoxShadow(
@@ -2270,7 +2281,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _adaptiveCardSurface(context),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
             color: _selectedLevel.accent.withValuesCompat(alpha: 0.14)),
@@ -2358,7 +2369,7 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _adaptiveCardSurface(context),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
             color: _selectedLevel.accent.withValuesCompat(alpha: 0.18)),
@@ -2373,8 +2384,8 @@ class _PuzzleGameScreenState extends ConsumerState<PuzzleGameScreen>
               _isArabic
                   ? 'اسحبي كل قطعة من الأسفل نحو مكانها داخل اللوحة. عندما تقترب من المكان الصحيح وتفلتينها فوقه ستثبت فورًا وتلتصق مع باقي الصورة.'
                   : 'Drag each piece from the tray onto the board. When you drop it onto the correct spot, it snaps in and joins the picture.',
-              style: const TextStyle(
-                  fontSize: 14.5, height: 1.45, color: Colors.black87),
+              style: TextStyle(
+                  fontSize: 14.5, height: 1.45, color: _adaptiveTextPrimary(context)),
             ),
           ),
         ],
@@ -2414,7 +2425,7 @@ class _PuzzleStatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _adaptiveCardSurface(context),
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
@@ -2553,7 +2564,7 @@ class _TrayPuzzlePiece extends StatelessWidget {
       height: 82,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _adaptiveCardSurface(context),
         borderRadius: BorderRadius.circular(16),
         border:
             Border.all(color: accent.withValuesCompat(alpha: 0.24), width: 1.5),
@@ -2717,7 +2728,7 @@ class _RacingCarsGameScreenState extends State<RacingCarsGameScreen> {
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: _adaptiveCardSurface(context),
               borderRadius: BorderRadius.circular(22),
             ),
             child: Column(
@@ -3176,7 +3187,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _adaptiveCardSurface(context),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
           color: _selectedLevel.accent.withValuesCompat(alpha: 0.14),
@@ -3384,7 +3395,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: _adaptiveCardSurface(context),
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
                 color: _selectedLevel.accent.withValuesCompat(alpha: 0.14),
@@ -3469,7 +3480,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: _adaptiveCardSurface(context),
               borderRadius: BorderRadius.circular(20),
             ),
             child: const Center(
@@ -3614,9 +3625,9 @@ class _MemoryCardTile extends StatelessWidget {
                                       : card.token.label,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.w700,
-                                    color: Colors.black87,
+                                    color: _adaptiveTextPrimary(context),
                                   ),
                                 ),
                               ],
@@ -3746,7 +3757,7 @@ class _LevelGridLauncher extends StatelessWidget {
               width: 54,
               height: 54,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: _adaptiveCardSurface(context),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(icon, color: accent, size: 28),
@@ -4062,7 +4073,7 @@ class _LevelGridCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12.5,
                     height: 1.3,
-                    color: locked ? Colors.grey.shade600 : Colors.black87,
+                    color: locked ? Colors.grey.shade600 : _adaptiveTextPrimary(context),
                   ),
                 ),
               ],
@@ -4197,10 +4208,10 @@ class _GameScaffold extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text(
                       subtitle,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         height: 1.4,
-                        color: Colors.black87,
+                        color: _adaptiveTextPrimary(context),
                       ),
                     ),
                   ],
@@ -4341,7 +4352,7 @@ class BehavioralScreen extends ConsumerWidget {
       borderRadius: BorderRadius.circular(20),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _adaptiveCardSurface(context),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -4456,7 +4467,7 @@ class ValueDetailsScreen extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _adaptiveCardSurface(context),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -4702,7 +4713,7 @@ class _MethodContentScreenState extends ConsumerState<MethodContentScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 48),
                           child: Text(
                             l10n.noActivitiesFound,
-                            style: TextStyle(color: Colors.grey[600]),
+                            style: TextStyle(color: _adaptiveTextSecondary(context)),
                           ),
                         ),
                       );
@@ -4747,7 +4758,7 @@ class _MethodContentScreenState extends ConsumerState<MethodContentScreen> {
       borderRadius: BorderRadius.circular(20),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _adaptiveCardSurface(context),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -4822,7 +4833,7 @@ class _MethodContentScreenState extends ConsumerState<MethodContentScreen> {
                         style: TextStyle(
                           fontSize: 13,
                           height: 1.4,
-                          color: Colors.grey[700],
+                          color: _adaptiveTextSecondary(context),
                         ),
                       ),
                     ],
@@ -4934,7 +4945,7 @@ class _BehavioralContentDetailScreenState
                   style: TextStyle(
                     fontSize: 16,
                     height: 1.5,
-                    color: Colors.grey[700],
+                    color: _adaptiveTextSecondary(context),
                   ),
                 ),
               ],
@@ -5053,7 +5064,7 @@ class SkillfulScreen extends ConsumerWidget {
       child: Container(
         height: 120,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _adaptiveCardSurface(context),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -5093,10 +5104,10 @@ class SkillfulScreen extends ConsumerWidget {
                   children: [
                     Text(
                       _localizedSkillTitle(rawTitle, l10n),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: _adaptiveTextPrimary(context),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -5104,7 +5115,7 @@ class SkillfulScreen extends ConsumerWidget {
                       _localizedSkillDescription(rawTitle, l10n),
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey[600],
+                        color: _adaptiveTextSecondary(context),
                       ),
                     ),
                   ],
@@ -5328,8 +5339,8 @@ class _SkillDetailScreenState extends ConsumerState<SkillDetailScreen> {
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: l10n.searchActivities,
-                    hintStyle: TextStyle(color: Colors.grey[500]),
-                    prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
+                    hintStyle: TextStyle(color: _adaptiveTextSecondary(context)),
+                    prefixIcon: Icon(Icons.search, color: _adaptiveTextSecondary(context)),
                   ),
                 ),
               ),
@@ -5393,7 +5404,7 @@ class _SkillDetailScreenState extends ConsumerState<SkillDetailScreen> {
                     return Center(
                       child: Text(
                         l10n.noActivitiesFound,
-                        style: TextStyle(color: Colors.grey[500]),
+                        style: TextStyle(color: _adaptiveTextSecondary(context)),
                       ),
                     );
                   }
@@ -5441,7 +5452,7 @@ class _SkillDetailScreenState extends ConsumerState<SkillDetailScreen> {
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _adaptiveCardSurface(context),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -5499,10 +5510,10 @@ class _SkillDetailScreenState extends ConsumerState<SkillDetailScreen> {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: _adaptiveTextPrimary(context),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -5760,7 +5771,7 @@ class _SkillVideoScreenState extends ConsumerState<SkillVideoScreen> {
                                 width: double.infinity,
                                 height: 200,
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: _adaptiveCardSurface(context),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 alignment: Alignment.center,
@@ -5792,7 +5803,7 @@ class _SkillVideoScreenState extends ConsumerState<SkillVideoScreen> {
                                 style: TextStyle(
                                   fontSize: 15,
                                   height: 1.5,
-                                  color: Colors.grey[700],
+                                  color: _adaptiveTextSecondary(context),
                                 ),
                               ),
                           ],
@@ -5801,7 +5812,7 @@ class _SkillVideoScreenState extends ConsumerState<SkillVideoScreen> {
                         Container(
                           height: 250,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: _adaptiveCardSurface(context),
                             borderRadius: BorderRadius.circular(25),
                             boxShadow: [
                               BoxShadow(
@@ -5848,7 +5859,7 @@ class _SkillVideoScreenState extends ConsumerState<SkillVideoScreen> {
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: _adaptiveCardSurface(context),
                           borderRadius: BorderRadius.circular(25),
                           boxShadow: [
                             BoxShadow(
@@ -5878,7 +5889,7 @@ class _SkillVideoScreenState extends ConsumerState<SkillVideoScreen> {
                                   style: TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
+                                    color: _adaptiveTextPrimary(context),
                                   ),
                                 ),
                               ],
@@ -5889,7 +5900,7 @@ class _SkillVideoScreenState extends ConsumerState<SkillVideoScreen> {
                               style: TextStyle(
                                 fontSize: 16,
                                 height: 1.5,
-                                color: Colors.grey[700],
+                                color: _adaptiveTextSecondary(context),
                               ),
                             ),
                             const SizedBox(height: 20),
@@ -5969,7 +5980,7 @@ class _SkillCmsVideoHeroCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _adaptiveCardSurface(context),
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
@@ -6029,10 +6040,10 @@ class _SkillCmsVideoHeroCard extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: _adaptiveTextPrimary(context),
             ),
           ),
           const SizedBox(height: 12),
@@ -6164,7 +6175,7 @@ class EducationalScreen extends ConsumerWidget {
       borderRadius: BorderRadius.circular(20),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _adaptiveCardSurface(context),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -6423,8 +6434,8 @@ class _EducationalSubjectScreenState
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: l10n.searchLessons,
-                    hintStyle: TextStyle(color: Colors.grey[500]),
-                    prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
+                    hintStyle: TextStyle(color: _adaptiveTextSecondary(context)),
+                    prefixIcon: Icon(Icons.search, color: _adaptiveTextSecondary(context)),
                   ),
                 ),
               ),
@@ -6492,7 +6503,7 @@ class _EducationalSubjectScreenState
                     return Center(
                       child: Text(
                         l10n.noLessonsFound,
-                        style: TextStyle(color: Colors.grey[500]),
+                        style: TextStyle(color: _adaptiveTextSecondary(context)),
                       ),
                     );
                   }
@@ -6528,7 +6539,7 @@ class _EducationalSubjectScreenState
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _adaptiveCardSurface(context),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -6567,10 +6578,10 @@ class _EducationalSubjectScreenState
                   children: [
                     Text(
                       lesson['title'],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: _adaptiveTextPrimary(context),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -6633,7 +6644,7 @@ class _EducationalSubjectScreenState
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _adaptiveCardSurface(context),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -6692,10 +6703,10 @@ class _EducationalSubjectScreenState
                       title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: _adaptiveTextPrimary(context),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -6830,7 +6841,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                       Container(
                         height: 220,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: _adaptiveCardSurface(context),
                           borderRadius: BorderRadius.circular(25),
                           boxShadow: [
                             BoxShadow(
@@ -6871,7 +6882,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: _adaptiveCardSurface(context),
                           borderRadius: BorderRadius.circular(25),
                           boxShadow: [
                             BoxShadow(
@@ -6903,7 +6914,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
+                                    color: _adaptiveTextPrimary(context),
                                   ),
                                 ),
                               ],
@@ -6913,7 +6924,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                               l10n.playQuizToEarnStars,
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: Colors.grey[600],
+                                color: _adaptiveTextSecondary(context),
                               ),
                             ),
                             const SizedBox(height: 18),
@@ -7054,7 +7065,7 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: _adaptiveCardSurface(context),
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
@@ -7093,7 +7104,7 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
                           Text(
                             l10n.questionOf(
                                 _currentQuestionIndex + 1, _quizData.length),
-                            style: TextStyle(color: Colors.grey[600]),
+                            style: TextStyle(color: _adaptiveTextSecondary(context)),
                           ),
                         ],
                       ),
@@ -7116,7 +7127,7 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: _adaptiveCardSurface(context),
                   borderRadius: BorderRadius.circular(22),
                 ),
                 child: Text(
@@ -7140,9 +7151,9 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
                     final isCorrect = index == currentQ['correct'];
                     final isSelected = _selectedAnswerIndex == index;
 
-                    Color bgColor = Colors.white;
+                    Color bgColor = _adaptiveCardSurface(context);
                     Color borderColor = Colors.orange[200]!;
-                    Color textColor = Colors.black87;
+                    Color textColor = _adaptiveTextPrimary(context);
 
                     if (_showResult) {
                       if (isCorrect) {
@@ -7340,7 +7351,7 @@ class CmsQuizCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _adaptiveCardSurface(context),
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
@@ -7378,10 +7389,10 @@ class CmsQuizCard extends ConsumerWidget {
               Expanded(
                 child: Text(
                   isCompleted ? l10n.youCompletedQuiz : l10n.readyForFunQuiz,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: _adaptiveTextPrimary(context),
                   ),
                 ),
               ),
@@ -7391,7 +7402,7 @@ class CmsQuizCard extends ConsumerWidget {
           Text(
             l10n.playQuizToEarnStars,
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey[600]),
+            style: TextStyle(color: _adaptiveTextSecondary(context)),
           ),
           const SizedBox(height: 18),
           SizedBox(
@@ -7653,7 +7664,7 @@ class _CmsQuizScreenState extends ConsumerState<CmsQuizScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: _adaptiveCardSurface(context),
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
@@ -7690,7 +7701,7 @@ class _CmsQuizScreenState extends ConsumerState<CmsQuizScreen> {
                           Text(
                             l10n.questionOf(
                                 _currentQuestionIndex + 1, questions.length),
-                            style: TextStyle(color: Colors.grey[600]),
+                            style: TextStyle(color: _adaptiveTextSecondary(context)),
                           ),
                         ],
                       ),
@@ -7712,7 +7723,7 @@ class _CmsQuizScreenState extends ConsumerState<CmsQuizScreen> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: _adaptiveCardSurface(context),
                   borderRadius: BorderRadius.circular(22),
                 ),
                 child: Text(
@@ -7734,9 +7745,9 @@ class _CmsQuizScreenState extends ConsumerState<CmsQuizScreen> {
                     final isCorrect = index == currentQ.correctIndex;
                     final isSelected = _selectedAnswerIndex == index;
 
-                    Color bgColor = Colors.white;
+                    Color bgColor = _adaptiveCardSurface(context);
                     Color borderColor = Colors.orange[200]!;
-                    Color textColor = Colors.black87;
+                    Color textColor = _adaptiveTextPrimary(context);
 
                     if (_showResult) {
                       if (isCorrect) {

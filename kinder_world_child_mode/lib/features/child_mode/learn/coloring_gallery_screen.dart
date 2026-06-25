@@ -7,6 +7,7 @@ import 'package:kinder_world/core/models/public_content.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/repositories/public_content_repository.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
+import 'package:kinder_world/core/utils/adaptive_colors.dart';
 import 'package:kinder_world/core/widgets/cloudinary_video_player_view.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
 import 'package:kinder_world/features/child_mode/learn/coloring_page_screen.dart';
@@ -470,10 +471,10 @@ class _CmsColoringVideoCard extends StatelessWidget {
                           description,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             height: 1.45,
-                            color: Colors.black87,
+                            color: adaptiveTextPrimary(context),
                           ),
                         ),
                       ],
@@ -617,7 +618,7 @@ class _ColoringVideoPlayerScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 15,
                                 height: 1.5,
-                                color: Colors.grey[700],
+                                color: adaptiveTextSecondary(context),
                               ),
                             ),
                         ],
@@ -626,7 +627,7 @@ class _ColoringVideoPlayerScreen extends StatelessWidget {
                       Container(
                         height: 250,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: adaptiveCardSurface(context),
                           borderRadius: BorderRadius.circular(25),
                           boxShadow: [
                             BoxShadow(
@@ -679,7 +680,7 @@ class _ColoringVideoPlayerScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: adaptiveCardSurface(context),
                         borderRadius: BorderRadius.circular(25),
                         boxShadow: [
                           BoxShadow(
@@ -706,12 +707,12 @@ class _ColoringVideoPlayerScreen extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(width: 10),
-                              const Text(
+                              Text(
                                 "Let's Watch!",
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
+                                  color: adaptiveTextPrimary(context),
                                 ),
                               ),
                             ],
@@ -724,7 +725,7 @@ class _ColoringVideoPlayerScreen extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 16,
                               height: 1.5,
-                              color: Colors.grey[700],
+                              color: adaptiveTextSecondary(context),
                             ),
                           ),
                           const SizedBox(height: 20),
