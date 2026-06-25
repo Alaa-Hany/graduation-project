@@ -308,6 +308,11 @@ class ChildProfile(Base):
     deleted_at = Column(UTCDateTime(), nullable=True, index=True)
     picture_password_reset_token_hash = Column(String, nullable=True)
     picture_password_reset_token_expires_at = Column(UTCDateTime(), nullable=True)
+    # Opaque local-first gamification snapshot (coins, earned badges, unlocked
+    # achievements, reward-store purchases, explored categories) the child app
+    # syncs so these survive a fresh device / web storage reset. Shape:
+    # {"updated_at": <epoch_ms>, "data": {"<box_key>": <value>, ...}}.
+    gamification_state = Column(JSON, nullable=True)
 
     @property
     def picture_password(self) -> object:

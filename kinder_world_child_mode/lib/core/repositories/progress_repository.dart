@@ -130,6 +130,29 @@ class ProgressRepository {
     }
   }
 
+  /// Restore a server-originated record for local-first recovery on login.
+  ///
+  /// Idempotent: skips when a record with the same id already exists, so a
+  /// logout/login cycle never duplicates today's activities and a fresher local
+  /// completion is always preserved. Returns true only when a new record was
+  /// written. Used to rebuild the daily goal / today's activities after the
+  /// local Hive box has been dropped (fresh device, web storage reset).
+  Future<bool> restoreRecord(ProgressRecord record) async {
+    try {
+      await _warmRecords();
+      if (_recordCache.containsKey(record.id) ||
+          _progressBox.containsKey(record.id)) {
+        return false;
+      }
+      await _progressBox.put(record.id, record.toJson());
+      _cacheRecord(record);
+      return true;
+    } catch (e) {
+      _logger.e('Error restoring progress record: ${record.id}, $e');
+      return false;
+    }
+  }
+
   /// Get progress record by ID
   Future<ProgressRecord?> getProgressRecord(String recordId) async {
     try {

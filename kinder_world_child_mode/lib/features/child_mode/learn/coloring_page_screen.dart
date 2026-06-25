@@ -117,7 +117,12 @@ class _ColoringPageScreenState extends ConsumerState<ColoringPageScreen> {
   }
 
   Future<void> _restoreProgress(SvgColoringTemplate template) async {
-    final progress = await ColoringProgressStorage.load(widget.svgAssetPath);
+    final childId = ref.read(currentChildProvider)?.id;
+    if (childId == null) return;
+    final progress = await ColoringProgressStorage.load(
+      widget.svgAssetPath,
+      childId: childId,
+    );
     _controller.restoreColors(progress.colors);
     final completedNow = template.areas.isNotEmpty &&
         _controller.filledAreasCount >= template.areas.length;
@@ -147,12 +152,18 @@ class _ColoringPageScreenState extends ConsumerState<ColoringPageScreen> {
     }
 
     _saveDebounce?.cancel();
-    _saveDebounce = Timer(const Duration(milliseconds: 250), () {
-      ColoringProgressStorage.save(
+    _saveDebounce = Timer(const Duration(milliseconds: 250), () async {
+      final childId = ref.read(currentChildProvider)?.id;
+      if (childId == null) return;
+      await ColoringProgressStorage.save(
         svgAssetPath: widget.svgAssetPath,
+        childId: childId,
         colors: _controller.colorsByAreaId,
         isCompleted: _isCompleted,
       );
+      // Back the coloring progress up to the server so it survives a fresh
+      // device / web storage reset.
+      unawaited(ref.read(clientStateSyncServiceProvider).push(childId));
     });
   }
 

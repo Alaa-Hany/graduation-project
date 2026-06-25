@@ -16,6 +16,8 @@ import 'package:kinder_world/core/providers/content_controller.dart';
 import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/core/repositories/gamification_repository.dart';
 import 'package:kinder_world/core/services/gamification_service.dart';
+import 'package:kinder_world/core/services/gamification_sync_service.dart';
+import 'package:kinder_world/core/providers/shared_preferences_provider.dart';
 import 'package:kinder_world/features/child_mode/store/reward_store_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -35,6 +37,22 @@ final gamificationRepositoryProvider = Provider<GamificationRepository>((ref) {
   return GamificationRepository(
     gamificationBox: box,
     logger: logger,
+  );
+});
+
+/// Provides the [ClientStateSyncService] singleton — server-backed snapshot of
+/// the child's full local-first state (gamification + avatar/favorites/mood/
+/// coloring).
+final clientStateSyncServiceProvider =
+    Provider<ClientStateSyncService>((ref) {
+  return ClientStateSyncService(
+    gamificationRepository: ref.watch(gamificationRepositoryProvider),
+    childRepository: ref.watch(childRepositoryProvider),
+    moodBox: Hive.box('mood_entries'),
+    sharedPreferences: ref.watch(sharedPreferencesProvider),
+    reportsApi: ref.watch(reportsApiProvider),
+    secureStorage: ref.watch(secureStorageProvider),
+    logger: ref.watch(loggerProvider),
   );
 });
 
@@ -180,6 +198,13 @@ class GamificationNotifier extends StateNotifier<GamificationNotifierState> {
       // Refresh every activity-driven value so the UI updates instantly,
       // without needing a manual pull-to-refresh.
       _refreshDependentData();
+
+      // Back up the new coins/badges/achievements to the server so they survive
+      // a fresh device / web storage reset (fire-and-forget).
+      unawaited(
+        _ref?.read(clientStateSyncServiceProvider).push(childId) ??
+            Future<void>.value(),
+      );
 
       return result;
     } catch (e) {

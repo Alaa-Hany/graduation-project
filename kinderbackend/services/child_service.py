@@ -519,6 +519,62 @@ class ChildService:
 
         return progress
 
+    def _recent_activity_records(
+        self, *, db: Session, child_id: int, limit: int = 1000
+    ) -> list[dict]:
+        """Return the child's completion history for local-first recovery.
+
+        Child mode computes the daily goal AND the "done" badges on every lesson,
+        game and story from records in its local Hive box only
+        (``getTodayProgress`` for today's goal, ``completedActivityIds`` for the
+        all-time badges). After a logout/login cycle, on a fresh device, or when
+        the web build drops its storage, that box can be empty even though the
+        backend still holds every event the child streamed via
+        ``/analytics/events``. We return the full completion history (newest
+        first, capped) so the client can rebuild both the daily goal and the
+        all-time completion badges.
+
+        Each event carries the original ``client_record_id`` and ``activity_id``
+        from its ``metadata_json`` so the client can re-seed records under the
+        SAME id it used locally — that keeps the restore idempotent (no
+        duplicates / no inflated daily goal) even when local storage survived.
+        """
+        rows = (
+            db.query(ChildActivityEvent)
+            .filter(
+                ChildActivityEvent.child_id == child_id,
+                ChildActivityEvent.archived_at.is_(None),
+                ChildActivityEvent.event_type.in_(_COMPLETION_EVENT_TYPES),
+            )
+            .order_by(ChildActivityEvent.occurred_at.desc())
+            .limit(limit)
+            .all()
+        )
+        records = []
+        for row in rows:
+            occurred = ensure_utc(row.occurred_at)
+            meta = row.metadata_json if isinstance(row.metadata_json, dict) else {}
+            # The badge key the client checks against is the activity_id it sent
+            # in metadata_json; lesson_id mirrors it for lessons only.
+            activity_id = (
+                meta.get("activity_id")
+                or row.lesson_id
+                or row.activity_name
+                or f"event_{row.id}"
+            )
+            records.append(
+                {
+                    "event_id": row.id,
+                    "client_record_id": meta.get("client_record_id"),
+                    "activity_id": activity_id,
+                    "event_type": row.event_type,
+                    "points": int(row.points or 0),
+                    "duration_seconds": int(row.duration_seconds or 0),
+                    "occurred_at": occurred.isoformat() if occurred else None,
+                }
+            )
+        return records
+
     def list_parent_children(self, *, parent: User, db: Session) -> dict:
         children = (
             db.query(ChildProfile)
@@ -733,14 +789,58 @@ class ChildService:
         # parent dashboard shows, computed from analytics, and the client merges
         # it into its local profile (taking the max, never regressing).
         progress = self._progress_by_child(db=db, child_ids=[child.id]).get(child.id, {})
+        recent_activity = self._recent_activity_records(db=db, child_id=child.id)
 
         return {
             "success": True,
             "child_id": child.id,
             "name": child.name,
             "progress": progress,
+            "recent_activity": recent_activity,
+            "gamification_state": child.gamification_state,
             **session_payload,
         }
+
+    def save_gamification_state(
+        self,
+        *,
+        child_id: int,
+        state: dict,
+        db: Session,
+        parent: User | None = None,
+    ) -> dict:
+        """Persist the child's local-first gamification snapshot (coins, badges,
+        achievements, reward-store purchases) so it survives a fresh device /
+        web storage reset. Last-write-wins: an older snapshot (by ``updated_at``)
+        never clobbers a newer one already stored.
+
+        When ``parent`` is supplied the child must belong to them, so a parent
+        token can never write another family's child (mirrors the ownership
+        guard the analytics ingest endpoints enforce).
+        """
+        child = (
+            db.query(ChildProfile)
+            .filter(
+                ChildProfile.id == child_id,
+                ChildProfile.deleted_at.is_(None),
+            )
+            .first()
+        )
+        if not child:
+            raise not_found("Child not found")
+        if parent is not None and int(child.parent_id) != int(parent.id):
+            raise not_found("Child not found")
+
+        incoming_updated = int((state or {}).get("updated_at") or 0)
+        existing = child.gamification_state if isinstance(child.gamification_state, dict) else None
+        existing_updated = int((existing or {}).get("updated_at") or 0)
+        if existing is not None and incoming_updated < existing_updated:
+            return {"success": True, "applied": False, "updated_at": existing_updated}
+
+        child.gamification_state = state
+        db.add(child)
+        db.commit()
+        return {"success": True, "applied": True, "updated_at": incoming_updated}
 
     def validate_child_session(
         self,
@@ -1077,6 +1177,14 @@ def login_child(
 
 def validate_child_session(payload: ChildSessionValidateIn, db: Session) -> dict:
     return child_service.validate_child_session(payload=payload, db=db)
+
+
+def save_gamification_state(
+    child_id: int, state: dict, db: Session, parent: User | None = None
+) -> dict:
+    return child_service.save_gamification_state(
+        child_id=child_id, state=state, db=db, parent=parent
+    )
 
 
 def change_child_password(payload: ChildChangePasswordIn, db: Session) -> dict:

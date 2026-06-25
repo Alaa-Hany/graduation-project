@@ -88,4 +88,19 @@ class ReportsApi {
     );
     return Map<String, dynamic>.from(response.data ?? const {});
   }
+
+  /// Pushes the child's local-first gamification snapshot (coins, badges,
+  /// achievements, reward-store purchases) so it survives a fresh device / web
+  /// storage reset. `payload` is `{child_id, updated_at, data}`.
+  Future<Map<String, dynamic>> syncGamificationState(
+    Map<String, dynamic> payload, {
+    String? parentAccessToken,
+  }) async {
+    final response = await _network.put<Map<String, dynamic>>(
+      '/analytics/gamification',
+      data: payload,
+      options: _authorizedOptions(parentAccessToken),
+    );
+    return Map<String, dynamic>.from(response.data ?? const {});
+  }
 }

@@ -30,6 +30,28 @@ class ActivityEventIn(BaseModel):
     )
 
 
+class GamificationStateIn(BaseModel):
+    """Local-first gamification snapshot the child app syncs so coins, badges,
+    achievements and reward-store purchases survive a fresh device / storage
+    reset. ``data`` is an opaque key→value map of the child's local entries;
+    ``updated_at`` (epoch millis) drives last-write-wins on the server.
+    """
+
+    child_id: int
+    updated_at: int = Field(ge=0)
+    data: dict
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "child_id": 1,
+                "updated_at": 1750000000000,
+                "data": {"gam_coins_1": 120, "store_owned_1": "[\"hat_1\"]"},
+            }
+        }
+    )
+
+
 class SessionLogIn(BaseModel):
     child_id: int
     session_id: Optional[str] = None

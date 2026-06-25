@@ -55,6 +55,28 @@ mixin _AuthRepositoryChildMixin on _AuthRepositorySupportMixin {
         data: data,
       );
 
+      // Restore the child's completion history so the daily goal AND the "done"
+      // badges on every lesson/game/story survive a logout/login cycle (and
+      // fresh devices / web storage resets). The profile backfill above only
+      // restores the all-time aggregate; the per-activity records that drive
+      // `getTodayProgress` (daily goal) and `completedActivityIds` (badges) live
+      // in a local-only Hive box, so without this they would read empty.
+      await _restoreRecentActivity(childId: resolvedChildId, data: data);
+
+      // Restore the server-backed snapshot of the child's full local-first state
+      // (coins, badges, achievements, reward-store purchases, avatar, favorites,
+      // mood history, coloring progress). These live in local-only storage, so
+      // without this they reset on a fresh device / web storage reset even though
+      // the child earned/made them. Last-write-wins keeps a fresher local state
+      // from being clobbered.
+      try {
+        await _ref
+            .read(clientStateSyncServiceProvider)
+            .restore(resolvedChildId, data['gamification_state']);
+      } catch (e) {
+        _logger.w('Client state restore failed: $e');
+      }
+
       final childUser = _buildChildUser(
         childId: resolvedChildId,
         childName: _extractChildName(data),
@@ -153,6 +175,72 @@ mixin _AuthRepositoryChildMixin on _AuthRepositorySupportMixin {
       await childRepo.createChildProfile(seeded);
     } catch (e) {
       _logger.w('Child progress backfill failed: $e');
+    }
+  }
+
+  /// Re-seeds the local progress box with the child's completion history
+  /// returned by the login endpoint, so the daily goal and the all-time "done"
+  /// badges recover on a fresh device / after a storage reset. Idempotent:
+  /// records reuse their original `client_record_id` (falling back to a
+  /// deterministic `srv-<eventId>`), so re-logins never duplicate a completion
+  /// and a fresher local record is never overwritten.
+  Future<void> _restoreRecentActivity({
+    required String childId,
+    required Map<String, dynamic> data,
+  }) async {
+    final rawRecords = data['recent_activity'];
+    if (rawRecords is! List || rawRecords.isEmpty) return;
+
+    try {
+      final progressRepo = _ref.read(progressRepositoryProvider);
+      var restored = 0;
+      for (final raw in rawRecords) {
+        if (raw is! Map) continue;
+        final eventId = raw['event_id']?.toString();
+        final occurredRaw = raw['occurred_at']?.toString();
+        if (eventId == null || occurredRaw == null) continue;
+        final occurred = DateTime.tryParse(occurredRaw)?.toLocal();
+        if (occurred == null) continue;
+
+        // Re-seed under the ORIGINAL local record id when the backend has it, so
+        // restoring on a device that still holds the local record is a no-op
+        // (idempotent) and never inflates the daily goal. Fresh devices fall
+        // back to a deterministic server id.
+        final clientRecordId = raw['client_record_id']?.toString();
+        final recordId = (clientRecordId != null && clientRecordId.isNotEmpty)
+            ? clientRecordId
+            : 'srv-$eventId';
+        final activityId =
+            raw['activity_id']?.toString() ?? 'event_$eventId';
+        final points = raw['points'] is num
+            ? (raw['points'] as num).toInt()
+            : int.tryParse('${raw['points']}') ?? 0;
+        final durationSeconds = raw['duration_seconds'] is num
+            ? (raw['duration_seconds'] as num).toInt()
+            : int.tryParse('${raw['duration_seconds']}') ?? 0;
+
+        final record = ProgressRecord(
+          id: recordId,
+          childId: childId,
+          activityId: activityId,
+          date: occurred,
+          score: 100,
+          duration: (durationSeconds / 60).round(),
+          xpEarned: points,
+          completionStatus: CompletionStatus.completed,
+          syncStatus: SyncStatus.synced,
+          createdAt: occurred,
+          updatedAt: occurred,
+        );
+        if (await progressRepo.restoreRecord(record)) {
+          restored++;
+        }
+      }
+      if (restored > 0) {
+        _logger.d('Restored $restored recent activity records on login');
+      }
+    } catch (e) {
+      _logger.w('Recent activity restore failed: $e');
     }
   }
 

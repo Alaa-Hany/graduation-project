@@ -16,6 +16,9 @@ class _FakeBox extends Fake implements Box {
       _store.containsKey(key) ? _store[key] : defaultValue;
 
   @override
+  bool containsKey(dynamic key) => _store.containsKey(key);
+
+  @override
   Future<void> put(dynamic key, dynamic value) async {
     _store[key] = value;
   }
@@ -184,6 +187,49 @@ void main() {
       expect(await repo.getActivitiesCompleted(childId), 0);
       expect(await repo.getExploredCategories(childId), isEmpty);
       expect(await repo.hasCompletedActivityId(childId, 'act-1'), isFalse);
+    });
+  });
+
+  group('cross-device snapshot', () {
+    test('export captures coins/categories and stamps updated_at', () async {
+      await repo.addCoins(childId, 40);
+      await repo.addExploredCategory(childId, 'science');
+
+      final snap = await repo.exportSnapshot(childId);
+      expect(snap['updated_at'], isA<int>());
+      final data = snap['data'] as Map;
+      expect(data['gam_coins_$childId'], 40);
+      expect(data.containsKey('categories_$childId'), isTrue);
+    });
+
+    test('import restores coins onto a fresh (empty) child', () async {
+      final snapshot = {
+        'updated_at': 1750000000000,
+        'data': {'gam_coins_$childId': 99},
+      };
+      final applied = await repo.importSnapshot(childId, snapshot);
+      expect(applied, isTrue);
+      expect(await repo.getCoins(childId), 99);
+    });
+
+    test('import is last-write-wins: older snapshot does not clobber newer',
+        () async {
+      await repo.importSnapshot(childId, {
+        'updated_at': 2000,
+        'data': {'gam_coins_$childId': 50},
+      });
+      final applied = await repo.importSnapshot(childId, {
+        'updated_at': 1000,
+        'data': {'gam_coins_$childId': 5},
+      });
+      expect(applied, isFalse);
+      expect(await repo.getCoins(childId), 50);
+    });
+
+    test('hasLocalData reflects whether the child has stored entries', () async {
+      expect(repo.hasLocalData(childId), isFalse);
+      await repo.addCoins(childId, 1);
+      expect(repo.hasLocalData(childId), isTrue);
     });
   });
 }

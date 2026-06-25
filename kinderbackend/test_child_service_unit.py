@@ -307,6 +307,98 @@ def test_login_child_success(service, db, create_parent):
     assert "session_token" in result
 
 
+def test_login_child_returns_recent_activity(service, db, create_parent):
+    from datetime import timedelta
+
+    from core.time_utils import utc_now
+    from models import ChildActivityEvent
+
+    parent = create_parent(email="lc-recent@example.com")
+    child = _make_child(service, db, parent, name="Recent")
+    now = utc_now()
+    db.add_all(
+        [
+            # A game completion: the badge key lives in metadata_json.activity_id.
+            ChildActivityEvent(
+                child_id=child.id,
+                event_type="activity_completed",
+                occurred_at=now,
+                source="child_mode",
+                points=120,
+                duration_seconds=300,
+                activity_name="Memory Match",
+                metadata_json={
+                    "activity_id": "game_memory_1",
+                    "client_record_id": "local-rec-1",
+                },
+            ),
+            # An older lesson completion → still returned (all-time history, not
+            # just today), so the "done" badge persists.
+            ChildActivityEvent(
+                child_id=child.id,
+                event_type="lesson_completed",
+                occurred_at=now - timedelta(days=5),
+                source="child_mode",
+                points=50,
+                lesson_id="lesson_math_1",
+                metadata_json={"activity_id": "lesson_math_1"},
+            ),
+            # Non-completion event → must be excluded.
+            ChildActivityEvent(
+                child_id=child.id,
+                event_type="mood_entry",
+                occurred_at=now,
+                source="child_mode",
+                mood_value=5,
+            ),
+        ]
+    )
+    db.commit()
+
+    payload = ChildLoginIn(child_id=child.id, name="Recent", picture_password=PW)
+    result = service.login_child(payload=payload, db=db, client_ip="1.2.3.4")
+
+    recent = result["recent_activity"]
+    assert len(recent) == 2  # both completions, mood entry excluded
+
+    by_activity = {r["activity_id"]: r for r in recent}
+    assert by_activity["game_memory_1"]["client_record_id"] == "local-rec-1"
+    assert by_activity["game_memory_1"]["points"] == 120
+    assert "lesson_math_1" in by_activity  # all-time, not windowed
+
+
+def test_save_and_login_returns_gamification_state(service, db, create_parent):
+    parent = create_parent(email="lc-gam@example.com")
+    child = _make_child(service, db, parent, name="Gamer")
+
+    state = {
+        "updated_at": 1750000000000,
+        "data": {f"gam_coins_{child.id}": 120, f"store_owned_{child.id}": "[\"hat_1\"]"},
+    }
+    res = service.save_gamification_state(child_id=child.id, state=state, db=db)
+    assert res["applied"] is True
+
+    payload = ChildLoginIn(child_id=child.id, name="Gamer", picture_password=PW)
+    result = service.login_child(payload=payload, db=db, client_ip="1.2.3.4")
+    assert result["gamification_state"]["data"][f"gam_coins_{child.id}"] == 120
+
+
+def test_save_gamification_state_last_write_wins(service, db, create_parent):
+    parent = create_parent(email="lc-gam-lww@example.com")
+    child = _make_child(service, db, parent, name="Gamer2")
+
+    newer = {"updated_at": 2000, "data": {"coins": 50}}
+    older = {"updated_at": 1000, "data": {"coins": 5}}
+
+    assert service.save_gamification_state(child_id=child.id, state=newer, db=db)["applied"] is True
+    # An older snapshot must NOT clobber the newer one already stored.
+    res = service.save_gamification_state(child_id=child.id, state=older, db=db)
+    assert res["applied"] is False
+
+    db.refresh(child)
+    assert child.gamification_state["data"]["coins"] == 50
+
+
 def test_login_child_not_found(service, db, create_parent):
     create_parent(email="lc-404@example.com")
     payload = ChildLoginIn(child_id=999999, name="Ghost", picture_password=PW)

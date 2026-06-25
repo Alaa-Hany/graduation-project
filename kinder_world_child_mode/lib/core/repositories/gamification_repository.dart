@@ -21,6 +21,27 @@ class _Keys {
   static String categories(String childId) => 'categories_$childId';
   static String coins(String childId) => 'gam_coins_$childId';
   static String completedActivities(String childId) => 'completed_acts_$childId';
+  // Reward-store keys (written by RewardStoreNotifier into the same box). Listed
+  // here so the cross-device snapshot has a single source of truth.
+  static String storeOwned(String childId) => 'store_owned_$childId';
+  static String storeEquipped(String childId) => 'store_equipped_$childId';
+  static String storeHistory(String childId) => 'store_history_requests_$childId';
+  // Local bookkeeping only (NOT synced): the `updated_at` of the last snapshot
+  // pushed/applied for this child, for last-write-wins on import.
+  static String syncVersion(String childId) => 'gam_syncv.$childId';
+
+  /// Every box key that makes up a child's synced gamification snapshot.
+  static List<String> snapshotKeys(String childId) => [
+        achievements(childId),
+        badges(childId),
+        metadata(childId),
+        categories(childId),
+        coins(childId),
+        completedActivities(childId),
+        storeOwned(childId),
+        storeEquipped(childId),
+        storeHistory(childId),
+      ];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -400,6 +421,70 @@ class GamificationRepository {
       exploredCategories: exploredCategories,
       coins: coins,
     );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // CROSS-DEVICE SNAPSHOT (server-backed recovery)
+  // ══════════════════════════════════════════════════════════════════════════
+
+  /// True when this child has any locally-stored gamification data. Used to
+  /// decide whether a server snapshot should be applied unconditionally (fresh
+  /// device) or only when newer (same device).
+  bool hasLocalData(String childId) {
+    for (final key in _Keys.snapshotKeys(childId)) {
+      if (_box.containsKey(key)) return true;
+    }
+    return false;
+  }
+
+  /// Builds the child's gamification snapshot for upload. Stamps `updated_at`
+  /// (epoch millis) and records it locally so later imports can compare.
+  Future<Map<String, dynamic>> exportSnapshot(String childId) async {
+    final data = <String, dynamic>{};
+    for (final key in _Keys.snapshotKeys(childId)) {
+      if (_box.containsKey(key)) {
+        data[key] = _box.get(key);
+      }
+    }
+    final updatedAt = DateTime.now().millisecondsSinceEpoch;
+    await _box.put(_Keys.syncVersion(childId), updatedAt);
+    return {'updated_at': updatedAt, 'data': data};
+  }
+
+  /// Applies a server snapshot to local storage. Last-write-wins: skips when the
+  /// child already has local data that is at least as fresh. Returns true when
+  /// the snapshot was applied.
+  Future<bool> importSnapshot(String childId, dynamic snapshot) async {
+    try {
+      if (snapshot is! Map) return false;
+      final data = snapshot['data'];
+      if (data is! Map) return false;
+      final serverUpdated = (snapshot['updated_at'] is num)
+          ? (snapshot['updated_at'] as num).toInt()
+          : int.tryParse('${snapshot['updated_at']}') ?? 0;
+
+      final localUpdated =
+          (_box.get(_Keys.syncVersion(childId), defaultValue: 0) as num).toInt();
+      // Only skip when we already hold something at least as fresh.
+      if (hasLocalData(childId) && serverUpdated <= localUpdated) {
+        return false;
+      }
+
+      for (final entry in data.entries) {
+        final key = entry.key.toString();
+        // Keys prefixed with `__` are other-domain extras (avatar, favorites,
+        // mood, coloring) bundled into the same snapshot by ClientStateSyncService
+        // and applied by it — they must not land in the gamification box.
+        if (key.startsWith('__')) continue;
+        await _box.put(key, entry.value);
+      }
+      await _box.put(_Keys.syncVersion(childId), serverUpdated);
+      _logger.i('Imported gamification snapshot for child $childId');
+      return true;
+    } catch (e) {
+      _logger.e('GamificationRepository.importSnapshot error: $e');
+      return false;
+    }
   }
 
   // ══════════════════════════════════════════════════════════════════════════

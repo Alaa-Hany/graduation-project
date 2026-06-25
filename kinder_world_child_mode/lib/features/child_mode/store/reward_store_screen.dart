@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -312,7 +313,7 @@ class RewardRedeemResult {
 }
 
 class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
-  RewardStoreNotifier(this._box, this._childId, this._gamRepo)
+  RewardStoreNotifier(this._box, this._childId, this._gamRepo, {this.onChanged})
       : super(const RewardStoreState(
           coins: 0,
           ownedIds: {},
@@ -326,6 +327,10 @@ class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
   final Box _box;
   final String _childId;
   final GamificationRepository _gamRepo;
+
+  /// Called after any local purchase/equip change is persisted, so the caller
+  /// can back the new state up to the server (fire-and-forget).
+  final void Function()? onChanged;
 
   String get _ownedKey => 'store_owned_$_childId';
   String get _equippedKey => 'store_equipped_$_childId';
@@ -389,6 +394,9 @@ class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
       jsonEncode(
           state.redemptionHistory.map((request) => request.toJson()).toList()),
     );
+
+    // Back the new purchase/equip/coin state up to the server.
+    onChanged?.call();
   }
 
   /// Refreshes coin balance from the gamification repository.
@@ -582,11 +590,15 @@ final rewardStoreProvider =
   final box = ref.watch(gamificationBoxProvider);
   final child = ref.watch(currentChildProvider);
   final gamRepo = ref.watch(gamificationRepositoryProvider);
+  final childId = child?.id ?? 'guest';
 
   return RewardStoreNotifier(
     box,
-    child?.id ?? 'guest',
+    childId,
     gamRepo,
+    onChanged: () => unawaited(
+      ref.read(clientStateSyncServiceProvider).push(childId),
+    ),
   );
 });
 

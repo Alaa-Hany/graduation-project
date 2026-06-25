@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/public_content.dart';
+import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/repositories/public_content_repository.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/cloudinary_video_player_view.dart';
@@ -128,10 +129,14 @@ class _ColoringGalleryScreenState extends ConsumerState<ColoringGalleryScreen>
     final progressMap = <String, ColoringProgressData>{};
     final templateMap = <String, SvgColoringTemplate>{};
 
+    final childId = ref.read(currentChildProvider)?.id;
+    if (childId == null) return;
+
     for (final item in _items) {
       final svgPath = item['svg'];
       if (svgPath == null || svgPath.isEmpty) continue;
-      progressMap[svgPath] = await ColoringProgressStorage.load(svgPath);
+      progressMap[svgPath] =
+          await ColoringProgressStorage.load(svgPath, childId: childId);
 
       try {
         final rawSvg = await rootBundle.loadString(svgPath);

@@ -3,6 +3,8 @@
 // Riverpod state management for the Mood Tracking system.
 // Follows the same pattern as gamification_provider.dart.
 
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:kinder_world/app.dart';
@@ -13,6 +15,7 @@ import 'package:kinder_world/core/repositories/mood_repository.dart';
 import 'package:kinder_world/core/repositories/child_repository.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
+import 'package:kinder_world/core/providers/gamification_provider.dart';
 import 'package:kinder_world/core/utils/session_token_utils.dart';
 import 'package:logger/logger.dart';
 
@@ -95,12 +98,17 @@ class MoodNotifier extends StateNotifier<MoodState> {
   final SecureStorage _secureStorage;
   final Logger _logger;
 
+  /// Called after a mood entry is recorded so the caller can back the updated
+  /// mood history up to the server (fire-and-forget).
+  final void Function(String childId)? onChanged;
+
   MoodNotifier({
     required MoodRepository moodRepository,
     required ChildRepository childRepository,
     required ReportsApi reportsApi,
     required SecureStorage secureStorage,
     required Logger logger,
+    this.onChanged,
   })  : _repo = moodRepository,
         _childRepo = childRepository,
         _reportsApi = reportsApi,
@@ -167,6 +175,8 @@ class MoodNotifier extends StateNotifier<MoodState> {
       );
 
       _logger.i('MoodNotifier: recorded mood "$mood" for $childId');
+
+      onChanged?.call(childId);
 
       // Keep feedback visible briefly without slowing down follow-up actions.
       await Future.delayed(const Duration(milliseconds: 800));
@@ -311,6 +321,9 @@ final moodNotifierProvider =
     reportsApi: reportsApi,
     secureStorage: secureStorage,
     logger: logger,
+    onChanged: (childId) => unawaited(
+      ref.read(clientStateSyncServiceProvider).push(childId),
+    ),
   );
 
   // Auto-load when child session is active

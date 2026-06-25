@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
+import 'package:kinder_world/core/providers/gamification_provider.dart';
 import 'package:kinder_world/core/repositories/child_repository.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
 import 'package:kinder_world/app.dart';
@@ -49,10 +52,15 @@ class ChildSessionController extends StateNotifier<ChildSessionState> {
   final SecureStorage _secureStorage;
   final Logger _logger;
 
+  /// Called after favorites change so the caller can back the updated profile
+  /// up to the server (fire-and-forget).
+  final void Function(String childId)? onFavoritesChanged;
+
   ChildSessionController({
     required ChildRepository childRepository,
     required SecureStorage secureStorage,
     required Logger logger,
+    this.onFavoritesChanged,
   })  : _childRepository = childRepository,
         _secureStorage = secureStorage,
         _logger = logger,
@@ -316,6 +324,7 @@ class ChildSessionController extends StateNotifier<ChildSessionState> {
       if (updated != null) {
         state = state.copyWith(childProfile: updated);
         _logger.d('Added to favorites: $activityId');
+        onFavoritesChanged?.call(state.childId!);
         return true;
       }
 
@@ -337,6 +346,7 @@ class ChildSessionController extends StateNotifier<ChildSessionState> {
       if (updated != null) {
         state = state.copyWith(childProfile: updated);
         _logger.d('Removed from favorites: $activityId');
+        onFavoritesChanged?.call(state.childId!);
         return true;
       }
 
@@ -457,6 +467,9 @@ final childSessionControllerProvider =
     childRepository: childRepository,
     secureStorage: secureStorage,
     logger: logger,
+    onFavoritesChanged: (childId) => unawaited(
+      ref.read(clientStateSyncServiceProvider).push(childId),
+    ),
   );
 });
 

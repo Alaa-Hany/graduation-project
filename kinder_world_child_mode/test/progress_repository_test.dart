@@ -19,6 +19,9 @@ class _FakeBox extends Fake implements Box {
       _store.containsKey(key) ? _store[key] : defaultValue;
 
   @override
+  bool containsKey(dynamic key) => _store.containsKey(key);
+
+  @override
   Future<void> put(dynamic key, dynamic value) async {
     _store[key] = value;
   }
@@ -126,6 +129,41 @@ void main() {
       final ok = await repo.deleteProgressRecord(created!.id);
       expect(ok, isTrue);
       expect(await repo.getProgressRecord(created.id), isNull);
+    });
+  });
+
+  group('restoreRecord (login recovery)', () {
+    test('writes a server record and makes it queryable', () async {
+      final ok = await repo.restoreRecord(_record(
+        id: 'srv-1',
+        date: DateTime.now(),
+        syncStatus: SyncStatus.synced,
+      ));
+      expect(ok, isTrue);
+      expect(box._store.containsKey('srv-1'), isTrue);
+
+      final today = await repo.getTodayProgress('c1');
+      expect(today.map((r) => r.id), contains('srv-1'));
+    });
+
+    test('is idempotent — re-restoring the same id does not duplicate', () async {
+      final first = await repo.restoreRecord(_record(id: 'srv-1'));
+      final second = await repo.restoreRecord(_record(id: 'srv-1'));
+      expect(first, isTrue);
+      expect(second, isFalse);
+
+      final all = await repo.getProgressForChild('c1');
+      expect(all.where((r) => r.id == 'srv-1').length, 1);
+    });
+
+    test('never overwrites an existing local completion', () async {
+      seed(_record(id: 'srv-1', score: 95));
+      final restored =
+          await repo.restoreRecord(_record(id: 'srv-1', score: 10));
+      expect(restored, isFalse);
+
+      final r = await repo.getProgressRecord('srv-1');
+      expect(r!.score, 95);
     });
   });
 

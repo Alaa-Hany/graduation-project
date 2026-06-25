@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/app.dart';
 import 'package:kinder_world/core/models/child_avatar_customization.dart';
+import 'package:kinder_world/core/providers/gamification_provider.dart';
 import 'package:kinder_world/core/providers/shared_preferences_provider.dart';
 import 'package:kinder_world/core/services/child_avatar_customization_service.dart';
 
@@ -17,6 +20,7 @@ class ChildAvatarCustomizationNotifier
   ChildAvatarCustomizationNotifier({
     required ChildAvatarCustomizationService service,
     required String childId,
+    this.onSaved,
   })  : _service = service,
         _childId = childId,
         super(const AsyncValue.loading()) {
@@ -25,6 +29,10 @@ class ChildAvatarCustomizationNotifier
 
   final ChildAvatarCustomizationService _service;
   final String _childId;
+
+  /// Called after a successful save so the caller can back the new avatar up to
+  /// the server (fire-and-forget).
+  final void Function()? onSaved;
 
   Future<void> load() async {
     state = const AsyncValue.loading();
@@ -36,6 +44,8 @@ class ChildAvatarCustomizationNotifier
     final success = await _service.save(_childId, customization);
     if (!success) {
       await load();
+    } else {
+      onSaved?.call();
     }
     return success;
   }
@@ -50,6 +60,9 @@ final childAvatarCustomizationProvider = StateNotifierProvider.autoDispose
   return ChildAvatarCustomizationNotifier(
     service: ref.watch(childAvatarCustomizationServiceProvider),
     childId: childId,
+    onSaved: () => unawaited(
+      ref.read(clientStateSyncServiceProvider).push(childId),
+    ),
   );
 });
 

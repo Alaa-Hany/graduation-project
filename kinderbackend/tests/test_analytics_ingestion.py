@@ -10,6 +10,7 @@ from models import ChildActivityEvent, ChildDailyActivitySummary, ChildSessionLo
 
 EVENTS_URL = "/api/v1/analytics/events"
 SESSIONS_URL = "/api/v1/analytics/sessions"
+GAMIFICATION_URL = "/api/v1/analytics/gamification"
 BASIC_REPORTS_URL = "/api/v1/reports/basic"
 
 
@@ -130,6 +131,36 @@ def test_cannot_ingest_event_for_another_parents_child(
     resp = client.post(
         EVENTS_URL,
         json={"child_id": child.id, "event_type": "lesson_completed"},
+        headers=other_headers,
+    )
+    assert resp.status_code in {403, 404}
+
+
+def test_sync_and_persist_gamification_state(client, db, parent, child, parent_headers):
+    resp = client.put(
+        GAMIFICATION_URL,
+        json={
+            "child_id": child.id,
+            "updated_at": 1750000000000,
+            "data": {f"gam_coins_{child.id}": 75, f"store_owned_{child.id}": "[\"hat_1\"]"},
+        },
+        headers=parent_headers,
+    )
+    assert resp.status_code == 200
+
+    from models import ChildProfile
+
+    refreshed = db.query(ChildProfile).filter(ChildProfile.id == child.id).first()
+    assert refreshed.gamification_state["data"][f"gam_coins_{child.id}"] == 75
+
+
+def test_cannot_sync_gamification_for_another_parents_child(
+    client, db, create_parent, auth_headers, child
+):
+    other_headers = auth_headers(create_parent(email="other.gam@example.invalid"))
+    resp = client.put(
+        GAMIFICATION_URL,
+        json={"child_id": child.id, "updated_at": 1, "data": {}},
         headers=other_headers,
     )
     assert resp.status_code in {403, 404}

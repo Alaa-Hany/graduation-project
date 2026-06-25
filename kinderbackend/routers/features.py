@@ -14,8 +14,9 @@ from core.report_cache import (
 from core.system_settings import require_ai_buddy_enabled
 from deps import AnalyticsPrincipal, get_analytics_principal, get_db, require_feature
 from models import User
-from schemas.analytics import ActivityEventIn, SessionLogIn
+from schemas.analytics import ActivityEventIn, GamificationStateIn, SessionLogIn
 from services.analytics_service import analytics_service
+from services.child_service import save_gamification_state
 from services.child_development_service import child_development_service
 from services.notification_service import notification_service
 from services.parental_controls_service import list_parent_child_controls
@@ -67,6 +68,24 @@ def ingest_session_log(
     # New screen-time data changes report aggregates → drop cached reports.
     invalidate_report_cache(principal.parent.id)
     return result
+
+
+@router.put("/analytics/gamification")
+def sync_gamification_state(
+    payload: GamificationStateIn,
+    db: Session = Depends(get_db),
+    principal: AnalyticsPrincipal = Depends(get_analytics_principal),
+):
+    """Persist the child's local-first gamification snapshot (coins, badges,
+    achievements, reward-store purchases) so it survives a fresh device / web
+    storage reset. Child tokens may only write their own id."""
+    _authorize_child_scope(principal, payload.child_id)
+    return save_gamification_state(
+        child_id=payload.child_id,
+        state={"updated_at": payload.updated_at, "data": payload.data},
+        db=db,
+        parent=principal.parent,
+    )
 
 
 # ===============================

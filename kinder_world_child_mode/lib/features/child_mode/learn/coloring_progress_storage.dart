@@ -17,9 +17,29 @@ class ColoringProgressData {
 class ColoringProgressStorage {
   static const String _prefix = 'coloring_progress_v1_';
 
-  static Future<ColoringProgressData> load(String svgAssetPath) async {
+  /// Prefix scoping every key for a single child. Used by the cross-device sync
+  /// so one child's snapshot never carries another child's coloring.
+  static String childPrefix(String childId) => '$_prefix$childId.';
+
+  static Future<ColoringProgressData> load(
+    String svgAssetPath, {
+    required String childId,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_key(svgAssetPath));
+    var raw = prefs.getString(_key(svgAssetPath, childId));
+    if (raw == null || raw.isEmpty) {
+      // One-time migration: earlier builds stored coloring progress under a
+      // child-agnostic key shared by every child on the device. Claim it for
+      // the first child that opens this drawing, then drop the legacy key so a
+      // second child doesn't inherit it.
+      final legacyKey = _legacyKey(svgAssetPath);
+      final legacyRaw = prefs.getString(legacyKey);
+      if (legacyRaw != null && legacyRaw.isNotEmpty) {
+        await prefs.setString(_key(svgAssetPath, childId), legacyRaw);
+        await prefs.remove(legacyKey);
+        raw = legacyRaw;
+      }
+    }
     if (raw == null || raw.isEmpty) {
       return const ColoringProgressData(
           colors: <String, Color>{}, isCompleted: false);
@@ -55,6 +75,7 @@ class ColoringProgressStorage {
 
   static Future<void> save({
     required String svgAssetPath,
+    required String childId,
     required Map<String, Color> colors,
     required bool isCompleted,
   }) async {
@@ -67,10 +88,15 @@ class ColoringProgressStorage {
       'updatedAt': DateTime.now().toIso8601String(),
     };
 
-    await prefs.setString(_key(svgAssetPath), jsonEncode(payload));
+    await prefs.setString(_key(svgAssetPath, childId), jsonEncode(payload));
   }
 
-  static String _key(String svgAssetPath) =>
+  // The `.` separator is not part of the base64url alphabet, so a child-scoped
+  // key can never be confused with a legacy (child-agnostic) one.
+  static String _key(String svgAssetPath, String childId) =>
+      '${childPrefix(childId)}${base64Url.encode(utf8.encode(svgAssetPath))}';
+
+  static String _legacyKey(String svgAssetPath) =>
       '$_prefix${base64Url.encode(utf8.encode(svgAssetPath))}';
 
   static Color? _parseColor(String hex) {
