@@ -555,7 +555,9 @@ class _ColoringVideoPlayerScreen extends StatelessWidget {
         .trim();
     final videoUrl = (item.preferredVideoUrl ?? '').trim();
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF8E1),
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? Theme.of(context).scaffoldBackgroundColor
+          : const Color(0xFFFFF8E1),
       body: SafeArea(
         child: Column(
           children: [

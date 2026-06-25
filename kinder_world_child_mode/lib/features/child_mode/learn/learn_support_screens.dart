@@ -1,6 +1,26 @@
 ﻿// ignore_for_file: prefer_const_constructors, unused_element, unused_element_parameter
 part of 'learn_screen.dart';
 
+/// Many of these screens hardcode a light pastel Scaffold background that does
+/// not follow the dark theme. In dark mode we fall back to the theme's dark
+/// scaffold background so these inner screens match the rest of the (dark) app;
+/// in light mode we keep the original pastel color.
+Color _adaptivePastelBackground(BuildContext context, Color light) {
+  final theme = Theme.of(context);
+  return theme.brightness == Brightness.dark
+      ? theme.scaffoldBackgroundColor
+      : light;
+}
+
+/// White cards/search bars become bright "islands" on the dark background.
+/// Use a dark surface in dark mode, white in light mode.
+Color _adaptiveCardSurface(BuildContext context) {
+  final theme = Theme.of(context);
+  return theme.brightness == Brightness.dark
+      ? theme.colorScheme.surfaceContainerHigh
+      : Colors.white;
+}
+
 class EntertainingScreen extends ConsumerWidget {
   const EntertainingScreen({super.key});
 
@@ -10,7 +30,7 @@ class EntertainingScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: Color(0xFFF3E5F5),
+      backgroundColor: _adaptivePastelBackground(context, const Color(0xFFF3E5F5)),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -28,7 +48,7 @@ class EntertainingScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white.withValuesCompat(alpha: 0.8),
+                color: _adaptiveCardSurface(context).withValuesCompat(alpha: 0.8),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
@@ -956,7 +976,7 @@ class _EntertainmentDetailScreenState
     final isGamesCategory = widget.categoryTitle == 'Games';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3E5F5),
+      backgroundColor: _adaptivePastelBackground(context, const Color(0xFFF3E5F5)),
       appBar: AppBar(
         title: Text(
           _localizedCategoryTitle(l10n),
@@ -3872,7 +3892,7 @@ class _LevelGridShell<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF8FB),
+      backgroundColor: _adaptivePastelBackground(context, const Color(0xFFFFF8FB)),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -4127,7 +4147,7 @@ class _GameScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF8FB),
+      backgroundColor: _adaptivePastelBackground(context, const Color(0xFFFFF8FB)),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -4262,7 +4282,7 @@ class BehavioralScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: Color(0xFFE8F5E9),
+      backgroundColor: _adaptivePastelBackground(context, const Color(0xFFE8F5E9)),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -4378,7 +4398,7 @@ class ValueDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFE8F5E9),
+      backgroundColor: _adaptivePastelBackground(context, const Color(0xFFE8F5E9)),
       appBar: AppBar(
         title: Text(
           valueTitle,
@@ -4596,7 +4616,7 @@ class _MethodContentScreenState extends ConsumerState<MethodContentScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: Color(0xFFE8F5E9),
+      backgroundColor: _adaptivePastelBackground(context, const Color(0xFFE8F5E9)),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -4633,7 +4653,7 @@ class _MethodContentScreenState extends ConsumerState<MethodContentScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValuesCompat(alpha: 0.8),
+                    color: _adaptiveCardSurface(context).withValuesCompat(alpha: 0.8),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Row(
@@ -4857,7 +4877,7 @@ class _BehavioralContentDetailScreenState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: Color(0xFFE8F5E9),
+      backgroundColor: _adaptivePastelBackground(context, const Color(0xFFE8F5E9)),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -4969,7 +4989,7 @@ class SkillfulScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: Color(0xFFFFF3E0),
+      backgroundColor: _adaptivePastelBackground(context, const Color(0xFFFFF3E0)),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -5252,7 +5272,8 @@ class _SkillDetailScreenState extends ConsumerState<SkillDetailScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: Color(0xFFFFF3E0).withValuesCompat(alpha: 0.5),
+      backgroundColor: _adaptivePastelBackground(
+          context, const Color(0xFFFFF3E0).withValuesCompat(alpha: 0.5)),
       body: SafeArea(
         child: Column(
           children: [
@@ -5290,7 +5311,7 @@ class _SkillDetailScreenState extends ConsumerState<SkillDetailScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: _adaptiveCardSurface(context),
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
@@ -5336,18 +5357,22 @@ class _SkillDetailScreenState extends ConsumerState<SkillDetailScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: isSelected ? AppColors.skillful : Colors.white,
+                          color: isSelected
+                              ? AppColors.skillful
+                              : _adaptiveCardSurface(context),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: isSelected
                                 ? AppColors.skillful
-                                : Colors.grey[300]!,
+                                : Theme.of(context).dividerColor,
                           ),
                         ),
                         child: Text(
                           _levelLabel(level, l10n),
                           style: TextStyle(
-                            color: isSelected ? Colors.white : Colors.grey[700],
+                            color: isSelected
+                                ? Colors.white
+                                : Theme.of(context).colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -5680,7 +5705,7 @@ class _SkillVideoScreenState extends ConsumerState<SkillVideoScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: Color(0xFFFFF8E1),
+      backgroundColor: _adaptivePastelBackground(context, const Color(0xFFFFF8E1)),
       body: SafeArea(
         child: Column(
           children: [
@@ -6067,7 +6092,7 @@ class EducationalScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: Color(0xFFE3F2FD),
+      backgroundColor: _adaptivePastelBackground(context, const Color(0xFFE3F2FD)),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -6085,7 +6110,7 @@ class EducationalScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white.withValuesCompat(alpha: 0.8),
+                color: _adaptiveCardSurface(context).withValuesCompat(alpha: 0.8),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
@@ -6343,7 +6368,7 @@ class _EducationalSubjectScreenState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: Color(0xFFE3F2FD),
+      backgroundColor: _adaptivePastelBackground(context, const Color(0xFFE3F2FD)),
       body: SafeArea(
         child: Column(
           children: [
@@ -6381,7 +6406,7 @@ class _EducationalSubjectScreenState
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: _adaptiveCardSurface(context),
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
@@ -6427,19 +6452,22 @@ class _EducationalSubjectScreenState
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color:
-                              isSelected ? AppColors.educational : Colors.white,
+                          color: isSelected
+                              ? AppColors.educational
+                              : _adaptiveCardSurface(context),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: isSelected
                                 ? AppColors.educational
-                                : Colors.grey[300]!,
+                                : Theme.of(context).dividerColor,
                           ),
                         ),
                         child: Text(
                           _levelLabel(level, l10n),
                           style: TextStyle(
-                            color: isSelected ? Colors.white : Colors.grey[700],
+                            color: isSelected
+                                ? Colors.white
+                                : Theme.of(context).colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -6757,7 +6785,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: Color(0xFFE1F5FE),
+      backgroundColor: _adaptivePastelBackground(context, const Color(0xFFE1F5FE)),
       body: SafeArea(
         child: Column(
           children: [
@@ -7002,7 +7030,7 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
     final currentQ = _quizData[_currentQuestionIndex];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF3E0),
+      backgroundColor: _adaptivePastelBackground(context, const Color(0xFFFFF3E0)),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -7587,7 +7615,7 @@ class _CmsQuizScreenState extends ConsumerState<CmsQuizScreen> {
 
     if (questions.isEmpty) {
       return Scaffold(
-        backgroundColor: const Color(0xFFFFF3E0),
+        backgroundColor: _adaptivePastelBackground(context, const Color(0xFFFFF3E0)),
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -7603,7 +7631,7 @@ class _CmsQuizScreenState extends ConsumerState<CmsQuizScreen> {
     final currentQ = questions[_currentQuestionIndex];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF3E0),
+      backgroundColor: _adaptivePastelBackground(context, const Color(0xFFFFF3E0)),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
