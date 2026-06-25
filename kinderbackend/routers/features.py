@@ -16,8 +16,8 @@ from deps import AnalyticsPrincipal, get_analytics_principal, get_db, require_fe
 from models import User
 from schemas.analytics import ActivityEventIn, GamificationStateIn, SessionLogIn
 from services.analytics_service import analytics_service
-from services.child_service import save_gamification_state
 from services.child_development_service import child_development_service
+from services.child_service import save_gamification_state
 from services.notification_service import notification_service
 from services.parental_controls_service import list_parent_child_controls
 from services.premium_behavior_service import premium_behavior_service

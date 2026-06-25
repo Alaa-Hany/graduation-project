@@ -557,10 +557,7 @@ class ChildService:
             # The badge key the client checks against is the activity_id it sent
             # in metadata_json; lesson_id mirrors it for lessons only.
             activity_id = (
-                meta.get("activity_id")
-                or row.lesson_id
-                or row.activity_name
-                or f"event_{row.id}"
+                meta.get("activity_id") or row.lesson_id or row.activity_name or f"event_{row.id}"
             )
             records.append(
                 {

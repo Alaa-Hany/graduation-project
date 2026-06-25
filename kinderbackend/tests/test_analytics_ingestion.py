@@ -142,7 +142,7 @@ def test_sync_and_persist_gamification_state(client, db, parent, child, parent_h
         json={
             "child_id": child.id,
             "updated_at": 1750000000000,
-            "data": {f"gam_coins_{child.id}": 75, f"store_owned_{child.id}": "[\"hat_1\"]"},
+            "data": {f"gam_coins_{child.id}": 75, f"store_owned_{child.id}": '["hat_1"]'},
         },
         headers=parent_headers,
     )

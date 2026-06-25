@@ -46,7 +46,7 @@ class GamificationStateIn(BaseModel):
             "example": {
                 "child_id": 1,
                 "updated_at": 1750000000000,
-                "data": {"gam_coins_1": 120, "store_owned_1": "[\"hat_1\"]"},
+                "data": {"gam_coins_1": 120, "store_owned_1": '["hat_1"]'},
             }
         }
     )

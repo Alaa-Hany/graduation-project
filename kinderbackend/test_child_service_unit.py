@@ -373,7 +373,7 @@ def test_save_and_login_returns_gamification_state(service, db, create_parent):
 
     state = {
         "updated_at": 1750000000000,
-        "data": {f"gam_coins_{child.id}": 120, f"store_owned_{child.id}": "[\"hat_1\"]"},
+        "data": {f"gam_coins_{child.id}": 120, f"store_owned_{child.id}": '["hat_1"]'},
     }
     res = service.save_gamification_state(child_id=child.id, state=state, db=db)
     assert res["applied"] is True
