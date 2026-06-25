@@ -136,6 +136,12 @@
       document.getElementById("splash-branding")?.remove();
       document.body.style.background = "transparent";
     }
+
+    // The Flutter engine dispatches `flutter-first-frame` on `window` once the
+    // app has rendered its first frame. Without this listener the native splash
+    // above is never removed, so the blue logo page stays up forever and the
+    // Flutter splash only flashes through underneath it.
+    window.addEventListener("flutter-first-frame", removeSplashFromWeb);
   </script>
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
 </head>
