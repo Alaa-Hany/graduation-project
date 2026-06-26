@@ -3909,4 +3909,526 @@ class AppLocalizationsAr extends AppLocalizationsEn {
 
   @override
   String get playVideoLaunchFailed => 'تعذر فتح رابط الفيديو.';
+
+  // ── Activity of the Day ──
+  @override
+  String activitiesCompletedAmazing(int count) =>
+      '🎯 أنهيت $count أنشطة — رائع!';
+
+  @override
+  String activityCount(int count) => '$count نشاط متاح';
+
+  @override
+  String activityMinutes(int minutes) => '$minutes د';
+
+  @override
+  String get activityOfDayCompletedCta => 'تم! +50 نقطة خبرة';
+
+  @override
+  String get activityOfDayFindColorsSubtitle =>
+      'أشر إلى شيء أحمر، وشيء أزرق، وشيء أخضر.';
+
+  @override
+  String get activityOfDayFindColorsTitle => 'دوّر على 3 ألوان';
+
+  @override
+  String get activityOfDayFinishCta => 'إنهاء النشاط';
+
+  @override
+  String get activityOfDayMissionTitle => 'مهمتك';
+
+  @override
+  String get activityOfDayShareSmileSubtitle =>
+      'اعمل تصفيقة (high-five) أو قول كلمة لطيفة لحد.';
+
+  @override
+  String get activityOfDayShareSmileTitle => 'شارك ابتسامة';
+
+  @override
+  String get activityOfDaySpotShapesSubtitle =>
+      'دوّر على دائرة ومربع حواليك.';
+
+  @override
+  String get activityOfDaySpotShapesTitle => 'لاحظ شكلين';
+
+  @override
+  String get activityOfDayStartCta => 'ابدأ النشاط';
+
+  @override
+  String get activityOfDayTimeHint => 'هياخد حوالي 5 دقايق، استمتع!';
+
+  @override
+  String get activityOfDayTreasureHuntSubtitle =>
+      'دوّر على ألوان وأشكال حواليك';
+
+  @override
+  String get activityOfDayTreasureHuntTitle => 'رحلة البحث عن الكنز';
+
+  @override
+  String activityXp(int xp) => '$xp نقطة خبرة';
+
+  // ── Admin ──
+  @override
+  String adminAdminsRemoveRoleConfirm(String roleName) =>
+      'إزالة دور $roleName من هذا المسؤول؟';
+
+  @override
+  String adminChildrenDetailTitle(String name) => 'تفاصيل الطفل: $name';
+
+  @override
+  String get adminCmsAdvancedJsonHelp =>
+      'استخدم هذا الحقل فقط للبيانات الإضافية غير المتاحة في النموذج المنظم.';
+
+  @override
+  String get adminCmsAdvancedJsonTitle => 'JSON متقدم';
+
+  @override
+  String get adminCmsContentSaved => 'تم حفظ المحتوى';
+
+  @override
+  String get adminCmsMetadataDifficultyLabel => 'الصعوبة';
+
+  @override
+  String get adminCmsMetadataDurationLabel => 'المدة (بالدقائق)';
+
+  @override
+  String get adminCmsMetadataFeaturedLabel => 'مميز';
+
+  @override
+  String get adminCmsMetadataTagsLabel => 'الوسوم';
+
+  @override
+  String get adminCmsOptionAdd => 'إضافة خيار';
+
+  @override
+  String get adminCmsOptionRemove => 'إزالة خيار';
+
+  @override
+  String get adminCmsPreviewArabicSection => 'معاينة بالعربية';
+
+  @override
+  String get adminCmsPreviewEmpty => 'لا يوجد شيء للمعاينة حتى الآن';
+
+  @override
+  String get adminCmsPreviewEnglishSection => 'معاينة بالإنجليزية';
+
+  @override
+  String get adminCmsPreviewMetadataSection => 'البيانات الوصفية';
+
+  @override
+  String get adminCmsPreviewQuestionsSection => 'الأسئلة';
+
+  @override
+  String get adminCmsPublishConfirmMessage =>
+      'سيصبح هذا العنصر مرئيًا في التطبيق. هل تريد الاستمرار؟';
+
+  @override
+  String get adminCmsPublishConfirmTitle => 'نشر المحتوى';
+
+  @override
+  String get adminCmsPublishSuccess => 'تم نشر المحتوى';
+
+  @override
+  String get adminCmsQuestionAdd => 'إضافة سؤال';
+
+  @override
+  String get adminCmsQuestionCorrectAnswerLabel => 'الإجابة الصحيحة';
+
+  @override
+  String get adminCmsQuestionExplanationArLabel => 'الشرح بالعربية';
+
+  @override
+  String get adminCmsQuestionExplanationEnLabel => 'الشرح بالإنجليزية';
+
+  @override
+  String adminCmsQuestionLabel(int number) => 'السؤال $number';
+
+  @override
+  String adminCmsQuestionOptionLabel(int number) => 'الخيار $number';
+
+  @override
+  String get adminCmsQuestionOptionsLabel => 'خيارات الإجابة';
+
+  @override
+  String get adminCmsQuestionPromptArLabel => 'نص السؤال بالعربية';
+
+  @override
+  String get adminCmsQuestionPromptEnLabel => 'نص السؤال بالإنجليزية';
+
+  @override
+  String get adminCmsQuestionRemove => 'إزالة السؤال';
+
+  @override
+  String get adminCmsQuizPreviewAction => 'معاينة الاختبار';
+
+  @override
+  String get adminCmsStructuredMetadataTitle => 'بيانات وصفية منظمة';
+
+  @override
+  String get adminCmsUnpublishConfirmMessage =>
+      'سيتم نقل هذا العنصر إلى المسودات مرة أخرى. هل تريد الاستمرار؟';
+
+  @override
+  String get adminCmsUnpublishConfirmTitle => 'إلغاء نشر المحتوى';
+
+  @override
+  String get adminCmsUnpublishSuccess => 'تم نقل المحتوى إلى المسودات';
+
+  @override
+  String get adminCmsValidationBodyArRequired =>
+      'النص بالعربية مطلوب قبل النشر';
+
+  @override
+  String get adminCmsValidationBodyEnRequired =>
+      'النص بالإنجليزية مطلوب قبل النشر';
+
+  @override
+  String get adminCmsValidationInvalidAgeGroup =>
+      'استخدم فئة عمرية مثل 5-7 أو 8+';
+
+  @override
+  String get adminCmsValidationInvalidJsonList =>
+      'يجب أن يكون JSON الاختبار المتقدم على هيئة قائمة (list)';
+
+  @override
+  String get adminCmsValidationInvalidJsonObject =>
+      'يجب أن تكون البيانات الوصفية المتقدمة على هيئة كائن JSON (object)';
+
+  @override
+  String get adminCmsValidationInvalidJsonSyntax =>
+      'أدخل JSON صحيح قبل الحفظ';
+
+  @override
+  String get adminCmsValidationInvalidUrl => 'أدخل رابط http أو https صحيح';
+
+  @override
+  String get adminCmsValidationQuestionCorrectAnswerRequired =>
+      'اختر إجابة صحيحة لكل سؤال';
+
+  @override
+  String get adminCmsValidationQuestionOptionTextRequired =>
+      'كل خيار إجابة يحتاج إلى نص';
+
+  @override
+  String get adminCmsValidationQuestionOptionsRequired =>
+      'كل سؤال يحتاج إلى خيارين على الأقل';
+
+  @override
+  String get adminCmsValidationQuestionPromptRequired =>
+      'كل سؤال يحتاج إلى نص بالإنجليزية أو العربية';
+
+  @override
+  String get adminCmsValidationQuestionRequired =>
+      'أضف سؤالًا واحدًا على الأقل قبل النشر';
+
+  @override
+  String get adminCmsValidationTitleArRequired => 'العنوان بالعربية مطلوب';
+
+  @override
+  String get adminCmsValidationTitleEnRequired => 'العنوان بالإنجليزية مطلوب';
+
+  @override
+  String adminPaginationSummary(int page, int totalPages, int total) =>
+      'صفحة $page من $totalPages • $total سجل';
+
+  @override
+  String adminRoleStats(int permissionCount, int adminCount) =>
+      '$permissionCount صلاحية • $adminCount مسؤول';
+
+  @override
+  String adminSupportMessagesCount(int count) => '$count رسالة';
+
+  @override
+  String adminUsersDetailTitle(String email) => 'تفاصيل المستخدم: $email';
+
+  // ── AI Buddy Responses ──
+  @override
+  String get aiDefaultResponse =>
+      'ده حاجة حلوة! قولّي كمان. أنا هنا لمساعدتك تتعلم وتستمتع كل يوم!';
+
+  @override
+  String get aiGameResponse =>
+      'يااه، ألعاب! 🎮 جرّب "Puzzle Builder" في قسم المهارات. لعبة حلوة وبتقوّي عقلك!';
+
+  @override
+  String get aiMathResponse =>
+      'أنا كمان بحب الرياضيات! 🔢 جرّب ده: 3 + 5 = ؟ تيجي نلعب لعبة أرقام سريعة؟';
+
+  @override
+  String get aiQuickActionFactResponse =>
+      '🧠 تعرف إن الأخطبوط له 3 قلوب ودمّه أزرق؟ الطبيعة عجيبة!';
+
+  @override
+  String get aiQuickActionFallbackResponse => 'عندي حاجة حلوة لك!';
+
+  @override
+  String get aiQuickActionGameResponse =>
+      '🎮 جرّب "Puzzle Challenge" دلوقتي. بتقوّي مهارتك في حل المشاكل!';
+
+  @override
+  String get aiQuickActionLessonResponse =>
+      '📚 أنا أنصحك بـ"Numbers Adventure". مناسب لمستواك وممتع جدًا!';
+
+  @override
+  String get aiQuickActionMotivationResponse =>
+      '⭐ أنت بتعمل حاجة رائعة! كل حاجة جديدة تتعلمها بتقوّي عقلك. يلا كمّل!';
+
+  @override
+  String get aiQuickActionStoryResponse =>
+      '📖 حكاية سريعة: سامي المستكشف العلمي لقى جرعة سحرية... بس كانت بس عصير برتقال! 😄';
+
+  @override
+  String get aiSadResponse =>
+      'أنا حزين إنك حاسس كده 💙. مفيش مشكلة إن حاسيسك تكون كبيرة. تحب حاجة تفرحك؟';
+
+  @override
+  String get aiStoryResponse =>
+      'في يوم من الأيام في عالم كيندر وورلد، مستكشف صغير وشجاع اكتشف إن التعلّم هو أعظم مغامرة على الإطلاق. ✨';
+
+  @override
+  String get aiTiredResponse =>
+      'الراحة مهمة كمان 😴. جرّب نشاط هادئ بسيط زي التلوين النهارده.';
+
+  @override
+  String get aiWelcomeGreeting =>
+      'أهلًا! أنا كيندر، صاحبك في التعلّم. أساعدك إزاي النهارده؟';
+
+  // ── Misc ──
+  @override
+  String get alertLabel => 'تنبيه';
+
+  @override
+  String buildLabel(String buildNumber) => 'الإصدار $buildNumber';
+
+  // ── Child Profile Setup ──
+  @override
+  String get childProfileAvatarSubtitle => 'اختر شخصية مرحة تمثل طفلك';
+
+  @override
+  String get childProfileAvatarTitle => 'اختر صورة رمزية';
+
+  @override
+  String get childProfileBasicInfoSubtitle =>
+      'ده بيساعدنا نخصص تجربة التعلّم له';
+
+  @override
+  String get childProfileBasicInfoTitle => 'قولّنا عن طفلك';
+
+  @override
+  String get childProfileInterestsSubtitle =>
+      'اختر حتى 5 اهتمامات (اختياري)';
+
+  @override
+  String get childProfileInterestsTitle => 'إيه اهتمامات طفلك؟';
+
+  @override
+  String get childProfilePicturePasswordSubtitle =>
+      'اختر 3 صور هيتذكرها طفلك';
+
+  @override
+  String get childProfilePicturePasswordTitle => 'اعمل كلمة سر بالصور';
+
+  @override
+  String completeActivitiesToday(int n) => 'أكمل $n أنشطة النهارده';
+
+  @override
+  String couldNotLoadColoringPage(String error) =>
+      'تعذر تحميل صفحة التلوين: $error';
+
+  @override
+  String daysAgoCount(int count) => 'منذ $count يوم';
+
+  // ── Gamification ──
+  @override
+  String get gamificationAchievementUnlocked => 'تم فتح إنجاز جديد!';
+
+  @override
+  String get gamificationAchievementsUnlocked => 'الإنجازات المفتوحة';
+
+  @override
+  String get gamificationActivitiesCompleted => 'الأنشطة المكتملة';
+
+  @override
+  String get gamificationBadgesEarned => 'الشارات المكتسبة';
+
+  @override
+  String get gamificationCurrentStreak => 'التتابع الحالي';
+
+  @override
+  String get gamificationLevelLabel => 'المستوى';
+
+  @override
+  String gamificationLevelTitle(int level) => 'المستوى $level';
+
+  @override
+  String get gamificationLevelUp => 'ترقية مستوى!';
+
+  @override
+  String get gamificationNoAchievementsYet =>
+      'لا توجد إنجازات حتى الآن — استمر في الاستكشاف!';
+
+  @override
+  String get gamificationNoBadgesYet => 'لا توجد شارات حتى الآن — يلا كمّل!';
+
+  @override
+  String get gamificationParentSnapshot => 'لقطة سريعة لتقدّم الطفل';
+
+  @override
+  String get gamificationParentSnapshotSubtitle =>
+      'نظرة عامة على نظام التحفيز لهذا الطفل';
+
+  @override
+  String get gamificationProgressSection => 'التقدّم';
+
+  @override
+  String get gamificationRecentBadges => 'الشارات الأخيرة';
+
+  @override
+  String get gamificationSeeAllAchievements => 'عرض كل الإنجازات';
+
+  @override
+  String get gamificationStreakLabel => 'أيام متتالية';
+
+  @override
+  String get gamificationSubtitle => 'تابع تقدّمك واكسب جوائز!';
+
+  @override
+  String get gamificationTitle => 'إنجازاتي';
+
+  @override
+  String get gamificationTotalXp => 'إجمالي نقاط الخبرة';
+
+  @override
+  String get gamificationViewAll => 'عرض الكل';
+
+  @override
+  String get gamificationXpLabel => 'نقاط الخبرة';
+
+  @override
+  String gamificationXpToNext(int xp) => '$xp نقطة خبرة للمستوى التالي';
+
+  @override
+  String get inactiveLabel => 'غير نشط';
+
+  @override
+  String interactiveFillDisabled(String error) => 'تم تعطيل التفاعل: $error';
+
+  @override
+  String get labelId => 'المعرّف';
+
+  // ── Legal Pages ──
+  @override
+  String get legalCoppaFooterText => 'الأهل في السيطرة دايمًا، والأطفال في أمان.';
+
+  @override
+  String get legalCoppaHeroSubtitle => 'مصمم للأطفال بعناية وحماية إضافية.';
+
+  @override
+  String get legalCoppaHeroTitle => 'الأطفال أولًا';
+
+  @override
+  String get legalCoppaSectionTitle => 'الالتزام بمعيار COPPA';
+
+  @override
+  String get legalPrivacyFooterText => 'استخدام شفاف للبيانات، دايمًا.';
+
+  @override
+  String get legalPrivacyHeroSubtitle =>
+      'نجمع فقط ما نحتاجه لمساعدة طفلك على النمو.';
+
+  @override
+  String get legalPrivacyHeroTitle => 'بياناتك تحت سيطرتك';
+
+  @override
+  String get legalPrivacySectionTitle => 'تفاصيل الخصوصية';
+
+  @override
+  String get legalTermsFooterText =>
+      'نحمي عائلتك ونوضّح كل شيء بكل بساطة.';
+
+  @override
+  String get legalTermsHeroSubtitle => 'إزاي بنحافظ على كيندر وورلد آمن وودود.';
+
+  @override
+  String get legalTermsHeroTitle => 'قواعد واضحة وبسيطة';
+
+  @override
+  String get legalTermsSectionTitle => 'اتفاقيتك معنا';
+
+  // ── Lesson ──
+  @override
+  String get lessonAnswerOptionA => 'الإجابة أ';
+
+  @override
+  String get lessonAnswerOptionB => 'الإجابة ب';
+
+  @override
+  String get lessonAnswerOptionC => 'الإجابة ج';
+
+  @override
+  String get lessonContentFallback =>
+      'هنا يظهر محتوى الدرس الأساسي، وقد يشمل نصوصًا أو صورًا أو فيديوهات أو أنشطة تفاعلية.';
+
+  @override
+  String levelBadge(int level) => 'مستوى $level';
+
+  @override
+  String levelBubble(int level) => 'مستوى$level';
+
+  @override
+  String messageSentToParent(String email) =>
+      'أرسلنا رسالة لوالدك/والدتك على\n$email';
+
+  @override
+  String minutesShort(int minutes) => '$minutes د';
+
+  @override
+  String get notAvailable => 'غير متاح';
+
+  @override
+  String planActivated(String planName) => 'تم تفعيل $planName.';
+
+  @override
+  String planChildProfiles(int count) => 'حتى $count ملف طفل';
+
+  @override
+  String get pleaseEnterChildName => 'من فضلك أدخل اسم طفلك';
+
+  @override
+  String resetLinkSentTo(String email) =>
+      'أرسلنا رابط إعادة تعيين كلمة المرور إلى\n$email';
+
+  @override
+  String skillVideoAdvanced(String skill) => '$skill متقدم';
+
+  @override
+  String skillVideoBasics(String skill) => 'أساسيات $skill';
+
+  @override
+  String skillVideoFun(String skill) => '$skill بطريقة ممتعة';
+
+  @override
+  String skillVideoMastering(String skill) => 'احترف $skill';
+
+  @override
+  String streakDaysStrong(int streak) => '⚡ $streak يوم متتالي، يلا كمّل!';
+
+  @override
+  String streakOnFire(int streak) => '🏆 تتابع 7 أيام أو أكثر — أنت مشتعل!';
+
+  @override
+  String versionBuildLabel(String version, String build) =>
+      'الإصدار $version (بناء $build)';
+
+  @override
+  String versionLabel(String version) => 'الإصدار $version';
+
+  @override
+  String xpDisplay(int xp) => '⭐ $xp نقطة خبرة';
+
+  @override
+  String xpToNextLevel(int xp) => '$xp للمستوى التالي';
+
+  @override
+  String xpValue(int xp) => '$xp نقطة خبرة';
 }

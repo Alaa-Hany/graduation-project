@@ -4683,7 +4683,14 @@ class _MethodContentScreenState extends ConsumerState<MethodContentScreen> {
       onTap: () => _openActivityAndRefresh(
         context,
         ref,
-        _BehavioralContentDetailScreen(item: item),
+        SkillVideoScreen(
+          videoTitle: title,
+          videoUrl: item.preferredVideoUrl,
+          thumbnailUrl: item.effectiveThumbnailUrl,
+          description: description.isNotEmpty ? description : null,
+          quizzes: item.quizzes,
+          axisKey: _resolveCmsItemAxisKey(item) ?? 'behavioral',
+        ),
       ),
       borderRadius: BorderRadius.circular(20),
       child: Container(
@@ -4780,142 +4787,6 @@ class _MethodContentScreenState extends ConsumerState<MethodContentScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _BehavioralContentDetailScreen extends ConsumerStatefulWidget {
-  const _BehavioralContentDetailScreen({required this.item});
-
-  final PublicContentItem item;
-
-  @override
-  ConsumerState<_BehavioralContentDetailScreen> createState() =>
-      _BehavioralContentDetailScreenState();
-}
-
-class _BehavioralContentDetailScreenState
-    extends ConsumerState<_BehavioralContentDetailScreen> {
-  late Future<PublicContentItem?> _itemFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _itemFuture =
-        ref.read(publicContentRepositoryProvider).fetchItem(widget.item.slug);
-  }
-
-  String _localized(String en, String ar) {
-    final locale = Localizations.localeOf(context).languageCode.toLowerCase();
-    if (locale.startsWith('ar')) {
-      return ar.trim().isNotEmpty ? ar : en;
-    }
-    return en.trim().isNotEmpty ? en : ar;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _adaptivePastelBackground(context, const Color(0xFFE8F5E9)),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          _localized(widget.item.titleEn, widget.item.titleAr),
-          style: TextStyle(
-            color: AppColors.behavioral,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: FutureBuilder<PublicContentItem?>(
-        future: _itemFuture,
-        builder: (context, snapshot) {
-          final item = snapshot.data ?? widget.item;
-          final description = _localized(
-            item.descriptionEn ?? '',
-            item.descriptionAr ?? '',
-          );
-          final body = _localized(item.bodyEn ?? '', item.bodyAr ?? '');
-          return ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              const ChildHeader(compact: true),
-              const SizedBox(height: 16),
-              if ((item.effectiveThumbnailUrl ?? '').isNotEmpty)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(22),
-                  child: CachedNetworkImage(
-                    imageUrl: item.effectiveThumbnailUrl!,
-                    height: 210,
-                    fit: BoxFit.cover,
-                    errorWidget: (_, __, ___) => const SizedBox.shrink(),
-                  ),
-                ),
-              if ((item.effectiveThumbnailUrl ?? '').isNotEmpty)
-                const SizedBox(height: 20),
-              Text(
-                _localized(item.titleEn, item.titleAr),
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-              if (description.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                Text(
-                  description,
-                  style: TextStyle(
-                    fontSize: 16,
-                    height: 1.5,
-                    color: _adaptiveTextSecondary(context),
-                  ),
-                ),
-              ],
-              if (body.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValuesCompat(alpha: 0.82),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Text(
-                    body,
-                    style: TextStyle(
-                      fontSize: 15,
-                      height: 1.6,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                ),
-              ],
-              if (item.hasVideo) ...[
-                const SizedBox(height: 16),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(22),
-                  child: CloudinaryVideoPlayerView(
-                    videoUrl: item.preferredVideoUrl!,
-                  ),
-                ),
-              ],
-              if (item.quizzes.isNotEmpty) ...[
-                const SizedBox(height: 20),
-                CmsQuizCard(
-                  quizzes: item.quizzes,
-                  accentColor: AppColors.behavioral,
-                  axisKey: _resolveCmsItemAxisKey(item) ?? 'behavioral',
-                ),
-              ],
-            ],
-          );
-        },
       ),
     );
   }

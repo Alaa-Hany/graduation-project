@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   :root{
-    --p1:#2e9e6b; --p2:#e0892b; --p3:#8a5cd1; --p4:#3b82c4;
+    --p1:#2e9e6b; --p2:#e0892b; --p3:#8a5cd1; --p4:#3b82c4; --p0:#1f9d63;
     --ink:#1d2433; --muted:#5b6678; --line:#e7ecf5; --card:#ffffff;
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -25,7 +25,7 @@
   .wrap{max-width:1080px;margin:0 auto}
 
   /* ===== Hero ===== */
-  .hero{text-align:center;margin-bottom:44px}
+  .hero{text-align:center;margin-bottom:40px}
   .logo{width:min(230px,55vw);height:auto;filter:drop-shadow(0 14px 26px rgba(60,80,160,.22));margin-bottom:6px}
   .badge{
     display:inline-block;font-size:14px;font-weight:800;color:#fff;
@@ -40,6 +40,30 @@
     background:var(--card);border:1px solid var(--line);border-radius:14px;
     padding:10px 18px;font-weight:800;font-size:14px;box-shadow:0 6px 16px rgba(30,40,80,.05)
   }
+
+  /* ===== Already-shipped section ===== */
+  .shipped{
+    background:linear-gradient(160deg,#eafbf2 0%,#ffffff 70%);
+    border:1.6px solid #bfe8d2;border-radius:24px;
+    padding:26px 28px;margin-bottom:30px;
+    box-shadow:0 18px 40px rgba(30,40,80,.07);
+    opacity:0;animation:rise .6s ease forwards;
+  }
+  .shipped-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+  .shipped-pill{
+    background:var(--p0);color:#fff;font-size:12.5px;font-weight:800;
+    padding:6px 16px;border-radius:999px;letter-spacing:.4px;white-space:nowrap;
+  }
+  .shipped-head h2{font-size:clamp(18px,2.6vw,22px);font-weight:900;color:#15794d}
+  .shipped-sub{font-size:13.5px;font-weight:700;color:#2c8b62;margin-bottom:16px}
+  .shipped-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}
+  .shipped-item{
+    display:flex;align-items:center;gap:9px;background:#fff;
+    border:1.6px solid #bfe8d2;border-radius:14px;padding:11px 12px;
+    font-weight:800;font-size:13.5px;color:var(--ink);
+    box-shadow:0 4px 10px rgba(30,40,80,.04);
+  }
+  .shipped-item .ic{font-size:17px;flex:0 0 auto}
 
   /* ===== Timeline ===== */
   .phase{
@@ -88,10 +112,11 @@
   @media(max-width:760px){
     .phase{grid-template-columns:1fr}
     .feats{grid-template-columns:repeat(2,1fr)}
+    .shipped-grid{grid-template-columns:repeat(2,1fr)}
   }
   @media print{
     body{background:#fff;padding:0}
-    .phase,.moat{box-shadow:none;break-inside:avoid;animation:none;opacity:1}
+    .phase,.moat,.shipped{box-shadow:none;break-inside:avoid;animation:none;opacity:1}
   }
 </style>
 </head>
@@ -111,6 +136,26 @@
     </div>
   </header>
 
+  <section class="shipped">
+    <div class="shipped-head">
+      <span class="shipped-pill">✅ ALREADY LIVE</span>
+      <h2>Already Built &amp; Working In The App Today</h2>
+    </div>
+    <p class="shipped-sub">Not a future promise — these are shipped, working features a reviewer can open the app and try right now.</p>
+    <div class="shipped-grid">
+      <div class="shipped-item"><span class="ic">👋</span> Onboarding &amp; language picker</div>
+      <div class="shipped-item"><span class="ic">🎙️</span> AI Buddy that listens &amp; talks back</div>
+      <div class="shipped-item"><span class="ic">🎯</span> Daily goal tracker</div>
+      <div class="shipped-item"><span class="ic">🏆</span> Achievement badges &amp; streaks</div>
+      <div class="shipped-item"><span class="ic">🎉</span> XP reward pop-ups</div>
+      <div class="shipped-item"><span class="ic">🎨</span> Coloring &amp; creation gallery</div>
+      <div class="shipped-item"><span class="ic">📊</span> Smart parent dashboard &amp; reports</div>
+      <div class="shipped-item"><span class="ic">💚</span> Mood tracking &amp; recommendations</div>
+      <div class="shipped-item"><span class="ic">📈</span> Rule-based progress insights for parents</div>
+      <div class="shipped-item"><span class="ic">🌐</span> Full Arabic/English translation coverage</div>
+    </div>
+  </section>
+
   <section class="timeline">
 
     <!-- Phase 1 -->
@@ -124,9 +169,7 @@
         <div class="feat"><span class="ic">🚫</span> Remove third-party watermarks</div>
         <div class="feat"><span class="ic">🎬</span> Licensed &amp; original content</div>
         <div class="feat"><span class="ic">🖼️</span> Thumbnail for every video</div>
-        <div class="feat"><span class="ic">🌐</span> Consistent UI translation</div>
-        <div class="feat"><span class="ic">🧩</span> Fill content gaps</div>
-        <div class="feat"><span class="ic">👋</span> Child onboarding</div>
+        <div class="feat"><span class="ic">🔍</span> Full QA pass across all 4 pillars</div>
       </div>
     </article>
 
@@ -138,12 +181,12 @@
         <span class="ptime">3–6 months</span>
       </div>
       <div class="feats">
-        <div class="feat"><span class="ic">🎙️</span> AI buddy with voice &amp; name</div>
-        <div class="feat"><span class="ic">✅</span> Daily quests &amp; goals</div>
-        <div class="feat"><span class="ic">🏆</span> Collectibles to gather</div>
+        <div class="feat"><span class="ic">🏷️</span> Let kids name their AI buddy</div>
+        <div class="feat"><span class="ic">🦊</span> Give the buddy a visual character</div>
+        <div class="feat"><span class="ic">📜</span> Story-driven multi-step quest chains</div>
+        <div class="feat"><span class="ic">🦄</span> Collectible sticker album</div>
+        <div class="feat"><span class="ic">🎊</span> Level-up cutscenes &amp; effects</div>
         <div class="feat"><span class="ic">📖</span> Serialized stories</div>
-        <div class="feat"><span class="ic">🎉</span> Celebrations &amp; effects</div>
-        <div class="feat"><span class="ic">🗣️</span> Voice interaction for kids</div>
       </div>
     </article>
 
@@ -155,12 +198,12 @@
         <span class="ptime">6–12 months</span>
       </div>
       <div class="feats">
-        <div class="feat"><span class="ic">🧠</span> Adaptive learning path</div>
-        <div class="feat"><span class="ic">📥</span> True offline mode</div>
-        <div class="feat"><span class="ic">🎨</span> "Create" features</div>
+        <div class="feat"><span class="ic">🧠</span> True adaptive difficulty</div>
+        <div class="feat"><span class="ic">📥</span> Full offline video downloads</div>
         <div class="feat"><span class="ic">🌟</span> Safe showcase for kids' work</div>
-        <div class="feat"><span class="ic">🦊</span> Original recurring characters</div>
-        <div class="feat"><span class="ic">🗓️</span> Fresh seasonal content</div>
+        <div class="feat"><span class="ic">🗓️</span> Fresh seasonal content calendar</div>
+        <div class="feat"><span class="ic">🎵</span> AI-personalized stories/songs</div>
+        <div class="feat"><span class="ic">🧩</span> More mini-games &amp; puzzle types</div>
       </div>
     </article>
 
@@ -172,12 +215,12 @@
         <span class="ptime">12+ months</span>
       </div>
       <div class="feats">
-        <div class="feat"><span class="ic">📊</span> Smart parent dashboard</div>
-        <div class="feat"><span class="ic">🤖</span> AI reports for parents</div>
-        <div class="feat"><span class="ic">🌍</span> Multi-language</div>
-        <div class="feat"><span class="ic">🎁</span> Real-world rewards</div>
+        <div class="feat"><span class="ic">🤖</span> LLM-written natural-language report narratives</div>
+        <div class="feat"><span class="ic">🌍</span> Languages beyond Arabic/English</div>
+        <div class="feat"><span class="ic">🎁</span> Real-world reward redemption</div>
         <div class="feat"><span class="ic">👨‍👩‍👧</span> Safe family community</div>
-        <div class="feat"><span class="ic">📈</span> Advanced learning analytics</div>
+        <div class="feat"><span class="ic">📈</span> Deeper predictive analytics</div>
+        <div class="feat"><span class="ic">🏫</span> Classroom/teacher mode</div>
       </div>
     </article>
 
