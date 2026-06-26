@@ -161,44 +161,6 @@ const behavioralValues = <Map<String, dynamic>>[
   },
 ];
 
-const behavioralMethods = <Map<String, dynamic>>[
-  {
-    'title': 'Relaxation',
-    'title_ar': 'الاسترخاء',
-    'image': 'assets/images/method_relaxation.png',
-  },
-  {
-    'title': 'Imagination',
-    'title_ar': 'الخيال',
-    'image': 'assets/images/method_imagination.png',
-  },
-  {
-    'title': 'Meditation',
-    'title_ar': 'التأمل',
-    'image': 'assets/images/method_meditation.png',
-  },
-  {
-    'title': 'Art Expression',
-    'title_ar': 'التعبير الفني',
-    'image': 'assets/images/method_art.png',
-  },
-  {
-    'title': 'Social Bonding',
-    'title_ar': 'الترابط الاجتماعي',
-    'image': 'assets/images/method_social.png',
-  },
-  {
-    'title': 'Self Development',
-    'title_ar': 'تطوير الذات',
-    'image': 'assets/images/method_self_dev.png',
-  },
-  {
-    'title': 'Social Justice Focus',
-    'title_ar': 'التركيز على العدالة الاجتماعية',
-    'image': 'assets/images/method_justice.png',
-  },
-];
-
 const skillCatalog = <Map<String, dynamic>>[
   {
     'title': 'Cooking',

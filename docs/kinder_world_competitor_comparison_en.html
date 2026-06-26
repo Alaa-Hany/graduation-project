@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kinder World — Competitive Comparison</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1d2433; --muted:#5b6678; --line:#e7ecf5; --card:#ffffff;
+    --yes:#1f9d63; --yes-bg:#e8f7ef;
+    --no:#c4453c; --no-bg:#fbeceb;
+    --mid:#c6862a; --mid-bg:#fdf3e2;
+    --kw:#5a3fc0; --kw-bg:#efe9ff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Nunito',system-ui,'Segoe UI',sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(1200px 600px at 90% -10%, #eaf3ff 0%, transparent 55%),
+      radial-gradient(1000px 600px at -10% 10%, #fdeef5 0%, transparent 55%),
+      linear-gradient(165deg,#f7faff 0%,#fdf7fb 100%);
+    min-height:100vh;padding:42px 20px 60px;line-height:1.55;
+  }
+  .wrap{max-width:1180px;margin:0 auto}
+
+  /* ===== Hero ===== */
+  .hero{text-align:center;margin-bottom:38px}
+  .logo{width:min(210px,52vw);height:auto;filter:drop-shadow(0 14px 26px rgba(60,80,160,.22));margin-bottom:4px}
+  .badge{
+    display:inline-block;font-size:14px;font-weight:800;color:#fff;
+    background:linear-gradient(90deg,#5a3fc0,#3b82c4);
+    padding:7px 20px;border-radius:999px;margin-bottom:16px;letter-spacing:.3px;
+    box-shadow:0 8px 22px rgba(80,90,200,.25);
+  }
+  .hero h1{font-size:clamp(26px,4.4vw,44px);font-weight:900}
+  .hero p{font-size:clamp(14px,2vw,18px);color:var(--muted);font-weight:700;margin-top:8px}
+
+  /* ===== Apps strip ===== */
+  .apps{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:28px}
+  .app{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:14px;font-size:12.5px;color:var(--muted);font-weight:600;
+    box-shadow:0 6px 16px rgba(30,40,80,.05);
+    opacity:0;animation:rise .6s ease forwards;
+  }
+  .app:nth-child(1){animation-delay:.05s}
+  .app:nth-child(2){animation-delay:.1s}
+  .app:nth-child(3){animation-delay:.15s}
+  .app:nth-child(4){animation-delay:.2s}
+  .app:nth-child(5){animation-delay:.25s}
+  .app b{display:block;color:var(--ink);font-size:14px;font-weight:800;margin-bottom:6px}
+  @keyframes rise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+
+  /* ===== Table card ===== */
+  .tcard{
+    background:var(--card);border:1px solid var(--line);border-radius:22px;
+    padding:8px;box-shadow:0 18px 40px rgba(30,40,80,.07);
+    overflow-x:auto;margin-bottom:28px;
+    opacity:0;animation:rise .7s ease forwards;animation-delay:.3s;
+  }
+  table{border-collapse:separate;border-spacing:0;width:100%;min-width:980px}
+  thead th{
+    position:sticky;top:0;background:#fff;
+    font-size:13.5px;font-weight:800;padding:14px 10px;text-align:center;
+    border-bottom:2px solid var(--line);white-space:nowrap;
+  }
+  thead th:first-child{text-align:left;min-width:210px}
+  thead th.kw-col{color:var(--kw);background:var(--kw-bg);border-radius:14px 14px 0 0}
+  tbody td{
+    padding:12px 10px;text-align:center;font-size:13.5px;font-weight:700;
+    border-bottom:1px solid var(--line);white-space:nowrap;
+  }
+  tbody td:first-child{text-align:left;font-weight:800;color:var(--ink);white-space:normal}
+  tbody tr:last-child td{border-bottom:none}
+  tbody td.kw-col{background:var(--kw-bg)}
+  tbody tr:last-child td.kw-col{border-radius:0 0 14px 14px}
+
+  .pill{
+    display:inline-flex;align-items:center;gap:5px;padding:5px 11px;
+    border-radius:999px;font-size:12.5px;font-weight:800;
+  }
+  .yes{color:var(--yes);background:var(--yes-bg)}
+  .no{color:var(--no);background:var(--no-bg)}
+  .mid{color:var(--mid);background:var(--mid-bg)}
+  .kw-pill{color:var(--kw);background:#fff;border:1.6px solid var(--kw)}
+
+  .scroll-hint{text-align:center;font-size:12.5px;color:var(--muted);font-weight:700;margin:-14px 0 22px}
+
+  /* ===== Gap summary ===== */
+  .gaps{
+    border-radius:24px;padding:26px 28px;color:#fff;text-align:center;
+    background:linear-gradient(120deg,#5a3fc0,#3b82c4 90%);
+    box-shadow:0 18px 40px rgba(90,70,200,.25);
+    opacity:0;animation:rise .7s ease forwards;animation-delay:.4s;
+  }
+  .gaps h2{font-size:clamp(17px,2.8vw,24px);font-weight:900;margin-bottom:14px}
+  .gaps ul{list-style:none;display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+  .gaps li{background:rgba(255,255,255,.16);padding:8px 16px;border-radius:999px;font-size:13px;font-weight:700;white-space:nowrap}
+  .gaps .lead{font-size:13.5px;font-weight:700;opacity:.95;margin-bottom:16px}
+
+  footer{text-align:center;color:var(--muted);font-size:13px;font-weight:700;margin-top:30px}
+
+  @media(max-width:760px){.apps{grid-template-columns:repeat(2,1fr)}}
+  @media print{
+    body{background:#fff;padding:0}
+    .tcard,.gaps,.app{box-shadow:none;animation:none;opacity:1}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <img class="logo" src="logo.png" alt="Kinder World">
+    <span class="badge">COMPETITIVE COMPARISON · COMPARATIVE ANALYSIS</span>
+    <h1>Kinder World vs. Market Apps</h1>
+    <p>A direct comparison against five leading children's educational apps — sourced from the SRS Related Work section</p>
+  </header>
+
+  <section class="apps">
+    <div class="app"><b>Khan Academy Kids</b>Free, ages 2–8. Structured learning paths in literacy &amp; math, animated characters, basic progress tracking.</div>
+    <div class="app"><b>Duolingo ABC</b>Early reading &amp; phonics, ages 3–8, via gamification (streaks/points), difficulty adapts to performance.</div>
+    <div class="app"><b>YouTube Kids</b>Curated video platform, parental controls for filtering &amp; screen time, multi-language including Arabic.</div>
+    <div class="app"><b>Nafham</b>Arabic curriculum-aligned video lessons (Egypt/MENA) — but passive, no interactivity or AI personalization.</div>
+    <div class="app"><b>Nahla &amp; Nahl</b>Arabic digital reading library with gamification, narrated digital books — Arabic-first.</div>
+  </section>
+
+  <div class="tcard">
+    <table>
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Khan Academy<br>Kids</th>
+          <th>Duolingo<br>ABC</th>
+          <th>YouTube<br>Kids</th>
+          <th>Nafham</th>
+          <th>Nahla &amp; Nahl</th>
+          <th class="kw-col">Kinder World</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Arabic Language Support</td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill mid">◐ Partial</span></td>
+          <td><span class="pill yes">✓ Yes</span></td>
+          <td><span class="pill yes">✓ Yes</span></td>
+          <td class="kw-col"><span class="pill kw-pill">★ Full (bilingual AR/EN)</span></td>
+        </tr>
+        <tr>
+          <td>Adaptive AI Personalisation</td>
+          <td><span class="pill mid">◐ Basic</span></td>
+          <td><span class="pill mid">◐ Basic</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td class="kw-col"><span class="pill kw-pill">★ Yes (full)</span></td>
+        </tr>
+        <tr>
+          <td>Conversational AI Companion</td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td class="kw-col"><span class="pill kw-pill">★ Yes (AI Buddy)</span></td>
+        </tr>
+        <tr>
+          <td>Behavioral / Emotional Dev.</td>
+          <td><span class="pill mid">◐ Limited</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td class="kw-col"><span class="pill kw-pill">★ Yes</span></td>
+        </tr>
+        <tr>
+          <td>Mood Tracking</td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td class="kw-col"><span class="pill kw-pill">★ Yes</span></td>
+        </tr>
+        <tr>
+          <td>Per-Child Parental Controls</td>
+          <td><span class="pill mid">◐ Basic</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill mid">◐ Basic</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td class="kw-col"><span class="pill kw-pill">★ Advanced (schedule, block)</span></td>
+        </tr>
+        <tr>
+          <td>Subscription &amp; Billing</td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill mid">◐ Partial</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td class="kw-col"><span class="pill kw-pill">★ Full billing engine</span></td>
+        </tr>
+        <tr>
+          <td>Admin Portal / CMS</td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td class="kw-col"><span class="pill kw-pill">★ Yes (RBAC + Audit Log)</span></td>
+        </tr>
+        <tr>
+          <td>Lesson Progress Analytics</td>
+          <td><span class="pill mid">◐ Basic</span></td>
+          <td><span class="pill mid">◐ Basic</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td class="kw-col"><span class="pill kw-pill">★ Comprehensive</span></td>
+        </tr>
+        <tr>
+          <td>Screen-Time Logs</td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill mid">◐ Basic</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td class="kw-col"><span class="pill kw-pill">★ Yes (per device/category)</span></td>
+        </tr>
+        <tr>
+          <td>Support Ticketing System</td>
+          <td><span class="pill mid">◐ Email only</span></td>
+          <td><span class="pill mid">◐ Email only</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td><span class="pill no">✕ No</span></td>
+          <td class="kw-col"><span class="pill kw-pill">★ Yes (in-app threaded)</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="scroll-hint">⟷ Scroll horizontally on smaller screens to see all apps</p>
+
+  <section class="gaps">
+    <h2>🎯 The Gap No Other App Fills — That Kinder World Fills</h2>
+    <p class="lead">No platform above delivers all of these simultaneously — Kinder World unifies them in a single product:</p>
+    <ul>
+      <li>🌐 Bilingual Arabic/English content</li>
+      <li>🤖 Conversational AI companion with safety filtering</li>
+      <li>💚 Mood tracking &amp; behavioral development</li>
+      <li>🛡️ Advanced per-child parental controls (scheduling &amp; blocking)</li>
+      <li>💳 Full subscription &amp; billing engine</li>
+      <li>🔐 Role-based admin portal with audit logging</li>
+    </ul>
+  </section>
+
+  <footer>Kinder World · Graduation Project — Data source: SRS Section 2.7 / 2.8 (Comparative Analysis &amp; Summary of Gaps)</footer>
+
+</div>
+</body>
+</html>

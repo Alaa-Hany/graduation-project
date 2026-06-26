@@ -589,8 +589,6 @@ class _AdminContentManagementScreenState
         content?.status ?? (selectedType == 'video' ? 'published' : 'draft');
     String selectedBehavioralValue =
         metadataMap['behavioral_value']?.toString() ?? '';
-    String selectedBehavioralMethod =
-        metadataMap['behavioral_method']?.toString() ?? '';
     bool featured = metadataMap['featured'] == true;
     bool isAddingCategory = false;
     bool newCatSaving = false;
@@ -624,11 +622,6 @@ class _AdminContentManagementScreenState
         isArabic ? category.titleAr : category.titleEn;
 
     List<String> behavioralValueTitles() => behavioralValues
-        .map((item) => item['title']?.toString() ?? '')
-        .where((title) => title.isNotEmpty)
-        .toList();
-
-    List<String> behavioralMethodTitles() => behavioralMethods
         .map((item) => item['title']?.toString() ?? '')
         .where((title) => title.isNotEmpty)
         .toList();
@@ -673,9 +666,6 @@ class _AdminContentManagementScreenState
     }
     if (!behavioralValueTitles().contains(selectedBehavioralValue)) {
       selectedBehavioralValue = '';
-    }
-    if (!behavioralMethodTitles().contains(selectedBehavioralMethod)) {
-      selectedBehavioralMethod = '';
     }
 
     String videoPlacementLabel() {
@@ -727,7 +717,6 @@ class _AdminContentManagementScreenState
                             selectedAxisKey = value ?? '';
                             if (selectedAxisKey != 'behavioral') {
                               selectedBehavioralValue = '';
-                              selectedBehavioralMethod = '';
                             }
                             final availableCategoryIds = categoriesForAxis()
                                 .map((category) => category.id)
@@ -1071,28 +1060,6 @@ class _AdminContentManagementScreenState
                               }),
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: DropdownButtonFormFieldCompat<String>(
-                              initialValue: selectedBehavioralMethod.isEmpty
-                                  ? null
-                                  : selectedBehavioralMethod,
-                              decoration: InputDecoration(
-                                labelText: l10n.adminCmsBehavioralMethodLabel,
-                              ),
-                              items: behavioralMethodTitles()
-                                  .map(
-                                    (method) => DropdownMenuItem<String>(
-                                      value: method,
-                                      child: Text(method),
-                                    ),
-                                  )
-                                  .toList(),
-                              onChanged: (value) => setStateDialog(
-                                () => selectedBehavioralMethod = value ?? '',
-                              ),
-                            ),
-                          ),
                         ]),
                         const SizedBox(height: 12),
                       ],
@@ -1322,8 +1289,7 @@ class _AdminContentManagementScreenState
       return;
     }
     if (selectedAxisKey == 'behavioral' &&
-        (selectedBehavioralValue.trim().isEmpty ||
-            selectedBehavioralMethod.trim().isEmpty)) {
+        selectedBehavioralValue.trim().isEmpty) {
       _showFeedback(
         l10n.adminCmsValidationBehavioralPlacementRequired,
         isError: true,
@@ -1408,10 +1374,8 @@ class _AdminContentManagementScreenState
         if (difficulty.text.trim().isNotEmpty)
           'difficulty': difficulty.text.trim(),
         if (tagsList.isNotEmpty) 'tags': tagsList,
-        if (selectedAxisKey == 'behavioral') ...{
+        if (selectedAxisKey == 'behavioral')
           'behavioral_value': selectedBehavioralValue.trim(),
-          'behavioral_method': selectedBehavioralMethod.trim(),
-        },
         if (videoPreviewUrlValue.isNotEmpty)
           'video_preview_url': videoPreviewUrlValue,
         if (videoProviderValue.isNotEmpty) 'video_provider': videoProviderValue,

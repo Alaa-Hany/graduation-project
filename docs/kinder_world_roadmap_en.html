@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kinder World — Project Roadmap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --p1:#2e9e6b; --p2:#e0892b; --p3:#8a5cd1; --p4:#3b82c4;
+    --ink:#1d2433; --muted:#5b6678; --line:#e7ecf5; --card:#ffffff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Nunito',system-ui,'Segoe UI',sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(1200px 600px at 90% -10%, #eaf3ff 0%, transparent 55%),
+      radial-gradient(1000px 600px at -10% 10%, #fdeef5 0%, transparent 55%),
+      linear-gradient(165deg,#f7faff 0%,#fdf7fb 100%);
+    min-height:100vh;padding:42px 20px 60px;line-height:1.55;
+  }
+  .wrap{max-width:1080px;margin:0 auto}
+
+  /* ===== Hero ===== */
+  .hero{text-align:center;margin-bottom:44px}
+  .logo{width:min(230px,55vw);height:auto;filter:drop-shadow(0 14px 26px rgba(60,80,160,.22));margin-bottom:6px}
+  .badge{
+    display:inline-block;font-size:14px;font-weight:800;color:#fff;
+    background:linear-gradient(90deg,#8a5cd1,#3b82c4);
+    padding:7px 20px;border-radius:999px;margin-bottom:16px;letter-spacing:.3px;
+    box-shadow:0 8px 22px rgba(80,90,200,.25);
+  }
+  .hero h1{font-size:clamp(30px,5vw,50px);font-weight:900}
+  .hero p{font-size:clamp(15px,2.2vw,20px);color:var(--muted);font-weight:700;margin-top:8px}
+  .pillars{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:22px}
+  .pillar{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:10px 18px;font-weight:800;font-size:14px;box-shadow:0 6px 16px rgba(30,40,80,.05)
+  }
+
+  /* ===== Timeline ===== */
+  .phase{
+    display:grid;grid-template-columns:240px 1fr;gap:24px;
+    background:var(--card);border:1px solid var(--line);border-radius:24px;
+    padding:24px;margin-bottom:26px;box-shadow:0 18px 40px rgba(30,40,80,.07);
+    border-inline-start:7px solid var(--c);
+    opacity:0;animation:rise .7s ease forwards;
+  }
+  .phase:nth-child(1){animation-delay:.05s}
+  .phase:nth-child(2){animation-delay:.18s}
+  .phase:nth-child(3){animation-delay:.31s}
+  .phase:nth-child(4){animation-delay:.44s}
+  @keyframes rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+
+  .phead{display:flex;flex-direction:column;justify-content:center;gap:8px;
+    padding:18px;border-radius:18px;color:#fff;
+    background:linear-gradient(160deg,var(--c),color-mix(in srgb,var(--c) 78%,#000))}
+  .pnum{font-size:13px;font-weight:800;opacity:.92;text-transform:uppercase;letter-spacing:.5px}
+  .ptitle{font-size:22px;font-weight:900}
+  .ptime{display:inline-block;background:rgba(255,255,255,.22);
+    padding:4px 14px;border-radius:999px;font-size:13px;font-weight:800;width:fit-content}
+
+  .feats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;align-content:center}
+  .feat{
+    display:flex;align-items:center;gap:9px;background:#fff;
+    border:1.6px solid color-mix(in srgb,var(--c) 45%,#fff);
+    border-radius:14px;padding:11px 13px;font-weight:800;font-size:14px;
+    box-shadow:0 4px 10px rgba(30,40,80,.04);
+  }
+  .feat .ic{font-size:18px;flex:0 0 auto}
+
+  /* ===== Moat ===== */
+  .moat{
+    border-radius:24px;padding:26px 28px;color:#fff;text-align:center;
+    background:linear-gradient(120deg,#b8860b,#7a4fd6 90%);
+    box-shadow:0 18px 40px rgba(120,80,200,.25);
+    opacity:0;animation:rise .7s ease forwards;animation-delay:.55s;
+  }
+  .moat h2{font-size:clamp(18px,3vw,26px);font-weight:900;margin-bottom:6px}
+  .moat .tags{font-size:clamp(13px,2vw,17px);font-weight:800;opacity:.96}
+  .moat .tags span{white-space:nowrap}
+
+  footer{text-align:center;color:var(--muted);font-size:13px;font-weight:700;margin-top:34px}
+
+  @media(max-width:760px){
+    .phase{grid-template-columns:1fr}
+    .feats{grid-template-columns:repeat(2,1fr)}
+  }
+  @media print{
+    body{background:#fff;padding:0}
+    .phase,.moat{box-shadow:none;break-inside:avoid;animation:none;opacity:1}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <img class="logo" src="logo.png" alt="Kinder World"
+         onerror="this.style.display='none';document.getElementById('logoFallback').style.display='block'">
+    <span class="badge">PROJECT ROADMAP · LONG-TERM VISION</span>
+    <h1 id="logoFallback" style="display:none">Kinder World</h1>
+    <p>From a kids' content app → to a beloved learning companion parents trust</p>
+    <div class="pillars">
+      <div class="pillar">🎯 Healthy Engagement</div>
+      <div class="pillar">🛡️ Safety &amp; Trust</div>
+      <div class="pillar">🌱 Learning That Feels Like Play</div>
+    </div>
+  </header>
+
+  <section class="timeline">
+
+    <!-- Phase 1 -->
+    <article class="phase" style="--c:var(--p1)">
+      <div class="phead">
+        <span class="pnum">Phase 1</span>
+        <span class="ptitle">Foundation &amp; Polish</span>
+        <span class="ptime">Now · 0–3 months</span>
+      </div>
+      <div class="feats">
+        <div class="feat"><span class="ic">🚫</span> Remove third-party watermarks</div>
+        <div class="feat"><span class="ic">🎬</span> Licensed &amp; original content</div>
+        <div class="feat"><span class="ic">🖼️</span> Thumbnail for every video</div>
+        <div class="feat"><span class="ic">🌐</span> Consistent UI translation</div>
+        <div class="feat"><span class="ic">🧩</span> Fill content gaps</div>
+        <div class="feat"><span class="ic">👋</span> Child onboarding</div>
+      </div>
+    </article>
+
+    <!-- Phase 2 -->
+    <article class="phase" style="--c:var(--p2)">
+      <div class="phead">
+        <span class="pnum">Phase 2</span>
+        <span class="ptitle">Engagement &amp; Character</span>
+        <span class="ptime">3–6 months</span>
+      </div>
+      <div class="feats">
+        <div class="feat"><span class="ic">🎙️</span> AI buddy with voice &amp; name</div>
+        <div class="feat"><span class="ic">✅</span> Daily quests &amp; goals</div>
+        <div class="feat"><span class="ic">🏆</span> Collectibles to gather</div>
+        <div class="feat"><span class="ic">📖</span> Serialized stories</div>
+        <div class="feat"><span class="ic">🎉</span> Celebrations &amp; effects</div>
+        <div class="feat"><span class="ic">🗣️</span> Voice interaction for kids</div>
+      </div>
+    </article>
+
+    <!-- Phase 3 -->
+    <article class="phase" style="--c:var(--p3)">
+      <div class="phead">
+        <span class="pnum">Phase 3</span>
+        <span class="ptitle">Intelligence &amp; Creativity</span>
+        <span class="ptime">6–12 months</span>
+      </div>
+      <div class="feats">
+        <div class="feat"><span class="ic">🧠</span> Adaptive learning path</div>
+        <div class="feat"><span class="ic">📥</span> True offline mode</div>
+        <div class="feat"><span class="ic">🎨</span> "Create" features</div>
+        <div class="feat"><span class="ic">🌟</span> Safe showcase for kids' work</div>
+        <div class="feat"><span class="ic">🦊</span> Original recurring characters</div>
+        <div class="feat"><span class="ic">🗓️</span> Fresh seasonal content</div>
+      </div>
+    </article>
+
+    <!-- Phase 4 -->
+    <article class="phase" style="--c:var(--p4)">
+      <div class="phead">
+        <span class="pnum">Phase 4</span>
+        <span class="ptitle">Scale &amp; Platform</span>
+        <span class="ptime">12+ months</span>
+      </div>
+      <div class="feats">
+        <div class="feat"><span class="ic">📊</span> Smart parent dashboard</div>
+        <div class="feat"><span class="ic">🤖</span> AI reports for parents</div>
+        <div class="feat"><span class="ic">🌍</span> Multi-language</div>
+        <div class="feat"><span class="ic">🎁</span> Real-world rewards</div>
+        <div class="feat"><span class="ic">👨‍👩‍👧</span> Safe family community</div>
+        <div class="feat"><span class="ic">📈</span> Advanced learning analytics</div>
+      </div>
+    </article>
+
+  </section>
+
+  <section class="moat">
+    <h2>🛡️ Competitive Edge — What Sets Us Apart in the Market</h2>
+    <div class="tags">
+      <span>Parent Trust</span> · <span>A Character Kids Love</span> · <span>Sense of Progress</span>
+      · <span>Ad-Free Safety</span> · <span>Creation, Not Consumption</span>
+    </div>
+  </section>
+
+  <footer>Kinder World · Graduation Project — Roadmap &amp; Future Vision</footer>
+
+</div>
+</body>
+</html>

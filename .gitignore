@@ -1,5 +1,23 @@
 app.log
 *.log
+# Local DB backups — contain production data, never commit
+/db_backups/
+# Ad-hoc DB helper scripts (read DB URL from env, kept local)
+/kinderbackend/_backup_neon.py
+/kinderbackend/_inspect_behavioral.py
+/kinderbackend/_review_behavioral_from_backup.py
+/kinderbackend/_behavioral_review.txt
+/kinderbackend/_apply_behavioral_text_cleanup.py
+/kinderbackend/_cleanup_report.txt
+/kinderbackend/_review_other_content.py
+/kinderbackend/_other_content_review.txt
+/kinderbackend/_fix_other_content.py
+/kinderbackend/_fix_other_report.txt
+/kinderbackend/_audit_content.py
+/kinderbackend/_content_audit.txt
+/kinderbackend/_extract_srs.py
+/kinderbackend/_srs_text.txt
+/_srs_extract.md
 .coverage
 coverage.xml
 .pytest_cache/

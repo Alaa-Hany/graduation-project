@@ -4328,8 +4328,7 @@ class BehavioralScreen extends ConsumerWidget {
                 itemCount: _values.length,
                 itemBuilder: (context, index) {
                   final value = _values[index];
-                  return _buildValueCard(
-                      context, value['title'], value['image']);
+                  return _buildValueCard(context, value);
                 },
               ),
             ),
@@ -4340,12 +4339,20 @@ class BehavioralScreen extends ConsumerWidget {
   }
 
   // CHANGED CARD TO IMAGE BACKGROUND STYLE FOR GRID
-  Widget _buildValueCard(BuildContext context, String title, String imagePath) {
+  Widget _buildValueCard(BuildContext context, Map<String, dynamic> value) {
+    final isArabic = Localizations.localeOf(context)
+        .languageCode
+        .toLowerCase()
+        .startsWith('ar');
+    final navTitle = value['title'] as String;
+    final label =
+        (isArabic ? value['title_ar'] : value['title']) as String? ?? navTitle;
+    final imagePath = value['image'] as String;
     return InkWell(
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => ValueDetailsScreen(valueTitle: title),
+            builder: (context) => MethodContentScreen(valueTitle: navTitle),
           ),
         );
       },
@@ -4383,7 +4390,7 @@ class BehavioralScreen extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 20.0),
               child: Text(
-                title,
+                label,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 18,
@@ -4399,130 +4406,18 @@ class BehavioralScreen extends ConsumerWidget {
   }
 }
 
-// Level 2: Value Details Screen
-class ValueDetailsScreen extends StatelessWidget {
-  final String valueTitle;
-  const ValueDetailsScreen({super.key, required this.valueTitle});
-
-  List<Map<String, dynamic>> get _methods => behavioralMethods;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _adaptivePastelBackground(context, const Color(0xFFE8F5E9)),
-      appBar: AppBar(
-        title: Text(
-          valueTitle,
-          style: TextStyle(
-              color: AppColors.behavioral, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const ChildHeader(compact: true),
-            Expanded(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 0.85,
-                ),
-                itemCount: _methods.length,
-                itemBuilder: (context, index) {
-                  final method = _methods[index];
-                  return _buildMethodCard(
-                      context, method['title'], method['image']);
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMethodCard(
-      BuildContext context, String title, String imagePath) {
-    return InkWell(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => MethodContentScreen(
-              valueTitle: valueTitle,
-              methodTitle: title,
-            ),
-          ),
-        );
-      },
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        decoration: BoxDecoration(
-          color: _adaptiveCardSurface(context),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValuesCompat(alpha: 0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-          image: DecorationImage(
-            image: AssetImage(imagePath),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.transparent,
-                Colors.black.withValuesCompat(alpha: 0.7),
-              ],
-            ),
-          ),
-          child: Align(
-            alignment: Alignment.bottomCenter,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20.0),
-              child: Text(
-                title,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 // Level 3: Method Content Screen
 class MethodContentScreen extends ConsumerStatefulWidget {
   final String valueTitle;
-  final String methodTitle;
+
+  /// Optional behavioral "method" filter. When null, the screen shows all
+  /// content for [valueTitle] (the value opens its videos directly).
+  final String? methodTitle;
 
   const MethodContentScreen({
     super.key,
     required this.valueTitle,
-    required this.methodTitle,
+    this.methodTitle,
   });
 
   @override
@@ -4584,7 +4479,7 @@ class _MethodContentScreenState extends ConsumerState<MethodContentScreen> {
     }
 
     final selectedValue = _normalizeBehavioralToken(widget.valueTitle);
-    final selectedMethod = _normalizeBehavioralToken(widget.methodTitle);
+    final selectedMethod = _normalizeBehavioralToken(widget.methodTitle ?? '');
     final itemValue = _normalizeBehavioralToken(
       item.metadata['behavioral_value']?.toString() ?? '',
     );
@@ -4599,12 +4494,29 @@ class _MethodContentScreenState extends ConsumerState<MethodContentScreen> {
     ].map(_normalizeBehavioralToken);
     final matchesValue =
         itemValue == selectedValue || categoryTerms.contains(selectedValue);
-    final matchesMethod = itemMethod == selectedMethod;
+    // When no method is selected, the value shows all of its content.
+    final matchesMethod = selectedMethod.isEmpty || itemMethod == selectedMethod;
     return matchesValue && matchesMethod;
   }
 
   String _normalizeBehavioralToken(String value) {
     return value.trim().toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '');
+  }
+
+  /// Localized display name for the value, derived from the English
+  /// [widget.valueTitle] (which stays English for content filtering).
+  String _localizedValueTitle(BuildContext context) {
+    final isArabic = Localizations.localeOf(context)
+        .languageCode
+        .toLowerCase()
+        .startsWith('ar');
+    for (final value in behavioralValues) {
+      if (value['title'] == widget.valueTitle) {
+        final ar = value['title_ar'] as String?;
+        return isArabic ? (ar ?? widget.valueTitle) : widget.valueTitle;
+      }
+    }
+    return widget.valueTitle;
   }
 
   String _localizedContentTitle(PublicContentItem item) {
@@ -4687,7 +4599,7 @@ class _MethodContentScreenState extends ConsumerState<MethodContentScreen> {
                 ),
                 const SizedBox(height: 30),
                 Text(
-                  widget.methodTitle,
+                  widget.methodTitle ?? _localizedValueTitle(context),
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -4719,14 +4631,13 @@ class _MethodContentScreenState extends ConsumerState<MethodContentScreen> {
                       );
                     }
                     return Column(
-                      children: items
-                          .map(
-                            (item) => Padding(
-                              padding: const EdgeInsets.only(bottom: 16.0),
-                              child: _buildContentCard(context, item),
-                            ),
-                          )
-                          .toList(),
+                      children: [
+                        for (var i = 0; i < items.length; i++)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 16.0),
+                            child: _buildContentCard(context, items[i], i + 1),
+                          ),
+                      ],
                     );
                   },
                 ),
@@ -4738,8 +4649,27 @@ class _MethodContentScreenState extends ConsumerState<MethodContentScreen> {
     );
   }
 
-  Widget _buildContentCard(BuildContext context, PublicContentItem item) {
-    final title = _localizedContentTitle(item);
+  String _formatCardNumber(int n, bool arabic) {
+    final digits = n.toString();
+    if (!arabic) return digits;
+    const western = '0123456789';
+    const eastern = '٠١٢٣٤٥٦٧٨٩';
+    final buffer = StringBuffer();
+    for (final ch in digits.split('')) {
+      final idx = western.indexOf(ch);
+      buffer.write(idx >= 0 ? eastern[idx] : ch);
+    }
+    return buffer.toString();
+  }
+
+  Widget _buildContentCard(
+      BuildContext context, PublicContentItem item, int position) {
+    final isArabic = Localizations.localeOf(context)
+        .languageCode
+        .toLowerCase()
+        .startsWith('ar');
+    final title =
+        '${_localizedContentTitle(item)} ${_formatCardNumber(position, isArabic)}';
     final description = _localizedContentDescription(item);
     final thumbnailUrl = item.effectiveThumbnailUrl;
     final hasRemoteImage = thumbnailUrl != null &&
@@ -4886,7 +4816,6 @@ class _BehavioralContentDetailScreenState
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: _adaptivePastelBackground(context, const Color(0xFFE8F5E9)),
       appBar: AppBar(
@@ -4949,22 +4878,24 @@ class _BehavioralContentDetailScreenState
                   ),
                 ),
               ],
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValuesCompat(alpha: 0.82),
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Text(
-                  body.isEmpty ? l10n.playNoBodyContentYet : body,
-                  style: TextStyle(
-                    fontSize: 15,
-                    height: 1.6,
-                    color: Theme.of(context).colorScheme.onSurface,
+              if (body.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValuesCompat(alpha: 0.82),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Text(
+                    body,
+                    style: TextStyle(
+                      fontSize: 15,
+                      height: 1.6,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                   ),
                 ),
-              ),
+              ],
               if (item.hasVideo) ...[
                 const SizedBox(height: 16),
                 ClipRRect(
@@ -6163,12 +6094,20 @@ class EducationalScreen extends ConsumerWidget {
   }
 
   Widget _buildSubjectCard(BuildContext context, Map<String, dynamic> subject) {
+    final isArabic = Localizations.localeOf(context)
+        .languageCode
+        .toLowerCase()
+        .startsWith('ar');
+    final navTitle = subject['title'] as String;
+    final label =
+        (isArabic ? subject['title_ar'] : subject['title']) as String? ??
+            navTitle;
     return InkWell(
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) =>
-                EducationalSubjectScreen(subjectTitle: subject['title']),
+                EducationalSubjectScreen(subjectTitle: navTitle),
           ),
         );
       },
@@ -6206,7 +6145,7 @@ class EducationalScreen extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 20.0),
               child: Text(
-                subject['title'],
+                label,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,

@@ -1,7 +1,7 @@
 // Smoke/render tests for the stateless category screens in
 // learn_support_screens.dart (EntertainingScreen, BehavioralScreen,
 // SkillfulScreen, EducationalScreen) and the simple prop-driven detail screens
-// (ValueDetailsScreen, SkillVideoScreen). These exercise the build methods and
+// (SkillVideoScreen). These exercise the build methods and
 // their card/grid sub-widgets without touching the interactive games.
 
 import 'package:flutter/material.dart';
@@ -68,12 +68,6 @@ void main() {
   testWidgets('EducationalScreen renders', (tester) async {
     await pump(tester, const EducationalScreen());
     expect(find.byType(EducationalScreen), findsOneWidget);
-  });
-
-  testWidgets('ValueDetailsScreen renders with a title', (tester) async {
-    await pump(tester, const ValueDetailsScreen(valueTitle: 'Kindness'));
-    expect(find.byType(ValueDetailsScreen), findsOneWidget);
-    expect(find.text('Kindness'), findsWidgets);
   });
 
   testWidgets('SkillVideoScreen renders with metadata', (tester) async {
