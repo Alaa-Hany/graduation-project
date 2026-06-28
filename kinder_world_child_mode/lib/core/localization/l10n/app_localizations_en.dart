@@ -1299,7 +1299,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'You\'ve reached the maximum number of childrens. Upgrade nowfor \$10/month.';
 
   @override
-  String get childRegisterForbidden => 'Not allowed';
+  String get childRegisterForbidden =>
+      'Could not create the child. Make sure you are signed in as the parent and the email matches your account.';
 
   @override
   String get paywallTitle => 'Upgrade to Premium';

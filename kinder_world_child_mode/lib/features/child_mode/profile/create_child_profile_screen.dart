@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/app.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
+import 'package:kinder_world/core/data/child_avatar_catalog.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
@@ -42,24 +43,6 @@ class _CreateChildProfileScreenState
   // Step 4: Picture Password
   final List<String> _picturePassword = [];
   OverlayEntry? _topMessageEntry;
-
-  // Available avatars
-  final List<String> _avatarOptions = [
-    'assets/images/avatars/boy1.png',
-    'assets/images/avatars/boy2.png',
-    'assets/images/avatars/boy3.png',
-    'assets/images/avatars/boy4.png',
-    'assets/images/avatars/girl1.png',
-    'assets/images/avatars/girl2.png',
-    'assets/images/avatars/girl3.png',
-    'assets/images/avatars/girl4.png',
-    'assets/images/avatars/av1.png',
-    'assets/images/avatars/av2.png',
-    'assets/images/avatars/av3.png',
-    'assets/images/avatars/av4.png',
-    'assets/images/avatars/av5.png',
-    'assets/images/avatars/av6.png',
-  ];
 
   // Available interests
   final Map<String, String> _interestOptions = {
@@ -623,17 +606,24 @@ class _CreateChildProfileScreenState
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
             ),
-            itemCount: _avatarOptions.length,
+            itemCount: childAvatarOptions.length,
             itemBuilder: (context, index) {
-              final avatar = _avatarOptions[index];
+              final option = childAvatarOptions[index];
+              final avatar = option.assetPath;
               final isSelected = _selectedAvatar == avatar;
+              // A newly created child starts at level 1, so higher-level
+              // avatars stay locked until the child levels up (mirrors the
+              // child management and profile customization screens).
+              final isUnlocked = option.isUnlockedForLevel(1);
 
               return InkWell(
-                onTap: () {
-                  setState(() {
-                    _selectedAvatar = avatar;
-                  });
-                },
+                onTap: isUnlocked
+                    ? () {
+                        setState(() {
+                          _selectedAvatar = avatar;
+                        });
+                      }
+                    : null,
                 borderRadius: BorderRadius.circular(16),
                 child: Container(
                   decoration: BoxDecoration(
@@ -649,27 +639,59 @@ class _CreateChildProfileScreenState
                     ),
                   ),
                   child: Center(
-                    child: Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .primary
-                            .withValuesCompat(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(40),
-                      ),
-                      child: ClipOval(
-                        child: Image.asset(
-                          avatar,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Icon(
-                            Icons.person,
-                            size: 40,
-                            color: Theme.of(context).colorScheme.primary,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Opacity(
+                          opacity: isUnlocked ? 1 : 0.35,
+                          child: Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .primary
+                                  .withValuesCompat(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(40),
+                            ),
+                            child: ClipOval(
+                              child: Image.asset(
+                                avatar,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Icon(
+                                  Icons.person,
+                                  size: 40,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                        if (!isUnlocked)
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.lock_rounded,
+                                size: 22,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              ),
+                              if (option.unlockLevel != null)
+                                Text(
+                                  'LV${option.unlockLevel}',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
+                                ),
+                            ],
+                          ),
+                      ],
                     ),
                   ),
                 ),

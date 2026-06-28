@@ -410,10 +410,16 @@ class AuthController extends StateNotifier<AuthState> {
       );
       return null;
     } on ChildRegisterException catch (e) {
+      // Map known backend statuses to specific UI codes FIRST so the screen can
+      // surface the real cause (not signed in as parent / email mismatch /
+      // parent not found / limit reached). Preferring e.message here would
+      // collapse every distinct failure into the generic "register failed"
+      // message, which is exactly what hid the real cause before.
       state = state.copyWith(
         isLoading: false,
-        error: e.message ??
-            _childRegisterErrorForStatus(e.statusCode, e.detailCode),
+        error: _childRegisterErrorForStatus(e.statusCode, e.detailCode) ??
+            e.message ??
+            AuthUiMessages.childRegisterFailed,
       );
       return null;
     } catch (e) {
@@ -532,7 +538,7 @@ class AuthController extends StateNotifier<AuthState> {
     }
   }
 
-  String _childRegisterErrorForStatus(int? statusCode, String? detailCode) {
+  String? _childRegisterErrorForStatus(int? statusCode, String? detailCode) {
     if (statusCode == 402 && detailCode == 'CHILD_LIMIT_REACHED') {
       return 'child_register_limit';
     }
@@ -545,7 +551,10 @@ class AuthController extends StateNotifier<AuthState> {
       case 422:
         return 'child_register_422';
       default:
-        return AuthUiMessages.childRegisterFailed;
+        // Unknown/unexpected status: let the caller fall back to the raw
+        // backend message (or the generic failure text) instead of forcing a
+        // misleading specific code.
+        return null;
     }
   }
 

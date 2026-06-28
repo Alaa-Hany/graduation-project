@@ -2485,7 +2485,8 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get childProfilesSubtitle => 'إدارة حسابات أطفالك';
   @override
-  String get childRegisterForbidden => 'غير مسموح';
+  String get childRegisterForbidden =>
+      'تعذّر إنشاء الطفل. تأكد من تسجيل الدخول بحساب ولي الأمر وأن البريد الإلكتروني مطابق لحسابك.';
   @override
   String get childRegisterLimitReached =>
       'لقد وصلت إلى الحد الأقصى لعدد الأطفال. قم بالترقية الآن مقابل 10 دولارات شهريًا.';
