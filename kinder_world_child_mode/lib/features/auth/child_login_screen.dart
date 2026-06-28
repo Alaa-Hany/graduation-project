@@ -392,6 +392,40 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
   Future<void> _showCreateProfileDialog(AppLocalizations l10n) async {
     if (!mounted) return;
     final parentContext = context;
+    // Creating a child requires an authenticated parent: the backend ties the
+    // new child to the parent's auth token. Typing a parent email is NOT enough
+    // (otherwise anyone could add children under someone else's account), so
+    // without a signed-in parent the request always fails with 401. Detect that
+    // up front and send the user to the parent login instead of letting them
+    // fill the whole form and hit a confusing failure at the end.
+    final parentAccessToken =
+        await ref.read(secureStorageProvider).getParentAccessToken();
+    if (!mounted) return;
+    if (parentAccessToken == null || parentAccessToken.trim().isEmpty) {
+      final goToLogin = await showDialog<bool>(
+        // ignore: use_build_context_synchronously
+        context: parentContext,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(l10n.createChildProfile),
+          content: Text(l10n.childRegisterForbidden),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(l10n.cancel),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(l10n.parentLogin),
+            ),
+          ],
+        ),
+      );
+      if (goToLogin == true && mounted) {
+        // ignore: use_build_context_synchronously
+        parentContext.go(Routes.parentLogin);
+      }
+      return;
+    }
     final storedParentEmail =
         await ref.read(secureStorageProvider).getParentEmail();
     if (!mounted) return;
@@ -536,12 +570,36 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                             runSpacing: 8,
                             children: childAvatarOptions.map((option) {
                               final isSelected = selectedAvatar == option.id;
+                              // A newly created child starts at level 1, so
+                              // higher-level avatars stay locked until the child
+                              // levels up (mirrors the child management and
+                              // profile customization screens).
+                              final isUnlocked = option.isUnlockedForLevel(1);
+                              final avatarImage = ClipOval(
+                                child: option.assetPath.isNotEmpty
+                                    ? Image.asset(
+                                        option.assetPath,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) => Icon(
+                                          option.icon,
+                                          color: option.iconColor,
+                                          size: 26,
+                                        ),
+                                      )
+                                    : Icon(
+                                        option.icon,
+                                        color: option.iconColor,
+                                        size: 26,
+                                      ),
+                              );
                               return InkWell(
-                                onTap: () {
-                                  setDialogState(() {
-                                    selectedAvatar = option.id;
-                                  });
-                                },
+                                onTap: isUnlocked
+                                    ? () {
+                                        setDialogState(() {
+                                          selectedAvatar = option.id;
+                                        });
+                                      }
+                                    : null,
                                 borderRadius: BorderRadius.circular(12),
                                 child: Container(
                                   width: 64,
@@ -566,24 +624,41 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                                     ),
                                   ),
                                   child: Center(
-                                    child: ClipOval(
-                                      child: option.assetPath.isNotEmpty
-                                          ? Image.asset(
-                                              option.assetPath,
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (_, __, ___) =>
-                                                  Icon(
-                                                option.icon,
-                                                color: option.iconColor,
-                                                size: 26,
+                                    child: isUnlocked
+                                        ? avatarImage
+                                        : Stack(
+                                            alignment: Alignment.center,
+                                            children: [
+                                              Opacity(
+                                                opacity: 0.35,
+                                                child: avatarImage,
                                               ),
-                                            )
-                                          : Icon(
-                                              option.icon,
-                                              color: option.iconColor,
-                                              size: 26,
-                                            ),
-                                    ),
+                                              Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(
+                                                    Icons.lock_rounded,
+                                                    size: 18,
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .onSurfaceVariant,
+                                                  ),
+                                                  if (option.unlockLevel != null)
+                                                    Text(
+                                                      'LV${option.unlockLevel}',
+                                                      style: TextStyle(
+                                                        fontSize: 9,
+                                                        fontWeight:
+                                                            FontWeight.w800,
+                                                        color: Theme.of(context)
+                                                            .colorScheme
+                                                            .onSurfaceVariant,
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
                                   ),
                                 ),
                               );
