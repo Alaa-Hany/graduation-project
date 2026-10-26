@@ -29,6 +29,10 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/admin/auth", tags=["Admin Auth"])
 
+# auth_rate_limit is a factory: it must be *called* to get the dependency.
+# Depends(auth_rate_limit) would just run the factory and never limit anything.
+admin_auth_rate_limit_check = Depends(auth_rate_limit())
+
 
 class AdminLoginRequest(BaseModel):
     email: EmailStr
@@ -108,7 +112,7 @@ def admin_login(
     payload: AdminLoginRequest,
     request: Request,
     db: Session = Depends(get_db),
-    rate_limit_check: None = Depends(auth_rate_limit),
+    rate_limit_check: None = admin_auth_rate_limit_check,
 ):
     return admin_auth_service.login(payload=payload, request=request, db=db)
 
@@ -130,7 +134,7 @@ def admin_bootstrap_status(db: Session = Depends(get_db)):
 def admin_bootstrap(
     payload: AdminBootstrapRequest,
     db: Session = Depends(get_db),
-    rate_limit_check: None = Depends(auth_rate_limit),
+    rate_limit_check: None = admin_auth_rate_limit_check,
 ):
     if db.query(AdminUser.id).first() is not None:
         raise HTTPException(
@@ -170,7 +174,7 @@ def admin_bootstrap(
 def admin_refresh(
     payload: AdminRefreshRequest,
     db: Session = Depends(get_db),
-    rate_limit_check: None = Depends(auth_rate_limit),
+    rate_limit_check: None = admin_auth_rate_limit_check,
 ):
     """
     Exchange a valid admin refresh token for a new access token.
