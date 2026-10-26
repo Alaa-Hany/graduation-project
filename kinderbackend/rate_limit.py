@@ -216,6 +216,47 @@ def user_rate_limit(
     return check_rate_limit
 
 
+def ai_principal_rate_limit(
+    *,
+    limit_setting: str,
+    window_seconds: int = 60,
+    scope: str,
+    message: str,
+):
+    """Per-AI-principal rate-limit dependency for paid AI provider endpoints.
+
+    Keyed by child id for ``child_session`` tokens, otherwise by parent id, and
+    by ``scope`` rather than path so the bucket cannot be dodged by spreading
+    calls across session ids. The cap is read from ``settings.<limit_setting>``
+    on each request. Degrades to the in-memory limiter on a Redis outage
+    instead of failing open, since every allowed call costs provider credits.
+    """
+
+    from core.settings import settings
+    from deps import get_ai_buddy_principal
+
+    def check_rate_limit(principal=Depends(get_ai_buddy_principal)) -> None:
+        max_requests = int(getattr(settings, limit_setting))
+        if principal.child is not None:
+            key = f"{scope}:child:{principal.child.id}"
+        else:
+            key = f"{scope}:parent:{principal.parent.id}"
+
+        if not rate_limiter.is_allowed(key, max_requests, window_seconds, fail_open=False):
+            raise HTTPException(
+                status_code=HTTP_429_TOO_MANY_REQUESTS,
+                detail=_rate_limit_detail(
+                    code="RATE_LIMIT_EXCEEDED",
+                    message=message,
+                    retry_after=window_seconds,
+                    scope=scope,
+                ),
+                headers={"Retry-After": str(window_seconds)},
+            )
+
+    return check_rate_limit
+
+
 # ---------------------------------------------------------------------------
 # Pre-configured limiters
 # ---------------------------------------------------------------------------
@@ -313,6 +354,24 @@ def email_otp_resend_rate_limit():
         message="Too many OTP resend requests. Please try again later.",
         scope="email_otp_resend",
         fail_open=False,
+    )
+
+
+def ai_buddy_message_rate_limit():
+    """Per-child/parent throttling for AI Buddy chat messages."""
+    return ai_principal_rate_limit(
+        limit_setting="ai_buddy_messages_per_minute",
+        scope="ai_buddy_message",
+        message="Too many messages. Please wait a moment and try again.",
+    )
+
+
+def voice_rate_limit():
+    """Per-child/parent throttling shared by voice transcribe and synthesize."""
+    return ai_principal_rate_limit(
+        limit_setting="voice_requests_per_minute",
+        scope="voice",
+        message="Too many voice requests. Please wait a moment and try again.",
     )
 
 
