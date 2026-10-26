@@ -434,16 +434,15 @@ class AuthService:
         if user is None:
             raise HTTPException(status_code=404, detail=AuthMessages.USER_NOT_FOUND)
         if self._user_has_verified_email(user):
-            refresh_token = self._issue_refresh_token(user=user)
-            db.add(user)
-            db.commit()
-            db.refresh(user)
-            return {
-                "access_token": create_access_token(str(user.id), user.token_version),
-                "refresh_token": refresh_token,
-                "token_type": "bearer",
-                "user": user_to_json(user),
-            }
+            # Never issue tokens here: there is no live OTP to check, so doing so
+            # would let anyone who knows the email log in (and skip 2FA).
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "EMAIL_ALREADY_VERIFIED",
+                    "message": AuthMessages.EMAIL_ALREADY_VERIFIED,
+                },
+            )
         if self._otp_expired(user) or not getattr(user, "email_otp_hash", None):
             raise HTTPException(status_code=400, detail=AuthMessages.INVALID_OR_EXPIRED_OTP)
         if not verify_password(payload.otp, user.email_otp_hash):

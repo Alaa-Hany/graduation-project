@@ -5,6 +5,7 @@ mixin _AuthRepositorySupportMixin {
   static const _parentInvalidTwoFactorCode = 'PARENT_INVALID_TWO_FACTOR_CODE';
   static const _emailVerificationRequiredCode = 'EMAIL_VERIFICATION_REQUIRED';
   static const _otpResendCooldownCode = 'OTP_RESEND_COOLDOWN';
+  static const _emailAlreadyVerifiedCode = 'EMAIL_ALREADY_VERIFIED';
 
   SecureStorage get _secureStorage;
   AuthApi get _authApi;
@@ -185,6 +186,10 @@ mixin _AuthRepositorySupportMixin {
 
   bool _isOtpResendCooldown(DioException e) {
     return _extractErrorDetailCode(e) == _otpResendCooldownCode;
+  }
+
+  bool _isEmailAlreadyVerified(DioException e) {
+    return _extractErrorDetailCode(e) == _emailAlreadyVerifiedCode;
   }
 
   DateTime? _extractLockedUntil(DioException e) {

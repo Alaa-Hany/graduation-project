@@ -105,9 +105,18 @@ class _ParentVerifyEmailScreenState
       return;
     }
 
+    final authState = ref.read(authControllerProvider);
+    if (authState.emailAlreadyVerified) {
+      _showMessage(
+        authState.error ?? AuthUiMessages.emailAlreadyVerified,
+        isError: false,
+      );
+      context.go(Routes.parentLogin);
+      return;
+    }
+
     _syncCooldown();
-    final error = ref.read(authControllerProvider).error;
-    _showMessage(error ?? AuthUiMessages.verificationCodeInvalid);
+    _showMessage(authState.error ?? AuthUiMessages.verificationCodeInvalid);
   }
 
   Future<void> _resendOtp() async {

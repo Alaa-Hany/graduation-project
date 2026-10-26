@@ -15,6 +15,8 @@ abstract final class AuthUiMessages {
   static const emailVerificationRequired =
       'Email verification is required before login';
   static const verificationCodeInvalid = 'Invalid or expired OTP';
+  static const emailAlreadyVerified =
+      'Email is already verified. Please log in with your password.';
   static const verificationCodeSent =
       'We sent a verification code to your email.';
   static const verificationCodeResent =

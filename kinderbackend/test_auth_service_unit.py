@@ -188,11 +188,18 @@ def test_verify_otp_user_not_found(service, db):
     assert exc.value.status_code == 404
 
 
-def test_verify_otp_already_verified_returns_tokens(service, db, create_parent):
-    create_parent(email="verify-done@example.com")
+def test_verify_otp_already_verified_rejected_without_tokens(service, db, create_parent):
+    user = create_parent(email="verify-done@example.com")
     payload = VerifyEmailOtpIn(email="verify-done@example.com", otp="123456")
-    result = service.verify_parent_email_otp(payload, db)
-    assert "access_token" in result
+    with pytest.raises(HTTPException) as exc:
+        service.verify_parent_email_otp(payload, db)
+    assert exc.value.status_code == 409
+    assert exc.value.detail == {
+        "code": "EMAIL_ALREADY_VERIFIED",
+        "message": AuthMessages.EMAIL_ALREADY_VERIFIED,
+    }
+    db.refresh(user)
+    assert user.refresh_token_hash is None
 
 
 def test_verify_otp_expired(service, db, create_parent):

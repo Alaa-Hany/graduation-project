@@ -20,6 +20,7 @@ class AuthState {
   final bool requiresTwoFactor;
   final String? twoFactorMethod;
   final bool requiresEmailVerification;
+  final bool emailAlreadyVerified;
   final String? pendingVerificationEmail;
   final DateTime? otpExpiresAt;
   final DateTime? resendAvailableAt;
@@ -32,6 +33,7 @@ class AuthState {
     this.requiresTwoFactor = false,
     this.twoFactorMethod,
     this.requiresEmailVerification = false,
+    this.emailAlreadyVerified = false,
     this.pendingVerificationEmail,
     this.otpExpiresAt,
     this.resendAvailableAt,
@@ -45,6 +47,7 @@ class AuthState {
     bool? requiresTwoFactor,
     Object? twoFactorMethod = _sentinel,
     bool? requiresEmailVerification,
+    bool? emailAlreadyVerified,
     Object? pendingVerificationEmail = _sentinel,
     Object? otpExpiresAt = _sentinel,
     Object? resendAvailableAt = _sentinel,
@@ -60,6 +63,7 @@ class AuthState {
           : twoFactorMethod as String?,
       requiresEmailVerification:
           requiresEmailVerification ?? this.requiresEmailVerification,
+      emailAlreadyVerified: emailAlreadyVerified ?? this.emailAlreadyVerified,
       pendingVerificationEmail: identical(pendingVerificationEmail, _sentinel)
           ? this.pendingVerificationEmail
           : pendingVerificationEmail as String?,
@@ -247,7 +251,11 @@ class AuthController extends StateNotifier<AuthState> {
     required String email,
     required String otp,
   }) async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(
+      isLoading: true,
+      error: null,
+      emailAlreadyVerified: false,
+    );
 
     try {
       final user = await _authRepository.verifyParentEmailOtp(
@@ -274,6 +282,20 @@ class AuthController extends StateNotifier<AuthState> {
       );
       return false;
     } on ParentAuthException catch (e) {
+      if (e.emailAlreadyVerified) {
+        // Nothing left to verify and no tokens were issued: the screen sends
+        // the user to the normal login flow.
+        state = state.copyWith(
+          isLoading: false,
+          error: e.message,
+          emailAlreadyVerified: true,
+          requiresEmailVerification: false,
+          pendingVerificationEmail: null,
+          otpExpiresAt: null,
+          resendAvailableAt: null,
+        );
+        return false;
+      }
       state = state.copyWith(
         isLoading: false,
         error: _formatParentAuthError(e),

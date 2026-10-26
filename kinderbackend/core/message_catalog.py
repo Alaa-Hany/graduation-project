@@ -16,6 +16,7 @@ class AuthMessages:
     EMAIL_ALREADY_REGISTERED = "Email already registered"
     EMAIL_VERIFICATION_REQUIRED = "Email verification is required before login"
     EMAIL_VERIFIED_SUCCESSFULLY = "Email verified successfully"
+    EMAIL_ALREADY_VERIFIED = "Email is already verified. Please log in with your password."
     INVALID_OR_EXPIRED_OTP = "Invalid or expired OTP"
     OTP_RESENT_SUCCESSFULLY = "OTP sent successfully"
     OTP_RESEND_COOLDOWN = "Please wait before requesting another OTP"
