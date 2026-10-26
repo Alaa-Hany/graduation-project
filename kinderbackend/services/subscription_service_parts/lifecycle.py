@@ -34,34 +34,6 @@ from services.subscription_service_parts.common import (
 
 
 class SubscriptionLifecycleMixin:
-    def upgrade_subscription(
-        self,
-        *,
-        payload,
-        db: Session,
-        user: User,
-    ) -> dict[str, object]:
-        try:
-            plan = validate_plan_value(payload.plan)
-        except ValueError:
-            raise HTTPException(status_code=400, detail=SubscriptionMessages.INVALID_PLAN)
-
-        if plan == PLAN_FREE:
-            self._set_free_access(db=db, user=user, source="parent_upgrade_free")
-            db.commit()
-            db.refresh(user)
-            return self.get_subscription(db=db, user=user)
-        self._activate_plan(
-            db=db,
-            user=user,
-            plan=plan,
-            source="parent_upgrade",
-            request_origin="upgrade",
-        )
-        db.commit()
-        db.refresh(user)
-        return self.get_subscription(db=db, user=user)
-
     def cancel_subscription(
         self,
         *,

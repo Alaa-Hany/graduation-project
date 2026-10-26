@@ -102,10 +102,6 @@ class SubscriptionInfo(BaseModel):
     payment_attempts: List[PaymentAttemptOut]
 
 
-class SubscriptionChange(BaseModel):
-    plan: str
-
-
 class PlanOut(BaseModel):
     id: str
     name: str
@@ -231,19 +227,9 @@ def get_subscription_history(
     return subscription_service.subscription_history(db=db, user=user)
 
 
-@router.post(
-    "/upgrade",
-    response_model=SubscriptionInfo,
-    summary="Grant Plan Access",
-    description="Apply plan access directly without starting a checkout flow.",
-    response_description="Updated purchase access details after the override is applied.",
-)
-def upgrade_subscription(
-    payload: SubscriptionChange,
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
-):
-    return subscription_service.upgrade_subscription(payload=payload, db=db, user=user)
+# There is deliberately no parent-facing "grant plan" endpoint: paid plans are
+# activated only by a verified provider checkout (/select -> /activate or the
+# payment webhook). Admin grants go through admin_override_subscription.
 
 
 @public_router.get(
