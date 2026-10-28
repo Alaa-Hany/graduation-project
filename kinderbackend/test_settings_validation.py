@@ -40,7 +40,7 @@ def test_production_requires_cors():
             "STRIPE_PRICE_FAMILY_PLUS_MONTHLY": "price_placeholder_family",
             "STRIPE_PRICE_PREMIUM_YEARLY": "price_placeholder_premium_yearly",
             "STRIPE_PRICE_FAMILY_PLUS_YEARLY": "price_placeholder_family_yearly",
-            "KINDER_JWT_SECRET": "TEST_ONLY_PLACEHOLDER_SECRET",
+            "KINDER_JWT_SECRET": "TEST_ONLY_PLACEHOLDER_SECRET_AT_LEAST_32_CHARS",
         }
     )
     try:
@@ -56,7 +56,7 @@ def test_reconciliation_requires_schedule():
             "ENVIRONMENT": "development",
             "PAYMENT_RECONCILIATION_ENABLED": "true",
             "PAYMENT_RECONCILIATION_SCHEDULE": "",
-            "KINDER_JWT_SECRET": "TEST_ONLY_PLACEHOLDER_SECRET",
+            "KINDER_JWT_SECRET": "TEST_ONLY_PLACEHOLDER_SECRET_AT_LEAST_32_CHARS",
         }
     )
     try:
@@ -81,7 +81,7 @@ def test_stripe_https_required_in_production():
             "STRIPE_PRICE_PREMIUM_YEARLY": "price_placeholder_premium_yearly",
             "STRIPE_PRICE_FAMILY_PLUS_YEARLY": "price_placeholder_family_yearly",
             "ALLOWED_ORIGINS": "https://app.example.invalid",
-            "KINDER_JWT_SECRET": "TEST_ONLY_PLACEHOLDER_SECRET",
+            "KINDER_JWT_SECRET": "TEST_ONLY_PLACEHOLDER_SECRET_AT_LEAST_32_CHARS",
         }
     )
     try:
@@ -97,7 +97,7 @@ def test_ai_provider_requires_key():
             "ENVIRONMENT": "development",
             "AI_PROVIDER_MODE": "external",
             "AI_PROVIDER_API_KEY": "",
-            "KINDER_JWT_SECRET": "TEST_ONLY_PLACEHOLDER_SECRET",
+            "KINDER_JWT_SECRET": "TEST_ONLY_PLACEHOLDER_SECRET_AT_LEAST_32_CHARS",
         }
     )
     try:
@@ -113,7 +113,7 @@ def test_internal_provider_blocked_in_production():
             "ENVIRONMENT": "production",
             "PAYMENT_PROVIDER": "internal",
             "ALLOWED_ORIGINS": "https://app.example.invalid",
-            "KINDER_JWT_SECRET": "TEST_ONLY_PLACEHOLDER_SECRET",
+            "KINDER_JWT_SECRET": "TEST_ONLY_PLACEHOLDER_SECRET_AT_LEAST_32_CHARS",
         }
     )
     try:
@@ -128,7 +128,7 @@ def test_internal_provider_allowed_in_development():
         {
             "ENVIRONMENT": "development",
             "PAYMENT_PROVIDER": "internal",
-            "KINDER_JWT_SECRET": "TEST_ONLY_PLACEHOLDER_SECRET",
+            "KINDER_JWT_SECRET": "TEST_ONLY_PLACEHOLDER_SECRET_AT_LEAST_32_CHARS",
         }
     )
     try:
@@ -142,7 +142,7 @@ def test_data_encryption_settings_are_loaded():
     original = _with_env(
         {
             "ENVIRONMENT": "development",
-            "KINDER_JWT_SECRET": "TEST_ONLY_PLACEHOLDER_SECRET",
+            "KINDER_JWT_SECRET": "TEST_ONLY_PLACEHOLDER_SECRET_AT_LEAST_32_CHARS",
             "DATA_ENCRYPTION_KEY": "field-secret-v2",
             "DATA_ENCRYPTION_PREVIOUS_KEYS": "field-secret-v1,field-secret-v0",
         }
@@ -162,7 +162,7 @@ def test_ai_provider_generation_settings_are_loaded() -> None:
     original = _with_env(
         {
             "ENVIRONMENT": "development",
-            "KINDER_JWT_SECRET": "TEST_ONLY_PLACEHOLDER_SECRET",
+            "KINDER_JWT_SECRET": "TEST_ONLY_PLACEHOLDER_SECRET_AT_LEAST_32_CHARS",
             "AI_MODEL": "gpt-4o-mini",
             "AI_MAX_TOKENS": "700",
             "AI_TEMPERATURE": "0.4",
@@ -173,5 +173,57 @@ def test_ai_provider_generation_settings_are_loaded() -> None:
         assert settings.ai_model == "gpt-4o-mini"
         assert settings.ai_max_tokens == 700
         assert settings.ai_temperature == 0.4
+    finally:
+        _restore_env(original)
+
+
+def _production_env(secret: str) -> dict[str, str | None]:
+    """A production config that is valid apart from the JWT secret under test."""
+    return {
+        "ENVIRONMENT": "production",
+        "PAYMENT_PROVIDER": "stripe",
+        "STRIPE_SECRET_KEY": "sk_test_placeholder",
+        "STRIPE_WEBHOOK_SECRET": "whsec_placeholder",
+        "STRIPE_CHECKOUT_SUCCESS_URL": "https://app.example.invalid/success",
+        "STRIPE_CHECKOUT_CANCEL_URL": "https://app.example.invalid/cancel",
+        "STRIPE_PORTAL_RETURN_URL": "https://app.example.invalid/portal",
+        "STRIPE_PRICE_PREMIUM_MONTHLY": "price_placeholder_premium",
+        "STRIPE_PRICE_FAMILY_PLUS_MONTHLY": "price_placeholder_family",
+        "STRIPE_PRICE_PREMIUM_YEARLY": "price_placeholder_premium_yearly",
+        "STRIPE_PRICE_FAMILY_PLUS_YEARLY": "price_placeholder_family_yearly",
+        "ALLOWED_ORIGINS": "https://app.example.invalid",
+        "ALLOWED_ORIGIN_REGEX": "",
+        "REDIS_URL": "redis://localhost:6379/0",
+        "ENABLE_ADMIN_SEED_ENDPOINT": "false",
+        "KINDER_JWT_SECRET": secret,
+    }
+
+
+@pytest.mark.parametrize("secret", ["x" * 31, "short-secret", "TEST_ONLY_PLACEHOLDER_SECRET"])
+def test_production_rejects_jwt_secret_shorter_than_32_chars(secret):
+    original = _with_env(_production_env(secret))
+    try:
+        with pytest.raises(ValueError, match="Production JWT secret is too short"):
+            Settings.from_env()
+    finally:
+        _restore_env(original)
+
+
+def test_production_accepts_jwt_secret_of_32_chars():
+    original = _with_env(_production_env("x" * 32))
+    try:
+        settings = Settings.from_env()
+        assert settings.is_production
+        assert len(settings.jwt_active_secret) == 32
+    finally:
+        _restore_env(original)
+
+
+def test_short_jwt_secret_still_allowed_outside_production():
+    original = _with_env(
+        {"ENVIRONMENT": "development", "PAYMENT_PROVIDER": "internal", "KINDER_JWT_SECRET": "dev"}
+    )
+    try:
+        assert Settings.from_env().jwt_active_secret == "dev"
     finally:
         _restore_env(original)

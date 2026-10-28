@@ -10,6 +10,9 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).parent.parent / ".env")
 
+# HS256 signs with SHA-256, so a key shorter than its 32-byte output weakens it.
+MIN_PRODUCTION_JWT_SECRET_LENGTH = 32
+
 
 def _as_bool(value: str | None, default: bool = False) -> bool:
     if value is None:
@@ -280,6 +283,17 @@ class Settings:
             "TEST_ONLY_SECRET",
         }:
             raise ValueError("Production JWT secret is insecure. Use a strong random value.")
+        if (
+            environment == "production"
+            and len(jwt_active_secret) < MIN_PRODUCTION_JWT_SECRET_LENGTH
+        ):
+            # HS256 keys shorter than the 32-byte hash output are brute-forceable
+            # offline from any single issued token (RFC 7518 §3.2).
+            raise ValueError(
+                f"Production JWT secret is too short ({len(jwt_active_secret)} characters). "
+                f"Use at least {MIN_PRODUCTION_JWT_SECRET_LENGTH} random characters, e.g. "
+                'python -c "import secrets; print(secrets.token_urlsafe(48))".'
+            )
         if payment_provider not in {"internal", "stripe"}:
             raise ValueError("PAYMENT_PROVIDER must be either 'internal' or 'stripe'")
         if environment == "production" and payment_provider != "stripe":
