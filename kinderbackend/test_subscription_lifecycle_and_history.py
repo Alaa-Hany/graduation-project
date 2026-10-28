@@ -167,3 +167,25 @@ def test_admin_subscription_detail_exposes_lifecycle_and_history(
     assert len(item["recent_events"]) >= 1
     assert len(item["billing_history"]) == 0
     assert len(item["payment_attempts"]) >= 1
+
+
+def test_free_parent_cannot_self_grant_paid_plan(client, db, create_parent, auth_headers):
+    # Regression: POST /subscription/upgrade let any logged-in parent switch to a
+    # paid plan without paying. Paid plans must only come from a verified checkout.
+    parent = create_parent(email="free.self.grant@example.com", plan=PLAN_FREE)
+    headers = auth_headers(parent)
+
+    for plan in (PLAN_PREMIUM, PLAN_FAMILY_PLUS):
+        response = client.post(
+            "/api/v1/subscription/upgrade",
+            json={"plan": plan},
+            headers=headers,
+        )
+        assert response.status_code == 404
+
+    status = client.get("/api/v1/subscription", headers=headers).json()
+    assert status["current_plan_id"] == PLAN_FREE
+    assert status["has_paid_access"] is False
+    db.refresh(parent)
+    assert parent.plan == PLAN_FREE
+    assert parent.is_premium is False

@@ -31,6 +31,9 @@ env/
 .vscode/
 .idea/
 .claude/
+# Per-user Claude Code permissions; explicit in case .claude/ is ever un-ignored
+# to share project settings.
+.claude/settings.local.json
 .DS_Store
 Thumbs.db
 __pycache__/
@@ -75,6 +78,7 @@ KinderWorld_Audit_Report.docx
 generate_audit_report.py
 
 # Scratch / local-only files
+*.bak
 puzzle_block.txt
 puzzle_drag_block.txt
 **/test_failures.txt

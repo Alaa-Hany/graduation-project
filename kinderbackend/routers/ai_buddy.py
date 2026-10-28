@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from deps import AiBuddyPrincipal, get_ai_buddy_principal, get_current_user, get_db
 from models import User
+from rate_limit import ai_buddy_message_rate_limit
 from schemas.ai_buddy import (
     AiBuddyConversationOut,
     AiBuddyDeleteHistoryOut,
@@ -72,6 +73,7 @@ async def send_ai_buddy_message(
     payload: AiBuddySendMessageIn,
     db: Session = Depends(get_db),
     principal: AiBuddyPrincipal = Depends(get_ai_buddy_principal),
+    _: None = Depends(ai_buddy_message_rate_limit()),
 ):
     # send_message runs moderation + an external AI provider call; offload it so
     # the event loop stays free to serve other requests while it waits on I/O.

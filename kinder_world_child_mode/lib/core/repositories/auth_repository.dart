@@ -55,6 +55,7 @@ class ParentAuthException implements Exception {
   final bool requiresTwoFactor;
   final String? twoFactorMethod;
   final bool requiresEmailVerification;
+  final bool emailAlreadyVerified;
   final String? pendingEmail;
   final DateTime? otpExpiresAt;
   final DateTime? resendAvailableAt;
@@ -65,6 +66,7 @@ class ParentAuthException implements Exception {
     this.requiresTwoFactor = false,
     this.twoFactorMethod,
     this.requiresEmailVerification = false,
+    this.emailAlreadyVerified = false,
     this.pendingEmail,
     this.otpExpiresAt,
     this.resendAvailableAt,

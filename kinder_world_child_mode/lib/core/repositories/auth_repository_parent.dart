@@ -142,6 +142,15 @@ mixin _AuthRepositoryParentMixin on _AuthRepositorySupportMixin {
       }
       return user;
     } on DioException catch (e) {
+      // The backend never issues tokens for an already-verified account; the
+      // user has to sign in with their password (and 2FA) instead.
+      if (_isEmailAlreadyVerified(e)) {
+        throw ParentAuthException(
+          message: _extractErrorMessage(e) ?? AuthUiMessages.emailAlreadyVerified,
+          statusCode: e.response?.statusCode,
+          emailAlreadyVerified: true,
+        );
+      }
       throw ParentAuthException(
         message:
             _extractErrorMessage(e) ?? AuthUiMessages.verificationCodeInvalid,

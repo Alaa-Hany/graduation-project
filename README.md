@@ -485,6 +485,13 @@ CORS:
 - `ALLOWED_ORIGIN_REGEX`
 - `CORS_ALLOW_CREDENTIALS`
 
+Reverse proxy / client IP:
+
+- `FORWARDED_ALLOW_IPS` (default `127.0.0.1`): IPs uvicorn trusts to send `X-Forwarded-For` / `X-Forwarded-Proto`. The Docker image runs uvicorn with `--proxy-headers --forwarded-allow-ips "$FORWARDED_ALLOW_IPS"`.
+  - **On Render, set this to `*`.** The app is only reachable through Render's load balancer, so its address is the TCP peer of every request. With the default, every user looks like the same IP, so they share one IP-based rate-limit counter (login, OTP, password reset, admin auth) and one child-login lockout, and audit logs record the proxy instead of the user.
+  - Only use `*` when the app cannot be reached except through a trusted proxy. If it is exposed directly, anyone can forge `X-Forwarded-For` to dodge IP limits.
+  - If Render runs the service with a custom start command instead of the Dockerfile `CMD`, that command needs the same flags.
+
 Database:
 
 - `DATABASE_URL`
@@ -567,6 +574,8 @@ AI provider:
 - `AI_TEMPERATURE`
 - `AI_FREQUENCY_PENALTY` (optional, default 0.4 — reduces repeated wording)
 - `AI_PRESENCE_PENALTY` (optional, default 0.6 — encourages fresh topics)
+- `AI_BUDDY_MESSAGES_PER_MINUTE` (optional, default 20 — per child/parent cap on AI Buddy messages)
+- `VOICE_REQUESTS_PER_MINUTE` (optional, default 10 — per child/parent cap shared by voice transcribe/synthesize)
 
 Media uploads (Cloudinary):
 

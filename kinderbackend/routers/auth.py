@@ -165,6 +165,10 @@ class TwoFactorEnableRequest(BaseModel):
         return normalized
 
 
+class TwoFactorDisableRequest(TwoFactorEnableRequest):
+    """Current authenticator code, proving the caller still holds the device."""
+
+
 class TwoFactorActionResponse(TwoFactorStatusResponse):
     success: bool
     message: str
@@ -334,11 +338,16 @@ def enable_two_factor_endpoint(
     "/auth/2fa/disable",
     response_model=TwoFactorActionResponse,
     summary="Disable Parent 2FA",
-    description="Disable TOTP-based two-factor authentication for the current parent account.",
+    description=(
+        "Disable TOTP-based two-factor authentication for the current parent account. "
+        "Requires a current code from the authenticator app."
+    ),
     response_description="2FA disablement result.",
 )
 def disable_two_factor_endpoint(
+    payload: TwoFactorDisableRequest,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
+    rate_limit_check: None = two_factor_rate_limit_check,
 ):
-    return auth_service.disable_two_factor(db=db, user=user)
+    return auth_service.disable_two_factor(db=db, user=user, code=payload.code)

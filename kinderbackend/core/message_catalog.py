@@ -16,6 +16,7 @@ class AuthMessages:
     EMAIL_ALREADY_REGISTERED = "Email already registered"
     EMAIL_VERIFICATION_REQUIRED = "Email verification is required before login"
     EMAIL_VERIFIED_SUCCESSFULLY = "Email verified successfully"
+    EMAIL_ALREADY_VERIFIED = "Email is already verified. Please log in with your password."
     INVALID_OR_EXPIRED_OTP = "Invalid or expired OTP"
     OTP_RESENT_SUCCESSFULLY = "OTP sent successfully"
     OTP_RESEND_COOLDOWN = "Please wait before requesting another OTP"
@@ -49,6 +50,7 @@ class AuthMessages:
     TWO_FACTOR_SETUP_REQUIRED = "Two-factor authentication setup is required before enabling it"
     TWO_FACTOR_ENABLED_SUCCESSFULLY = "Two-factor authentication enabled successfully"
     TWO_FACTOR_DISABLED_SUCCESSFULLY = "Two-factor authentication disabled successfully"
+    TWO_FACTOR_NOT_ENABLED = "Two-factor authentication is not enabled"
     PASSWORD_RESET_EMAIL_SENT = "If that email is registered, a password reset link has been sent"
     INVALID_OR_EXPIRED_RESET_TOKEN = "Invalid or expired password reset link"
     PASSWORD_RESET_SUCCESSFUL = "Password reset successfully"
@@ -85,6 +87,9 @@ class AdminAuthMessages:
     TWO_FACTOR_SETUP_REQUIRED = "Two-factor authentication setup is required before enabling it"
     TWO_FACTOR_ENABLED_SUCCESSFULLY = "Two-factor authentication enabled successfully"
     TWO_FACTOR_DISABLED_SUCCESSFULLY = "Two-factor authentication disabled successfully"
+    TWO_FACTOR_CANNOT_DISABLE_MANDATORY = (
+        "Two-factor authentication is mandatory for admin accounts and cannot be disabled."
+    )
     TWO_FACTOR_MANDATORY = (
         "Two-factor authentication is mandatory for admin accounts. "
         "Please set up 2FA via POST /api/v2/admin/2fa/setup then POST /api/v2/admin/2fa/enable "

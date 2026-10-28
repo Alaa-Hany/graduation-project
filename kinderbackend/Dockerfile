@@ -51,6 +51,15 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=4)" \
     || exit 1
 
+# Trusted proxies for X-Forwarded-For / X-Forwarded-Proto. Behind a platform
+# load balancer (e.g. Render) the TCP peer is the proxy, so without this every
+# user shares the proxy's IP in rate limits, child-login lockouts and audit logs.
+# Default trusts only localhost; set FORWARDED_ALLOW_IPS="*" on Render, where the
+# app is reachable only through Render's proxy.
+ENV FORWARDED_ALLOW_IPS="127.0.0.1"
+
 # Set AUTO_RUN_MIGRATIONS=true in your environment (or docker-compose.yml) to
 # let the app apply Alembic migrations automatically on startup.
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Shell form so FORWARDED_ALLOW_IPS is expanded at runtime; exec keeps uvicorn as
+# PID 1 so it receives stop signals directly.
+CMD ["sh", "-c", "exec uvicorn main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips \"${FORWARDED_ALLOW_IPS:-127.0.0.1}\""]

@@ -149,7 +149,7 @@ def test_settings_from_env_parses_cors_and_runtime_flags(
     monkeypatch.setenv("ALLOWED_ORIGINS", "https://app.example.com, https://admin.example.com")
     monkeypatch.setenv("ALLOWED_ORIGIN_REGEX", r"^https://preview-\d+\.example\.com$")
     monkeypatch.setenv("CORS_ALLOW_CREDENTIALS", "false")
-    monkeypatch.setenv("KINDER_JWT_SECRET", "TEST_ONLY_PLACEHOLDER_SECRET")
+    monkeypatch.setenv("KINDER_JWT_SECRET", "TEST_ONLY_PLACEHOLDER_SECRET_AT_LEAST_32_CHARS")
     monkeypatch.setenv("STRIPE_SECRET_KEY", "sk_test_placeholder")
     monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_placeholder")
     monkeypatch.setenv("STRIPE_CHECKOUT_SUCCESS_URL", "https://app.example.invalid/success")
@@ -187,7 +187,7 @@ def test_settings_from_env_parses_cors_and_runtime_flags(
 
 def test_settings_rejects_invalid_allowed_origin(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("ENVIRONMENT", "development")
-    monkeypatch.setenv("KINDER_JWT_SECRET", "TEST_ONLY_PLACEHOLDER_SECRET")
+    monkeypatch.setenv("KINDER_JWT_SECRET", "TEST_ONLY_PLACEHOLDER_SECRET_AT_LEAST_32_CHARS")
     monkeypatch.setenv("ALLOWED_ORIGINS", "not-a-url")
 
     with pytest.raises(ValueError, match="Invalid origin"):
@@ -196,7 +196,7 @@ def test_settings_rejects_invalid_allowed_origin(monkeypatch: pytest.MonkeyPatch
 
 def test_settings_rejects_wildcard_with_credentials(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("ENVIRONMENT", "development")
-    monkeypatch.setenv("KINDER_JWT_SECRET", "TEST_ONLY_PLACEHOLDER_SECRET")
+    monkeypatch.setenv("KINDER_JWT_SECRET", "TEST_ONLY_PLACEHOLDER_SECRET_AT_LEAST_32_CHARS")
     monkeypatch.setenv("ALLOWED_ORIGINS", "*")
     monkeypatch.setenv("CORS_ALLOW_CREDENTIALS", "true")
 
@@ -208,7 +208,7 @@ def test_settings_allows_wildcard_without_credentials_in_dev(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("ENVIRONMENT", "development")
-    monkeypatch.setenv("KINDER_JWT_SECRET", "TEST_ONLY_PLACEHOLDER_SECRET")
+    monkeypatch.setenv("KINDER_JWT_SECRET", "TEST_ONLY_PLACEHOLDER_SECRET_AT_LEAST_32_CHARS")
     monkeypatch.setenv("ALLOWED_ORIGINS", "*")
     monkeypatch.setenv("CORS_ALLOW_CREDENTIALS", "false")
 
@@ -222,7 +222,7 @@ def test_settings_rejects_permissive_origin_regex_in_production(
 ) -> None:
     monkeypatch.setenv("ENVIRONMENT", "production")
     monkeypatch.setenv("PAYMENT_PROVIDER", "stripe")
-    monkeypatch.setenv("KINDER_JWT_SECRET", "TEST_ONLY_PLACEHOLDER_SECRET")
+    monkeypatch.setenv("KINDER_JWT_SECRET", "TEST_ONLY_PLACEHOLDER_SECRET_AT_LEAST_32_CHARS")
     monkeypatch.setenv("STRIPE_SECRET_KEY", "sk_test_placeholder")
     monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_placeholder")
     monkeypatch.setenv("STRIPE_CHECKOUT_SUCCESS_URL", "https://app.example.invalid/success")

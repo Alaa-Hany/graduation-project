@@ -101,24 +101,14 @@ def _select_payload(plan, *, session_id=None, billing_interval="monthly"):
 
 
 # ---------------------------------------------------------------------------
-# upgrade_subscription / admin_override_subscription (internal provider)
+# admin_override_subscription (internal provider)
 # ---------------------------------------------------------------------------
 
 
-def test_upgrade_to_free(db, create_parent):
-    parent = create_parent(email="up-free@example.com", plan=PLAN_PREMIUM)
-    result = subscription_service.upgrade_subscription(
-        payload=SimpleNamespace(plan=PLAN_FREE), db=db, user=parent
-    )
-    assert result["current_plan_id"] == PLAN_FREE
-
-
-def test_upgrade_to_premium(db, create_parent):
-    parent = create_parent(email="up-prem@example.com", plan=PLAN_FREE)
-    result = subscription_service.upgrade_subscription(
-        payload=SimpleNamespace(plan=PLAN_PREMIUM), db=db, user=parent
-    )
-    assert result["current_plan_id"] == PLAN_PREMIUM
+def test_service_has_no_parent_direct_grant():
+    # Paid plans must only come from a verified checkout; the old parent-facing
+    # upgrade_subscription shortcut must not come back.
+    assert not hasattr(subscription_service, "upgrade_subscription")
 
 
 def test_admin_override_to_free(db, create_parent):

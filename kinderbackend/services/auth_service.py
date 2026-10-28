@@ -434,16 +434,15 @@ class AuthService:
         if user is None:
             raise HTTPException(status_code=404, detail=AuthMessages.USER_NOT_FOUND)
         if self._user_has_verified_email(user):
-            refresh_token = self._issue_refresh_token(user=user)
-            db.add(user)
-            db.commit()
-            db.refresh(user)
-            return {
-                "access_token": create_access_token(str(user.id), user.token_version),
-                "refresh_token": refresh_token,
-                "token_type": "bearer",
-                "user": user_to_json(user),
-            }
+            # Never issue tokens here: there is no live OTP to check, so doing so
+            # would let anyone who knows the email log in (and skip 2FA).
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "EMAIL_ALREADY_VERIFIED",
+                    "message": AuthMessages.EMAIL_ALREADY_VERIFIED,
+                },
+            )
         if self._otp_expired(user) or not getattr(user, "email_otp_hash", None):
             raise HTTPException(status_code=400, detail=AuthMessages.INVALID_OR_EXPIRED_OTP)
         if not verify_password(payload.otp, user.email_otp_hash):
@@ -523,7 +522,8 @@ class AuthService:
         db.refresh(user)
         return payload
 
-    def disable_two_factor(self, *, db: Session, user: User) -> dict[str, Any]:
+    def disable_two_factor(self, *, db: Session, user: User, code: str | None) -> dict[str, Any]:
+        two_factor_service.require_current_code(account=user, code=code)
         payload = two_factor_service.disable_two_factor(account=user)
         user.updated_at = db_utc_now()
         db.add(user)
@@ -820,13 +820,26 @@ class AuthService:
     def _password_reset_expiry_minutes(self) -> int:
         return max(int(os.getenv("PASSWORD_RESET_EXPIRES_MINUTES", "30")), 5)
 
-    def _store_password_reset_token(self, *, user: User, token: str) -> None:
+    @staticmethod
+    def _hash_password_reset_secret(secret: str) -> str:
+        return hashlib.sha256(secret.encode("utf-8")).hexdigest()
+
+    def _issue_password_reset_token(self, *, user: User) -> str:
+        """Mint a reset token and persist only the hash of its secret half.
+
+        Same shape as refresh tokens, "{user_id}:{secret}": confirmation looks
+        the user up by primary key and does one constant-time compare, instead
+        of running bcrypt against every account with a pending reset. The
+        secret is 32 random bytes, so a fast hash is enough here.
+        """
         now = db_utc_now()
-        user.password_reset_token_hash = hash_password(token)
+        secret = secrets.token_urlsafe(32)
+        user.password_reset_token_hash = self._hash_password_reset_secret(secret)
         user.password_reset_token_expires_at = now + timedelta(
             minutes=self._password_reset_expiry_minutes()
         )
         user.updated_at = now
+        return f"{user.id}:{secret}"
 
     @staticmethod
     def _clear_password_reset_token(user: User) -> None:
@@ -908,8 +921,7 @@ class AuthService:
             )
 
         if user and self._user_has_verified_email(user):
-            token = secrets.token_urlsafe(32)
-            self._store_password_reset_token(user=user, token=token)
+            token = self._issue_password_reset_token(user=user)
             db.add(user)
             db.commit()
 
@@ -931,6 +943,26 @@ class AuthService:
 
         return {"success": True, "message": AuthMessages.PASSWORD_RESET_EMAIL_SENT}
 
+    def _find_password_reset_user(self, *, token: str, db: Session) -> User | None:
+        """Return the user a valid, unexpired reset token belongs to, else None.
+
+        Tokens issued before the "{user_id}:{secret}" format (raw secrets with a
+        bcrypt hash on file) have no ":" and are rejected here; even a forged
+        "id:..." prefix cannot match, since a SHA-256 hex digest never equals a
+        bcrypt hash. Those users simply request a new link.
+        """
+        user_id_str, _, secret = token.partition(":")
+        if not secret or not user_id_str.isdigit():
+            return None
+
+        user = db.query(User).filter(User.id == int(user_id_str)).first()
+        stored_hash = getattr(user, "password_reset_token_hash", None) if user else None
+        if not stored_hash or self._password_reset_token_expired(user):
+            return None
+        if not secrets.compare_digest(self._hash_password_reset_secret(secret), stored_hash):
+            return None
+        return user
+
     def confirm_password_reset(self, payload: ResetPasswordIn, db: Session) -> dict:
         if payload.new_password != payload.confirm_password:
             raise HTTPException(status_code=400, detail=AuthMessages.PASSWORDS_DO_NOT_MATCH)
@@ -939,15 +971,8 @@ class AuthService:
         if not is_valid:
             raise HTTPException(status_code=422, detail=error_msg)
 
-        user = db.query(User).filter(User.password_reset_token_hash.isnot(None)).all()
-        matching_user: User | None = None
-        for u in user:
-            token_hash = getattr(u, "password_reset_token_hash", None)
-            if token_hash and verify_password(payload.token, token_hash):
-                matching_user = u
-                break
-
-        if matching_user is None or self._password_reset_token_expired(matching_user):
+        matching_user = self._find_password_reset_user(token=payload.token, db=db)
+        if matching_user is None:
             raise HTTPException(status_code=400, detail=AuthMessages.INVALID_OR_EXPIRED_RESET_TOKEN)
 
         matching_user.password_hash = hash_password(payload.new_password)
@@ -1050,5 +1075,5 @@ def enable_two_factor(*, db: Session, user: User, code: str | None) -> dict:
     return auth_service.enable_two_factor(db=db, user=user, code=code)
 
 
-def disable_two_factor(*, db: Session, user: User) -> dict:
-    return auth_service.disable_two_factor(db=db, user=user)
+def disable_two_factor(*, db: Session, user: User, code: str | None) -> dict:
+    return auth_service.disable_two_factor(db=db, user=user, code=code)

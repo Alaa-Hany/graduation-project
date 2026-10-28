@@ -21,13 +21,18 @@ from admin_utils import build_admin_payload
 from auth import hash_password
 from core.time_utils import db_utc_now
 from deps import get_db
-from rate_limit import auth_rate_limit
+from rate_limit import admin_two_factor_rate_limit, auth_rate_limit
 from routers.admin_seed import ensure_builtin_admin_rbac
 from services.admin_auth_service import admin_auth_service
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/admin/auth", tags=["Admin Auth"])
+
+# auth_rate_limit is a factory: it must be *called* to get the dependency.
+# Depends(auth_rate_limit) would just run the factory and never limit anything.
+admin_auth_rate_limit_check = Depends(auth_rate_limit())
+admin_two_factor_rate_limit_check = Depends(admin_two_factor_rate_limit())
 
 
 class AdminLoginRequest(BaseModel):
@@ -88,6 +93,10 @@ class TwoFactorEnableRequest(BaseModel):
         return normalized
 
 
+class TwoFactorDisableRequest(TwoFactorEnableRequest):
+    """Current authenticator code, proving the caller still holds the device."""
+
+
 class TwoFactorActionResponse(TwoFactorStatusResponse):
     success: bool
     message: str
@@ -108,7 +117,7 @@ def admin_login(
     payload: AdminLoginRequest,
     request: Request,
     db: Session = Depends(get_db),
-    rate_limit_check: None = Depends(auth_rate_limit),
+    rate_limit_check: None = admin_auth_rate_limit_check,
 ):
     return admin_auth_service.login(payload=payload, request=request, db=db)
 
@@ -130,7 +139,7 @@ def admin_bootstrap_status(db: Session = Depends(get_db)):
 def admin_bootstrap(
     payload: AdminBootstrapRequest,
     db: Session = Depends(get_db),
-    rate_limit_check: None = Depends(auth_rate_limit),
+    rate_limit_check: None = admin_auth_rate_limit_check,
 ):
     if db.query(AdminUser.id).first() is not None:
         raise HTTPException(
@@ -170,7 +179,7 @@ def admin_bootstrap(
 def admin_refresh(
     payload: AdminRefreshRequest,
     db: Session = Depends(get_db),
-    rate_limit_check: None = Depends(auth_rate_limit),
+    rate_limit_check: None = admin_auth_rate_limit_check,
 ):
     """
     Exchange a valid admin refresh token for a new access token.
@@ -229,9 +238,12 @@ def admin_two_factor_enable(
     "/2fa/disable",
     response_model=TwoFactorActionResponse,
     summary="Disable admin 2FA",
+    description="Requires a current code from the authenticator app.",
 )
 def admin_two_factor_disable(
+    payload: TwoFactorDisableRequest,
     admin=Depends(get_current_admin),
     db: Session = Depends(get_db),
+    rate_limit_check: None = admin_two_factor_rate_limit_check,
 ):
-    return admin_auth_service.disable_two_factor(admin=admin, db=db)
+    return admin_auth_service.disable_two_factor(admin=admin, code=payload.code, db=db)

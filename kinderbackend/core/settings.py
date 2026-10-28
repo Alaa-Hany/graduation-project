@@ -10,6 +10,9 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).parent.parent / ".env")
 
+# HS256 signs with SHA-256, so a key shorter than its 32-byte output weakens it.
+MIN_PRODUCTION_JWT_SECRET_LENGTH = 32
+
 
 def _as_bool(value: str | None, default: bool = False) -> bool:
     if value is None:
@@ -138,6 +141,8 @@ class Settings:
     tts_voice_en: str
     sentry_dsn: str | None
     youtube_api_key: str | None
+    ai_buddy_messages_per_minute: int = 20
+    voice_requests_per_minute: int = 10
 
     @property
     def is_production(self) -> bool:
@@ -254,6 +259,16 @@ class Settings:
         tts_model = (os.getenv("TTS_MODEL") or "gpt-4o-mini-tts").strip() or "gpt-4o-mini-tts"
         tts_voice_ar = (os.getenv("TTS_VOICE_AR") or "shimmer").strip() or "shimmer"
         tts_voice_en = (os.getenv("TTS_VOICE_EN") or "nova").strip() or "nova"
+        # Per-child (or per-parent) caps on the paid AI endpoints, so one account
+        # cannot burn through provider credits.
+        ai_buddy_messages_per_minute = max(
+            _as_int(os.getenv("AI_BUDDY_MESSAGES_PER_MINUTE"), 20),
+            1,
+        )
+        voice_requests_per_minute = max(
+            _as_int(os.getenv("VOICE_REQUESTS_PER_MINUTE"), 10),
+            1,
+        )
         sentry_dsn = (os.getenv("SENTRY_DSN") or "").strip() or None
         youtube_api_key = (os.getenv("YOUTUBE_API_KEY") or "").strip() or None
 
@@ -268,6 +283,17 @@ class Settings:
             "TEST_ONLY_SECRET",
         }:
             raise ValueError("Production JWT secret is insecure. Use a strong random value.")
+        if (
+            environment == "production"
+            and len(jwt_active_secret) < MIN_PRODUCTION_JWT_SECRET_LENGTH
+        ):
+            # HS256 keys shorter than the 32-byte hash output are brute-forceable
+            # offline from any single issued token (RFC 7518 §3.2).
+            raise ValueError(
+                f"Production JWT secret is too short ({len(jwt_active_secret)} characters). "
+                f"Use at least {MIN_PRODUCTION_JWT_SECRET_LENGTH} random characters, e.g. "
+                'python -c "import secrets; print(secrets.token_urlsafe(48))".'
+            )
         if payment_provider not in {"internal", "stripe"}:
             raise ValueError("PAYMENT_PROVIDER must be either 'internal' or 'stripe'")
         if environment == "production" and payment_provider != "stripe":
@@ -415,6 +441,8 @@ class Settings:
             tts_voice_en=tts_voice_en,
             sentry_dsn=sentry_dsn,
             youtube_api_key=youtube_api_key,
+            ai_buddy_messages_per_minute=ai_buddy_messages_per_minute,
+            voice_requests_per_minute=voice_requests_per_minute,
         )
 
 

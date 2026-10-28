@@ -1,3 +1,4 @@
+import hashlib
 import json
 import logging
 import os
@@ -692,6 +693,15 @@ class ChildService:
             "session_ttl_minutes": ttl_minutes,
         }
 
+    @staticmethod
+    def _invalid_child_credentials():
+        """The single 401 for an unknown child id or a wrong name."""
+        return http_error(
+            status_code=401,
+            message="Invalid credentials",
+            code="CHILD_INVALID_NAME",
+        )
+
     def login_child(
         self,
         *,
@@ -717,6 +727,8 @@ class ChildService:
             .first()
         )
         if not child:
+            # Answer exactly like a wrong name, so the response never reveals
+            # which child ids exist. The real reason stays in the server log.
             self._record_failed_attempt(
                 child_id=payload.child_id,
                 client_ip=client_ip,
@@ -724,7 +736,7 @@ class ChildService:
                 user_agent=user_agent,
                 device_id=device_id,
             )
-            raise not_found("Child not found")
+            raise self._invalid_child_credentials()
 
         normalized_name = payload.name.strip().lower()
         child_name = (child.name or "").strip().lower()
@@ -736,11 +748,7 @@ class ChildService:
                 user_agent=user_agent,
                 device_id=device_id,
             )
-            raise http_error(
-                status_code=401,
-                message="Invalid credentials",
-                code="CHILD_INVALID_NAME",
-            )
+            raise self._invalid_child_credentials()
 
         stored_password = child.picture_password or []
         if not self._verify_picture_password(
@@ -932,13 +940,27 @@ class ChildService:
     def _picture_password_reset_expiry_minutes(self) -> int:
         return max(int(os.getenv("CHILD_PASSWORD_RESET_EXPIRES_MINUTES", "60")), 5)
 
-    def _store_picture_password_reset_token(self, *, child: ChildProfile, token: str) -> None:
+    @staticmethod
+    def _hash_picture_password_reset_secret(secret: str) -> str:
+        return hashlib.sha256(secret.encode("utf-8")).hexdigest()
+
+    def _issue_picture_password_reset_token(self, *, child: ChildProfile) -> str:
+        """Mint a reset token and persist only the hash of its secret half.
+
+        Token shape is "{child_id}:{secret}" (same design as parent reset and
+        refresh tokens): confirmation looks the child up by primary key and does
+        one constant-time compare, instead of running bcrypt against every
+        child with a pending reset. The secret is 32 random bytes, so a fast
+        hash is enough.
+        """
         now = db_utc_now()
-        child.picture_password_reset_token_hash = hash_password(token)
+        secret = secrets.token_urlsafe(32)
+        child.picture_password_reset_token_hash = self._hash_picture_password_reset_secret(secret)
         child.picture_password_reset_token_expires_at = now + timedelta(
             minutes=self._picture_password_reset_expiry_minutes()
         )
         child.updated_at = now
+        return f"{child.id}:{secret}"
 
     @staticmethod
     def _clear_picture_password_reset_token(child: ChildProfile) -> None:
@@ -1055,8 +1077,7 @@ class ChildService:
             and (parent.email or "").strip().lower() == normalized_email
             and bool(getattr(parent, "email_verified", False))
         ):
-            token = secrets.token_urlsafe(32)
-            self._store_picture_password_reset_token(child=child, token=token)
+            token = self._issue_picture_password_reset_token(child=child)
             db.add(child)
             db.commit()
 
@@ -1086,27 +1107,42 @@ class ChildService:
 
         return {"success": True, "message": AuthMessages.CHILD_PASSWORD_RESET_EMAIL_SENT}
 
+    def _find_picture_password_reset_child(self, *, token: str, db: Session) -> ChildProfile | None:
+        """Return the live child a valid, unexpired reset token belongs to, else None.
+
+        Tokens issued before the "{child_id}:{secret}" format (raw secrets with
+        a bcrypt hash on file) have no ":" and are rejected; even a forged
+        "id:..." prefix cannot match, since a SHA-256 hex digest never equals a
+        bcrypt hash. The parent simply requests a new link.
+        """
+        child_id_str, _, secret = token.partition(":")
+        if not secret or not child_id_str.isdigit():
+            return None
+
+        child = (
+            db.query(ChildProfile)
+            .filter(
+                ChildProfile.id == int(child_id_str),
+                ChildProfile.deleted_at.is_(None),
+            )
+            .first()
+        )
+        stored_hash = getattr(child, "picture_password_reset_token_hash", None) if child else None
+        if not stored_hash or self._picture_password_reset_token_expired(child):
+            return None
+        if not secrets.compare_digest(
+            self._hash_picture_password_reset_secret(secret), stored_hash
+        ):
+            return None
+        return child
+
     def confirm_picture_password_reset(
         self, *, payload: ChildResetPicturePasswordIn, db: Session
     ) -> dict:
         validate_picture_password_length(payload.new_picture_password, length=3)
 
-        candidates = (
-            db.query(ChildProfile)
-            .filter(
-                ChildProfile.picture_password_reset_token_hash.isnot(None),
-                ChildProfile.deleted_at.is_(None),
-            )
-            .all()
-        )
-        matching_child: ChildProfile | None = None
-        for candidate in candidates:
-            token_hash = getattr(candidate, "picture_password_reset_token_hash", None)
-            if token_hash and verify_password(payload.token, token_hash):
-                matching_child = candidate
-                break
-
-        if matching_child is None or self._picture_password_reset_token_expired(matching_child):
+        matching_child = self._find_picture_password_reset_child(token=payload.token, db=db)
+        if matching_child is None:
             raise bad_request(AuthMessages.INVALID_OR_EXPIRED_CHILD_RESET_TOKEN)
 
         matching_child.picture_password = self._hash_picture_password(payload.new_picture_password)
