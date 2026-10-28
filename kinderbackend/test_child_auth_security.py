@@ -82,6 +82,20 @@ def test_child_login_wrong_name_and_wrong_pictures_return_distinct_codes(client,
     assert wrong_pictures.json()["detail"]["code"] == "CHILD_INVALID_PICTURE"
 
 
+def test_child_login_unknown_id_is_indistinguishable_from_wrong_name(client, db):
+    parent = _create_parent(db, email="child.enum.parent@example.com")
+    child = _create_child(db, parent_id=parent.id, name="EnumKid")
+    body = {"name": "Guess", "picture_password": ["cat", "dog", "apple"]}
+
+    unknown = client.post("/api/v1/auth/child/login", json={"child_id": 999999, **body})
+    wrong_name = client.post("/api/v1/auth/child/login", json={"child_id": child.id, **body})
+
+    assert unknown.status_code == wrong_name.status_code == 401
+    assert unknown.json()["detail"] == wrong_name.json()["detail"]
+    assert unknown.json()["detail"]["message"] == "Invalid credentials"
+    assert unknown.json()["error"] == wrong_name.json()["error"]
+
+
 def test_child_login_returns_expiring_session_token(client, db):
     parent = _create_parent(db)
     child = _create_child(db, parent_id=parent.id)

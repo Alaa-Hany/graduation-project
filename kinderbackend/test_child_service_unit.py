@@ -402,12 +402,43 @@ def test_save_gamification_state_last_write_wins(service, db, create_parent):
     assert child.gamification_state["data"]["coins"] == 50
 
 
-def test_login_child_not_found(service, db, create_parent):
-    create_parent(email="lc-404@example.com")
-    payload = ChildLoginIn(child_id=999999, name="Ghost", picture_password=PW)
-    with pytest.raises(HTTPException) as exc:
-        service.login_child(payload=payload, db=db)
-    assert exc.value.status_code == 404
+def test_login_child_unknown_id_looks_like_wrong_name(service, db, create_parent):
+    # Regression: an unknown child id used to return 404 "Child not found",
+    # which let anyone enumerate which child ids exist.
+    parent = create_parent(email="lc-404@example.com")
+    child = _make_child(service, db, parent, name="Real")
+
+    with pytest.raises(HTTPException) as unknown:
+        service.login_child(
+            payload=ChildLoginIn(child_id=999999, name="Ghost", picture_password=PW), db=db
+        )
+    with pytest.raises(HTTPException) as wrong_name:
+        service.login_child(
+            payload=ChildLoginIn(child_id=child.id, name="Ghost", picture_password=PW), db=db
+        )
+
+    assert unknown.value.status_code == 401
+    assert unknown.value.detail == wrong_name.value.detail
+    assert unknown.value.detail["message"] == "Invalid credentials"
+
+
+def test_login_child_unknown_id_still_counts_failed_attempts(service, db, monkeypatch):
+    # Probing a missing id must still hit the per-id+IP lockout, so ids cannot be
+    # scanned without limit.
+    monkeypatch.setattr(child_module, "get_redis_client", lambda: None)
+    child_module._FAILED_ATTEMPTS.clear()
+    probe = ChildLoginIn(child_id=987654, name="Ghost", picture_password=PW)
+
+    statuses = []
+    for _ in range(7):
+        try:
+            service.login_child(payload=probe, db=db, client_ip="8.8.8.8")
+        except HTTPException as exc:
+            statuses.append(exc.status_code)
+
+    assert statuses[0] == 401
+    assert 429 in statuses
+    assert child_module._FAILED_ATTEMPTS[child_module._child_failed_key(987654, "8.8.8.8")]
 
 
 def test_login_child_invalid_name(service, db, create_parent):
@@ -536,7 +567,8 @@ def test_validate_child_session_device_required(service, db, create_parent):
     token = _child_session_token(child, device_id="dev-a")
     with pytest.raises(HTTPException) as exc:
         service.validate_child_session(
-            payload=ChildSessionValidateIn(session_token=token), db=db  # no device_id
+            payload=ChildSessionValidateIn(session_token=token),
+            db=db,  # no device_id
         )
     assert exc.value.status_code == 401
 

@@ -693,6 +693,15 @@ class ChildService:
             "session_ttl_minutes": ttl_minutes,
         }
 
+    @staticmethod
+    def _invalid_child_credentials():
+        """The single 401 for an unknown child id or a wrong name."""
+        return http_error(
+            status_code=401,
+            message="Invalid credentials",
+            code="CHILD_INVALID_NAME",
+        )
+
     def login_child(
         self,
         *,
@@ -718,6 +727,8 @@ class ChildService:
             .first()
         )
         if not child:
+            # Answer exactly like a wrong name, so the response never reveals
+            # which child ids exist. The real reason stays in the server log.
             self._record_failed_attempt(
                 child_id=payload.child_id,
                 client_ip=client_ip,
@@ -725,7 +736,7 @@ class ChildService:
                 user_agent=user_agent,
                 device_id=device_id,
             )
-            raise not_found("Child not found")
+            raise self._invalid_child_credentials()
 
         normalized_name = payload.name.strip().lower()
         child_name = (child.name or "").strip().lower()
@@ -737,11 +748,7 @@ class ChildService:
                 user_agent=user_agent,
                 device_id=device_id,
             )
-            raise http_error(
-                status_code=401,
-                message="Invalid credentials",
-                code="CHILD_INVALID_NAME",
-            )
+            raise self._invalid_child_credentials()
 
         stored_password = child.picture_password or []
         if not self._verify_picture_password(
