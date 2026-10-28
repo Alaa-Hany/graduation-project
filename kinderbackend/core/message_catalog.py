@@ -50,6 +50,7 @@ class AuthMessages:
     TWO_FACTOR_SETUP_REQUIRED = "Two-factor authentication setup is required before enabling it"
     TWO_FACTOR_ENABLED_SUCCESSFULLY = "Two-factor authentication enabled successfully"
     TWO_FACTOR_DISABLED_SUCCESSFULLY = "Two-factor authentication disabled successfully"
+    TWO_FACTOR_NOT_ENABLED = "Two-factor authentication is not enabled"
     PASSWORD_RESET_EMAIL_SENT = "If that email is registered, a password reset link has been sent"
     INVALID_OR_EXPIRED_RESET_TOKEN = "Invalid or expired password reset link"
     PASSWORD_RESET_SUCCESSFUL = "Password reset successfully"

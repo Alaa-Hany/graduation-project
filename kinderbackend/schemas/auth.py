@@ -396,7 +396,7 @@ class ForgotPasswordIn(AuthSchemaBase):
 
 
 class ResetPasswordIn(AuthSchemaBase):
-    token: str = Field(..., min_length=1)
+    token: str = Field(..., min_length=1, max_length=256)
     new_password: str = Field(
         ...,
         min_length=1,

@@ -92,6 +92,25 @@ class TwoFactorService:
             "message": AuthMessages.TWO_FACTOR_ENABLED_SUCCESSFULLY,
         }
 
+    def require_current_code(self, *, account: TwoFactorAccount, code: str | None) -> None:
+        """Prove the caller still holds the authenticator before 2FA is turned off.
+
+        A stolen access token alone must not be enough to strip 2FA from an
+        account, so disabling requires a valid code for the enabled secret.
+        """
+        if not bool(getattr(account, "two_factor_enabled", False)):
+            raise http_error(
+                status_code=409,
+                message=AuthMessages.TWO_FACTOR_NOT_ENABLED,
+                code="TWO_FACTOR_NOT_ENABLED",
+            )
+        if not verify_totp_code(getattr(account, "two_factor_secret", None) or "", code):
+            raise http_error(
+                status_code=422,
+                message=AuthMessages.INVALID_TWO_FACTOR_CODE,
+                code="INVALID_TWO_FACTOR_CODE",
+            )
+
     def disable_two_factor(self, *, account: TwoFactorAccount) -> dict[str, Any]:
         account.two_factor_enabled = False
         account.two_factor_method = None

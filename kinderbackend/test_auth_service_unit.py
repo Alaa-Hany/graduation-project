@@ -643,33 +643,116 @@ def test_confirm_password_reset_invalid_token(service, db, create_parent):
     assert exc.value.status_code == 400
 
 
+def _issue_reset_token(service, db, user) -> str:
+    token = service._issue_password_reset_token(user=user)
+    db.add(user)
+    db.commit()
+    return token
+
+
+def _reset_payload(token: str) -> ResetPasswordIn:
+    return ResetPasswordIn(token=token, new_password=NEW_PASSWORD, confirm_password=NEW_PASSWORD)
+
+
 def test_confirm_password_reset_expired_token(service, db, create_parent):
     user = create_parent(email="reset-expired@example.com")
-    user.password_reset_token_hash = hash_password("rawtoken")
+    token = _issue_reset_token(service, db, user)
     user.password_reset_token_expires_at = db_utc_now() - timedelta(minutes=1)
     db.add(user)
     db.commit()
-    payload = ResetPasswordIn(
-        token="rawtoken", new_password=NEW_PASSWORD, confirm_password=NEW_PASSWORD
-    )
     with pytest.raises(HTTPException) as exc:
-        service.confirm_password_reset(payload, db)
+        service.confirm_password_reset(_reset_payload(token), db)
     assert exc.value.status_code == 400
 
 
 def test_confirm_password_reset_success(service, db, create_parent):
     user = create_parent(email="reset-ok@example.com")
-    user.password_reset_token_hash = hash_password("rawtoken")
-    user.password_reset_token_expires_at = db_utc_now() + timedelta(minutes=10)
-    db.add(user)
-    db.commit()
-    payload = ResetPasswordIn(
-        token="rawtoken", new_password=NEW_PASSWORD, confirm_password=NEW_PASSWORD
-    )
-    result = service.confirm_password_reset(payload, db)
+    token = _issue_reset_token(service, db, user)
+    result = service.confirm_password_reset(_reset_payload(token), db)
     assert result["success"] is True
     db.refresh(user)
     assert user.password_reset_token_hash is None
+    # Single use: the same link cannot reset the password a second time.
+    with pytest.raises(HTTPException) as exc:
+        service.confirm_password_reset(_reset_payload(token), db)
+    assert exc.value.status_code == 400
+
+
+def test_password_reset_token_is_id_prefixed_and_stores_sha256_of_secret(
+    service, db, create_parent
+):
+    user = create_parent(email="reset-shape@example.com")
+    token = _issue_reset_token(service, db, user)
+    user_id, _, secret = token.partition(":")
+    assert user_id == str(user.id)
+    assert len(secret) >= 40
+    db.refresh(user)
+    assert user.password_reset_token_hash == service._hash_password_reset_secret(secret)
+    assert secret not in user.password_reset_token_hash
+
+
+def test_confirm_password_reset_never_runs_bcrypt_on_tokens(
+    service, db, create_parent, monkeypatch
+):
+    # Regression: confirmation used to bcrypt-verify the token against every
+    # user with a pending reset (O(n) bcrypt per request, an easy CPU DoS).
+    users = [create_parent(email=f"reset-many{i}@example.com") for i in range(5)]
+    tokens = [_issue_reset_token(service, db, u) for u in users]
+
+    def _no_bcrypt(*args, **kwargs):
+        raise AssertionError("reset confirmation must not call bcrypt verify")
+
+    monkeypatch.setattr(auth_module, "verify_password", _no_bcrypt)
+
+    for bad in ("garbage", f"{users[0].id}:wrong-secret", "999999:whatever"):
+        with pytest.raises(HTTPException) as exc:
+            service.confirm_password_reset(_reset_payload(bad), db)
+        assert exc.value.status_code == 400
+
+    assert service.confirm_password_reset(_reset_payload(tokens[3]), db)["success"] is True
+
+
+def test_confirm_password_reset_token_for_other_user_is_rejected(service, db, create_parent):
+    alice = create_parent(email="reset-alice@example.com")
+    bob = create_parent(email="reset-bob@example.com")
+    alice_token = _issue_reset_token(service, db, alice)
+    _issue_reset_token(service, db, bob)
+    _, _, alice_secret = alice_token.partition(":")
+
+    with pytest.raises(HTTPException) as exc:
+        service.confirm_password_reset(_reset_payload(f"{bob.id}:{alice_secret}"), db)
+    assert exc.value.status_code == 400
+
+
+def test_confirm_password_reset_old_format_token_fails_safely(service, db, create_parent):
+    # Links issued before the "{user_id}:{secret}" format stored a bcrypt hash
+    # of a raw token. They must be rejected cleanly, not crash or match.
+    user = create_parent(email="reset-legacy@example.com")
+    user.password_reset_token_hash = hash_password("legacy-raw-token")
+    user.password_reset_token_expires_at = db_utc_now() + timedelta(minutes=10)
+    db.add(user)
+    db.commit()
+
+    for legacy in ("legacy-raw-token", f"{user.id}:legacy-raw-token"):
+        with pytest.raises(HTTPException) as exc:
+            service.confirm_password_reset(_reset_payload(legacy), db)
+        assert exc.value.status_code == 400
+        assert exc.value.detail == AuthMessages.INVALID_OR_EXPIRED_RESET_TOKEN
+
+    db.refresh(user)
+    assert user.password_hash != hash_password(NEW_PASSWORD)  # password untouched
+    assert user.password_reset_token_hash is not None
+
+
+def test_request_password_reset_emails_id_prefixed_token(service, db, create_parent, monkeypatch):
+    user = create_parent(email="reset-email@example.com")
+    sent = {}
+    monkeypatch.setattr(service, "_send_password_reset_email", lambda **kwargs: sent.update(kwargs))
+
+    service.request_password_reset(ForgotPasswordIn(email="reset-email@example.com"), db)
+
+    assert sent["token"].startswith(f"{user.id}:")
+    assert service.confirm_password_reset(_reset_payload(sent["token"]), db)["success"] is True
 
 
 # ---------------------------------------------------------------------------
@@ -743,7 +826,9 @@ def test_module_wrappers_delegate(monkeypatch):
     assert auth_module.two_factor_status(user="u")["stub"] == "two_factor_status"
     assert auth_module.setup_two_factor(db="db", user="u")["stub"] == "two_factor_setup"
     assert auth_module.enable_two_factor(db="db", user="u", code="1")["stub"] == "enable_two_factor"
-    assert auth_module.disable_two_factor(db="db", user="u")["stub"] == "disable_two_factor"
+    assert (
+        auth_module.disable_two_factor(db="db", user="u", code="1")["stub"] == "disable_two_factor"
+    )
 
 
 def test_validate_password_policy_wrappers():
