@@ -290,7 +290,18 @@ class AdminAuthService:
         db.refresh(admin)
         return payload
 
-    def disable_two_factor(self, *, admin, db: Session) -> dict:
+    def disable_two_factor(self, *, admin, code: str | None, db: Session) -> dict:
+        if settings.enforce_admin_2fa:
+            # With 2FA mandatory, an admin without it cannot log in again, so
+            # turning it off here would only lock the account out.
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "code": "ADMIN_2FA_MANDATORY",
+                    "message": AdminAuthMessages.TWO_FACTOR_CANNOT_DISABLE_MANDATORY,
+                },
+            )
+        two_factor_service.require_current_code(account=admin, code=code)
         payload = two_factor_service.disable_two_factor(account=admin)
         admin.updated_at = db_utc_now()
         db.add(admin)

@@ -516,8 +516,12 @@ def test_two_factor_full_lifecycle(client, db, seed_builtin_rbac, create_admin, 
     )
     assert with_code.status_code == 200
 
-    # disable 2FA
-    disabled = client.post("/api/v1/admin/auth/2fa/disable", headers=headers)
+    # disable 2FA (requires a current code)
+    disabled = client.post(
+        "/api/v1/admin/auth/2fa/disable",
+        json={"code": generate_totp_code(secret)},
+        headers=headers,
+    )
     assert disabled.status_code == 200
     assert disabled.json()["enabled"] is False
 

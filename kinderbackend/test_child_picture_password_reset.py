@@ -120,3 +120,151 @@ def test_confirm_rejects_invalid_token(service, db, create_parent):
             db=db,
         )
     assert exc.value.status_code == 400
+
+
+# ---------------------------------------------------------------------------
+# "{child_id}:{secret}" token design (O(1) lookup, SHA-256 of the secret)
+# ---------------------------------------------------------------------------
+
+
+def _issue_token(service, db, child) -> str:
+    token = service._issue_picture_password_reset_token(child=child)
+    db.add(child)
+    db.commit()
+    return token
+
+
+def _confirm(service, db, token, new_password=PW2):
+    return service.confirm_picture_password_reset(
+        payload=ChildResetPicturePasswordIn(token=token, new_picture_password=new_password),
+        db=db,
+    )
+
+
+def test_token_is_child_id_prefixed_and_stores_sha256_of_secret(service, db, create_parent):
+    parent = create_parent(email="reset-shape-child@example.com")
+    child = _make_child(service, db, parent)
+
+    token = _issue_token(service, db, child)
+
+    child_id, _, secret = token.partition(":")
+    assert child_id == str(child.id)
+    assert len(secret) >= 40
+    db.refresh(child)
+    assert child.picture_password_reset_token_hash == (
+        service._hash_picture_password_reset_secret(secret)
+    )
+
+
+def test_confirm_never_runs_bcrypt_on_tokens(service, db, create_parent, monkeypatch):
+    # Regression: confirmation used to bcrypt-verify the token against every
+    # child with a pending reset (O(n) bcrypt per request, an easy CPU DoS).
+    import services.child_service as child_module
+
+    # One child per parent: the free plan allows a single child.
+    children = [
+        _make_child(
+            service, db, create_parent(email=f"reset-many-child{i}@example.com"), name=f"Kid{i}"
+        )
+        for i in range(4)
+    ]
+    tokens = [_issue_token(service, db, c) for c in children]
+
+    def _no_bcrypt(*args, **kwargs):
+        raise AssertionError("reset confirmation must not call bcrypt verify")
+
+    monkeypatch.setattr(child_module, "verify_password", _no_bcrypt)
+
+    for bad in ("garbage", f"{children[0].id}:wrong-secret", "999999:whatever"):
+        with pytest.raises(HTTPException) as exc:
+            _confirm(service, db, bad)
+        assert exc.value.status_code == 400
+
+    assert _confirm(service, db, tokens[2])["success"] is True
+
+
+def test_confirm_rejects_token_secret_for_another_child(service, db, create_parent):
+    first = _make_child(
+        service, db, create_parent(email="reset-swap-child1@example.com"), name="First"
+    )
+    second = _make_child(
+        service, db, create_parent(email="reset-swap-child2@example.com"), name="Second"
+    )
+    first_token = _issue_token(service, db, first)
+    _issue_token(service, db, second)
+    _, _, first_secret = first_token.partition(":")
+
+    with pytest.raises(HTTPException) as exc:
+        _confirm(service, db, f"{second.id}:{first_secret}")
+    assert exc.value.status_code == 400
+
+
+def test_confirm_token_is_single_use(service, db, create_parent):
+    parent = create_parent(email="reset-once-child@example.com")
+    child = _make_child(service, db, parent)
+    token = _issue_token(service, db, child)
+
+    assert _confirm(service, db, token)["success"] is True
+    with pytest.raises(HTTPException) as exc:
+        _confirm(service, db, token, new_password=PW)
+    assert exc.value.status_code == 400
+
+
+def test_confirm_rejects_expired_token(service, db, create_parent):
+    from datetime import timedelta
+
+    from core.time_utils import db_utc_now
+
+    parent = create_parent(email="reset-expired-child@example.com")
+    child = _make_child(service, db, parent)
+    token = _issue_token(service, db, child)
+    child.picture_password_reset_token_expires_at = db_utc_now() - timedelta(minutes=1)
+    db.add(child)
+    db.commit()
+
+    with pytest.raises(HTTPException) as exc:
+        _confirm(service, db, token)
+    assert exc.value.status_code == 400
+
+
+def test_confirm_rejects_token_for_deleted_child(service, db, create_parent):
+    from core.time_utils import db_utc_now
+
+    parent = create_parent(email="reset-deleted-child@example.com")
+    child = _make_child(service, db, parent)
+    token = _issue_token(service, db, child)
+    child.deleted_at = db_utc_now()
+    db.add(child)
+    db.commit()
+
+    with pytest.raises(HTTPException) as exc:
+        _confirm(service, db, token)
+    assert exc.value.status_code == 400
+
+
+def test_confirm_old_format_token_fails_safely(service, db, create_parent):
+    # Links issued before the "{child_id}:{secret}" format stored a bcrypt hash
+    # of a raw token. They must be rejected cleanly and change nothing.
+    from datetime import timedelta
+
+    from auth import hash_password
+    from core.message_catalog import AuthMessages
+    from core.time_utils import db_utc_now
+
+    parent = create_parent(email="reset-legacy-child@example.com")
+    child = _make_child(service, db, parent)
+    child.picture_password_reset_token_hash = hash_password("legacy-raw-token")
+    child.picture_password_reset_token_expires_at = db_utc_now() + timedelta(minutes=10)
+    db.add(child)
+    db.commit()
+
+    for legacy in ("legacy-raw-token", f"{child.id}:legacy-raw-token"):
+        with pytest.raises(HTTPException) as exc:
+            _confirm(service, db, legacy)
+        assert exc.value.status_code == 400
+        assert exc.value.detail == AuthMessages.INVALID_OR_EXPIRED_CHILD_RESET_TOKEN
+
+    db.refresh(child)
+    assert service._verify_picture_password(
+        stored_password=child.picture_password, provided_password=PW
+    )

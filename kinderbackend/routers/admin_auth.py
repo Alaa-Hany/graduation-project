@@ -21,7 +21,7 @@ from admin_utils import build_admin_payload
 from auth import hash_password
 from core.time_utils import db_utc_now
 from deps import get_db
-from rate_limit import auth_rate_limit
+from rate_limit import admin_two_factor_rate_limit, auth_rate_limit
 from routers.admin_seed import ensure_builtin_admin_rbac
 from services.admin_auth_service import admin_auth_service
 
@@ -32,6 +32,7 @@ router = APIRouter(prefix="/admin/auth", tags=["Admin Auth"])
 # auth_rate_limit is a factory: it must be *called* to get the dependency.
 # Depends(auth_rate_limit) would just run the factory and never limit anything.
 admin_auth_rate_limit_check = Depends(auth_rate_limit())
+admin_two_factor_rate_limit_check = Depends(admin_two_factor_rate_limit())
 
 
 class AdminLoginRequest(BaseModel):
@@ -90,6 +91,10 @@ class TwoFactorEnableRequest(BaseModel):
         if not normalized:
             raise ValueError("value must not be blank")
         return normalized
+
+
+class TwoFactorDisableRequest(TwoFactorEnableRequest):
+    """Current authenticator code, proving the caller still holds the device."""
 
 
 class TwoFactorActionResponse(TwoFactorStatusResponse):
@@ -233,9 +238,12 @@ def admin_two_factor_enable(
     "/2fa/disable",
     response_model=TwoFactorActionResponse,
     summary="Disable admin 2FA",
+    description="Requires a current code from the authenticator app.",
 )
 def admin_two_factor_disable(
+    payload: TwoFactorDisableRequest,
     admin=Depends(get_current_admin),
     db: Session = Depends(get_db),
+    rate_limit_check: None = admin_two_factor_rate_limit_check,
 ):
-    return admin_auth_service.disable_two_factor(admin=admin, db=db)
+    return admin_auth_service.disable_two_factor(admin=admin, code=payload.code, db=db)

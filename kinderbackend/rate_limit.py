@@ -216,6 +216,45 @@ def user_rate_limit(
     return check_rate_limit
 
 
+def admin_rate_limit_per_admin(
+    max_requests: int = 5,
+    window_seconds: int = 300,
+    *,
+    code: str = "RATE_LIMIT_EXCEEDED",
+    message: str | None = None,
+    scope: str = "admin",
+    fail_open: bool = True,
+):
+    """Per-authenticated-admin + path keyed rate-limit dependency.
+
+    Same as :func:`user_rate_limit`, but resolves the caller with the admin
+    token dependency (``user_rate_limit`` only accepts parent tokens).
+    """
+
+    from admin_deps import get_current_admin
+
+    def check_rate_limit(request: Request, admin=Depends(get_current_admin)) -> None:
+        admin_id = getattr(admin, "id", "unknown")
+        key = f"admin:{admin_id}:{request.url.path}"
+        resolved_message = (
+            message or f"Too many requests. Limit: {max_requests} per {window_seconds} seconds"
+        )
+
+        if not rate_limiter.is_allowed(key, max_requests, window_seconds, fail_open=fail_open):
+            raise HTTPException(
+                status_code=HTTP_429_TOO_MANY_REQUESTS,
+                detail=_rate_limit_detail(
+                    code=code,
+                    message=resolved_message,
+                    retry_after=window_seconds,
+                    scope=scope,
+                ),
+                headers={"Retry-After": str(window_seconds)},
+            )
+
+    return check_rate_limit
+
+
 def ai_principal_rate_limit(
     *,
     limit_setting: str,
@@ -299,6 +338,17 @@ def two_factor_rate_limit():
         window_seconds=300,
         message="Too many two-factor attempts. Please try again later.",
         scope="two_factor",
+        fail_open=False,
+    )
+
+
+def admin_two_factor_rate_limit():
+    """Per-admin throttling for admin 2FA code checks (e.g. disabling 2FA)."""
+    return admin_rate_limit_per_admin(
+        max_requests=5,
+        window_seconds=300,
+        message="Too many two-factor attempts. Please try again later.",
+        scope="admin_two_factor",
         fail_open=False,
     )
 
