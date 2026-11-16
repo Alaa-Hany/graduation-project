@@ -15,6 +15,9 @@ class _TestSecureStorage extends SecureStorage {
 }
 
 class _RecordingAdapter implements HttpClientAdapter {
+  _RecordingAdapter({this.body = const {'success': true}});
+
+  final Map<String, dynamic> body;
   RequestOptions? lastOptions;
 
   @override
@@ -28,7 +31,7 @@ class _RecordingAdapter implements HttpClientAdapter {
   ) async {
     lastOptions = options;
     return ResponseBody.fromString(
-      jsonEncode(<String, dynamic>{'success': true}),
+      jsonEncode(body),
       200,
       headers: {
         Headers.contentTypeHeader: [Headers.jsonContentType],
@@ -78,5 +81,32 @@ void main() {
 
     expect(adapter.lastOptions?.path, '/api/v1/auth/child/change-password');
     expect(adapter.lastOptions?.headers['Authorization'], 'Bearer parent.jwt');
+  });
+
+  test('verifyEmailOtp sends the registration token from register', () async {
+    final adapter = _RecordingAdapter(body: const {
+      'success': true,
+      'email': 'mona@example.com',
+      'verification_required': true,
+      'registration_token': 'reg-token-123',
+    });
+    final api = _api(adapter);
+    await api.register(
+      name: 'Mona',
+      email: ' Mona@Example.com ',
+      password: 'Secret123!',
+      confirmPassword: 'Secret123!',
+    );
+    await api.verifyEmailOtp(email: 'mona@example.com', otp: '123456');
+
+    expect(adapter.lastOptions?.path, '/api/v1/auth/verify-email-otp');
+    expect(adapter.lastOptions?.data['registration_token'], 'reg-token-123');
+
+    // Used once: a later verify (e.g. after logging in again) goes without it.
+    await api.verifyEmailOtp(email: 'mona@example.com', otp: '123456');
+    expect(
+      (adapter.lastOptions?.data as Map).containsKey('registration_token'),
+      isFalse,
+    );
   });
 }

@@ -10,7 +10,12 @@ from models import (
     SubscriptionProfile,
     User,
 )
-from plan_service import PLAN_FREE, get_plan_features, get_plan_limits
+from plan_service import (
+    PLAN_FREE,
+    get_plan_features,
+    get_plan_limits,
+    subscription_access_expired,
+)
 from services.subscription_service_parts.common import SUBSCRIPTION_STATUS_FREE
 
 
@@ -52,7 +57,7 @@ class SubscriptionHistoryMixin:
         user: User,
         profile: SubscriptionProfile,
     ) -> dict[str, object]:
-        plan = profile.current_plan_id
+        plan = self._effective_plan_id(profile)
         return {
             "plan": plan,
             "current_plan_id": plan,
@@ -86,7 +91,7 @@ class SubscriptionHistoryMixin:
     ) -> dict[str, object]:
         lifecycle = self._serialize_lifecycle(user=user, profile=profile)
         return {
-            "current_plan_id": profile.current_plan_id,
+            "current_plan_id": lifecycle["current_plan_id"],
             "is_active": bool(lifecycle["has_paid_access"]),
             "status": profile.status,
             "started_at": lifecycle["started_at"],
@@ -110,9 +115,13 @@ class SubscriptionHistoryMixin:
     def _serialize_lifecycle(
         self, *, user: User, profile: SubscriptionProfile
     ) -> dict[str, object]:
-        has_paid_access = bool(user.is_active) and profile.current_plan_id != PLAN_FREE
+        effective_plan = self._effective_plan_id(profile)
+        has_paid_access = bool(user.is_active) and effective_plan != PLAN_FREE
         return {
-            "current_plan_id": profile.current_plan_id,
+            "current_plan_id": effective_plan,
+            # True when a paid plan is still on record but its period (plus
+            # grace) has ended, e.g. a renewal or cancel webhook never arrived.
+            "access_expired": effective_plan != profile.current_plan_id,
             "selected_plan_id": profile.selected_plan_id,
             "status": profile.status,
             "started_at": profile.started_at.isoformat() if profile.started_at else None,
@@ -128,6 +137,14 @@ class SubscriptionHistoryMixin:
             "has_paid_access": has_paid_access,
             "account_is_active": bool(user.is_active),
         }
+
+    @staticmethod
+    def _effective_plan_id(profile: SubscriptionProfile) -> str:
+        """The plan the account can use now: FREE once the paid period plus the
+        grace window is over, so this screen agrees with feature access."""
+        if profile.current_plan_id != PLAN_FREE and subscription_access_expired(profile):
+            return PLAN_FREE
+        return profile.current_plan_id
 
     def _record_subscription_event(
         self,

@@ -41,6 +41,7 @@ class SubscriptionLifecycleOut(BaseModel):
     will_renew: bool = False
     is_active: bool
     has_paid_access: bool
+    access_expired: bool = False
 
 
 class SubscriptionHistorySummaryOut(BaseModel):

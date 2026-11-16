@@ -103,6 +103,8 @@ class LoginIn(AuthSchemaBase):
 class VerifyEmailOtpIn(AuthSchemaBase):
     email: EmailStr
     otp: str = Field(..., min_length=6, max_length=6)
+    # Returned by /auth/register; ties the OTP to the session that signed up.
+    registration_token: str | None = Field(default=None, max_length=128)
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -332,6 +334,7 @@ class PendingVerificationResponse(BaseModel):
     verification_required: bool
     otp_expires_at: str | None = None
     resend_available_at: str | None = None
+    registration_token: str | None = None
 
     model_config = ConfigDict(
         json_schema_extra={

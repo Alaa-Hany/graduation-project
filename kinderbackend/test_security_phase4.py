@@ -30,7 +30,7 @@ def family(create_parent, create_child, auth_headers):
     return parent, child, auth_headers(parent)
 
 
-# ── #11: analytics payload limits and rate limit ───────────────────────────
+# â”€â”€ #11: analytics payload limits and rate limit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 def test_analytics_rejects_inflated_points_and_huge_metadata(client, family):
@@ -125,7 +125,7 @@ def test_analytics_rate_limit_is_per_child_and_shared_across_endpoints():
     check(principal=sibling)
 
 
-# ── #25: video upload streams, rejects oversize early ──────────────────────
+# â”€â”€ #25: video upload streams, rejects oversize early â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 @pytest.fixture
@@ -149,7 +149,15 @@ def _fake_asset():
     )
 
 
+def test_default_upload_limit_matches_cloudinary_cap(monkeypatch):
+    from core.settings import Settings
+
+    monkeypatch.delenv("MEDIA_MAX_UPLOAD_SIZE_MB", raising=False)
+    assert Settings.from_env().media_max_upload_size_mb == 100
+
+
 def test_oversized_upload_rejected_before_reaching_the_handler(client, media_admin, monkeypatch):
+    original_limit = settings.media_max_upload_size_mb
     object.__setattr__(settings, "media_max_upload_size_mb", 1)
     calls = []
     monkeypatch.setattr(
@@ -162,7 +170,7 @@ def test_oversized_upload_rejected_before_reaching_the_handler(client, media_adm
             files={"file": ("big.mp4", b"0" * (3 * 1024 * 1024), "video/mp4")},
         )
     finally:
-        object.__setattr__(settings, "media_max_upload_size_mb", 200)
+        object.__setattr__(settings, "media_max_upload_size_mb", original_limit)
     assert response.status_code == 413
     assert calls == []
 
@@ -172,6 +180,7 @@ def test_upload_over_limit_but_under_overhead_is_rejected_by_handler(
 ):
     # 1.5 MB fits the middleware's 1 MB multipart allowance, so the chunked
     # check in the handler is what refuses it.
+    original_limit = settings.media_max_upload_size_mb
     object.__setattr__(settings, "media_max_upload_size_mb", 1)
     calls = []
     monkeypatch.setattr(
@@ -184,7 +193,7 @@ def test_upload_over_limit_but_under_overhead_is_rejected_by_handler(
             files={"file": ("mid.mp4", b"0" * (1536 * 1024), "video/mp4")},
         )
     finally:
-        object.__setattr__(settings, "media_max_upload_size_mb", 200)
+        object.__setattr__(settings, "media_max_upload_size_mb", original_limit)
     assert response.status_code == 413
     assert calls == []
 
@@ -238,7 +247,7 @@ def test_media_service_accepts_file_object(monkeypatch):
             object.__setattr__(settings, name, None)
 
 
-# ── #16: readiness details are not public in production ────────────────────
+# â”€â”€ #16: readiness details are not public in production â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 @pytest.fixture
@@ -270,7 +279,7 @@ def test_readiness_details_still_shown_in_development(client):
     assert "payment" in body
 
 
-# ── #17: register / forgot-password answer the same for every email ────────
+# â”€â”€ #17: register / forgot-password answer the same for every email â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 def _register(client, email, name="New Parent"):
@@ -359,7 +368,7 @@ def test_forgot_password_still_sends_the_link(client, create_parent, monkeypatch
     assert "reset-password?token=" in sent[0]["body"]
 
 
-# ── #18: logs carry ids, not emails ────────────────────────────────────────
+# â”€â”€ #18: logs carry ids, not emails â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 def test_password_reset_and_admin_login_logs_have_no_email(
@@ -389,7 +398,7 @@ def test_email_fingerprint_is_stable_and_not_reversible_text():
     assert first != email_fingerprint("other@example.com")
 
 
-# ── #19: user-typed names are escaped in HTML emails ───────────────────────
+# â”€â”€ #19: user-typed names are escaped in HTML emails â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 _EVIL_NAME = '<a href="https://evil.example">Click</a>'

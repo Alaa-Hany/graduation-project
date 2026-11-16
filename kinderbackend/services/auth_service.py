@@ -1,4 +1,5 @@
 import hashlib
+import hmac
 import html
 import logging
 import os
@@ -44,6 +45,10 @@ PARENT_PIN_LOCKOUT_MINUTES = 5
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 MAX_REFRESH_SESSIONS_PER_USER = 10
 REGISTRATION_PENDING_MESSAGE = "Registration successful. Verify your email with the OTP we sent."
+
+
+def _sha256(value: str) -> str:
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
 _DUMMY_BCRYPT_HASH: str | None = None
@@ -492,15 +497,20 @@ class AuthService:
                 "verification_required": True,
                 "otp_expires_at": otp_expires_at,
                 "resend_available_at": resend_available_at,
+                "registration_token": secrets.token_urlsafe(32),  # unused decoy
             }
 
         otp_code = self._generate_email_otp()
         now = db_utc_now()
+        registration_token = secrets.token_urlsafe(32)
 
         if existing_user:
+            # Someone (maybe not the owner) is signing up again on a pending
+            # email. Don't touch the real name/password: park the new ones and
+            # apply them only if this same session confirms the OTP.
             user = existing_user
-            user.name = payload.name
-            user.password_hash = hash_password(payload.password)
+            user.pending_name = payload.name
+            user.pending_password_hash = hash_password(payload.password)
             user.is_active = False
             user.email_verified = False
             user.email_verified_at = None
@@ -520,6 +530,8 @@ class AuthService:
             self._store_email_otp(user=user, otp_code=otp_code)
             db.add(user)
 
+        # Only the latest signup's session can complete verification.
+        user.registration_token_hash = _sha256(registration_token)
         db.commit()
         db.refresh(user)
 
@@ -531,7 +543,9 @@ class AuthService:
             )
             raise HTTPException(status_code=503, detail=AuthMessages.OTP_SEND_FAILED)
 
-        return self._pending_verification_payload(user, message=REGISTRATION_PENDING_MESSAGE)
+        payload_out = self._pending_verification_payload(user, message=REGISTRATION_PENDING_MESSAGE)
+        payload_out["registration_token"] = registration_token
+        return payload_out
 
     def login_parent(self, payload: LoginIn, db: Session) -> dict:
         normalized_email = normalize_email(payload.email)
@@ -601,6 +615,21 @@ class AuthService:
         user.updated_at = db_utc_now()
         return self._token_response(db=db, user=user)
 
+    @staticmethod
+    def _registration_session_matches(user: User, token: str | None) -> bool:
+        """Is this verify call coming from the session that made the latest signup?
+
+        - With a token: it must be the latest signup's token.
+        - Without one (older app, or a pending user who came back through the
+          login screen): allowed only when nobody signed up again on top of the
+          original signup, i.e. there is no parked name/password to apply. That
+          keeps the original password, which the person logging in just proved.
+        """
+        if token:
+            expected = getattr(user, "registration_token_hash", None)
+            return bool(expected) and hmac.compare_digest(_sha256(token), expected)
+        return not getattr(user, "pending_password_hash", None)
+
     def verify_parent_email_otp(self, payload: VerifyEmailOtpIn, db: Session) -> dict:
         normalized_email = normalize_email(payload.email)
         user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
@@ -613,9 +642,20 @@ class AuthService:
             raise HTTPException(status_code=400, detail=AuthMessages.INVALID_OR_EXPIRED_OTP)
         if self._otp_expired(user) or not getattr(user, "email_otp_hash", None):
             raise HTTPException(status_code=400, detail=AuthMessages.INVALID_OR_EXPIRED_OTP)
+        if not self._registration_session_matches(user, payload.registration_token):
+            verify_password(payload.otp, _dummy_bcrypt_hash())
+            raise HTTPException(status_code=400, detail=AuthMessages.INVALID_OR_EXPIRED_OTP)
         if not verify_password(payload.otp, user.email_otp_hash):
             raise HTTPException(status_code=400, detail=AuthMessages.INVALID_OR_EXPIRED_OTP)
 
+        if user.pending_password_hash:
+            # The OTP was confirmed by the session that made the latest signup,
+            # so its name/password now become the account's.
+            user.password_hash = user.pending_password_hash
+            user.name = user.pending_name or user.name
+        user.pending_password_hash = None
+        user.pending_name = None
+        user.registration_token_hash = None
         user.email_verified = True
         user.email_verified_at = db_utc_now()
         user.is_active = True

@@ -17,6 +17,7 @@ from admin_utils import (
 from auth import hash_password
 from core.admin_security import require_sensitive_action_confirmation
 from core.time_utils import db_utc_now
+from core.validators import generate_temporary_password, validate_password_policy
 from deps import get_db
 from models import User
 from plan_service import PLAN_FREE, validate_plan_value
@@ -282,7 +283,15 @@ def reset_admin_user_password(
 ):
     require_sensitive_action_confirmation(request, action="user.reset_password")
     user = _get_user_or_404(user_id, db)
-    temp_password = payload.new_password or "Temp@123456"
+    if payload.new_password:
+        is_valid, error_msg = validate_password_policy(payload.new_password)
+        if not is_valid:
+            raise HTTPException(status_code=422, detail=error_msg)
+        temp_password = payload.new_password
+    else:
+        # A fresh random password every time; a fixed default would be known
+        # to anyone who has seen this code.
+        temp_password = generate_temporary_password()
     before = {"id": user.id, "email": user.email}
     user.password_hash = hash_password(temp_password)
     # Ends every device session too, not just current access tokens.

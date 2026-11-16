@@ -219,8 +219,10 @@ class Settings:
         cloudinary_media_root_folder = (
             os.getenv("CLOUDINARY_MEDIA_ROOT_FOLDER") or "kinderworld"
         ).strip() or "kinderworld"
+        # Cloudinary's single-request upload API accepts at most 100 MB, so a
+        # higher default would let videos pass our check and then fail there.
         media_max_upload_size_mb = max(
-            _as_int(os.getenv("MEDIA_MAX_UPLOAD_SIZE_MB"), 200),
+            _as_int(os.getenv("MEDIA_MAX_UPLOAD_SIZE_MB"), 100),
             1,
         )
         payment_provider = (os.getenv("PAYMENT_PROVIDER") or "internal").strip().lower()

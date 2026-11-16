@@ -39,6 +39,13 @@ class User(Base):
     email_otp_hash = Column(String, nullable=True)
     email_otp_expires_at = Column(UTCDateTime(), nullable=True)
     email_otp_last_sent_at = Column(UTCDateTime(), nullable=True)
+    # A signup repeated on a not-yet-verified email parks its name/password
+    # here; they only replace the real ones once the OTP is confirmed by the
+    # same app session (registration_token), so nobody can set a password on
+    # an account they don't own.
+    pending_name = Column(String, nullable=True)
+    pending_password_hash = Column(String, nullable=True)
+    registration_token_hash = Column(String(64), nullable=True)
     is_premium = Column(Boolean, default=False, nullable=False, server_default=false())
     plan = Column(String, nullable=False, default="FREE", server_default=text("'FREE'"))
 

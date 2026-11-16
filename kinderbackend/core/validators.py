@@ -81,6 +81,30 @@ def validate_password_policy(password: str) -> tuple[bool, str]:
     return True, ""
 
 
+def generate_temporary_password(length: int = 16) -> str:
+    """Random password that satisfies validate_password_policy.
+
+    Uses ``secrets`` and avoids look-alike characters (0/O, 1/l/I) because an
+    admin may read it out or type it for the parent.
+    """
+    import secrets
+
+    upper = "ABCDEFGHJKLMNPQRSTUVWXYZ"
+    lower = "abcdefghijkmnopqrstuvwxyz"
+    digits = "23456789"
+    special = "!@#$%*-_=+?"
+    alphabet = upper + lower + digits + special
+    chars = [
+        secrets.choice(upper),
+        secrets.choice(lower),
+        secrets.choice(digits),
+        secrets.choice(special),
+    ]
+    chars += [secrets.choice(alphabet) for _ in range(max(length, 12) - len(chars))]
+    secrets.SystemRandom().shuffle(chars)
+    return "".join(chars)
+
+
 def validate_pin_format(pin: str, *, length: int = 4) -> None:
     if len(pin) != length or not pin.isdigit():
         raise unprocessable(f"PIN must be exactly {length} digits")

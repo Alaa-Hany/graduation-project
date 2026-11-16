@@ -152,12 +152,17 @@ def get_user_plan(user: User) -> str:
     plan_value = get_stored_user_plan(user)
     if plan_value == PLAN_FREE:
         return plan_value
-    profile = getattr(user, "subscription_profile", None)
-    expires_at = getattr(profile, "expires_at", None) if profile is not None else None
-    if expires_at is not None:
-        if ensure_utc(expires_at) + subscription_expiry_grace() < utc_now():
-            return PLAN_FREE
+    if subscription_access_expired(getattr(user, "subscription_profile", None)):
+        return PLAN_FREE
     return plan_value
+
+
+def subscription_access_expired(profile) -> bool:
+    """True once a subscription's period plus the grace window is over."""
+    expires_at = getattr(profile, "expires_at", None) if profile is not None else None
+    if expires_at is None:
+        return False
+    return ensure_utc(expires_at) + subscription_expiry_grace() < utc_now()
 
 
 def plan_allows(current_plan: str, required_plan: str) -> bool:

@@ -115,20 +115,36 @@ class AuthApi {
         'confirm_password': confirmPassword,
       },
     );
-    return _toPendingVerificationPayload(response.data);
+    final payload = _toPendingVerificationPayload(response.data);
+    final token = payload.raw['registration_token'];
+    if (token is String && token.isNotEmpty) {
+      _registrationTokens[email.trim().toLowerCase()] = token;
+    }
+    return payload;
   }
+
+  /// Registration token per email, returned by /auth/register. The backend
+  /// only lets the session that made the latest signup confirm the OTP, so
+  /// nobody can set the password of a pending account that isn't theirs.
+  /// Kept in memory only: after an app restart the verify call goes without
+  /// it, which the backend still accepts for an uncontested signup.
+  static final Map<String, String> _registrationTokens = {};
 
   Future<AuthSessionPayload> verifyEmailOtp({
     required String email,
     required String otp,
   }) async {
+    final normalizedEmail = email.trim().toLowerCase();
+    final registrationToken = _registrationTokens[normalizedEmail];
     final response = await _network.post<Map<String, dynamic>>(
       '/auth/verify-email-otp',
       data: {
-        'email': email.trim().toLowerCase(),
+        'email': normalizedEmail,
         'otp': otp.trim(),
+        if (registrationToken != null) 'registration_token': registrationToken,
       },
     );
+    _registrationTokens.remove(normalizedEmail);
     return _toSessionPayload(response.data);
   }
 
