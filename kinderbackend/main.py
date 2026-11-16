@@ -15,10 +15,10 @@ from core.exception_handlers import build_error_body, register_exception_handler
 from core.logging_utils import configure_logging, log_with_context
 from core.message_catalog import MaintenanceMessages
 from core.request_id_middleware import RequestIdMiddleware
-from core.upload_size_limit import UploadSizeLimitMiddleware
 from core.security_headers import apply_security_headers
 from core.settings import settings
 from core.system_settings import is_maintenance_mode
+from core.upload_size_limit import UploadSizeLimitMiddleware
 from database import SessionLocal, engine
 from db_migrations import verify_database_schema
 from routers.admin_admins import router as admin_admins_router
@@ -167,10 +167,7 @@ async def _data_purge_loop() -> None:
     DATA_PURGE_INTERVAL_HOURS. Safe with several workers: each pass only
     deletes rows that are already due, so overlapping runs are harmless.
     """
-    from services.account_deletion_service import (
-        data_purge_interval_seconds,
-        run_data_purge_once,
-    )
+    from services.account_deletion_service import data_purge_interval_seconds, run_data_purge_once
 
     await asyncio.sleep(60)
     while True:

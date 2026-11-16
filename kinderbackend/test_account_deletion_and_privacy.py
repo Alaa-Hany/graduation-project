@@ -21,10 +21,7 @@ from models import (
     SupportTicket,
     User,
 )
-from services.account_deletion_service import (
-    account_deletion_service,
-    data_purge_enabled,
-)
+from services.account_deletion_service import account_deletion_service, data_purge_enabled
 
 PASSWORD = "Password123!"
 
