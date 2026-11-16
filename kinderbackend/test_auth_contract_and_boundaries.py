@@ -121,7 +121,9 @@ def test_children_endpoints_reject_child_session_token(client, create_parent, cr
     assert response.json()["detail"] == "Invalid token type"
 
 
-def test_child_change_password_accepts_camelcase_aliases(client, create_parent, create_child):
+def test_child_change_password_accepts_camelcase_aliases(
+    client, create_parent, create_child, auth_headers
+):
     parent = create_parent(email="child.alias.parent@example.com")
     child = create_child(parent_id=parent.id, name="Alias Kid")
 
@@ -133,6 +135,7 @@ def test_child_change_password_accepts_camelcase_aliases(client, create_parent, 
             "currentPicturePassword": ["cat", "dog", "apple"],
             "newPicturePassword": ["tree", "book", "fish"],
         },
+        headers=auth_headers(parent),
     )
     assert change.status_code == 200
     assert change.json()["success"] is True

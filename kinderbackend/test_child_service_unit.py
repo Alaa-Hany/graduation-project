@@ -438,7 +438,7 @@ def test_login_child_unknown_id_still_counts_failed_attempts(service, db, monkey
 
     assert statuses[0] == 401
     assert 429 in statuses
-    assert child_module._FAILED_ATTEMPTS[child_module._child_failed_key(987654, "8.8.8.8")]
+    assert child_module._FAILED_ATTEMPTS[child_module._child_failed_key(987654)]
 
 
 def test_login_child_invalid_name(service, db, create_parent):
@@ -598,14 +598,15 @@ def test_change_child_password_success(service, db, create_parent):
         current_picture_password=PW,
         new_picture_password=PW2,
     )
-    result = service.change_child_password(payload=payload, db=db)
+    result = service.change_child_password(payload=payload, parent=parent, db=db)
     assert result["success"] is True
     # The new password now verifies.
     login = ChildLoginIn(child_id=child.id, name="PwKid", picture_password=PW2)
     assert service.login_child(payload=login, db=db)["success"] is True
 
 
-def test_change_child_password_not_found(service, db):
+def test_change_child_password_not_found(service, db, create_parent):
+    parent = create_parent(email="ccp-missing@example.com")
     payload = ChildChangePasswordIn(
         child_id=999999,
         name="Ghost",
@@ -613,7 +614,7 @@ def test_change_child_password_not_found(service, db):
         new_picture_password=PW2,
     )
     with pytest.raises(HTTPException) as exc:
-        service.change_child_password(payload=payload, db=db)
+        service.change_child_password(payload=payload, parent=parent, db=db)
     assert exc.value.status_code == 404
 
 
@@ -627,7 +628,7 @@ def test_change_child_password_invalid_name(service, db, create_parent):
         new_picture_password=PW2,
     )
     with pytest.raises(HTTPException) as exc:
-        service.change_child_password(payload=payload, db=db)
+        service.change_child_password(payload=payload, parent=parent, db=db)
     assert exc.value.status_code == 401
 
 
@@ -641,7 +642,7 @@ def test_change_child_password_wrong_current(service, db, create_parent):
         new_picture_password=["a", "b", "c"],
     )
     with pytest.raises(HTTPException) as exc:
-        service.change_child_password(payload=payload, db=db)
+        service.change_child_password(payload=payload, parent=parent, db=db)
     assert exc.value.status_code == 401
 
 
@@ -685,4 +686,4 @@ def test_module_wrappers_delegate(monkeypatch):
     assert child_module.register_child("pl", "p", "db")["stub"] == "register_child"
     assert child_module.login_child("pl", "db")["stub"] == "login_child"
     assert child_module.validate_child_session("pl", "db")["stub"] == "validate_child_session"
-    assert child_module.change_child_password("pl", "db")["stub"] == "change_child_password"
+    assert child_module.change_child_password("pl", "p", "db")["stub"] == "change_child_password"

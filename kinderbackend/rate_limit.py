@@ -6,6 +6,7 @@ REDIS_URL is configured.  Falls back to a single-process in-memory store for
 local development / tests — NOT safe across multiple workers.
 """
 
+import ipaddress
 import logging
 import time
 from collections import defaultdict
@@ -15,6 +16,7 @@ from fastapi import Depends, HTTPException, Request
 from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 
 from core.redis_client import get_redis_client
+from core.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -109,6 +111,21 @@ rate_limiter = RedisRateLimiter()
 
 
 def _client_ip(request: Request) -> str:
+    """Best-effort real client IP for rate-limit keys.
+
+    Behind Cloudflare, ``CF-Connecting-IP`` is set by Cloudflare itself and
+    overwrites anything the client sent, so it can't be spoofed the way the
+    left-most ``X-Forwarded-For`` entry can. It is only trusted when
+    ``TRUST_CF_CONNECTING_IP`` is on. A missing or malformed value falls back
+    to the socket peer as resolved by uvicorn.
+    """
+    if settings.trust_cf_connecting_ip:
+        cf_ip = (request.headers.get("CF-Connecting-IP") or "").strip()
+        if cf_ip:
+            try:
+                return str(ipaddress.ip_address(cf_ip))
+            except ValueError:
+                logger.warning("Ignoring malformed CF-Connecting-IP header")
     return request.client.host if request.client else "unknown"
 
 

@@ -103,6 +103,8 @@ class SubscriptionMessages:
     PENDING_PLAN_SELECTION_MISMATCH = "Requested plan does not match the pending checkout selection"
     SESSION_ID_REQUIRED_FOR_ACTIVATION = "session_id is required to activate this plan"
     PAYMENT_NOT_COMPLETED = "Payment is not completed yet"
+    CHECKOUT_SESSION_MISMATCH = "Checkout session does not belong to this account or plan"
+    CHECKOUT_SESSION_ALREADY_USED = "Checkout session was already used"
     NO_REFUNDABLE_PAYMENT = "No refundable payment found"
     NO_PROVIDER_CUSTOMER_EXISTS = "No provider customer exists for this account"
     NO_BILLING_CUSTOMER_AVAILABLE = "No billing customer is available for this account"

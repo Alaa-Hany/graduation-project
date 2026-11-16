@@ -33,9 +33,13 @@ class FakeProvider:
     provider_key = "stripe"
     is_external = True
 
-    def __init__(self, *, raise_on=None, error=None):
+    def __init__(self, *, raise_on=None, error=None, owner_id=None, plan_id=PLAN_PREMIUM):
         self.raise_on = raise_on or set()
         self.error = error or PaymentProviderError("boom")
+        # Metadata Stripe echoes back for the session (set by us at creation).
+        self.metadata = (
+            {"user_id": str(owner_id), "plan_id": plan_id} if owner_id is not None else {}
+        )
 
     def _maybe_raise(self, method):
         if method in self.raise_on:
@@ -57,6 +61,7 @@ class FakeProvider:
             subscription_id="sub_x",
             payment_intent_id="pi_x",
             raw={},
+            metadata=dict(self.metadata),
         )
 
     def refund_payment(self, *, payment_intent_id, charge_id, amount_cents, reason, metadata):
@@ -279,11 +284,98 @@ def test_activate_provider_error(db, create_parent, use_provider):
 
 def test_activate_success(db, create_parent, use_provider):
     parent = create_parent(email="act-ok@example.com", plan=PLAN_FREE)
-    use_provider(FakeProvider())
+    use_provider(FakeProvider(owner_id=parent.id))
     result = subscription_service.activate_subscription(
         payload=_select_payload(PLAN_PREMIUM, session_id="cs_ok"), db=db, user=parent
     )
     assert result["current_plan_id"] == PLAN_PREMIUM
+
+
+def test_activate_rejects_session_owned_by_another_user(db, create_parent, use_provider):
+    victim = create_parent(email="act-victim@example.com", plan=PLAN_FREE)
+    attacker = create_parent(email="act-attacker@example.com", plan=PLAN_FREE)
+    use_provider(FakeProvider(owner_id=victim.id))
+    with pytest.raises(HTTPException) as exc:
+        subscription_service.activate_subscription(
+            payload=_select_payload(PLAN_PREMIUM, session_id="cs_victim"), db=db, user=attacker
+        )
+    assert exc.value.status_code == 403
+    db.refresh(attacker)
+    assert attacker.plan == PLAN_FREE
+
+
+def test_activate_rejects_session_without_owner_metadata(db, create_parent, use_provider):
+    parent = create_parent(email="act-nometa@example.com", plan=PLAN_FREE)
+    use_provider(FakeProvider(owner_id=None))
+    with pytest.raises(HTTPException) as exc:
+        subscription_service.activate_subscription(
+            payload=_select_payload(PLAN_PREMIUM, session_id="cs_nometa"), db=db, user=parent
+        )
+    assert exc.value.status_code == 403
+
+
+def test_activate_rejects_session_paid_for_a_different_plan(db, create_parent, use_provider):
+    from plan_service import PLAN_FAMILY_PLUS
+
+    parent = create_parent(email="act-wrongplan@example.com", plan=PLAN_FREE)
+    # Paid for PREMIUM, tries to claim the pricier FAMILY_PLUS.
+    use_provider(FakeProvider(owner_id=parent.id, plan_id=PLAN_PREMIUM))
+    with pytest.raises(HTTPException) as exc:
+        subscription_service.activate_subscription(
+            payload=_select_payload(PLAN_FAMILY_PLUS, session_id="cs_plan"), db=db, user=parent
+        )
+    assert exc.value.status_code == 403
+
+
+def test_activate_rejects_session_already_used_by_another_account(db, create_parent, use_provider):
+    first = create_parent(email="act-first@example.com", plan=PLAN_FREE)
+    second = create_parent(email="act-second@example.com", plan=PLAN_FREE)
+    use_provider(FakeProvider(owner_id=first.id))
+    subscription_service.activate_subscription(
+        payload=_select_payload(PLAN_PREMIUM, session_id="cs_shared"), db=db, user=first
+    )
+    # Even if the provider metadata were somehow made to match, a session that
+    # already activated one account can't activate a second one.
+    use_provider(FakeProvider(owner_id=second.id))
+    with pytest.raises(HTTPException) as exc:
+        subscription_service.activate_subscription(
+            payload=_select_payload(PLAN_PREMIUM, session_id="cs_shared"), db=db, user=second
+        )
+    assert exc.value.status_code == 409
+    db.refresh(second)
+    assert second.plan == PLAN_FREE
+
+
+def test_activate_rejects_replay_of_consumed_session_after_downgrade(
+    db, create_parent, use_provider
+):
+    parent = create_parent(email="act-replay@example.com", plan=PLAN_FREE)
+    use_provider(FakeProvider(owner_id=parent.id))
+    subscription_service.activate_subscription(
+        payload=_select_payload(PLAN_PREMIUM, session_id="cs_replay"), db=db, user=parent
+    )
+    # Access is revoked (refund / lapse), then the old paid session is replayed.
+    subscription_service.admin_override_subscription(
+        db=db, user=parent, plan=PLAN_FREE, source="admin"
+    )
+    with pytest.raises(HTTPException) as exc:
+        subscription_service.activate_subscription(
+            payload=_select_payload(PLAN_PREMIUM, session_id="cs_replay"), db=db, user=parent
+        )
+    assert exc.value.status_code == 409
+    db.refresh(parent)
+    assert parent.plan == PLAN_FREE
+
+
+def test_activate_same_session_twice_by_owner_is_idempotent(db, create_parent, use_provider):
+    """Normal use: retrying activation with your own session still works."""
+    parent = create_parent(email="act-retry@example.com", plan=PLAN_FREE)
+    use_provider(FakeProvider(owner_id=parent.id))
+    for _ in range(2):
+        result = subscription_service.activate_subscription(
+            payload=_select_payload(PLAN_PREMIUM, session_id="cs_retry"), db=db, user=parent
+        )
+        assert result["current_plan_id"] == PLAN_PREMIUM
 
 
 # ---------------------------------------------------------------------------
@@ -332,7 +424,7 @@ def test_refund_no_target(db, create_parent):
 
 def _activate_premium_with_target(db, parent, use_provider):
     """Activate premium via checkout so a refundable payment attempt exists."""
-    use_provider(FakeProvider())
+    use_provider(FakeProvider(owner_id=parent.id))
     subscription_service.activate_subscription(
         payload=_select_payload(PLAN_PREMIUM, session_id="cs_refund"), db=db, user=parent
     )

@@ -35,6 +35,9 @@ class CheckoutSessionResult:
     payment_intent_id: str | None = None
     payment_method_id: str | None = None
     raw: RawProviderPayload = field(default_factory=dict)
+    # Metadata we attached when creating the session (user_id, plan_id, ...).
+    # Used to prove a session belongs to the caller before activating a plan.
+    metadata: MetadataPayload = field(default_factory=dict)
 
 
 @dataclass(slots=True)

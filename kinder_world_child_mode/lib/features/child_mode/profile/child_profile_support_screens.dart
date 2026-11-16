@@ -1384,15 +1384,25 @@ class _SettingsEditProfileScreenState
 
     if (hasPasswordChange) {
       try {
+        // The backend only lets a parent change a child's picture password,
+        // so send the parent's token instead of the child session token.
+        final parentToken =
+            await ref.read(secureStorageProvider).getParentAccessToken();
+        if (parentToken == null || parentToken.isEmpty) {
+          throw StateError('parent session required');
+        }
         await ref.read(networkServiceProvider).post(
-          '/auth/child/change-password',
-          data: {
-            'child_id': int.tryParse(child.id) ?? child.id,
-            'name': child.name,
-            'current_picture_password': child.picturePassword,
-            'new_picture_password': newPassword,
-          },
-        );
+              '/auth/child/change-password',
+              data: {
+                'child_id': int.tryParse(child.id) ?? child.id,
+                'name': child.name,
+                'current_picture_password': child.picturePassword,
+                'new_picture_password': newPassword,
+              },
+              options: Options(
+                headers: {'Authorization': 'Bearer $parentToken'},
+              ),
+            );
       } catch (_) {
         if (!mounted) return;
         messenger.showSnackBar(

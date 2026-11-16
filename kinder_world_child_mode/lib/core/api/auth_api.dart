@@ -263,6 +263,7 @@ class AuthApi {
     required String name,
     required List<String> currentPicturePassword,
     required List<String> newPicturePassword,
+    required String parentAccessToken,
   }) async {
     final response = await _network.post<Map<String, dynamic>>(
       '/auth/child/change-password',
@@ -272,6 +273,9 @@ class AuthApi {
         'current_picture_password': currentPicturePassword,
         'new_picture_password': newPicturePassword,
       },
+      options: Options(
+        headers: {'Authorization': 'Bearer $parentAccessToken'},
+      ),
     );
     return Map<String, dynamic>.from(response.data ?? const {});
   }

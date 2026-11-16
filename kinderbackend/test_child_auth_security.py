@@ -55,7 +55,10 @@ def _create_child(
     return child
 
 
-def test_child_login_wrong_name_and_wrong_pictures_return_distinct_codes(client, db):
+def test_child_login_wrong_name_and_wrong_pictures_are_indistinguishable(client, db):
+    """A right name with wrong pictures must look exactly like a wrong name,
+    so the response can't be used to confirm a child's name before guessing
+    the picture password."""
     parent = _create_parent(db, email="child.codes.parent@example.com")
     child = _create_child(db, parent_id=parent.id, name="CodeKid")
 
@@ -67,9 +70,6 @@ def test_child_login_wrong_name_and_wrong_pictures_return_distinct_codes(client,
             "picture_password": ["cat", "dog", "apple"],
         },
     )
-    assert wrong_name.status_code == 401
-    assert wrong_name.json()["detail"]["code"] == "CHILD_INVALID_NAME"
-
     wrong_pictures = client.post(
         "/api/v1/auth/child/login",
         json={
@@ -78,8 +78,121 @@ def test_child_login_wrong_name_and_wrong_pictures_return_distinct_codes(client,
             "picture_password": ["wrong", "wrong", "wrong"],
         },
     )
-    assert wrong_pictures.status_code == 401
-    assert wrong_pictures.json()["detail"]["code"] == "CHILD_INVALID_PICTURE"
+
+    assert wrong_name.status_code == wrong_pictures.status_code == 401
+    assert wrong_name.json()["detail"] == wrong_pictures.json()["detail"]
+    assert wrong_pictures.json()["detail"]["code"] == "CHILD_INVALID_CREDENTIALS"
+
+
+def test_child_login_failure_counter_is_per_child_across_ips(client, db, monkeypatch):
+    """Rotating IPs must not reset the guess budget for one child."""
+    from core.settings import settings
+
+    monkeypatch.setenv("CHILD_AUTH_RATE_LIMIT_MAX_ATTEMPTS", "3")
+    monkeypatch.setenv("CHILD_AUTH_RATE_LIMIT_WINDOW_SECONDS", "300")
+    original = settings.trust_cf_connecting_ip
+    object.__setattr__(settings, "trust_cf_connecting_ip", True)
+    try:
+        parent = _create_parent(db, email="child.rotate.parent@example.com")
+        child = _create_child(db, parent_id=parent.id, name="RotateKid")
+        other = _create_child(db, parent_id=parent.id, name="OtherKid")
+
+        for i in range(3):
+            failed = client.post(
+                "/api/v1/auth/child/login",
+                json={
+                    "child_id": child.id,
+                    "name": child.name,
+                    "picture_password": ["wrong", "wrong", "wrong"],
+                },
+                headers={"CF-Connecting-IP": f"198.51.100.{i + 1}"},
+            )
+            assert failed.status_code == 401
+
+        # A brand-new IP with the correct pictures is still blocked.
+        blocked = client.post(
+            "/api/v1/auth/child/login",
+            json={
+                "child_id": child.id,
+                "name": child.name,
+                "picture_password": ["cat", "dog", "apple"],
+            },
+            headers={"CF-Connecting-IP": "203.0.113.77"},
+        )
+        assert blocked.status_code == 429
+        assert blocked.json()["detail"]["code"] == "CHILD_AUTH_RATE_LIMIT_EXCEEDED"
+
+        # Normal use: a different child is not affected by that lockout.
+        ok = client.post(
+            "/api/v1/auth/child/login",
+            json={
+                "child_id": other.id,
+                "name": other.name,
+                "picture_password": ["cat", "dog", "apple"],
+            },
+            headers={"CF-Connecting-IP": "198.51.100.1"},
+        )
+        assert ok.status_code == 200
+    finally:
+        object.__setattr__(settings, "trust_cf_connecting_ip", original)
+
+
+def _parent_headers(client, email: str) -> dict[str, str]:
+    login = client.post(
+        "/api/v1/auth/login",
+        json={"email": email, "password": "Password123!"},
+    )
+    assert login.status_code == 200
+    return {"Authorization": f"Bearer {login.json()['access_token']}"}
+
+
+def test_child_change_password_requires_parent_token(client, db):
+    parent = _create_parent(db, email="child.change.noauth.parent@example.com")
+    child = _create_child(db, parent_id=parent.id, name="NoAuthKid")
+    body = {
+        "child_id": child.id,
+        "name": child.name,
+        "current_picture_password": ["cat", "dog", "apple"],
+        "new_picture_password": ["tree", "book", "fish"],
+    }
+
+    anonymous = client.post("/api/v1/auth/child/change-password", json=body)
+    assert anonymous.status_code == 401
+
+    child_login = client.post(
+        "/api/v1/auth/child/login",
+        json={
+            "child_id": child.id,
+            "name": child.name,
+            "picture_password": ["cat", "dog", "apple"],
+        },
+    )
+    child_token = child_login.json()["session_token"]
+    with_child_token = client.post(
+        "/api/v1/auth/child/change-password",
+        json=body,
+        headers={"Authorization": f"Bearer {child_token}"},
+    )
+    assert with_child_token.status_code == 401
+
+    stranger = _create_parent(db, email="child.change.stranger@example.com")
+    other_family = client.post(
+        "/api/v1/auth/child/change-password",
+        json=body,
+        headers=_parent_headers(client, stranger.email),
+    )
+    assert other_family.status_code == 404
+
+    # The password is unchanged after all three rejected attempts.
+    still_ok = client.post(
+        "/api/v1/auth/child/login",
+        json={
+            "child_id": child.id,
+            "name": child.name,
+            "picture_password": ["cat", "dog", "apple"],
+        },
+    )
+    assert still_ok.status_code == 200
 
 
 def test_child_login_unknown_id_is_indistinguishable_from_wrong_name(client, db):
@@ -154,6 +267,7 @@ def test_child_create_and_change_password_store_hashed_picture_password(client, 
             "current_picture_password": ["cat", "dog", "apple"],
             "new_picture_password": ["tree", "book", "fish"],
         },
+        headers=headers,
     )
     assert change.status_code == 200
 

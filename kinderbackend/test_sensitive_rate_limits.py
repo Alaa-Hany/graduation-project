@@ -125,10 +125,13 @@ def test_support_contact_rate_limit_blocks_after_threshold(
     assert blocked.headers["Retry-After"] == "300"
 
 
-def test_child_change_password_rate_limit_blocks_repeated_attempts(client, db, create_parent):
+def test_child_change_password_rate_limit_blocks_repeated_attempts(
+    client, db, create_parent, auth_headers
+):
     from models import ChildProfile
 
     parent = create_parent(email="child.password.limit@example.com")
+    headers = auth_headers(parent)
     child = ChildProfile(
         parent_id=parent.id,
         name="Limiter Kid",
@@ -148,6 +151,7 @@ def test_child_change_password_rate_limit_blocks_repeated_attempts(client, db, c
                 "current_picture_password": ["wrong", "wrong", "wrong"],
                 "new_picture_password": ["tree", "book", "fish"],
             },
+            headers=headers,
         )
         assert response.status_code == 401
 
@@ -159,6 +163,7 @@ def test_child_change_password_rate_limit_blocks_repeated_attempts(client, db, c
             "current_picture_password": ["wrong", "wrong", "wrong"],
             "new_picture_password": ["tree", "book", "fish"],
         },
+        headers=headers,
     )
     assert blocked.status_code == 429
     assert blocked.json()["detail"]["code"] == "RATE_LIMIT_EXCEEDED"

@@ -210,6 +210,11 @@ class StripePaymentProvider:
                 payment_method_id = None
 
         subscription_id = getattr(session, "subscription", None)
+        raw_metadata = getattr(session, "metadata", None) or {}
+        try:
+            metadata = {str(k): str(v) for k, v in dict(raw_metadata).items()}
+        except (TypeError, ValueError):
+            metadata = {}
         return CheckoutSessionResult(
             provider=self.provider_key,
             session_id=session.id,
@@ -221,6 +226,7 @@ class StripePaymentProvider:
             payment_intent_id=payment_intent,
             payment_method_id=payment_method_id,
             raw=session.to_dict_recursive(),
+            metadata=metadata,
         )
 
     def _serialize_subscription(self, subscription) -> ProviderSubscriptionSnapshot:

@@ -74,7 +74,12 @@ class _FakeStripeProvider:
             subscription_id=None,
             payment_intent_id=self.state.payment_intent_id,
             raw={"metadata": metadata, "plan_id": plan_id, "email": user_email, "name": user_name},
+            metadata=self._remember_metadata(metadata),
         )
+
+    def _remember_metadata(self, metadata):
+        self.last_metadata = dict(metadata)
+        return dict(metadata)
 
     def retrieve_checkout_session(self, *, session_id):
         return CheckoutSessionResult(
@@ -88,6 +93,7 @@ class _FakeStripeProvider:
             payment_intent_id=self.state.payment_intent_id,
             payment_method_id="pm_card_visa",
             raw={},
+            metadata=dict(getattr(self, "last_metadata", {})),
         )
 
     def list_payment_methods(self, *, customer_id):

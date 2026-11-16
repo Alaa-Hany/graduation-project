@@ -17,6 +17,7 @@ from auth import verify_password
 from core.message_catalog import AdminAuthMessages
 from core.settings import settings
 from core.time_utils import db_utc_now, ensure_utc, utc_now
+from rate_limit import _client_ip
 from services.two_factor_service import two_factor_service
 
 logger = logging.getLogger(__name__)
@@ -29,7 +30,8 @@ class AdminAuthService:
         email = payload.email.strip().lower()
         admin = db.query(AdminUser).filter(AdminUser.email == email).first()
         now = db_utc_now()
-        client_host = request.client.host if request.client else None
+        resolved_ip = _client_ip(request)
+        client_host = None if resolved_ip == "unknown" else resolved_ip
         user_agent = request.headers.get("user-agent")
 
         if admin and admin.locked_until and ensure_utc(admin.locked_until) > utc_now():

@@ -336,6 +336,7 @@ def test_child_validation_duplicate_name_update_login_and_picture_password_flow(
             "current_picture_password": ["sun", "moon", "star"],
             "new_picture_password": ["tree", "book", "fish"],
         },
+        headers=headers,
     )
     assert wrong_change.status_code == 401
 
@@ -347,6 +348,7 @@ def test_child_validation_duplicate_name_update_login_and_picture_password_flow(
             "current_picture_password": ["cat", "dog", "apple"],
             "new_picture_password": ["tree", "book"],
         },
+        headers=headers,
     )
     assert invalid_new_password.status_code == 422
 
@@ -358,6 +360,7 @@ def test_child_validation_duplicate_name_update_login_and_picture_password_flow(
             "current_picture_password": ["cat", "dog", "apple"],
             "new_picture_password": ["tree", "book", "fish"],
         },
+        headers=headers,
     )
     assert change.status_code == 200
     assert change.json()["success"] is True

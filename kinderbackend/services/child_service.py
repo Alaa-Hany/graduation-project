@@ -87,8 +87,10 @@ def _current_streak(active_dates: list[date]) -> int:
 
 
 # Redis key helpers — module-level dicts removed; state lives in Redis.
-def _child_failed_key(child_id: int, client_ip: str) -> str:
-    return f"child:failed:{child_id}:{client_ip or 'unknown'}"
+def _child_failed_key(child_id: int) -> str:
+    # Keyed by child only, not child+IP: otherwise an attacker rotating IPs
+    # gets a fresh budget of picture-password guesses for every address.
+    return f"child:failed:{child_id}"
 
 
 def _child_device_key(child_id: int) -> str:
@@ -197,7 +199,7 @@ class ChildService:
         rc = get_redis_client()
         count = 0
         if rc is None:
-            key = _child_failed_key(child_id, client_ip)
+            key = _child_failed_key(child_id)
             now = time.time()
             window_start = now - self._rate_limit_window_seconds()
             attempts = [ts for ts in _FAILED_ATTEMPTS[key] if ts > window_start]
@@ -205,7 +207,7 @@ class ChildService:
             _FAILED_ATTEMPTS[key] = attempts
             count = len(attempts)
         else:
-            rkey = _child_failed_key(child_id, client_ip)
+            rkey = _child_failed_key(child_id)
             window = self._rate_limit_window_seconds()
             try:
                 pipe = rc.pipeline()
@@ -236,16 +238,16 @@ class ChildService:
         user_agent: str | None,
         device_id: str | None,
     ) -> None:
-        """Raise 429 if the failure counter for this child+IP exceeds the limit."""
+        """Raise 429 if the failure counter for this child (any IP) exceeds the limit."""
         rc = get_redis_client()
         attempts = 0
         if rc is None:
-            key = _child_failed_key(child_id, client_ip)
+            key = _child_failed_key(child_id)
             window_start = time.time() - self._rate_limit_window_seconds()
             _FAILED_ATTEMPTS[key] = [ts for ts in _FAILED_ATTEMPTS[key] if ts > window_start]
             attempts = len(_FAILED_ATTEMPTS[key])
         else:
-            rkey = _child_failed_key(child_id, client_ip)
+            rkey = _child_failed_key(child_id)
             try:
                 attempts = int(rc.get(rkey) or 0)
             except Exception as exc:
@@ -261,13 +263,9 @@ class ChildService:
                 attempts,
                 limit,
             )
-            self._record_failed_attempt(
-                child_id=child_id,
-                client_ip=client_ip,
-                reason="RATE_LIMIT_EXCEEDED",
-                user_agent=user_agent,
-                device_id=device_id,
-            )
+            # Don't count blocked requests as new failures: the counter is
+            # per child, so doing so would let anyone keep a child locked out
+            # forever just by retrying during the lockout window.
             raise http_error(
                 status_code=429,
                 message="Too many failed child login attempts. Try again later.",
@@ -695,11 +693,15 @@ class ChildService:
 
     @staticmethod
     def _invalid_child_credentials():
-        """The single 401 for an unknown child id or a wrong name."""
+        """The single 401 for an unknown child id, a wrong name or wrong pictures.
+
+        One code for all three, so the response never tells an attacker that
+        they got the name right and only need to guess the pictures.
+        """
         return http_error(
             status_code=401,
             message="Invalid credentials",
-            code="CHILD_INVALID_NAME",
+            code="CHILD_INVALID_CREDENTIALS",
         )
 
     def login_child(
@@ -762,11 +764,7 @@ class ChildService:
                 user_agent=user_agent,
                 device_id=device_id,
             )
-            raise http_error(
-                status_code=401,
-                message="Invalid picture password",
-                code="CHILD_INVALID_PICTURE",
-            )
+            raise self._invalid_child_credentials()
 
         self._bind_or_validate_device(
             child_id=child.id,
@@ -778,11 +776,11 @@ class ChildService:
         rc = get_redis_client()
         if rc is not None:
             try:
-                rc.delete(_child_failed_key(child.id, client_ip))
+                rc.delete(_child_failed_key(child.id))
             except Exception as exc:
                 logger.error("Redis child failure-key DELETE failed (%s)", exc)
         else:
-            _FAILED_ATTEMPTS.pop(_child_failed_key(child.id, client_ip), None)
+            _FAILED_ATTEMPTS.pop(_child_failed_key(child.id), None)
 
         session_payload = self._build_child_session(child=child, device_id=device_id)
         logger.info(
@@ -901,7 +899,9 @@ class ChildService:
             "session_expires_at": exp_iso,
         }
 
-    def change_child_password(self, *, payload: ChildChangePasswordIn, db: Session) -> dict:
+    def change_child_password(
+        self, *, payload: ChildChangePasswordIn, parent: User, db: Session
+    ) -> dict:
         child = (
             db.query(ChildProfile)
             .filter(
@@ -910,7 +910,9 @@ class ChildService:
             )
             .first()
         )
-        if not child:
+        # Another family's child answers like a missing one, so the endpoint
+        # can't be used to probe which child ids exist.
+        if not child or int(child.parent_id) != int(parent.id):
             raise not_found("Child not found")
 
         normalized_name = payload.name.strip().lower()
@@ -1225,8 +1227,8 @@ def save_gamification_state(
     )
 
 
-def change_child_password(payload: ChildChangePasswordIn, db: Session) -> dict:
-    return child_service.change_child_password(payload=payload, db=db)
+def change_child_password(payload: ChildChangePasswordIn, parent: User, db: Session) -> dict:
+    return child_service.change_child_password(payload=payload, parent=parent, db=db)
 
 
 def request_picture_password_reset(payload: ChildForgotPasswordIn, db: Session) -> dict:

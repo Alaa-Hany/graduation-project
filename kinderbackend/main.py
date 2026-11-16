@@ -330,6 +330,20 @@ if ADMIN_SEED_ENABLED:
     )
     _include_api_router(admin_seed_router)
 
+if settings.is_production and not settings.trust_cf_connecting_ip:
+    # Rate limits then key on the uvicorn-resolved peer, which can be spoofed
+    # via X-Forwarded-For when FORWARDED_ALLOW_IPS="*".
+    log_with_context(
+        logger,
+        logging.WARNING,
+        "client_ip_cf_header_not_trusted",
+        event="client_ip_cf_header_not_trusted",
+        category="app",
+        environment=getattr(settings, "environment", None),
+        outcome="warning",
+        hint="Set TRUST_CF_CONNECTING_IP=true when running behind Cloudflare",
+    )
+
 # --- Unversioned infrastructure routes ------------------------------------
 # health_router stays at /health — probed by load balancers without a version.
 # payment_webhooks_router stays at /webhooks — URL is registered externally

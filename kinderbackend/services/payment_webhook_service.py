@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 from typing import Any
-from uuid import uuid4
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -57,18 +56,8 @@ class PaymentWebhookService:
                     provider="stripe",
                     reason=str(exc),
                 )
-                record = PaymentWebhookEvent(
-                    provider="stripe",
-                    event_id=f"invalid_{uuid4()}",
-                    event_type="signature_invalid",
-                    status="failed",
-                    signature_valid=False,
-                    error_message=str(exc),
-                    payload_json=None,
-                    received_at=db_utc_now(),
-                )
-                db.add(record)
-                db.commit()
+                # Unsigned/forged requests are logged only. Writing a DB row per
+                # request let anyone fill the payment_webhook_events table.
                 log_with_context(
                     logger,
                     logging.WARNING,

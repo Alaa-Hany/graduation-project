@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 from typing import Any
 
@@ -11,6 +12,10 @@ from services.payment_provider import (
     PortalSessionResult,
     ProviderSubscriptionSnapshot,
     RefundResult,
+)
+
+_MOCK_SESSION_RE = re.compile(
+    r"^mock_session_(?P<user_id>\d+)_(?P<plan>[a-z_]+)_(?P<interval>monthly|yearly)$"
 )
 
 
@@ -49,11 +54,22 @@ class InternalPaymentProvider:
             subscription_id=f"mock_sub_{user_id}_{normalized_plan}",
             payment_intent_id=f"mock_pi_{user_id}_{normalized_plan}",
             raw={"mode": "internal", "billing_interval": billing_interval},
+            metadata=dict(metadata),
         )
 
     def retrieve_checkout_session(self, *, session_id: str) -> CheckoutSessionResult:
         self._ensure_non_production()
+        # Mock session ids encode their owner: mock_session_<user_id>_<plan>_<interval>.
+        metadata: dict[str, str] = {}
+        match = _MOCK_SESSION_RE.match(session_id or "")
+        if match:
+            metadata = {
+                "user_id": match.group("user_id"),
+                "plan_id": match.group("plan").upper(),
+                "billing_interval": match.group("interval"),
+            }
         return CheckoutSessionResult(
+            metadata=metadata,
             provider=self.provider_key,
             session_id=session_id,
             checkout_url=f"https://example.invalid/mock-checkout/{session_id}",
