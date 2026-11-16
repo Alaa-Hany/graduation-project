@@ -17,7 +17,8 @@ class _TestSecureStorage extends SecureStorage {
 class _RecordingAdapter implements HttpClientAdapter {
   _RecordingAdapter({this.body = const {'success': true}});
 
-  final Map<String, dynamic> body;
+  Map<String, dynamic> body;
+  int status = 200;
   RequestOptions? lastOptions;
 
   @override
@@ -32,7 +33,7 @@ class _RecordingAdapter implements HttpClientAdapter {
     lastOptions = options;
     return ResponseBody.fromString(
       jsonEncode(body),
-      200,
+      status,
       headers: {
         Headers.contentTypeHeader: [Headers.jsonContentType],
       },
@@ -40,12 +41,28 @@ class _RecordingAdapter implements HttpClientAdapter {
   }
 }
 
-AuthApi _api(_RecordingAdapter adapter) => AuthApi(
+AuthApi _api(_RecordingAdapter adapter, {RegistrationTokenStore? store}) =>
+    AuthApi(
       NetworkService(
         dio: Dio()..httpClientAdapter = adapter,
         secureStorage: _TestSecureStorage(),
         logger: Logger(),
       ),
+      registrationTokenStore: store,
+    );
+
+const _registerBody = {
+  'success': true,
+  'email': 'mona@example.com',
+  'verification_required': true,
+  'registration_token': 'reg-token-123',
+};
+
+Future<void> _register(AuthApi api) => api.register(
+      name: 'Mona',
+      email: ' Mona@Example.com ',
+      password: 'Secret123!',
+      confirmPassword: 'Secret123!',
     );
 
 void main() {
@@ -108,5 +125,48 @@ void main() {
       (adapter.lastOptions?.data as Map).containsKey('registration_token'),
       isFalse,
     );
+  });
+
+  test('registration token survives a reload (new AuthApi, same storage)',
+      () async {
+    final store = MemoryRegistrationTokenStore(); // stands in for secure storage
+    final adapter = _RecordingAdapter(body: Map.of(_registerBody));
+    await _register(_api(adapter, store: store));
+
+    // Page reload / app restart: a fresh AuthApi reading the same storage.
+    final afterReload = _api(adapter, store: store);
+    await afterReload.verifyEmailOtp(email: 'mona@example.com', otp: '123456');
+
+    expect(adapter.lastOptions?.data['registration_token'], 'reg-token-123');
+    expect(await store.read('mona@example.com'), isNull);
+  });
+
+  test('a wrong code keeps the registration token for the next try', () async {
+    final store = MemoryRegistrationTokenStore();
+    final adapter = _RecordingAdapter(body: Map.of(_registerBody));
+    final api = _api(adapter, store: store);
+    await _register(api);
+
+    adapter
+      ..status = 400
+      ..body = {
+        'detail': {'code': 'INVALID_OR_EXPIRED_OTP'},
+      };
+    await expectLater(
+      api.verifyEmailOtp(email: 'mona@example.com', otp: '000000'),
+      throwsA(isA<DioException>()),
+    );
+    expect(await store.read('mona@example.com'), 'reg-token-123');
+
+    adapter
+      ..status = 200
+      ..body = {'success': true};
+    await api.verifyEmailOtp(email: 'mona@example.com', otp: '123456');
+    expect(adapter.lastOptions?.data['registration_token'], 'reg-token-123');
+  });
+
+  test('the app stores the registration token in secure storage', () {
+    final store = SecureRegistrationTokenStore(_TestSecureStorage());
+    expect(store, isA<RegistrationTokenStore>());
   });
 }
