@@ -34,6 +34,24 @@ pushed, merged or deployed.
 | 23 | Zoom allowed (removed `user-scalable=no`), real description, `lang="en"` | Fixed | `c91d21a` |
 | 24 | Bluetooth permissions removed; `RECORD_AUDIO` kept (AI Buddy mic) | Fixed | `c91d21a` |
 
+> **Old web build vs new backend (checked 2026-11-16).** The web app live on
+> Firebase predates this branch. With the new backend: login, normal signup,
+> analytics, forgot-password, `/subscription/me` and admin reset keep working.
+> Two cases fail until the web app is redeployed (accepted for now):
+> 1. Submitting the signup form **twice** for the same unverified email, then
+>    entering the code → always "wrong code" (the old app never sends the
+>    registration token, and accepting a token-less verify there would reopen
+>    the takeover hole).
+> 2. Changing a child's picture password from child mode → "failed" message
+>    (the endpoint now needs the parent token, which the old app doesn't send).
+>
+> Fixed in Flutter for the next web deploy (commit `9030f3f`):
+> - the rotated refresh token is saved after every refresh (before, the app
+>   kept reusing the first one, so its second refresh always failed and the
+>   user was logged out — already happening in production today);
+> - the registration token is kept in secure storage, so a reload between
+>   signup and code entry no longer blocks verification.
+
 > Known limit of #7: when a parent has analytics **turned off**, only daily
 > totals are kept (no rows), so there is nothing to de-duplicate against — a
 > retried request in that mode can add to the day's totals twice. Rare and
@@ -98,9 +116,10 @@ Environment.
 
 ### Firebase (frontend)
 
-13. Deploy the web app with `deploy.ps1` (it passes
-    `--dart-define=API_BASE_URL=...`). The new headers in `firebase.json` go
-    live with that deploy — no console change needed.
+13. **Not in this deploy** — this round is backend only. The web app (with
+    the Flutter fixes and the new `firebase.json` headers) goes out later
+    with the design work, via `deploy.ps1` (it passes
+    `--dart-define=API_BASE_URL=...`). No console change needed then.
 
 ## 3. Deferred (not done in this branch)
 
