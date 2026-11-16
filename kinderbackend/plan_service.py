@@ -1,5 +1,8 @@
+import os
+from datetime import timedelta
 from typing import Dict, Optional
 
+from core.time_utils import ensure_utc, utc_now
 from models import User
 
 PLAN_FREE = "FREE"
@@ -125,8 +128,35 @@ def normalize_plan_value(plan: Optional[str]) -> str:
     return PLAN_FREE
 
 
+def subscription_expiry_grace() -> timedelta:
+    """How long access survives past expires_at while waiting for the renewal webhook."""
+    try:
+        hours = int((os.getenv("SUBSCRIPTION_EXPIRY_GRACE_HOURS") or "72").strip())
+    except (TypeError, ValueError):
+        hours = 72
+    return timedelta(hours=max(hours, 0))
+
+
+def get_stored_user_plan(user: User) -> str:
+    """The plan recorded on the user row, ignoring expiry (for bookkeeping)."""
+    return normalize_plan_value(getattr(user, "plan", None))
+
+
 def get_user_plan(user: User) -> str:
-    plan_value = normalize_plan_value(getattr(user, "plan", None))
+    """The plan the user may use right now.
+
+    A paid plan whose subscription period ended (plus a grace period for a
+    late renewal webhook) counts as FREE, even if nothing has downgraded the
+    stored plan yet, e.g. because a cancellation webhook was missed.
+    """
+    plan_value = get_stored_user_plan(user)
+    if plan_value == PLAN_FREE:
+        return plan_value
+    profile = getattr(user, "subscription_profile", None)
+    expires_at = getattr(profile, "expires_at", None) if profile is not None else None
+    if expires_at is not None:
+        if ensure_utc(expires_at) + subscription_expiry_grace() < utc_now():
+            return PLAN_FREE
     return plan_value
 
 

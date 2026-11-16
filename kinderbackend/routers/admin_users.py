@@ -20,6 +20,7 @@ from core.time_utils import db_utc_now
 from deps import get_db
 from models import User
 from plan_service import PLAN_FREE, validate_plan_value
+from services.auth_service import auth_service
 from services.subscription_service import subscription_service
 
 router = APIRouter(prefix="/admin/users", tags=["Admin Users"])
@@ -224,7 +225,8 @@ def disable_admin_user(
     user = _get_user_or_404(user_id, db)
     before = serialize_user_detail(user, db)
     user.is_active = False
-    user.token_version = (user.token_version or 0) + 1
+    # Ends every device session too, not just current access tokens.
+    auth_service._revoke_refresh_session(user, db)  # noqa: SLF001
     user.updated_at = db_utc_now()
     db.add(user)
     write_audit_log(
@@ -283,7 +285,8 @@ def reset_admin_user_password(
     temp_password = payload.new_password or "Temp@123456"
     before = {"id": user.id, "email": user.email}
     user.password_hash = hash_password(temp_password)
-    user.token_version = (user.token_version or 0) + 1
+    # Ends every device session too, not just current access tokens.
+    auth_service._revoke_refresh_session(user, db)  # noqa: SLF001
     user.updated_at = db_utc_now()
     db.add(user)
     write_audit_log(

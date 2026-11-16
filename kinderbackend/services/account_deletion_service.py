@@ -45,6 +45,7 @@ from models import (
     LessonProgress,
     Notification,
     ParentalControl,
+    ParentRefreshSession,
     PaymentAttempt,
     PaymentMethod,
     PaymentWebhookEvent,
@@ -197,7 +198,13 @@ class AccountDeletionService:
             db.query(AiBuddySession).filter(AiBuddySession.id.in_(session_ids)).delete(
                 synchronize_session=False
             )
-        for model in (Notification, PrivacySetting, ParentalControl, PaymentMethod):
+        for model in (
+            Notification,
+            PrivacySetting,
+            ParentalControl,
+            PaymentMethod,
+            ParentRefreshSession,
+        ):
             db.query(model).filter(model.user_id == user_id).delete(synchronize_session=False)
         # Any leftover per-child settings created by this parent.
         db.query(ChildParentalControlSetting).filter(

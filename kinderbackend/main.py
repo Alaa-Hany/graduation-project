@@ -244,6 +244,7 @@ app.add_middleware(
         "X-Request-ID",
         "X-Admin-Confirm",
         "X-Admin-Confirm-Action",
+        "X-Admin-Bootstrap-Secret",
     ],
     expose_headers=["X-Request-ID"],
     allow_credentials=bool(cors_config["allow_credentials"]),

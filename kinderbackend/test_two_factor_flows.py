@@ -19,7 +19,9 @@ def test_parent_two_factor_setup_enable_login_and_disable(
         "confirmed_at": None,
     }
 
-    setup = client.post("/api/v1/auth/2fa/setup", headers=headers)
+    setup = client.post(
+        "/api/v1/auth/2fa/setup", json={"password": "Password123!"}, headers=headers
+    )
     assert setup.status_code == 200
     setup_payload = setup.json()
     assert setup_payload["enabled"] is False
@@ -87,7 +89,9 @@ def test_parent_two_factor_setup_enable_login_and_disable(
 
 
 def _enable_parent_two_factor(client, headers) -> str:
-    setup = client.post("/api/v1/auth/2fa/setup", headers=headers)
+    setup = client.post(
+        "/api/v1/auth/2fa/setup", json={"password": "Password123!"}, headers=headers
+    )
     assert setup.status_code == 200
     secret = setup.json()["secret"]
     enable = client.post(
@@ -179,7 +183,9 @@ def test_admin_two_factor_setup_enable_login_and_disable(
         "confirmed_at": None,
     }
 
-    setup = client.post("/api/v1/admin/auth/2fa/setup", headers=headers)
+    setup = client.post(
+        "/api/v1/admin/auth/2fa/setup", json={"password": "AdminPass123!"}, headers=headers
+    )
     assert setup.status_code == 200
     setup_payload = setup.json()
     assert setup_payload["method"] == "totp"
@@ -226,7 +232,9 @@ def test_admin_two_factor_setup_enable_login_and_disable(
 
 
 def _enable_admin_two_factor(client, headers) -> str:
-    setup = client.post("/api/v1/admin/auth/2fa/setup", headers=headers)
+    setup = client.post(
+        "/api/v1/admin/auth/2fa/setup", json={"password": "AdminPass123!"}, headers=headers
+    )
     assert setup.status_code == 200
     secret = setup.json()["secret"]
     enable = client.post(

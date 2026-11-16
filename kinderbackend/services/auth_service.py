@@ -10,7 +10,7 @@ from typing import Any
 
 from fastapi import HTTPException
 from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, object_session
 
 from auth import create_access_token, hash_password, verify_password
 from core.message_catalog import AuthMessages
@@ -20,7 +20,7 @@ from core.time_utils import db_utc_now, ensure_utc, utc_now
 from core.validators import normalize_email, validate_email_domain
 from core.validators import validate_password_policy as core_validate_password_policy
 from core.validators import validate_pin_format
-from models import SupportTicket, User
+from models import ParentRefreshSession, SupportTicket, User
 from plan_service import PLAN_FREE
 from schemas.auth import (
     ForgotPasswordIn,
@@ -41,6 +41,7 @@ PARENT_PIN_LENGTH = 4
 PARENT_PIN_MAX_ATTEMPTS = 5
 PARENT_PIN_LOCKOUT_MINUTES = 5
 REFRESH_TOKEN_EXPIRE_DAYS = 7
+MAX_REFRESH_SESSIONS_PER_USER = 10
 
 
 # Redis key helpers — brute-force state lives in Redis in production.
@@ -297,24 +298,109 @@ class AuthService:
     def _hash_refresh_token_secret(secret: str) -> str:
         return hashlib.sha256(secret.encode("utf-8")).hexdigest()
 
-    def _issue_refresh_token(self, *, user: User) -> str:
-        """Mint a new opaque refresh token and persist its hash for rotation.
+    def _issue_refresh_token(
+        self,
+        *,
+        db: Session,
+        user: User,
+        session: ParentRefreshSession | None = None,
+    ) -> tuple[str, int]:
+        """Mint (or rotate) one device's refresh token; return (token, session_id).
 
-        Token shape is "{user_id}:{secret}" so a refresh request can look the
-        owner up by primary key without scanning every user; only the
-        high-entropy secret half is hashed and compared, so the id prefix
-        carries no security weight on its own.
+        Token shape is "{user_id}:{session_id}:{secret}". The ids only locate
+        the row; the high-entropy secret is what's hashed and compared. Each
+        sign-in gets its own session row, so devices don't log each other out.
         """
         secret = secrets.token_urlsafe(32)
-        user.refresh_token_hash = self._hash_refresh_token_secret(secret)
-        user.refresh_token_expires_at = db_utc_now() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-        return f"{user.id}:{secret}"
+        now = db_utc_now()
+        expires_at = now + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        token_hash = self._hash_refresh_token_secret(secret)
+        if session is None:
+            session = ParentRefreshSession(
+                user_id=user.id,
+                token_hash=token_hash,
+                created_at=now,
+                last_used_at=now,
+                expires_at=expires_at,
+            )
+            db.add(session)
+            db.flush()
+            self._prune_refresh_sessions(db=db, user_id=user.id, keep_id=session.id)
+        else:
+            session.token_hash = token_hash
+            session.last_used_at = now
+            session.expires_at = expires_at
+            db.add(session)
+        # The single legacy slot is no longer used once sessions exist.
+        user.refresh_token_hash = None
+        user.refresh_token_expires_at = None
+        return f"{user.id}:{session.id}:{secret}", int(session.id)
 
     @staticmethod
-    def _revoke_refresh_session(user: User) -> None:
+    def _prune_refresh_sessions(*, db: Session, user_id: int, keep_id: int) -> None:
+        """Cap live sessions per parent; the oldest ones are signed out."""
+        now = db_utc_now()
+        live = (
+            db.query(ParentRefreshSession)
+            .filter(
+                ParentRefreshSession.user_id == user_id,
+                ParentRefreshSession.revoked_at.is_(None),
+                ParentRefreshSession.expires_at > now,
+            )
+            .order_by(ParentRefreshSession.created_at.desc(), ParentRefreshSession.id.desc())
+            .all()
+        )
+        for stale in live[MAX_REFRESH_SESSIONS_PER_USER:]:
+            if stale.id != keep_id:
+                stale.revoked_at = now
+                db.add(stale)
+        # Expired / revoked rows carry no value; drop them so the table stays small.
+        db.query(ParentRefreshSession).filter(
+            ParentRefreshSession.user_id == user_id,
+            ParentRefreshSession.id != keep_id,
+            (ParentRefreshSession.expires_at <= now)
+            | (ParentRefreshSession.revoked_at < now - timedelta(days=1)),
+        ).delete(synchronize_session=False)
+
+    @staticmethod
+    def _revoke_refresh_session(user: User, db: Session | None = None) -> None:
+        """Sign the parent out everywhere (password change/reset, token reuse)."""
         user.token_version = (user.token_version or 0) + 1
         user.refresh_token_hash = None
         user.refresh_token_expires_at = None
+        session = db or object_session(user)
+        if session is not None and user.id is not None:
+            session.query(ParentRefreshSession).filter(
+                ParentRefreshSession.user_id == user.id,
+                ParentRefreshSession.revoked_at.is_(None),
+            ).update({ParentRefreshSession.revoked_at: db_utc_now()}, synchronize_session=False)
+
+    @staticmethod
+    def _revoke_one_refresh_session(*, db: Session, user_id: int, session_id: int) -> bool:
+        updated = (
+            db.query(ParentRefreshSession)
+            .filter(
+                ParentRefreshSession.id == session_id,
+                ParentRefreshSession.user_id == user_id,
+                ParentRefreshSession.revoked_at.is_(None),
+            )
+            .update({ParentRefreshSession.revoked_at: db_utc_now()}, synchronize_session=False)
+        )
+        return bool(updated)
+
+    def _token_response(self, *, db: Session, user: User) -> dict[str, Any]:
+        refresh_token, session_id = self._issue_refresh_token(db=db, user=user)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return {
+            "access_token": create_access_token(
+                str(user.id), user.token_version, session_id=session_id
+            ),
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "user": user_to_json(user),
+        }
 
     def register_parent(self, payload: RegisterIn, db: Session) -> dict:
         require_registration_enabled(db)
@@ -413,20 +499,30 @@ class AuthService:
                 },
             )
 
+        try:
+            two_factor_service.require_parent_login_code(account=user, code=payload.two_factor_code)
+        except HTTPException as exc:
+            # A *wrong* 2FA code counts toward the same lockout as a wrong
+            # password, otherwise someone with the password could guess the
+            # 6-digit code forever. A *missing* code is just step one of the
+            # 2FA login flow and is not counted.
+            detail = exc.detail if isinstance(exc.detail, dict) else {}
+            if detail.get("code") == "PARENT_INVALID_TWO_FACTOR_CODE":
+                locked_until = self._record_parent_login_failure(email=normalized_email)
+                if locked_until is not None:
+                    raise HTTPException(
+                        status_code=423,
+                        detail={
+                            "code": "PARENT_AUTH_TEMP_LOCKED",
+                            "message": AuthMessages.PARENT_AUTH_TEMP_LOCKED,
+                            "locked_until": locked_until,
+                        },
+                    )
+            raise
+        # Only a fully successful login (password + 2FA) resets the counter.
         self._clear_parent_login_failures(email=normalized_email)
-        two_factor_service.require_parent_login_code(account=user, code=payload.two_factor_code)
         user.updated_at = db_utc_now()
-        refresh_token = self._issue_refresh_token(user=user)
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-
-        return {
-            "access_token": create_access_token(str(user.id), user.token_version),
-            "refresh_token": refresh_token,
-            "token_type": "bearer",
-            "user": user_to_json(user),
-        }
+        return self._token_response(db=db, user=user)
 
     def verify_parent_email_otp(self, payload: VerifyEmailOtpIn, db: Session) -> dict:
         normalized_email = normalize_email(payload.email)
@@ -452,17 +548,7 @@ class AuthService:
         user.email_verified_at = db_utc_now()
         user.is_active = True
         self._clear_email_otp(user)
-        refresh_token = self._issue_refresh_token(user=user)
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-
-        return {
-            "access_token": create_access_token(str(user.id), user.token_version),
-            "refresh_token": refresh_token,
-            "token_type": "bearer",
-            "user": user_to_json(user),
-        }
+        return self._token_response(db=db, user=user)
 
     def resend_parent_email_otp(self, payload: ResendEmailOtpIn, db: Session) -> dict:
         normalized_email = normalize_email(payload.email)
@@ -506,7 +592,11 @@ class AuthService:
     def two_factor_status(self, *, user: User) -> dict[str, Any]:
         return two_factor_service.status_payload(account=user)
 
-    def two_factor_setup(self, *, db: Session, user: User) -> dict[str, Any]:
+    def two_factor_setup(self, *, db: Session, user: User, password: str | None) -> dict[str, Any]:
+        # A stolen access token alone must not be enough to bind the account
+        # to the attacker's authenticator app.
+        if not password or not verify_password(password, user.password_hash):
+            raise HTTPException(status_code=401, detail=AuthMessages.CURRENT_PASSWORD_IS_INCORRECT)
         payload = two_factor_service.setup_totp(account=user)
         user.updated_at = db_utc_now()
         db.add(user)
@@ -532,6 +622,57 @@ class AuthService:
         return payload
 
     def refresh_parent_access_token(self, payload: RefreshIn, db: Session) -> dict:
+        parts = (payload.refresh_token or "").split(":")
+        if len(parts) == 3:
+            return self._refresh_session_token(parts=parts, db=db)
+        return self._refresh_legacy_token(payload=payload, db=db)
+
+    def _refresh_session_token(self, *, parts: list[str], db: Session) -> dict:
+        user_id_str, session_id_str, secret = parts
+        if not secret or not user_id_str.isdigit() or not session_id_str.isdigit():
+            raise HTTPException(status_code=401, detail=AuthMessages.INVALID_REFRESH_TOKEN)
+        session = (
+            db.query(ParentRefreshSession)
+            .filter(
+                ParentRefreshSession.id == int(session_id_str),
+                ParentRefreshSession.user_id == int(user_id_str),
+            )
+            .first()
+        )
+        if session is None:
+            raise HTTPException(status_code=401, detail=AuthMessages.INVALID_REFRESH_TOKEN)
+        # Signed out (logout, password change) or expired: same answer as the
+        # old single-slot flow, which the app treats as "log in again".
+        if session.revoked_at is not None or ensure_utc(session.expires_at) <= utc_now():
+            raise HTTPException(status_code=401, detail=AuthMessages.SESSION_EXPIRED)
+
+        if not secrets.compare_digest(self._hash_refresh_token_secret(secret), session.token_hash):
+            # An old token of this session was replayed after rotation: it was
+            # probably stolen, so end this device's session (other devices are
+            # unaffected - they have their own sessions).
+            session.revoked_at = db_utc_now()
+            db.add(session)
+            db.commit()
+            raise HTTPException(status_code=401, detail=AuthMessages.INVALID_REFRESH_TOKEN)
+
+        user = db.query(User).filter(User.id == session.user_id).first()
+        if user is None or not bool(getattr(user, "is_active", False)):
+            raise HTTPException(status_code=401, detail=AuthMessages.INVALID_REFRESH_TOKEN)
+
+        new_refresh_token, session_id = self._issue_refresh_token(db=db, user=user, session=session)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return {
+            "access_token": create_access_token(
+                str(user.id), user.token_version, session_id=session_id
+            ),
+            "refresh_token": new_refresh_token,
+            "token_type": "bearer",
+        }
+
+    def _refresh_legacy_token(self, *, payload: RefreshIn, db: Session) -> dict:
+        """Accept a pre-sessions "{user_id}:{secret}" token once, moving it to a session."""
         user_id_str, _, secret = payload.refresh_token.partition(":")
         if not secret or not user_id_str.isdigit():
             raise HTTPException(status_code=401, detail=AuthMessages.INVALID_REFRESH_TOKEN)
@@ -551,18 +692,23 @@ class AuthService:
             # The presented token doesn't match the current one on file, i.e. it
             # was already rotated away (or forged). Treat as reuse and revoke
             # every outstanding token for this user rather than just this one.
-            self._revoke_refresh_session(user)
+            self._revoke_refresh_session(user, db)
             db.add(user)
             db.commit()
             raise HTTPException(status_code=401, detail=AuthMessages.INVALID_REFRESH_TOKEN)
 
-        new_refresh_token = self._issue_refresh_token(user=user)
+        if not bool(getattr(user, "is_active", False)):
+            raise HTTPException(status_code=401, detail=AuthMessages.INVALID_REFRESH_TOKEN)
+
+        new_refresh_token, session_id = self._issue_refresh_token(db=db, user=user)
         db.add(user)
         db.commit()
         db.refresh(user)
 
         return {
-            "access_token": create_access_token(str(user.id), user.token_version),
+            "access_token": create_access_token(
+                str(user.id), user.token_version, session_id=session_id
+            ),
             "refresh_token": new_refresh_token,
             "token_type": "bearer",
         }
@@ -610,7 +756,7 @@ class AuthService:
                 )
 
             user.password_hash = hash_password(payload.new_password)
-            self._revoke_refresh_session(user)
+            self._revoke_refresh_session(user, db)
             db.add(user)
             db.commit()
             db.refresh(user)
@@ -637,9 +783,16 @@ class AuthService:
                 detail=AuthMessages.FAILED_CHANGE_PASSWORD,
             )
 
-    def logout(self, *, db: Session, user: User) -> dict:
+    def logout(self, *, db: Session, user: User, session_id: int | None = None) -> dict:
         try:
-            self._revoke_refresh_session(user)
+            if session_id is not None:
+                # Sign out only this device. Its access token carries the session
+                # id, so get_current_user rejects it as soon as the row is revoked.
+                self._revoke_one_refresh_session(db=db, user_id=user.id, session_id=session_id)
+                db.commit()
+                return {"success": True}
+            # Token from before per-device sessions: fall back to signing out everywhere.
+            self._revoke_refresh_session(user, db)
             db.add(user)
             db.commit()
             db.refresh(user)
@@ -976,7 +1129,7 @@ class AuthService:
             raise HTTPException(status_code=400, detail=AuthMessages.INVALID_OR_EXPIRED_RESET_TOKEN)
 
         matching_user.password_hash = hash_password(payload.new_password)
-        self._revoke_refresh_session(matching_user)
+        self._revoke_refresh_session(matching_user, db)
         self._clear_password_reset_token(matching_user)
         matching_user.updated_at = db_utc_now()
         db.add(matching_user)
@@ -1067,8 +1220,8 @@ def two_factor_status(*, user: User) -> dict:
     return auth_service.two_factor_status(user=user)
 
 
-def setup_two_factor(*, db: Session, user: User) -> dict:
-    return auth_service.two_factor_setup(db=db, user=user)
+def setup_two_factor(*, db: Session, user: User, password: str | None) -> dict:
+    return auth_service.two_factor_setup(db=db, user=user, password=password)
 
 
 def enable_two_factor(*, db: Session, user: User, code: str | None) -> dict:

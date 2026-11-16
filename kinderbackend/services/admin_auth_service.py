@@ -276,7 +276,9 @@ class AdminAuthService:
     def two_factor_status(self, *, admin) -> dict:
         return two_factor_service.status_payload(account=admin)
 
-    def two_factor_setup(self, *, admin, db: Session) -> dict:
+    def two_factor_setup(self, *, admin, db: Session, password: str | None) -> dict:
+        if not password or not verify_password(password, admin.password_hash):
+            raise HTTPException(status_code=401, detail="Current password is incorrect")
         payload = two_factor_service.setup_totp(account=admin)
         admin.updated_at = db_utc_now()
         db.add(admin)

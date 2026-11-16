@@ -310,43 +310,72 @@ def test_refresh_without_stored_session_is_session_expired(service, db, create_p
     assert exc.value.detail == AuthMessages.SESSION_EXPIRED
 
 
-def test_refresh_reused_token_revokes_session(service, db, create_parent):
-    user = create_parent(email="refresh-reuse@example.com")
-    token = service._issue_refresh_token(user=user)
+def _new_session_token(service, db, user) -> str:
+    token, _ = service._issue_refresh_token(db=db, user=user)
     db.add(user)
     db.commit()
     db.refresh(user)
-    starting_version = user.token_version or 0
+    return token
 
-    # Rotate once successfully so the original token is now stale.
-    service.refresh_parent_access_token(RefreshIn(refresh_token=token), db)
 
+def test_refresh_reused_token_revokes_only_that_session(service, db, create_parent):
+    from models import ParentRefreshSession
+
+    user = create_parent(email="refresh-reuse@example.com")
+    phone = _new_session_token(service, db, user)
+    tablet = _new_session_token(service, db, user)
+
+    # Rotate the phone once so its original token is now stale, then replay it.
+    rotated = service.refresh_parent_access_token(RefreshIn(refresh_token=phone), db)
     with pytest.raises(HTTPException) as exc:
-        service.refresh_parent_access_token(RefreshIn(refresh_token=token), db)
+        service.refresh_parent_access_token(RefreshIn(refresh_token=phone), db)
     assert exc.value.status_code == 401
     assert exc.value.detail == AuthMessages.INVALID_REFRESH_TOKEN
 
-    db.refresh(user)
-    assert user.token_version == starting_version + 1
-    assert user.refresh_token_hash is None
+    phone_session = db.get(ParentRefreshSession, int(phone.split(":")[1]))
+    assert phone_session.revoked_at is not None
+    # The rotated phone token is dead too (same session), the tablet still works.
+    with pytest.raises(HTTPException):
+        service.refresh_parent_access_token(RefreshIn(refresh_token=rotated["refresh_token"]), db)
+    assert service.refresh_parent_access_token(RefreshIn(refresh_token=tablet), db)
 
 
 def test_refresh_success_rotates_token(service, db, create_parent):
-    user = create_parent(email="refresh-ok@example.com")
-    token = service._issue_refresh_token(user=user)
-    db.add(user)
-    db.commit()
-    db.refresh(user)
+    from models import ParentRefreshSession
 
-    payload = RefreshIn(refresh_token=token)
-    result = service.refresh_parent_access_token(payload, db)
+    user = create_parent(email="refresh-ok@example.com")
+    token = _new_session_token(service, db, user)
+
+    result = service.refresh_parent_access_token(RefreshIn(refresh_token=token), db)
     assert "access_token" in result
     assert result["refresh_token"] != token
+    _, session_id, secret = result["refresh_token"].split(":")
+    assert session_id == token.split(":")[1]  # same device, rotated secret
+    session = db.get(ParentRefreshSession, int(session_id))
+    assert session.token_hash == service._hash_refresh_token_secret(secret)
 
-    db.refresh(user)
-    assert user.refresh_token_hash == service._hash_refresh_token_secret(
-        result["refresh_token"].split(":", 1)[1]
+
+def test_legacy_refresh_token_is_migrated_to_a_session(service, db, create_parent):
+    """Tokens issued before per-device sessions keep working once."""
+    from datetime import timedelta
+
+    from core.time_utils import db_utc_now
+
+    user = create_parent(email="refresh-legacy@example.com")
+    user.refresh_token_hash = service._hash_refresh_token_secret("legacy-secret")
+    user.refresh_token_expires_at = db_utc_now() + timedelta(days=1)
+    db.add(user)
+    db.commit()
+
+    result = service.refresh_parent_access_token(
+        RefreshIn(refresh_token=f"{user.id}:legacy-secret"), db
     )
+    assert len(result["refresh_token"].split(":")) == 3
+    db.refresh(user)
+    assert user.refresh_token_hash is None
+    # The legacy token can't be used a second time.
+    with pytest.raises(HTTPException):
+        service.refresh_parent_access_token(RefreshIn(refresh_token=f"{user.id}:legacy-secret"), db)
 
 
 # ---------------------------------------------------------------------------
@@ -824,7 +853,9 @@ def test_module_wrappers_delegate(monkeypatch):
         == "request_parent_pin_reset"
     )
     assert auth_module.two_factor_status(user="u")["stub"] == "two_factor_status"
-    assert auth_module.setup_two_factor(db="db", user="u")["stub"] == "two_factor_setup"
+    assert (
+        auth_module.setup_two_factor(db="db", user="u", password="pw")["stub"] == "two_factor_setup"
+    )
     assert auth_module.enable_two_factor(db="db", user="u", code="1")["stub"] == "enable_two_factor"
     assert (
         auth_module.disable_two_factor(db="db", user="u", code="1")["stub"] == "disable_two_factor"

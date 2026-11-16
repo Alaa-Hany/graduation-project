@@ -648,6 +648,29 @@ def test_user_reset_password_changes_hash(client, db, super_admin_headers, creat
     assert row.password_hash != original_hash
 
 
+def test_admin_reset_and_disable_end_parent_device_sessions(
+    client, db, super_admin_headers, create_parent
+):
+    """A refresh token held by a thief must stop working after an admin reset/disable."""
+    for action, body in (("reset-password", {"new_password": "FreshPass123!"}), ("disable", None)):
+        parent = create_parent(email=f"user.sessions.{action}@example.com")
+        login = client.post(
+            "/api/v1/auth/login", json={"email": parent.email, "password": "Password123!"}
+        )
+        assert login.status_code == 200
+        refresh_token = login.json()["refresh_token"]
+
+        resp = client.post(
+            f"/api/v1/admin/users/{parent.id}/{action}", json=body, headers=super_admin_headers
+        )
+        assert resp.status_code == 200
+
+        if action == "disable":
+            client.post(f"/api/v1/admin/users/{parent.id}/enable", headers=super_admin_headers)
+        refresh = client.post("/api/v1/auth/refresh", json={"refresh_token": refresh_token})
+        assert refresh.status_code == 401
+
+
 def test_user_delete_removes_row(client, db, super_admin_headers, create_parent):
     parent = create_parent(email="user.delete@example.com")
     resp = client.delete(f"/api/v1/admin/users/{parent.id}", headers=super_admin_headers)

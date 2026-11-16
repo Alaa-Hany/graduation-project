@@ -474,7 +474,9 @@ def test_two_factor_full_lifecycle(client, db, seed_builtin_rbac, create_admin, 
     assert status0.status_code == 200
     assert status0.json()["enabled"] is False
 
-    setup = client.post("/api/v1/admin/auth/2fa/setup", headers=headers)
+    setup = client.post(
+        "/api/v1/admin/auth/2fa/setup", json={"password": "AdminPass123!"}, headers=headers
+    )
     assert setup.status_code == 200
     secret = setup.json()["secret"]
     assert secret

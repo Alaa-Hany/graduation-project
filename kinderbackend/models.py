@@ -87,6 +87,27 @@ class User(Base):
     )
 
 
+class ParentRefreshSession(Base):
+    """One refresh-token session per signed-in device.
+
+    Replaces the single users.refresh_token_hash slot, so signing in on a
+    second device no longer logs the first one out, and a reused (stolen)
+    refresh token only kills that one device's session.
+    """
+
+    __tablename__ = "parent_refresh_sessions"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    token_hash = Column(String(64), nullable=False)
+    created_at = Column(UTCDateTime(), server_default=func.now(), nullable=False)
+    last_used_at = Column(UTCDateTime(), nullable=True)
+    expires_at = Column(UTCDateTime(), nullable=False, index=True)
+    revoked_at = Column(UTCDateTime(), nullable=True, index=True)
+
+
 class SubscriptionProfile(Base):
     __tablename__ = "subscription_profiles"
 

@@ -11,7 +11,7 @@ from models import PaymentAttempt, SubscriptionProfile, User
 from plan_service import (
     PLAN_FREE,
     get_plan_catalog,
-    get_user_plan,
+    get_stored_user_plan,
     normalize_billing_interval,
     validate_plan_value,
 )
@@ -1010,7 +1010,7 @@ class SubscriptionLifecycleMixin:
         if profile is not None:
             updated = False
             now = db_utc_now()
-            plan = get_user_plan(user)
+            plan = get_stored_user_plan(user)
             if profile.current_plan_id != plan:
                 profile.current_plan_id = plan
                 updated = True
@@ -1059,7 +1059,7 @@ class SubscriptionLifecycleMixin:
             return profile
 
         now = db_utc_now()
-        plan = get_user_plan(user)
+        plan = get_stored_user_plan(user)
         status = SUBSCRIPTION_STATUS_FREE
         started_at = None
         expires_at = None

@@ -8,9 +8,11 @@ Endpoints:
   GET  /admin/auth/me       - return current admin profile + roles + permissions
 """
 
+import hmac
 import logging
+import os
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from pydantic import AliasChoices, BaseModel, EmailStr, Field, field_validator
 from sqlalchemy.orm import Session
 
@@ -19,6 +21,7 @@ from admin_deps import get_current_admin
 from admin_models import AdminUser, AdminUserRole
 from admin_utils import build_admin_payload
 from auth import hash_password
+from core.settings import settings
 from core.time_utils import db_utc_now
 from deps import get_db
 from rate_limit import admin_two_factor_rate_limit, auth_rate_limit
@@ -128,19 +131,51 @@ def admin_login(
     summary="Check whether the first admin account can be created",
 )
 def admin_bootstrap_status(db: Session = Depends(get_db)):
+    if not _bootstrap_allowed_here():
+        return {"can_bootstrap": False}
     return {"can_bootstrap": db.query(AdminUser.id).first() is None}
+
+
+def _bootstrap_secret() -> str:
+    return (os.getenv("ADMIN_BOOTSTRAP_SECRET") or "").strip()
+
+
+def _bootstrap_allowed_here() -> bool:
+    """In production the bootstrap endpoint is closed unless a secret is configured.
+
+    Otherwise, on a fresh or wiped database, the first stranger to call it
+    would become super admin.
+    """
+    return not settings.is_production or bool(_bootstrap_secret())
+
+
+def _require_bootstrap_secret(provided: str | None) -> None:
+    expected = _bootstrap_secret()
+    if not _bootstrap_allowed_here():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
+    if expected and not hmac.compare_digest((provided or "").strip(), expected):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid bootstrap secret",
+        )
 
 
 @router.post(
     "/bootstrap",
     response_model=AdminLoginResponse,
     summary="Create the first admin account",
+    description=(
+        "Disabled in production unless ADMIN_BOOTSTRAP_SECRET is set; when it is "
+        "set, the X-Admin-Bootstrap-Secret header must match it."
+    ),
 )
 def admin_bootstrap(
     payload: AdminBootstrapRequest,
     db: Session = Depends(get_db),
     rate_limit_check: None = admin_auth_rate_limit_check,
+    bootstrap_secret: str | None = Header(default=None, alias="X-Admin-Bootstrap-Secret"),
 ):
+    _require_bootstrap_secret(bootstrap_secret)
     if db.query(AdminUser.id).first() is not None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -213,12 +248,23 @@ def admin_two_factor_status(admin=Depends(get_current_admin)):
     return admin_auth_service.two_factor_status(admin=admin)
 
 
+class AdminTwoFactorSetupRequest(BaseModel):
+    password: str = Field(
+        ...,
+        min_length=1,
+        max_length=256,
+        validation_alias=AliasChoices("password", "current_password", "currentPassword"),
+    )
+
+
 @router.post("/2fa/setup", response_model=TwoFactorSetupResponse, summary="Start admin 2FA setup")
 def admin_two_factor_setup(
+    payload: AdminTwoFactorSetupRequest,
     admin=Depends(get_current_admin),
     db: Session = Depends(get_db),
+    rate_limit_check: None = admin_two_factor_rate_limit_check,
 ):
-    return admin_auth_service.two_factor_setup(admin=admin, db=db)
+    return admin_auth_service.two_factor_setup(admin=admin, db=db, password=payload.password)
 
 
 @router.post(
