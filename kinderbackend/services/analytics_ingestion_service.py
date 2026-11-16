@@ -5,6 +5,7 @@ from datetime import date, datetime, timedelta
 from math import floor
 
 from fastapi import HTTPException
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from core.time_utils import ensure_utc, to_db_utc, utc_now, utc_start_of_day
@@ -157,7 +158,9 @@ class AnalyticsIngestionService:
             summary.last_event_at = occurred_at
         db.add(summary)
 
-    def record_activity_event(self, *, db: Session, parent: User, payload) -> dict:
+    def record_activity_event(
+        self, *, db: Session, parent: User, payload, idempotency_key: str | None = None
+    ) -> dict:
         if payload.event_type not in TRACKED_EVENT_TYPES:
             raise HTTPException(
                 status_code=422,
@@ -197,8 +200,15 @@ class AnalyticsIngestionService:
                 }
             }
 
+        duplicate = self._find_by_idempotency_key(
+            db=db, model=ChildActivityEvent, child_id=payload.child_id, key=idempotency_key
+        )
+        if duplicate is not None:
+            return self._event_payload(duplicate, duplicate_request=True)
+
         event = ChildActivityEvent(
             child_id=payload.child_id,
+            idempotency_key=idempotency_key,
             event_type=payload.event_type,
             occurred_at=occurred_at,
             source=payload.source,
@@ -221,19 +231,73 @@ class AnalyticsIngestionService:
             mood_entries=1 if payload.event_type == "mood_entry" else 0,
             achievements_unlocked=1 if payload.event_type == "achievement_unlocked" else 0,
         )
-        db.commit()
+        if not self._commit_or_find_duplicate(db=db):
+            # Another copy of this request won the race; return what it stored.
+            existing = self._find_by_idempotency_key(
+                db=db, model=ChildActivityEvent, child_id=payload.child_id, key=idempotency_key
+            )
+            if existing is None:
+                self._raise_store_conflict()
+            return self._event_payload(existing, duplicate_request=True)
         db.refresh(event)
+        return self._event_payload(event)
 
-        return {
-            "event": {
-                "id": event.id,
-                "child_id": event.child_id,
-                "event_type": event.event_type,
-                "occurred_at": event.occurred_at.isoformat() if event.occurred_at else None,
-            }
+    @staticmethod
+    def _event_payload(event: ChildActivityEvent, *, duplicate_request: bool = False) -> dict:
+        body = {
+            "id": event.id,
+            "child_id": event.child_id,
+            "event_type": event.event_type,
+            "occurred_at": event.occurred_at.isoformat() if event.occurred_at else None,
         }
+        if duplicate_request:
+            body["duplicate"] = True
+        return {"event": body}
 
-    def record_session_log(self, *, db: Session, parent: User, payload) -> dict:
+    @staticmethod
+    def _session_payload(session_log: ChildSessionLog, *, duplicate_request: bool = False) -> dict:
+        body = {
+            "id": session_log.id,
+            "child_id": session_log.child_id,
+            "duration_seconds": session_log.duration_seconds,
+            "started_at": session_log.started_at.isoformat() if session_log.started_at else None,
+            "ended_at": session_log.ended_at.isoformat() if session_log.ended_at else None,
+        }
+        if duplicate_request:
+            body["duplicate"] = True
+        return {"session": body}
+
+    @staticmethod
+    def _find_by_idempotency_key(*, db: Session, model, child_id: int, key: str | None):
+        if not key:
+            return None
+        return (
+            db.query(model).filter(model.child_id == child_id, model.idempotency_key == key).first()
+        )
+
+    @staticmethod
+    def _commit_or_find_duplicate(*, db: Session) -> bool:
+        """Commit; on a unique-key clash (a concurrent copy of the same request
+        got in first) roll back the whole insert, summary bump included."""
+        try:
+            db.commit()
+            return True
+        except IntegrityError:
+            db.rollback()
+            return False
+
+    @staticmethod
+    def _raise_store_conflict() -> None:
+        """The insert failed for a reason other than a duplicate key (e.g. the
+        child was deleted meanwhile): answer 409 instead of crashing."""
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "ANALYTICS_STORE_CONFLICT", "message": "Could not store record"},
+        )
+
+    def record_session_log(
+        self, *, db: Session, parent: User, payload, idempotency_key: str | None = None
+    ) -> dict:
         self._ensure_parent_child_access(db=db, parent=parent, child_id=payload.child_id)
         started_at = ensure_utc(payload.started_at)
         ended_at = ensure_utc(payload.ended_at)
@@ -264,8 +328,15 @@ class AnalyticsIngestionService:
                 }
             }
 
+        duplicate = self._find_by_idempotency_key(
+            db=db, model=ChildSessionLog, child_id=payload.child_id, key=idempotency_key
+        )
+        if duplicate is not None:
+            return self._session_payload(duplicate, duplicate_request=True)
+
         session_log = ChildSessionLog(
             child_id=payload.child_id,
+            idempotency_key=idempotency_key,
             session_id=payload.session_id,
             source=payload.source,
             started_at=started_at,
@@ -281,17 +352,12 @@ class AnalyticsIngestionService:
             occurred_at=started_at,
             screen_time_minutes=floor(duration / 60),
         )
-        db.commit()
+        if not self._commit_or_find_duplicate(db=db):
+            existing = self._find_by_idempotency_key(
+                db=db, model=ChildSessionLog, child_id=payload.child_id, key=idempotency_key
+            )
+            if existing is None:
+                self._raise_store_conflict()
+            return self._session_payload(existing, duplicate_request=True)
         db.refresh(session_log)
-
-        return {
-            "session": {
-                "id": session_log.id,
-                "child_id": session_log.child_id,
-                "duration_seconds": session_log.duration_seconds,
-                "started_at": (
-                    session_log.started_at.isoformat() if session_log.started_at else None
-                ),
-                "ended_at": session_log.ended_at.isoformat() if session_log.ended_at else None,
-            }
-        }
+        return self._session_payload(session_log)

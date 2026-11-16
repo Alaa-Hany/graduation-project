@@ -121,12 +121,15 @@ class _FakeReportsApi extends Fake implements ReportsApi {
   int sessionLogs = 0;
   int activityEvents = 0;
   bool throwOnIngest = false;
+  final List<String?> idempotencyKeys = [];
 
   @override
   Future<Map<String, dynamic>> ingestSessionLog(
     Map<String, dynamic> payload, {
     String? parentAccessToken,
+    String? idempotencyKey,
   }) async {
+    idempotencyKeys.add(idempotencyKey);
     if (throwOnIngest) throw Exception('net');
     sessionLogs++;
     return {};
@@ -136,7 +139,9 @@ class _FakeReportsApi extends Fake implements ReportsApi {
   Future<Map<String, dynamic>> ingestActivityEvent(
     Map<String, dynamic> payload, {
     String? parentAccessToken,
+    String? idempotencyKey,
   }) async {
+    idempotencyKeys.add(idempotencyKey);
     if (throwOnIngest) throw Exception('net');
     activityEvents++;
     return {};
@@ -196,7 +201,8 @@ void main() {
       expect(c.state.isLoading, isFalse);
     });
 
-    test('marks record failed when child id is non-numeric (no sync)', () async {
+    test('marks record failed when child id is non-numeric (no sync)',
+        () async {
       progressRepo.createResult = _record(childId: 'child-x');
       storage.parentAccessToken = 'ptoken';
 
@@ -247,8 +253,7 @@ void main() {
 
   group('loading & queries', () {
     test('loadRecentRecords caps at 20 and sets loadedChildId', () async {
-      progressRepo.forChild =
-          List.generate(25, (i) => _record(id: 'r$i'));
+      progressRepo.forChild = List.generate(25, (i) => _record(id: 'r$i'));
       final c = build();
       await c.loadRecentRecords('42');
       expect(c.state.recentRecords.length, 20);

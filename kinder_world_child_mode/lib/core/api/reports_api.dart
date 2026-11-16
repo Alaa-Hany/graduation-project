@@ -1,5 +1,6 @@
 import 'package:kinder_world/core/network/network_service.dart';
 import 'package:dio/dio.dart';
+import 'package:uuid/uuid.dart';
 
 class ReportsApi {
   const ReportsApi(this._network);
@@ -14,6 +15,26 @@ class ReportsApi {
       headers: {'Authorization': 'Bearer $parentAccessToken'},
     );
   }
+
+  /// Analytics writes carry an Idempotency-Key so the backend stores a record
+  /// once even if the request is retried (network retry, or the record being
+  /// re-synced later). Callers pass a key derived from the local record id so
+  /// it stays the same across app restarts; otherwise a random one is used,
+  /// which still covers automatic network retries of the same call.
+  Options _ingestOptions(String? parentAccessToken, String? idempotencyKey) {
+    final key = (idempotencyKey != null && idempotencyKey.trim().isNotEmpty)
+        ? idempotencyKey.trim()
+        : _uuid.v4();
+    return Options(
+      headers: {
+        if (parentAccessToken != null && parentAccessToken.isNotEmpty)
+          'Authorization': 'Bearer $parentAccessToken',
+        NetworkService.idempotencyKeyHeader: key,
+      },
+    );
+  }
+
+  static const _uuid = Uuid();
 
   Future<Map<String, dynamic>> getBasicReports({
     int? childId,
@@ -68,11 +89,12 @@ class ReportsApi {
   Future<Map<String, dynamic>> ingestActivityEvent(
     Map<String, dynamic> payload, {
     String? parentAccessToken,
+    String? idempotencyKey,
   }) async {
     final response = await _network.post<Map<String, dynamic>>(
       '/analytics/events',
       data: payload,
-      options: _authorizedOptions(parentAccessToken),
+      options: _ingestOptions(parentAccessToken, idempotencyKey),
     );
     return Map<String, dynamic>.from(response.data ?? const {});
   }
@@ -80,11 +102,12 @@ class ReportsApi {
   Future<Map<String, dynamic>> ingestSessionLog(
     Map<String, dynamic> payload, {
     String? parentAccessToken,
+    String? idempotencyKey,
   }) async {
     final response = await _network.post<Map<String, dynamic>>(
       '/analytics/sessions',
       data: payload,
-      options: _authorizedOptions(parentAccessToken),
+      options: _ingestOptions(parentAccessToken, idempotencyKey),
     );
     return Map<String, dynamic>.from(response.data ?? const {});
   }

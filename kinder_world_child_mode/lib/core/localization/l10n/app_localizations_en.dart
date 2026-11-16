@@ -3491,6 +3491,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteAccountFailed =>
       'Could not delete the account. Check your password and try again.';
 
+  @override
+  String get parentGateTitle => 'Ask a grown-up';
+  @override
+  String parentGateQuestion(int a, int b) =>
+      'This opens a page outside Kinder World. Grown-ups: what is $a × $b?';
+  @override
+  String get parentGateAnswerLabel => 'Answer';
+  @override
+  String get parentGateContinue => 'Continue';
+  @override
+  String get parentGateWrongAnswer =>
+      'That is not right. Please ask a grown-up.';
+
   // ── Child Home Screen ──
   @override
   String get noActiveChildSession => 'No active child session';

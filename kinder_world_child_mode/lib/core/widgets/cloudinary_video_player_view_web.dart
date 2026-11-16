@@ -11,9 +11,15 @@ class CloudinaryVideoPlayerView extends StatefulWidget {
     super.key,
     required this.videoUrl,
     this.active = true,
+    this.requireParentGate = true,
   });
 
   final String videoUrl;
+
+  /// Kept for API parity with the mobile player. On the web nothing leaves the
+  /// page: the YouTube iframe is sandboxed so its logo and suggested videos
+  /// cannot open new tabs or navigate the app away.
+  final bool requireParentGate;
 
   /// When set to `false` the player is silenced (and a YouTube iframe blanked)
   /// so its audio stops even though the widget stays mounted — e.g. once the
@@ -50,7 +56,15 @@ class _CloudinaryVideoPlayerViewState extends State<CloudinaryVideoPlayerView> {
     final youtubeEmbed = youtubeEmbedUrl(widget.videoUrl);
     _youtubeEmbedUrl = youtubeEmbed;
     if (youtubeEmbed != null) {
-      _playerElement = web.HTMLIFrameElement()
+      final iframe = web.HTMLIFrameElement();
+      // No allow-popups / allow-top-navigation: clicking the YouTube logo or a
+      // suggested video can't take the child out of the app. Scripts and
+      // same-origin are what the embedded player itself needs to play.
+      iframe.setAttribute(
+        'sandbox',
+        'allow-scripts allow-same-origin allow-presentation',
+      );
+      _playerElement = iframe
         ..src = youtubeEmbed
         ..allow =
             'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen'

@@ -2776,6 +2776,18 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   String get deleteAccountFailed =>
       'تعذّر حذف الحساب. تأكد من كلمة المرور وحاول مرة أخرى.';
   @override
+  String get parentGateTitle => 'اطلب من أحد الكبار';
+  @override
+  String parentGateQuestion(int a, int b) =>
+      'هذا سيفتح صفحة خارج Kinder World. للكبار: كم يساوي $a × $b؟';
+  @override
+  String get parentGateAnswerLabel => 'الإجابة';
+  @override
+  String get parentGateContinue => 'متابعة';
+  @override
+  String get parentGateWrongAnswer =>
+      'الإجابة غير صحيحة. اطلب المساعدة من أحد الكبار.';
+  @override
   String get logoutTitle => 'تسجيل الخروج؟';
   @override
   String get manageBilling => 'سجل الشراء';

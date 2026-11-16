@@ -117,6 +117,9 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
 
   Future<void> _initStt() async {
     final available = await _stt.initialize(
+      // No Bluetooth headset support: it would make the plugin ask the child
+      // for BLUETOOTH_CONNECT, which the manifest no longer declares.
+      options: [SpeechToText.androidNoBluetooth],
       onError: (error) {
         if (mounted) {
           setState(() => _isListening = false);

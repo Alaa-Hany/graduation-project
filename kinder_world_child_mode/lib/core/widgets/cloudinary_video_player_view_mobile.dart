@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/utils/video_url_utils.dart';
+import 'package:kinder_world/core/widgets/parent_gate_dialog.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
@@ -10,9 +11,14 @@ class CloudinaryVideoPlayerView extends StatefulWidget {
     super.key,
     required this.videoUrl,
     this.active = true,
+    this.requireParentGate = true,
   });
 
   final String videoUrl;
+
+  /// Child mode must not leave the app without a grown-up. Only the admin
+  /// content preview turns this off.
+  final bool requireParentGate;
 
   /// When set to `false` the player pauses so it stops while the widget stays
   /// mounted (e.g. once the child taps "I'm done" and moves to the quiz). For a
@@ -72,6 +78,16 @@ class _CloudinaryVideoPlayerViewState extends State<CloudinaryVideoPlayerView> {
     final uri = Uri.tryParse(widget.videoUrl);
     if (uri == null) {
       return;
+    }
+    if (widget.requireParentGate) {
+      await _controller?.pause();
+      if (!mounted) {
+        return;
+      }
+      final allowed = await showParentGate(context);
+      if (!allowed || !mounted) {
+        return;
+      }
     }
     final mode =
         _isYouTube ? LaunchMode.inAppBrowserView : LaunchMode.externalApplication;

@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Header, Query
 from sqlalchemy.orm import Session
 
 from core.errors import http_error
@@ -34,6 +34,15 @@ analytics_ingest_rate_limit_check = Depends(analytics_ingest_rate_limit())
 # ===============================
 
 
+IDEMPOTENCY_KEY_HEADER = Header(default=None, alias="Idempotency-Key", max_length=128)
+
+
+def _clean_idempotency_key(value: str | None) -> str | None:
+    """The app sends a stable key per record so a retried upload is stored once."""
+    cleaned = (value or "").strip()
+    return cleaned or None
+
+
 def _authorize_child_scope(principal: AnalyticsPrincipal, child_id: int) -> None:
     """A child_session caller may only push data for its own child id."""
     if principal.child is not None and int(child_id) != int(principal.child.id):
@@ -50,10 +59,14 @@ def ingest_activity_event(
     db: Session = Depends(get_db),
     principal: AnalyticsPrincipal = Depends(get_analytics_principal),
     rate_limit_check: None = analytics_ingest_rate_limit_check,
+    idempotency_key: str | None = IDEMPOTENCY_KEY_HEADER,
 ):
     _authorize_child_scope(principal, payload.child_id)
     result = analytics_service.record_activity_event(
-        db=db, parent=principal.parent, payload=payload
+        db=db,
+        parent=principal.parent,
+        payload=payload,
+        idempotency_key=_clean_idempotency_key(idempotency_key),
     )
     # New activity invalidates every cached report variant for this parent.
     invalidate_report_cache(principal.parent.id)
@@ -66,9 +79,15 @@ def ingest_session_log(
     db: Session = Depends(get_db),
     principal: AnalyticsPrincipal = Depends(get_analytics_principal),
     rate_limit_check: None = analytics_ingest_rate_limit_check,
+    idempotency_key: str | None = IDEMPOTENCY_KEY_HEADER,
 ):
     _authorize_child_scope(principal, payload.child_id)
-    result = analytics_service.record_session_log(db=db, parent=principal.parent, payload=payload)
+    result = analytics_service.record_session_log(
+        db=db,
+        parent=principal.parent,
+        payload=payload,
+        idempotency_key=_clean_idempotency_key(idempotency_key),
+    )
     # New screen-time data changes report aggregates → drop cached reports.
     invalidate_report_cache(principal.parent.id)
     return result

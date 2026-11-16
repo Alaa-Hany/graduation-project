@@ -461,6 +461,8 @@ class ProgressController extends StateNotifier<ProgressState> {
           },
         },
         parentAccessToken: ingestToken,
+        // Stable per record: a re-sync after a failure is stored only once.
+        idempotencyKey: 'progress-session:${currentRecord.id}',
       );
 
       await _reportsApi.ingestActivityEvent(
@@ -498,6 +500,7 @@ class ProgressController extends StateNotifier<ProgressState> {
           },
         },
         parentAccessToken: ingestToken,
+        idempotencyKey: 'progress-event:${currentRecord.id}',
       );
 
       return await _progressRepository.updateProgressRecord(

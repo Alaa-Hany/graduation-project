@@ -423,6 +423,10 @@ class ChildSessionLog(Base):
             "archived_at",
             "started_at",
         ),
+        # A retried upload carrying the same Idempotency-Key is stored once.
+        UniqueConstraint(
+            "child_id", "idempotency_key", name="uq_child_session_logs_child_idempotency"
+        ),
     )
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
@@ -430,6 +434,7 @@ class ChildSessionLog(Base):
         Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), nullable=False, index=True
     )
     session_id = Column(String, nullable=True, index=True)
+    idempotency_key = Column(String(128), nullable=True)
     source = Column(String, nullable=False, default="app", server_default=text("'app'"))
     started_at = Column(UTCDateTime(), nullable=False, index=True)
     ended_at = Column(UTCDateTime(), nullable=False, index=True)
@@ -451,12 +456,17 @@ class ChildActivityEvent(Base):
             "archived_at",
             "occurred_at",
         ),
+        # A retried upload carrying the same Idempotency-Key is stored once.
+        UniqueConstraint(
+            "child_id", "idempotency_key", name="uq_child_activity_events_child_idempotency"
+        ),
     )
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     child_id = Column(
         Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    idempotency_key = Column(String(128), nullable=True)
     event_type = Column(String, nullable=False, index=True)
     occurred_at = Column(UTCDateTime(), nullable=False, index=True)
     source = Column(String, nullable=False, default="app", server_default=text("'app'"))
