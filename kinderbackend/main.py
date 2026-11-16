@@ -15,6 +15,7 @@ from core.exception_handlers import build_error_body, register_exception_handler
 from core.logging_utils import configure_logging, log_with_context
 from core.message_catalog import MaintenanceMessages
 from core.request_id_middleware import RequestIdMiddleware
+from core.upload_size_limit import UploadSizeLimitMiddleware
 from core.security_headers import apply_security_headers
 from core.settings import settings
 from core.system_settings import is_maintenance_mode
@@ -227,6 +228,12 @@ register_exception_handlers(app)
 # request_id in context), then EnvelopeMiddleware reads that id when wrapping.
 app.add_middleware(EnvelopeMiddleware)
 app.add_middleware(RequestIdMiddleware)
+# Added before CORS so a 413 still carries CORS headers for the admin panel.
+app.add_middleware(
+    UploadSizeLimitMiddleware,
+    path_suffixes=("/admin/media/videos/upload",),
+    max_bytes=lambda: settings.media_max_upload_size_mb * 1024 * 1024,
+)
 
 cors_config = _cors_config()
 

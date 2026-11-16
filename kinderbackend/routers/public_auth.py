@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from sqlalchemy.orm import Session
 
 from deps import get_current_user, get_db
@@ -226,10 +226,11 @@ def child_reset_picture_password(
 )
 def forgot_password(
     payload: ForgotPasswordIn,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     rate_limit_check: None = password_reset_rate_limit_check,
 ):
-    return auth_service.request_password_reset(payload, db)
+    return auth_service.request_password_reset(payload, db, background_tasks=background_tasks)
 
 
 @router.post(

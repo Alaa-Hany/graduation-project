@@ -14,6 +14,7 @@ from admin_auth import (
 )
 from admin_utils import build_admin_payload, write_audit_log
 from auth import verify_password
+from core.log_privacy import email_fingerprint
 from core.message_catalog import AdminAuthMessages
 from core.settings import settings
 from core.time_utils import db_utc_now, ensure_utc, utc_now
@@ -61,7 +62,11 @@ class AdminAuthService:
 
         password_ok = verify_password(payload.password, admin.password_hash) if admin else False
         if not admin or not password_ok:
-            logger.warning("Failed admin login attempt for email: %s", email)
+            logger.warning(
+                "Failed admin login attempt admin_id=%s ref=%s",
+                admin.id if admin is not None else None,
+                email_fingerprint(email),
+            )
             failure_entity_type = "admin_auth"
             failure_entity_id = email
 
@@ -112,7 +117,7 @@ class AdminAuthService:
             )
 
         if not admin.is_active:
-            logger.warning("Disabled admin login attempt: %s (id=%s)", admin.email, admin.id)
+            logger.warning("Disabled admin login attempt admin_id=%s", admin.id)
             write_audit_log(
                 db=db,
                 request=request,
@@ -150,7 +155,7 @@ class AdminAuthService:
         db.commit()
         db.refresh(admin)
 
-        logger.info("Admin login success: %s (id=%s)", admin.email, admin.id)
+        logger.info("Admin login success admin_id=%s", admin.id)
         write_audit_log(
             db=db,
             request=request,
@@ -267,7 +272,7 @@ class AdminAuthService:
         )
         db.commit()
 
-        logger.info("Admin logout: %s (id=%s)", admin.email, admin.id)
+        logger.info("Admin logout admin_id=%s", admin.id)
         return {"success": True, "message": AdminAuthMessages.LOGGED_OUT_SUCCESSFULLY}
 
     def current_profile(self, *, admin, db: Session) -> dict:

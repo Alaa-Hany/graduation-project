@@ -80,17 +80,21 @@ def test_register_parent_weak_password(service, db):
     assert exc.value.status_code == 422
 
 
-def test_register_parent_existing_verified_rejected(service, db, create_parent):
-    create_parent(email="reg-dup@example.com")
+def test_register_parent_existing_verified_looks_like_new_signup(service, db, create_parent):
+    existing = create_parent(email="reg-dup@example.com")
+    original_hash = existing.password_hash
     payload = RegisterIn(
         name="P",
         email="reg-dup@example.com",
         password=STRONG_PASSWORD,
         confirm_password=STRONG_PASSWORD,
     )
-    with pytest.raises(HTTPException) as exc:
-        service.register_parent(payload, db)
-    assert exc.value.status_code == 400
+    result = service.register_parent(payload, db)
+    assert result["verification_required"] is True
+    assert result["email"] == "reg-dup@example.com"
+    db.refresh(existing)
+    assert existing.password_hash == original_hash  # account untouched
+    assert existing.email_verified is True
 
 
 def test_register_parent_existing_unverified_overwrites(service, db, create_parent):
@@ -185,7 +189,8 @@ def test_verify_otp_user_not_found(service, db):
     payload = VerifyEmailOtpIn(email="nobody@example.com", otp="123456")
     with pytest.raises(HTTPException) as exc:
         service.verify_parent_email_otp(payload, db)
-    assert exc.value.status_code == 404
+    assert exc.value.status_code == 400
+    assert exc.value.detail == AuthMessages.INVALID_OR_EXPIRED_OTP
 
 
 def test_verify_otp_already_verified_rejected_without_tokens(service, db, create_parent):
@@ -193,11 +198,8 @@ def test_verify_otp_already_verified_rejected_without_tokens(service, db, create
     payload = VerifyEmailOtpIn(email="verify-done@example.com", otp="123456")
     with pytest.raises(HTTPException) as exc:
         service.verify_parent_email_otp(payload, db)
-    assert exc.value.status_code == 409
-    assert exc.value.detail == {
-        "code": "EMAIL_ALREADY_VERIFIED",
-        "message": AuthMessages.EMAIL_ALREADY_VERIFIED,
-    }
+    assert exc.value.status_code == 400
+    assert exc.value.detail == AuthMessages.INVALID_OR_EXPIRED_OTP
     db.refresh(user)
     assert user.refresh_token_hash is None
 
@@ -242,19 +244,21 @@ def test_verify_otp_success(service, db, create_parent):
     assert user.email_verified is True
 
 
-def test_resend_otp_user_not_found(service, db):
-    payload = ResendEmailOtpIn(email="ghost@example.com")
-    with pytest.raises(HTTPException) as exc:
-        service.resend_parent_email_otp(payload, db)
-    assert exc.value.status_code == 404
-
-
-def test_resend_otp_already_verified(service, db, create_parent):
+def test_resend_otp_unknown_and_verified_get_generic_success(service, db, create_parent):
     create_parent(email="resend-verified@example.com")
-    payload = ResendEmailOtpIn(email="resend-verified@example.com")
-    with pytest.raises(HTTPException) as exc:
-        service.resend_parent_email_otp(payload, db)
-    assert exc.value.status_code == 400
+    ghost = service.resend_parent_email_otp(ResendEmailOtpIn(email="ghost@example.com"), db)
+    verified = service.resend_parent_email_otp(
+        ResendEmailOtpIn(email="resend-verified@example.com"), db
+    )
+    for result in (ghost, verified):
+        assert result["success"] is True
+        assert set(result) == {
+            "success",
+            "message",
+            "email",
+            "otp_expires_at",
+            "resend_available_at",
+        }
 
 
 def test_resend_otp_cooldown(service, db, create_parent):
@@ -635,7 +639,8 @@ def test_request_password_reset_known_user(service, db, create_parent):
     assert result["success"] is True
 
 
-def test_request_password_reset_send_failure(service, db, create_parent, monkeypatch):
+def test_request_password_reset_send_failure_stays_generic(service, db, create_parent, monkeypatch):
+    # A 503 only for real accounts would reveal which emails are registered.
     create_parent(email="reset-sendfail@example.com")
     monkeypatch.setattr(
         service,
@@ -643,9 +648,10 @@ def test_request_password_reset_send_failure(service, db, create_parent, monkeyp
         lambda **kwargs: (_ for _ in ()).throw(RuntimeError("smtp down")),
     )
     payload = ForgotPasswordIn(email="reset-sendfail@example.com")
-    with pytest.raises(HTTPException) as exc:
-        service.request_password_reset(payload, db)
-    assert exc.value.status_code == 503
+    result = service.request_password_reset(payload, db)
+    assert result == service.request_password_reset(
+        ForgotPasswordIn(email="nobody-here@example.com"), db
+    )
 
 
 def test_confirm_password_reset_password_mismatch(service, db):

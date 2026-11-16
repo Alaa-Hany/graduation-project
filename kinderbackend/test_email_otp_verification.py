@@ -63,9 +63,10 @@ def test_parent_registration_requires_email_otp_before_activation(client, db, mo
 
 
 def _assert_already_verified_without_tokens(response) -> None:
-    assert response.status_code == 409
+    # Same generic "wrong/expired code" answer as a bad OTP, so the endpoint
+    # doesn't reveal that the email belongs to a verified account.
+    assert response.status_code == 400
     body = response.json()
-    assert body["detail"]["code"] == "EMAIL_ALREADY_VERIFIED"
     assert "access_token" not in body
     assert "refresh_token" not in body
 

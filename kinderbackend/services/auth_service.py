@@ -1,4 +1,5 @@
 import hashlib
+import html
 import logging
 import os
 import random
@@ -42,6 +43,19 @@ PARENT_PIN_MAX_ATTEMPTS = 5
 PARENT_PIN_LOCKOUT_MINUTES = 5
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 MAX_REFRESH_SESSIONS_PER_USER = 10
+REGISTRATION_PENDING_MESSAGE = "Registration successful. Verify your email with the OTP we sent."
+
+
+_DUMMY_BCRYPT_HASH: str | None = None
+
+
+def _dummy_bcrypt_hash() -> str:
+    """A throwaway bcrypt hash, so 'no such account' paths can spend the same
+    time verifying as real ones instead of answering suspiciously fast."""
+    global _DUMMY_BCRYPT_HASH
+    if _DUMMY_BCRYPT_HASH is None:
+        _DUMMY_BCRYPT_HASH = hash_password(secrets.token_urlsafe(16))
+    return _DUMMY_BCRYPT_HASH
 
 
 # Redis key helpers — brute-force state lives in Redis in production.
@@ -119,6 +133,51 @@ class AuthService:
             "resend_available_at": AuthService._otp_resend_available_at(user),
         }
 
+    @staticmethod
+    def _decoy_otp_timing() -> tuple[str, str]:
+        """OTP expiry/resend timestamps shaped like a real pending signup, used
+        when the email is unknown or already verified so callers can't tell."""
+        now = utc_now()
+        expires_at = now + timedelta(minutes=AuthService._email_otp_expiry_minutes())
+        resend_at = now + timedelta(seconds=AuthService._email_otp_resend_cooldown_seconds())
+        return expires_at.isoformat(), resend_at.isoformat()
+
+    @staticmethod
+    def _send_existing_account_notice(*, user: User) -> None:
+        """Tell the real owner someone tried to sign up with their email, instead
+        of telling the person signing up that the account exists."""
+        greeting_name = (user.name or "there").strip() or "there"
+        safe_name = html.escape(greeting_name)
+        subject = "Someone tried to create a Kinder World account with your email"
+        body = (
+            f"Hello {greeting_name},\n\n"
+            "Someone just tried to create a new Kinder World account with this email "
+            "address. You already have an account, so nothing was changed.\n\n"
+            'If this was you, log in with your password or use "Forgot password" '
+            "to reset it. If it wasn't you, you can safely ignore this email.\n\n"
+            "— The Kinder World Team"
+        )
+        html_body = (
+            '<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;">'
+            f"<p>Hello <strong>{safe_name}</strong>,</p>"
+            "<p>Someone just tried to create a new Kinder World account with this email "
+            "address. You already have an account, so nothing was changed.</p>"
+            "<p>If this was you, log in with your password or use "
+            "<em>Forgot password</em> to reset it. If it wasn't you, you can safely "
+            "ignore this email.</p><p>The Kinder World Team</p></body></html>"
+        )
+        try:
+            email_delivery_service.send_email(
+                to_email=user.email, subject=subject, body=body, html_body=html_body
+            )
+        except Exception as exc:  # best effort; the response must not change
+            logger.error(
+                "Failed to send existing-account notice to user_id=%s: %s",
+                user.id,
+                exc,
+                exc_info=True,
+            )
+
     def _store_email_otp(self, *, user: User, otp_code: str) -> None:
         now = db_utc_now()
         user.email_otp_hash = hash_password(otp_code)
@@ -136,6 +195,8 @@ class AuthService:
     def _send_email_otp(*, email: str, name: str | None, otp_code: str) -> None:
         subject = "Your Kinder World Verification Code"
         greeting_name = (name or "there").strip() or "there"
+        # The name is whatever was typed at signup; escape it for the HTML part.
+        html_greeting = html.escape(greeting_name)
         body = (
             f"Hello {greeting_name},\n\n"
             f"Your Kinder World verification code is: {otp_code}\n\n"
@@ -153,7 +214,7 @@ class AuthService:
           <h1 style="margin:0;font-size:26px;color:#1a3a6b;">Kinder World</h1>
         </td></tr>
         <tr><td style="font-size:16px;color:#333333;padding-bottom:16px;">
-          Hello <strong>{greeting_name}</strong>,
+          Hello <strong>{html_greeting}</strong>,
         </td></tr>
         <tr><td style="font-size:16px;color:#333333;padding-bottom:24px;">
           Use the code below to verify your account:
@@ -416,7 +477,22 @@ class AuthService:
 
         existing_user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
         if existing_user and self._user_has_verified_email(existing_user):
-            raise HTTPException(status_code=400, detail=AuthMessages.EMAIL_ALREADY_REGISTERED)
+            # Same answer as a fresh signup, so the endpoint can't be used to
+            # discover which emails have accounts. The owner gets a heads-up.
+            # Burn the same bcrypt work a real signup does (password + OTP hash)
+            # so response time doesn't give the answer away either.
+            hash_password(payload.password)
+            hash_password(self._generate_email_otp())
+            self._send_existing_account_notice(user=existing_user)
+            otp_expires_at, resend_available_at = self._decoy_otp_timing()
+            return {
+                "success": True,
+                "message": REGISTRATION_PENDING_MESSAGE,
+                "email": normalized_email,
+                "verification_required": True,
+                "otp_expires_at": otp_expires_at,
+                "resend_available_at": resend_available_at,
+            }
 
         otp_code = self._generate_email_otp()
         now = db_utc_now()
@@ -451,14 +527,11 @@ class AuthService:
             self._send_email_otp(email=user.email, name=user.name, otp_code=otp_code)
         except Exception as exc:
             logger.error(
-                "Failed to send registration OTP to %s: %s", user.email, exc, exc_info=True
+                "Failed to send registration OTP to user_id=%s: %s", user.id, exc, exc_info=True
             )
             raise HTTPException(status_code=503, detail=AuthMessages.OTP_SEND_FAILED)
 
-        return self._pending_verification_payload(
-            user,
-            message="Registration successful. Verify your email with the OTP we sent.",
-        )
+        return self._pending_verification_payload(user, message=REGISTRATION_PENDING_MESSAGE)
 
     def login_parent(self, payload: LoginIn, db: Session) -> dict:
         normalized_email = normalize_email(payload.email)
@@ -475,6 +548,10 @@ class AuthService:
             )
 
         user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
+        if user is None:
+            # Same bcrypt cost as a wrong password, so timing doesn't reveal
+            # whether the email has an account.
+            verify_password(payload.password, _dummy_bcrypt_hash())
         if not user or not verify_password(payload.password, user.password_hash):
             locked_until = self._record_parent_login_failure(email=normalized_email)
             if locked_until is not None:
@@ -527,18 +604,13 @@ class AuthService:
     def verify_parent_email_otp(self, payload: VerifyEmailOtpIn, db: Session) -> dict:
         normalized_email = normalize_email(payload.email)
         user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
-        if user is None:
-            raise HTTPException(status_code=404, detail=AuthMessages.USER_NOT_FOUND)
-        if self._user_has_verified_email(user):
-            # Never issue tokens here: there is no live OTP to check, so doing so
-            # would let anyone who knows the email log in (and skip 2FA).
-            raise HTTPException(
-                status_code=409,
-                detail={
-                    "code": "EMAIL_ALREADY_VERIFIED",
-                    "message": AuthMessages.EMAIL_ALREADY_VERIFIED,
-                },
-            )
+        # Unknown and already-verified emails get the same "wrong code" answer as
+        # a bad OTP, so this endpoint can't be used to find registered emails.
+        # Never issue tokens for a verified account here: there is no live OTP to
+        # check, so doing so would let anyone who knows the email log in.
+        if user is None or self._user_has_verified_email(user):
+            verify_password(payload.otp, _dummy_bcrypt_hash())  # match a real check's timing
+            raise HTTPException(status_code=400, detail=AuthMessages.INVALID_OR_EXPIRED_OTP)
         if self._otp_expired(user) or not getattr(user, "email_otp_hash", None):
             raise HTTPException(status_code=400, detail=AuthMessages.INVALID_OR_EXPIRED_OTP)
         if not verify_password(payload.otp, user.email_otp_hash):
@@ -553,10 +625,18 @@ class AuthService:
     def resend_parent_email_otp(self, payload: ResendEmailOtpIn, db: Session) -> dict:
         normalized_email = normalize_email(payload.email)
         user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
-        if user is None:
-            raise HTTPException(status_code=404, detail=AuthMessages.USER_NOT_FOUND)
-        if self._user_has_verified_email(user):
-            raise HTTPException(status_code=400, detail=AuthMessages.EMAIL_VERIFIED_SUCCESSFULLY)
+        if user is None or self._user_has_verified_email(user):
+            # Nothing to resend, but answer exactly like a real resend so the
+            # endpoint doesn't reveal which emails are registered.
+            hash_password(self._generate_email_otp())
+            otp_expires_at, resend_available_at = self._decoy_otp_timing()
+            return {
+                "success": True,
+                "message": AuthMessages.OTP_RESENT_SUCCESSFULLY,
+                "email": normalized_email,
+                "otp_expires_at": otp_expires_at,
+                "resend_available_at": resend_available_at,
+            }
         if not self._otp_can_be_resent(user):
             raise HTTPException(
                 status_code=429,
@@ -577,7 +657,7 @@ class AuthService:
             self._send_email_otp(email=user.email, name=user.name, otp_code=otp_code)
         except Exception as exc:
             logger.error(
-                "Failed to resend registration OTP to %s: %s", user.email, exc, exc_info=True
+                "Failed to resend registration OTP to user_id=%s: %s", user.id, exc, exc_info=True
             )
             raise HTTPException(status_code=503, detail=AuthMessages.OTP_SEND_FAILED)
 
@@ -1008,6 +1088,8 @@ class AuthService:
     ) -> None:
         reset_url = f"{app_base_url.rstrip('/')}/#/parent/reset-password?token={token}"
         greeting_name = (name or "there").strip() or "there"
+        html_greeting = html.escape(greeting_name)
+        html_reset_url = html.escape(reset_url, quote=True)
         subject = "Reset Your Kinder World Password"
         body = (
             f"Hello {greeting_name},\n\n"
@@ -1026,13 +1108,13 @@ class AuthService:
           <h1 style="margin:0;font-size:26px;color:#1a3a6b;">Kinder World</h1>
         </td></tr>
         <tr><td style="font-size:16px;color:#333333;padding-bottom:16px;">
-          Hello <strong>{greeting_name}</strong>,
+          Hello <strong>{html_greeting}</strong>,
         </td></tr>
         <tr><td style="font-size:16px;color:#333333;padding-bottom:24px;">
           We received a request to reset your password. Click the button below to create a new one:
         </td></tr>
         <tr><td align="center" style="padding-bottom:24px;">
-          <a href="{reset_url}" style="display:inline-block;background:linear-gradient(135deg,#1a3a6b,#4a6cf7);color:#ffffff;text-decoration:none;border-radius:10px;padding:14px 36px;font-size:16px;font-weight:bold;">
+          <a href="{html_reset_url}" style="display:inline-block;background:linear-gradient(135deg,#1a3a6b,#4a6cf7);color:#ffffff;text-decoration:none;border-radius:10px;padding:14px 36px;font-size:16px;font-weight:bold;">
             Reset Password
           </a>
         </td></tr>
@@ -1054,23 +1136,44 @@ class AuthService:
             to_email=email, subject=subject, body=body, html_body=html_body
         )
 
-    def request_password_reset(self, payload: ForgotPasswordIn, db: Session) -> dict:
+    def _deliver_password_reset_email(
+        self, *, user_id: int, email: str, name: str | None, token: str
+    ) -> None:
+        app_base_url = os.getenv("APP_BASE_URL", "http://localhost:44377")
+        try:
+            self._send_password_reset_email(
+                email=email, name=name, token=token, app_base_url=app_base_url
+            )
+            logger.info("Password reset email dispatched for user_id=%s.", user_id)
+        except Exception as exc:
+            # Not surfaced to the caller: a 503 only for real accounts would
+            # reveal which emails are registered. The user can simply retry.
+            logger.error(
+                "Failed to send password reset email for user_id=%s: %s",
+                user_id,
+                exc,
+                exc_info=True,
+            )
+
+    def request_password_reset(
+        self,
+        payload: ForgotPasswordIn,
+        db: Session,
+        background_tasks: Any | None = None,
+    ) -> dict:
+        """Always answers the same generic success. With ``background_tasks``
+        the email goes out after the response, so a real account doesn't take
+        noticeably longer to answer than an unknown email."""
         normalized_email = normalize_email(payload.email)
         user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
 
-        # These diagnostics are server-side only and never leak to the API
-        # response, so the anti-enumeration guarantee (always returning success)
-        # is preserved. They make it possible to tell from the logs whether an
-        # email was actually dispatched or silently skipped.
+        # Server-side diagnostics only; they never change the response.
         if user is None:
-            logger.info(
-                "Password reset requested for %s but no matching account exists; skipping send.",
-                normalized_email,
-            )
+            logger.info("Password reset requested for an unknown email; skipping send.")
         elif not self._user_has_verified_email(user):
             logger.info(
-                "Password reset requested for %s but the account email is not verified; skipping send.",
-                normalized_email,
+                "Password reset requested for user_id=%s with an unverified email; skipping send.",
+                user.id,
             )
 
         if user and self._user_has_verified_email(user):
@@ -1078,21 +1181,16 @@ class AuthService:
             db.add(user)
             db.commit()
 
-            app_base_url = os.getenv("APP_BASE_URL", "http://localhost:44377")
-            try:
-                self._send_password_reset_email(
-                    email=user.email, name=user.name, token=token, app_base_url=app_base_url
-                )
-                logger.info("Password reset email dispatched to %s.", user.email)
-            except Exception as exc:
-                logger.error(
-                    "Failed to send password reset email to %s: %s",
-                    user.email,
-                    exc,
-                    exc_info=True,
-                )
-                db.rollback()
-                raise HTTPException(status_code=503, detail=AuthMessages.PASSWORD_RESET_SEND_FAILED)
+            send_kwargs = {
+                "user_id": user.id,
+                "email": user.email,
+                "name": user.name,
+                "token": token,
+            }
+            if background_tasks is not None:
+                background_tasks.add_task(self._deliver_password_reset_email, **send_kwargs)
+            else:
+                self._deliver_password_reset_email(**send_kwargs)
 
         return {"success": True, "message": AuthMessages.PASSWORD_RESET_EMAIL_SENT}
 

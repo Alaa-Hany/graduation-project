@@ -313,6 +313,42 @@ def ai_principal_rate_limit(
     return check_rate_limit
 
 
+def analytics_principal_rate_limit(
+    *,
+    max_requests: int,
+    window_seconds: int = 60,
+    scope: str = "analytics_ingest",
+):
+    """Per-child (or per-parent) throttling for analytics ingest endpoints.
+
+    Keyed by ``scope`` rather than path so a caller cannot double its budget by
+    alternating /analytics/events and /analytics/sessions. Fails open on a
+    Redis outage: dropping a child's progress sync is worse than a burst.
+    """
+
+    from deps import get_analytics_principal
+
+    def check_rate_limit(principal=Depends(get_analytics_principal)) -> None:
+        if principal.child is not None:
+            key = f"{scope}:child:{principal.child.id}"
+        else:
+            key = f"{scope}:parent:{principal.parent.id}"
+
+        if not rate_limiter.is_allowed(key, max_requests, window_seconds, fail_open=True):
+            raise HTTPException(
+                status_code=HTTP_429_TOO_MANY_REQUESTS,
+                detail=_rate_limit_detail(
+                    code="RATE_LIMIT_EXCEEDED",
+                    message="Too many analytics requests. Please slow down.",
+                    retry_after=window_seconds,
+                    scope=scope,
+                ),
+                headers={"Retry-After": str(window_seconds)},
+            )
+
+    return check_rate_limit
+
+
 # ---------------------------------------------------------------------------
 # Pre-configured limiters
 # ---------------------------------------------------------------------------
@@ -440,6 +476,15 @@ def voice_rate_limit():
         scope="voice",
         message="Too many voice requests. Please wait a moment and try again.",
     )
+
+
+def analytics_ingest_rate_limit():
+    """Per-child/parent cap on analytics writes.
+
+    Generous enough for an offline queue flushing a backlog (the app sends one
+    request per activity), small enough to stop a script from flooding reports.
+    """
+    return analytics_principal_rate_limit(max_requests=120, window_seconds=60)
 
 
 def password_reset_rate_limit():

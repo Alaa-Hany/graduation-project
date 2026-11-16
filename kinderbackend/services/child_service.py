@@ -1,4 +1,5 @@
 import hashlib
+import html
 import json
 import logging
 import os
@@ -150,12 +151,7 @@ class ChildService:
         normalized_parent_email = (parent.email or "").strip().lower()
         if normalized_payload_email == normalized_parent_email:
             return
-        logger.warning(
-            "child_register_parent_email_mismatch parent_id=%s authenticated_email=%s payload_email=%s",
-            parent.id,
-            normalized_parent_email,
-            normalized_payload_email,
-        )
+        logger.warning("child_register_parent_email_mismatch parent_id=%s", parent.id)
         raise forbidden("Parent email does not match authenticated parent")
 
     def _rate_limit_window_seconds(self) -> int:
@@ -994,12 +990,17 @@ class ChildService:
     ) -> None:
         reset_url = f"{app_base_url.rstrip('/')}/#/parent/reset-child-password?token={token}"
         greeting_name = (parent_name or "there").strip() or "there"
-        safe_child = (child_name or "your child").strip() or "your child"
+        child_label = (child_name or "your child").strip() or "your child"
+        # Names are user-typed; escape them for the HTML part so a name like
+        # "<a href=...>" can't inject links or markup into our email.
+        html_greeting = html.escape(greeting_name)
+        html_child = html.escape(child_label)
+        html_reset_url = html.escape(reset_url, quote=True)
         expiry = self._picture_password_reset_expiry_minutes()
         subject = "Reset Your Child's Kinder World Picture Password"
         body = (
             f"Hello {greeting_name},\n\n"
-            f"We received a request to reset the picture password for {safe_child}.\n"
+            f"We received a request to reset the picture password for {child_label}.\n"
             f"Click the link below to choose a new picture password:\n{reset_url}\n\n"
             f"This link expires in {expiry} minutes.\n"
             "If you did not request this, you can safely ignore this email.\n\n"
@@ -1015,13 +1016,13 @@ class ChildService:
           <h1 style="margin:0;font-size:26px;color:#1a3a6b;">Kinder World</h1>
         </td></tr>
         <tr><td style="font-size:16px;color:#333333;padding-bottom:16px;">
-          Hello <strong>{greeting_name}</strong>,
+          Hello <strong>{html_greeting}</strong>,
         </td></tr>
         <tr><td style="font-size:16px;color:#333333;padding-bottom:24px;">
-          We received a request to reset the picture password for <strong>{safe_child}</strong>. Click the button below to choose a new one:
+          We received a request to reset the picture password for <strong>{html_child}</strong>. Click the button below to choose a new one:
         </td></tr>
         <tr><td align="center" style="padding-bottom:24px;">
-          <a href="{reset_url}" style="display:inline-block;background:linear-gradient(135deg,#1a3a6b,#4a6cf7);color:#ffffff;text-decoration:none;border-radius:10px;padding:14px 36px;font-size:16px;font-weight:bold;">
+          <a href="{html_reset_url}" style="display:inline-block;background:linear-gradient(135deg,#1a3a6b,#4a6cf7);color:#ffffff;text-decoration:none;border-radius:10px;padding:14px 36px;font-size:16px;font-weight:bold;">
             Reset Picture Password
           </a>
         </td></tr>
@@ -1103,19 +1104,19 @@ class ChildService:
                     app_base_url=app_base_url,
                 )
                 logger.info(
-                    "Child picture-password reset email dispatched for child_id=%s to %s.",
+                    "Child picture-password reset email dispatched for child_id=%s parent_id=%s.",
                     child.id,
-                    parent.email,
+                    parent.id,
                 )
             except Exception as exc:
+                # Not surfaced: a 503 only when the id+email match would reveal
+                # that they match. The parent can simply ask again.
                 logger.error(
                     "Failed to send child picture-password reset email for child_id=%s: %s",
                     child.id,
                     exc,
                     exc_info=True,
                 )
-                db.rollback()
-                raise http_error(503, AuthMessages.CHILD_PASSWORD_RESET_SEND_FAILED)
 
         return {"success": True, "message": AuthMessages.CHILD_PASSWORD_RESET_EMAIL_SENT}
 
