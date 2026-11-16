@@ -148,6 +148,8 @@ class PaymentProviderAdapter(Protocol):
 
     def detach_payment_method(self, *, payment_method_id: str) -> RawProviderPayload: ...
 
+    def delete_customer(self, *, customer_id: str) -> RawProviderPayload: ...
+
 
 def get_payment_provider() -> PaymentProviderAdapter:
     if settings.payment_provider == "stripe":

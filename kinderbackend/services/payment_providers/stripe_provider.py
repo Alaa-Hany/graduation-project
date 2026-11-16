@@ -169,6 +169,15 @@ class StripePaymentProvider:
         response = self._client_object().payment_methods.detach(payment_method_id)
         return response.to_dict_recursive()
 
+    def delete_customer(self, *, customer_id: str) -> dict[str, Any]:
+        """Delete the Stripe customer (account deletion).
+
+        Stripe cancels the customer's active subscriptions immediately and
+        removes their saved payment methods; past invoices stay in Stripe.
+        """
+        response = self._client_object().customers.delete(customer_id)
+        return response.to_dict_recursive()
+
     def _ensure_customer(self, *, email: str, name: str | None, metadata: dict[str, str]) -> str:
         customer = self._client_object().customers.create(
             params={

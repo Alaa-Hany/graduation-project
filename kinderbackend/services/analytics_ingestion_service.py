@@ -13,6 +13,7 @@ from models import (
     ChildDailyActivitySummary,
     ChildProfile,
     ChildSessionLog,
+    PrivacySetting,
     User,
 )
 
@@ -47,6 +48,14 @@ class AnalyticsIngestionService:
         if child.parent_id != parent.id:
             raise HTTPException(status_code=403, detail="Forbidden")
         return child
+
+    @staticmethod
+    def _tracking_disabled(*, db: Session, parent: User) -> bool:
+        """True when the parent turned analytics off in privacy settings."""
+        setting = db.query(PrivacySetting).filter(PrivacySetting.user_id == parent.id).first()
+        if setting is None:
+            return False
+        return (not bool(setting.analytics_enabled)) or bool(setting.data_collection_opt_out)
 
     @staticmethod
     def _retention_days() -> int:
@@ -104,6 +113,9 @@ class AnalyticsIngestionService:
         mood_entries: int = 0,
         achievements_unlocked: int = 0,
         ai_interactions_count: int = 0,
+        unlogged_points: int = 0,
+        unlogged_activities: int = 0,
+        unlogged_screen_seconds: int = 0,
     ) -> None:
         summary = self._get_or_create_daily_summary(
             db=db,
@@ -134,6 +146,13 @@ class AnalyticsIngestionService:
             int(summary.ai_interactions_count or 0) + max(ai_interactions_count, 0),
             0,
         )
+        summary.unlogged_points = int(summary.unlogged_points or 0) + max(unlogged_points, 0)
+        summary.unlogged_activities = int(summary.unlogged_activities or 0) + max(
+            unlogged_activities, 0
+        )
+        summary.unlogged_screen_seconds = int(summary.unlogged_screen_seconds or 0) + max(
+            unlogged_screen_seconds, 0
+        )
         if summary.last_event_at is None or occurred_at > summary.last_event_at:
             summary.last_event_at = occurred_at
         db.add(summary)
@@ -151,6 +170,32 @@ class AnalyticsIngestionService:
 
         self._ensure_parent_child_access(db=db, parent=parent, child_id=payload.child_id)
         occurred_at = to_db_utc(payload.occurred_at or utc_now())
+        is_completion = payload.event_type in COMPLETION_EVENT_TYPES
+
+        if self._tracking_disabled(db=db, parent=parent):
+            # Parent turned analytics off: keep only the day's totals, never
+            # the event itself (no activity name, lesson, mood or metadata).
+            self._increment_daily_summary(
+                db=db,
+                child_id=payload.child_id,
+                occurred_at=occurred_at,
+                activities_completed=1 if is_completion else 0,
+                lessons_completed=1 if payload.event_type == "lesson_completed" else 0,
+                mood_entries=1 if payload.event_type == "mood_entry" else 0,
+                achievements_unlocked=1 if payload.event_type == "achievement_unlocked" else 0,
+                unlogged_points=int(payload.points or 0) if is_completion else 0,
+                unlogged_activities=1 if is_completion else 0,
+            )
+            db.commit()
+            return {
+                "event": {
+                    "id": None,
+                    "child_id": payload.child_id,
+                    "event_type": payload.event_type,
+                    "occurred_at": occurred_at.isoformat(),
+                    "stored": False,
+                }
+            }
 
         event = ChildActivityEvent(
             child_id=payload.child_id,
@@ -198,6 +243,27 @@ class AnalyticsIngestionService:
                 detail="ended_at must be greater than or equal to started_at",
             )
         duration = max(int((ended_at - started_at).total_seconds()), 0)
+
+        if self._tracking_disabled(db=db, parent=parent):
+            self._increment_daily_summary(
+                db=db,
+                child_id=payload.child_id,
+                occurred_at=started_at,
+                screen_time_minutes=floor(duration / 60),
+                unlogged_screen_seconds=duration,
+            )
+            db.commit()
+            return {
+                "session": {
+                    "id": None,
+                    "child_id": payload.child_id,
+                    "duration_seconds": duration,
+                    "started_at": started_at.isoformat(),
+                    "ended_at": ended_at.isoformat(),
+                    "stored": False,
+                }
+            }
+
         session_log = ChildSessionLog(
             child_id=payload.child_id,
             session_id=payload.session_id,

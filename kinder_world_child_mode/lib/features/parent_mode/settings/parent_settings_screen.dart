@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kinder_world/core/api/api_providers.dart';
 import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
@@ -236,7 +237,6 @@ class ParentSettingsScreen extends ConsumerWidget {
                   icon: Icons.logout_rounded,
                   title: l10n.logout,
                   isDestructive: true,
-                  showDivider: false,
                   trailing: const SizedBox.shrink(),
                   onTap: () async {
                     final confirmed = await _confirmLogout(context, l10n);
@@ -250,6 +250,16 @@ class ParentSettingsScreen extends ConsumerWidget {
                       }
                     }
                   },
+                ),
+                // Basic version; the design branch will restyle it.
+                ParentSettingsTile(
+                  icon: Icons.delete_forever_rounded,
+                  title: l10n.deleteAccount,
+                  subtitle: l10n.deleteAccountSubtitle,
+                  isDestructive: true,
+                  showDivider: false,
+                  trailing: const SizedBox.shrink(),
+                  onTap: () => _deleteAccount(context, ref, l10n),
                 ),
               ],
             ),
@@ -270,6 +280,30 @@ class ParentSettingsScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _deleteAccount(
+      BuildContext context, WidgetRef ref, AppLocalizations l10n) async {
+    final credentials = await showDialog<(String, String)>(
+      context: context,
+      builder: (_) => _DeleteAccountDialog(l10n: l10n),
+    );
+    if (credentials == null || !context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref.read(authApiProvider).deleteAccount(
+            password: credentials.$1,
+            twoFactorCode: credentials.$2,
+          );
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(content: Text(l10n.deleteAccountFailed)));
+      return;
+    }
+    await ref.read(childSessionControllerProvider.notifier).endChildSession();
+    await ref.read(authControllerProvider.notifier).logout();
+    if (context.mounted) {
+      context.go(Routes.selectUserType);
+    }
   }
 
   Future<bool> _confirmLogout(
@@ -302,6 +336,83 @@ class ParentSettingsScreen extends ConsumerWidget {
       ),
     );
     return result ?? false;
+  }
+}
+
+/// Asks for the current password (and optional 2FA code) before deletion.
+/// Returns (password, twoFactorCode) or null when cancelled.
+class _DeleteAccountDialog extends StatefulWidget {
+  const _DeleteAccountDialog({required this.l10n});
+
+  final AppLocalizations l10n;
+
+  @override
+  State<_DeleteAccountDialog> createState() => _DeleteAccountDialogState();
+}
+
+class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
+  final _password = TextEditingController();
+  final _code = TextEditingController();
+
+  @override
+  void dispose() {
+    _password.dispose();
+    _code.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = widget.l10n;
+    final parent = context.parentTheme;
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: Text(l10n.deleteAccount),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.deleteAccountMessage),
+            const SizedBox(height: 16),
+            TextField(
+              key: const Key('delete_account_password'),
+              controller: _password,
+              obscureText: true,
+              autofillHints: const [AutofillHints.password],
+              decoration:
+                  InputDecoration(labelText: l10n.deleteAccountPasswordLabel),
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              key: const Key('delete_account_2fa'),
+              controller: _code,
+              keyboardType: TextInputType.number,
+              decoration:
+                  InputDecoration(labelText: l10n.deleteAccountTwoFactorLabel),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(
+          key: const Key('delete_account_confirm'),
+          style: FilledButton.styleFrom(
+            backgroundColor: parent.danger,
+            foregroundColor: parent.danger.onColor,
+          ),
+          onPressed: _password.text.isEmpty
+              ? null
+              : () => Navigator.of(context).pop((_password.text, _code.text)),
+          child: Text(l10n.deleteAccount),
+        ),
+      ],
+    );
   }
 }
 

@@ -3474,6 +3474,22 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get logoutMessage =>
       'You will need to sign in again to access the parent dashboard.';
+  @override
+  String get deleteAccount => 'Delete account';
+  @override
+  String get deleteAccountSubtitle =>
+      'Permanently delete your account and all child data';
+  @override
+  String get deleteAccountMessage =>
+      'This permanently deletes your account, every child profile and all their progress. Your subscription will be cancelled. This cannot be undone.';
+  @override
+  String get deleteAccountPasswordLabel => 'Current password';
+  @override
+  String get deleteAccountTwoFactorLabel =>
+      'Authenticator code (only if 2FA is on)';
+  @override
+  String get deleteAccountFailed =>
+      'Could not delete the account. Check your password and try again.';
 
   // ── Child Home Screen ──
   @override

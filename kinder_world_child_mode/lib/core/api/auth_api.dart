@@ -280,6 +280,22 @@ class AuthApi {
     return Map<String, dynamic>.from(response.data ?? const {});
   }
 
+  /// Permanently deletes the signed-in parent account and all child data.
+  Future<Map<String, dynamic>> deleteAccount({
+    required String password,
+    String? twoFactorCode,
+  }) async {
+    final code = twoFactorCode?.trim();
+    final response = await _network.delete<Map<String, dynamic>>(
+      '/auth/account',
+      data: {
+        'password': password,
+        if (code != null && code.isNotEmpty) 'two_factor_code': code,
+      },
+    );
+    return Map<String, dynamic>.from(response.data ?? const {});
+  }
+
   Future<Map<String, dynamic>> parentPinStatus() async {
     final response =
         await _network.get<Map<String, dynamic>>('/auth/parent-pin/status');

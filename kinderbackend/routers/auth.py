@@ -218,6 +218,44 @@ def logout_endpoint(
     return auth_service.logout(db=db, user=user)
 
 
+class DeleteAccountRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    password: str = Field(..., min_length=1, max_length=256)
+    two_factor_code: str | None = Field(
+        default=None,
+        max_length=16,
+        validation_alias=AliasChoices("two_factor_code", "twoFactorCode"),
+    )
+
+
+@router.delete(
+    "/auth/account",
+    summary="Delete Parent Account",
+    description=(
+        "Permanently delete the authenticated parent account, every linked child "
+        "profile and all their data. Requires the current password, plus a 2FA "
+        "code when 2FA is enabled. Billing history is kept without any link to "
+        "the person; the Stripe customer is deleted, which ends the subscription."
+    ),
+    response_description="Deletion result.",
+)
+def delete_account_endpoint(
+    payload: DeleteAccountRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+    rate_limit_check: None = password_change_rate_limit_check,
+):
+    from services.account_deletion_service import account_deletion_service
+
+    return account_deletion_service.delete_parent_account(
+        db=db,
+        user=user,
+        password=payload.password,
+        two_factor_code=payload.two_factor_code,
+    )
+
+
 @router.get(
     "/auth/parent-pin/status",
     response_model=ParentPinStatusResponse,

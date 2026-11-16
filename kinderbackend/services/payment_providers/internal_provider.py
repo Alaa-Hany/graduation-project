@@ -174,5 +174,9 @@ class InternalPaymentProvider:
         self._ensure_non_production()
         return {"id": payment_method_id, "detached": True}
 
+    def delete_customer(self, *, customer_id: str) -> dict[str, Any]:
+        # Mock customers only exist as ids on our side; nothing to delete.
+        return {"id": customer_id, "deleted": True}
+
 
 internal_payment_provider = InternalPaymentProvider()

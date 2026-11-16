@@ -1,6 +1,7 @@
+import asyncio
 import logging
 import time
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 
 import sentry_sdk
 from fastapi import FastAPI
@@ -158,6 +159,24 @@ def _cors_config() -> dict[str, object]:
     }
 
 
+async def _data_purge_loop() -> None:
+    """Hard-delete children whose soft delete passed the grace period.
+
+    First pass a minute after startup (so it never slows boot), then every
+    DATA_PURGE_INTERVAL_HOURS. Safe with several workers: each pass only
+    deletes rows that are already due, so overlapping runs are harmless.
+    """
+    from services.account_deletion_service import (
+        data_purge_interval_seconds,
+        run_data_purge_once,
+    )
+
+    await asyncio.sleep(60)
+    while True:
+        await asyncio.to_thread(run_data_purge_once)
+        await asyncio.sleep(data_purge_interval_seconds())
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     log_with_context(
@@ -169,9 +188,16 @@ async def lifespan(_: FastAPI):
         environment=getattr(settings, "environment", None),
     )
     _run_startup_checks()
+    from services.account_deletion_service import data_purge_enabled
+
+    purge_task = asyncio.create_task(_data_purge_loop()) if data_purge_enabled() else None
     try:
         yield
     finally:
+        if purge_task is not None:
+            purge_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await purge_task
         log_with_context(
             logger,
             logging.INFO,

@@ -1263,6 +1263,12 @@ abstract class AppLocalizations {
   String get aboutSubtitle;
   String get logoutTitle;
   String get logoutMessage;
+  String get deleteAccount;
+  String get deleteAccountSubtitle;
+  String get deleteAccountMessage;
+  String get deleteAccountPasswordLabel;
+  String get deleteAccountTwoFactorLabel;
+  String get deleteAccountFailed;
 
   // ── Child Home Screen ──
   String get noActiveChildSession;

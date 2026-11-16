@@ -2762,6 +2762,20 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   String get logoutMessage =>
       'ستحتاج إلى تسجيل الدخول مرة أخرى للوصول إلى لوحة تحكم ولي الأمر.';
   @override
+  String get deleteAccount => 'حذف الحساب';
+  @override
+  String get deleteAccountSubtitle => 'حذف حسابك وكل بيانات الأطفال نهائياً';
+  @override
+  String get deleteAccountMessage =>
+      'سيتم حذف حسابك وكل ملفات الأطفال وتقدّمهم نهائياً، وإلغاء اشتراكك. لا يمكن التراجع عن ذلك.';
+  @override
+  String get deleteAccountPasswordLabel => 'كلمة المرور الحالية';
+  @override
+  String get deleteAccountTwoFactorLabel => 'رمز المصادقة (فقط إذا كانت 2FA مفعّلة)';
+  @override
+  String get deleteAccountFailed =>
+      'تعذّر حذف الحساب. تأكد من كلمة المرور وحاول مرة أخرى.';
+  @override
   String get logoutTitle => 'تسجيل الخروج؟';
   @override
   String get manageBilling => 'سجل الشراء';

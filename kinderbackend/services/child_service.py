@@ -491,14 +491,19 @@ class ChildService:
             .group_by(ChildSessionLog.child_id)
             .all()
         )
+        seconds_by_child: dict[int, int] = defaultdict(int)
         for row in session_rows:
-            progress[row.child_id]["total_time_spent"] = int((row.seconds or 0) // 60)
+            seconds_by_child[row.child_id] += int(row.seconds or 0)
 
-        # Active days for the streak, from the daily-summary rollup.
+        # Active days for the streak, from the daily-summary rollup, plus the
+        # totals kept only as daily sums while the parent had analytics off.
         date_rows = (
             db.query(
                 ChildDailyActivitySummary.child_id,
                 ChildDailyActivitySummary.summary_date,
+                ChildDailyActivitySummary.unlogged_points,
+                ChildDailyActivitySummary.unlogged_activities,
+                ChildDailyActivitySummary.unlogged_screen_seconds,
             )
             .filter(
                 ChildDailyActivitySummary.child_id.in_(child_ids),
@@ -507,9 +512,14 @@ class ChildService:
             .all()
         )
         dates_by_child: dict[int, list[date]] = defaultdict(list)
-        for child_id, summary_date in date_rows:
+        for child_id, summary_date, u_points, u_activities, u_seconds in date_rows:
             if summary_date is not None:
                 dates_by_child[child_id].append(summary_date)
+            progress[child_id]["xp"] += int(u_points or 0)
+            progress[child_id]["activities_completed"] += int(u_activities or 0)
+            seconds_by_child[child_id] += int(u_seconds or 0)
+        for cid, seconds in seconds_by_child.items():
+            progress[cid]["total_time_spent"] = int(seconds // 60)
 
         for cid in child_ids:
             entry = progress[cid]

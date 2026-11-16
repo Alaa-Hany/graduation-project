@@ -717,6 +717,11 @@ class ChildDailyActivitySummary(Base):
     mood_entries = Column(Integer, nullable=False, default=0, server_default=text("0"))
     achievements_unlocked = Column(Integer, nullable=False, default=0, server_default=text("0"))
     ai_interactions_count = Column(Integer, nullable=False, default=0, server_default=text("0"))
+    # Totals for events/sessions that were NOT stored individually because the
+    # parent turned analytics off. Added on top of event-level sums for progress.
+    unlogged_points = Column(Integer, nullable=False, default=0, server_default=text("0"))
+    unlogged_activities = Column(Integer, nullable=False, default=0, server_default=text("0"))
+    unlogged_screen_seconds = Column(Integer, nullable=False, default=0, server_default=text("0"))
     data_source = Column(
         String, nullable=False, default="realtime", server_default=text("'realtime'")
     )
