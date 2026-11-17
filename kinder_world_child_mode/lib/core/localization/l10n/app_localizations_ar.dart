@@ -2762,6 +2762,32 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   String get logoutMessage =>
       'ستحتاج إلى تسجيل الدخول مرة أخرى للوصول إلى لوحة تحكم ولي الأمر.';
   @override
+  String get deleteAccount => 'حذف الحساب';
+  @override
+  String get deleteAccountSubtitle => 'حذف حسابك وكل بيانات الأطفال نهائياً';
+  @override
+  String get deleteAccountMessage =>
+      'سيتم حذف حسابك وكل ملفات الأطفال وتقدّمهم نهائياً، وإلغاء اشتراكك. لا يمكن التراجع عن ذلك.';
+  @override
+  String get deleteAccountPasswordLabel => 'كلمة المرور الحالية';
+  @override
+  String get deleteAccountTwoFactorLabel => 'رمز المصادقة (فقط إذا كانت 2FA مفعّلة)';
+  @override
+  String get deleteAccountFailed =>
+      'تعذّر حذف الحساب. تأكد من كلمة المرور وحاول مرة أخرى.';
+  @override
+  String get parentGateTitle => 'اطلب من أحد الكبار';
+  @override
+  String parentGateQuestion(int a, int b) =>
+      'هذا سيفتح صفحة خارج Kinder World. للكبار: كم يساوي $a × $b؟';
+  @override
+  String get parentGateAnswerLabel => 'الإجابة';
+  @override
+  String get parentGateContinue => 'متابعة';
+  @override
+  String get parentGateWrongAnswer =>
+      'الإجابة غير صحيحة. اطلب المساعدة من أحد الكبار.';
+  @override
   String get logoutTitle => 'تسجيل الخروج؟';
   @override
   String get manageBilling => 'سجل الشراء';

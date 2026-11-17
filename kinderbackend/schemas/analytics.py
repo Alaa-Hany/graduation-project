@@ -1,21 +1,44 @@
-from datetime import datetime
+import json
+from datetime import datetime, timedelta
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+# Upper bounds for client-supplied analytics. Real activities award well under
+# 500 XP and nobody plays for a day straight, so these only stop forged or
+# runaway payloads from inflating reports or bloating the database.
+MAX_EVENT_POINTS = 1000
+MAX_EVENT_DURATION_SECONDS = 24 * 60 * 60
+MAX_SESSION_SPAN = timedelta(hours=24)
+MAX_METADATA_BYTES = 8 * 1024
+MAX_GAMIFICATION_BYTES = 64 * 1024
+MAX_GAMIFICATION_KEYS = 1000
+
+
+def _json_size(value: object) -> int:
+    return len(json.dumps(value, separators=(",", ":"), default=str).encode("utf-8"))
+
+
+def _check_metadata(value: Optional[dict]) -> Optional[dict]:
+    if value is not None and _json_size(value) > MAX_METADATA_BYTES:
+        raise ValueError(f"metadata_json must be at most {MAX_METADATA_BYTES} bytes")
+    return value
 
 
 class ActivityEventIn(BaseModel):
     child_id: int
-    event_type: str
+    event_type: str = Field(min_length=1, max_length=64)
     occurred_at: Optional[datetime] = None
-    source: str = "app"
-    activity_name: Optional[str] = None
-    lesson_id: Optional[str] = None
+    source: str = Field(default="app", max_length=32)
+    activity_name: Optional[str] = Field(default=None, max_length=200)
+    lesson_id: Optional[str] = Field(default=None, max_length=128)
     mood_value: Optional[int] = Field(default=None, ge=1, le=5)
-    achievement_key: Optional[str] = None
-    points: Optional[int] = None
-    duration_seconds: Optional[int] = Field(default=None, ge=0)
+    achievement_key: Optional[str] = Field(default=None, max_length=128)
+    points: Optional[int] = Field(default=None, ge=0, le=MAX_EVENT_POINTS)
+    duration_seconds: Optional[int] = Field(default=None, ge=0, le=MAX_EVENT_DURATION_SECONDS)
     metadata_json: Optional[dict] = None
+
+    _metadata_size = field_validator("metadata_json")(_check_metadata)
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -41,6 +64,15 @@ class GamificationStateIn(BaseModel):
     updated_at: int = Field(ge=0)
     data: dict
 
+    @field_validator("data")
+    @classmethod
+    def _data_size(cls, value: dict) -> dict:
+        if len(value) > MAX_GAMIFICATION_KEYS:
+            raise ValueError(f"data must have at most {MAX_GAMIFICATION_KEYS} keys")
+        if _json_size(value) > MAX_GAMIFICATION_BYTES:
+            raise ValueError(f"data must be at most {MAX_GAMIFICATION_BYTES} bytes")
+        return value
+
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
@@ -54,11 +86,23 @@ class GamificationStateIn(BaseModel):
 
 class SessionLogIn(BaseModel):
     child_id: int
-    session_id: Optional[str] = None
-    source: str = "app"
+    session_id: Optional[str] = Field(default=None, max_length=128)
+    source: str = Field(default="app", max_length=32)
     started_at: datetime
     ended_at: datetime
     metadata_json: Optional[dict] = None
+
+    _metadata_size = field_validator("metadata_json")(_check_metadata)
+
+    @model_validator(mode="after")
+    def _span_is_reasonable(self) -> "SessionLogIn":
+        try:
+            span = self.ended_at - self.started_at
+        except TypeError:  # one naive, one aware: the service normalises these
+            return self
+        if span > MAX_SESSION_SPAN:
+            raise ValueError("a session cannot be longer than 24 hours")
+        return self
 
     model_config = ConfigDict(
         json_schema_extra={

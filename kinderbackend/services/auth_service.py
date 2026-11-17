@@ -1,4 +1,6 @@
 import hashlib
+import hmac
+import html
 import logging
 import os
 import random
@@ -10,7 +12,7 @@ from typing import Any
 
 from fastapi import HTTPException
 from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, object_session
 
 from auth import create_access_token, hash_password, verify_password
 from core.message_catalog import AuthMessages
@@ -20,7 +22,7 @@ from core.time_utils import db_utc_now, ensure_utc, utc_now
 from core.validators import normalize_email, validate_email_domain
 from core.validators import validate_password_policy as core_validate_password_policy
 from core.validators import validate_pin_format
-from models import SupportTicket, User
+from models import ParentRefreshSession, SupportTicket, User
 from plan_service import PLAN_FREE
 from schemas.auth import (
     ForgotPasswordIn,
@@ -41,6 +43,24 @@ PARENT_PIN_LENGTH = 4
 PARENT_PIN_MAX_ATTEMPTS = 5
 PARENT_PIN_LOCKOUT_MINUTES = 5
 REFRESH_TOKEN_EXPIRE_DAYS = 7
+MAX_REFRESH_SESSIONS_PER_USER = 10
+REGISTRATION_PENDING_MESSAGE = "Registration successful. Verify your email with the OTP we sent."
+
+
+def _sha256(value: str) -> str:
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+_DUMMY_BCRYPT_HASH: str | None = None
+
+
+def _dummy_bcrypt_hash() -> str:
+    """A throwaway bcrypt hash, so 'no such account' paths can spend the same
+    time verifying as real ones instead of answering suspiciously fast."""
+    global _DUMMY_BCRYPT_HASH
+    if _DUMMY_BCRYPT_HASH is None:
+        _DUMMY_BCRYPT_HASH = hash_password(secrets.token_urlsafe(16))
+    return _DUMMY_BCRYPT_HASH
 
 
 # Redis key helpers — brute-force state lives in Redis in production.
@@ -118,6 +138,51 @@ class AuthService:
             "resend_available_at": AuthService._otp_resend_available_at(user),
         }
 
+    @staticmethod
+    def _decoy_otp_timing() -> tuple[str, str]:
+        """OTP expiry/resend timestamps shaped like a real pending signup, used
+        when the email is unknown or already verified so callers can't tell."""
+        now = utc_now()
+        expires_at = now + timedelta(minutes=AuthService._email_otp_expiry_minutes())
+        resend_at = now + timedelta(seconds=AuthService._email_otp_resend_cooldown_seconds())
+        return expires_at.isoformat(), resend_at.isoformat()
+
+    @staticmethod
+    def _send_existing_account_notice(*, user: User) -> None:
+        """Tell the real owner someone tried to sign up with their email, instead
+        of telling the person signing up that the account exists."""
+        greeting_name = (user.name or "there").strip() or "there"
+        safe_name = html.escape(greeting_name)
+        subject = "Someone tried to create a Kinder World account with your email"
+        body = (
+            f"Hello {greeting_name},\n\n"
+            "Someone just tried to create a new Kinder World account with this email "
+            "address. You already have an account, so nothing was changed.\n\n"
+            'If this was you, log in with your password or use "Forgot password" '
+            "to reset it. If it wasn't you, you can safely ignore this email.\n\n"
+            "— The Kinder World Team"
+        )
+        html_body = (
+            '<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;">'
+            f"<p>Hello <strong>{safe_name}</strong>,</p>"
+            "<p>Someone just tried to create a new Kinder World account with this email "
+            "address. You already have an account, so nothing was changed.</p>"
+            "<p>If this was you, log in with your password or use "
+            "<em>Forgot password</em> to reset it. If it wasn't you, you can safely "
+            "ignore this email.</p><p>The Kinder World Team</p></body></html>"
+        )
+        try:
+            email_delivery_service.send_email(
+                to_email=user.email, subject=subject, body=body, html_body=html_body
+            )
+        except Exception as exc:  # best effort; the response must not change
+            logger.error(
+                "Failed to send existing-account notice to user_id=%s: %s",
+                user.id,
+                exc,
+                exc_info=True,
+            )
+
     def _store_email_otp(self, *, user: User, otp_code: str) -> None:
         now = db_utc_now()
         user.email_otp_hash = hash_password(otp_code)
@@ -135,6 +200,8 @@ class AuthService:
     def _send_email_otp(*, email: str, name: str | None, otp_code: str) -> None:
         subject = "Your Kinder World Verification Code"
         greeting_name = (name or "there").strip() or "there"
+        # The name is whatever was typed at signup; escape it for the HTML part.
+        html_greeting = html.escape(greeting_name)
         body = (
             f"Hello {greeting_name},\n\n"
             f"Your Kinder World verification code is: {otp_code}\n\n"
@@ -152,7 +219,7 @@ class AuthService:
           <h1 style="margin:0;font-size:26px;color:#1a3a6b;">Kinder World</h1>
         </td></tr>
         <tr><td style="font-size:16px;color:#333333;padding-bottom:16px;">
-          Hello <strong>{greeting_name}</strong>,
+          Hello <strong>{html_greeting}</strong>,
         </td></tr>
         <tr><td style="font-size:16px;color:#333333;padding-bottom:24px;">
           Use the code below to verify your account:
@@ -297,24 +364,109 @@ class AuthService:
     def _hash_refresh_token_secret(secret: str) -> str:
         return hashlib.sha256(secret.encode("utf-8")).hexdigest()
 
-    def _issue_refresh_token(self, *, user: User) -> str:
-        """Mint a new opaque refresh token and persist its hash for rotation.
+    def _issue_refresh_token(
+        self,
+        *,
+        db: Session,
+        user: User,
+        session: ParentRefreshSession | None = None,
+    ) -> tuple[str, int]:
+        """Mint (or rotate) one device's refresh token; return (token, session_id).
 
-        Token shape is "{user_id}:{secret}" so a refresh request can look the
-        owner up by primary key without scanning every user; only the
-        high-entropy secret half is hashed and compared, so the id prefix
-        carries no security weight on its own.
+        Token shape is "{user_id}:{session_id}:{secret}". The ids only locate
+        the row; the high-entropy secret is what's hashed and compared. Each
+        sign-in gets its own session row, so devices don't log each other out.
         """
         secret = secrets.token_urlsafe(32)
-        user.refresh_token_hash = self._hash_refresh_token_secret(secret)
-        user.refresh_token_expires_at = db_utc_now() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-        return f"{user.id}:{secret}"
+        now = db_utc_now()
+        expires_at = now + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        token_hash = self._hash_refresh_token_secret(secret)
+        if session is None:
+            session = ParentRefreshSession(
+                user_id=user.id,
+                token_hash=token_hash,
+                created_at=now,
+                last_used_at=now,
+                expires_at=expires_at,
+            )
+            db.add(session)
+            db.flush()
+            self._prune_refresh_sessions(db=db, user_id=user.id, keep_id=session.id)
+        else:
+            session.token_hash = token_hash
+            session.last_used_at = now
+            session.expires_at = expires_at
+            db.add(session)
+        # The single legacy slot is no longer used once sessions exist.
+        user.refresh_token_hash = None
+        user.refresh_token_expires_at = None
+        return f"{user.id}:{session.id}:{secret}", int(session.id)
 
     @staticmethod
-    def _revoke_refresh_session(user: User) -> None:
+    def _prune_refresh_sessions(*, db: Session, user_id: int, keep_id: int) -> None:
+        """Cap live sessions per parent; the oldest ones are signed out."""
+        now = db_utc_now()
+        live = (
+            db.query(ParentRefreshSession)
+            .filter(
+                ParentRefreshSession.user_id == user_id,
+                ParentRefreshSession.revoked_at.is_(None),
+                ParentRefreshSession.expires_at > now,
+            )
+            .order_by(ParentRefreshSession.created_at.desc(), ParentRefreshSession.id.desc())
+            .all()
+        )
+        for stale in live[MAX_REFRESH_SESSIONS_PER_USER:]:
+            if stale.id != keep_id:
+                stale.revoked_at = now
+                db.add(stale)
+        # Expired / revoked rows carry no value; drop them so the table stays small.
+        db.query(ParentRefreshSession).filter(
+            ParentRefreshSession.user_id == user_id,
+            ParentRefreshSession.id != keep_id,
+            (ParentRefreshSession.expires_at <= now)
+            | (ParentRefreshSession.revoked_at < now - timedelta(days=1)),
+        ).delete(synchronize_session=False)
+
+    @staticmethod
+    def _revoke_refresh_session(user: User, db: Session | None = None) -> None:
+        """Sign the parent out everywhere (password change/reset, token reuse)."""
         user.token_version = (user.token_version or 0) + 1
         user.refresh_token_hash = None
         user.refresh_token_expires_at = None
+        session = db or object_session(user)
+        if session is not None and user.id is not None:
+            session.query(ParentRefreshSession).filter(
+                ParentRefreshSession.user_id == user.id,
+                ParentRefreshSession.revoked_at.is_(None),
+            ).update({ParentRefreshSession.revoked_at: db_utc_now()}, synchronize_session=False)
+
+    @staticmethod
+    def _revoke_one_refresh_session(*, db: Session, user_id: int, session_id: int) -> bool:
+        updated = (
+            db.query(ParentRefreshSession)
+            .filter(
+                ParentRefreshSession.id == session_id,
+                ParentRefreshSession.user_id == user_id,
+                ParentRefreshSession.revoked_at.is_(None),
+            )
+            .update({ParentRefreshSession.revoked_at: db_utc_now()}, synchronize_session=False)
+        )
+        return bool(updated)
+
+    def _token_response(self, *, db: Session, user: User) -> dict[str, Any]:
+        refresh_token, session_id = self._issue_refresh_token(db=db, user=user)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return {
+            "access_token": create_access_token(
+                str(user.id), user.token_version, session_id=session_id
+            ),
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "user": user_to_json(user),
+        }
 
     def register_parent(self, payload: RegisterIn, db: Session) -> dict:
         require_registration_enabled(db)
@@ -330,15 +482,35 @@ class AuthService:
 
         existing_user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
         if existing_user and self._user_has_verified_email(existing_user):
-            raise HTTPException(status_code=400, detail=AuthMessages.EMAIL_ALREADY_REGISTERED)
+            # Same answer as a fresh signup, so the endpoint can't be used to
+            # discover which emails have accounts. The owner gets a heads-up.
+            # Burn the same bcrypt work a real signup does (password + OTP hash)
+            # so response time doesn't give the answer away either.
+            hash_password(payload.password)
+            hash_password(self._generate_email_otp())
+            self._send_existing_account_notice(user=existing_user)
+            otp_expires_at, resend_available_at = self._decoy_otp_timing()
+            return {
+                "success": True,
+                "message": REGISTRATION_PENDING_MESSAGE,
+                "email": normalized_email,
+                "verification_required": True,
+                "otp_expires_at": otp_expires_at,
+                "resend_available_at": resend_available_at,
+                "registration_token": secrets.token_urlsafe(32),  # unused decoy
+            }
 
         otp_code = self._generate_email_otp()
         now = db_utc_now()
+        registration_token = secrets.token_urlsafe(32)
 
         if existing_user:
+            # Someone (maybe not the owner) is signing up again on a pending
+            # email. Don't touch the real name/password: park the new ones and
+            # apply them only if this same session confirms the OTP.
             user = existing_user
-            user.name = payload.name
-            user.password_hash = hash_password(payload.password)
+            user.pending_name = payload.name
+            user.pending_password_hash = hash_password(payload.password)
             user.is_active = False
             user.email_verified = False
             user.email_verified_at = None
@@ -358,6 +530,8 @@ class AuthService:
             self._store_email_otp(user=user, otp_code=otp_code)
             db.add(user)
 
+        # Only the latest signup's session can complete verification.
+        user.registration_token_hash = _sha256(registration_token)
         db.commit()
         db.refresh(user)
 
@@ -365,14 +539,13 @@ class AuthService:
             self._send_email_otp(email=user.email, name=user.name, otp_code=otp_code)
         except Exception as exc:
             logger.error(
-                "Failed to send registration OTP to %s: %s", user.email, exc, exc_info=True
+                "Failed to send registration OTP to user_id=%s: %s", user.id, exc, exc_info=True
             )
             raise HTTPException(status_code=503, detail=AuthMessages.OTP_SEND_FAILED)
 
-        return self._pending_verification_payload(
-            user,
-            message="Registration successful. Verify your email with the OTP we sent.",
-        )
+        payload_out = self._pending_verification_payload(user, message=REGISTRATION_PENDING_MESSAGE)
+        payload_out["registration_token"] = registration_token
+        return payload_out
 
     def login_parent(self, payload: LoginIn, db: Session) -> dict:
         normalized_email = normalize_email(payload.email)
@@ -389,6 +562,10 @@ class AuthService:
             )
 
         user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
+        if user is None:
+            # Same bcrypt cost as a wrong password, so timing doesn't reveal
+            # whether the email has an account.
+            verify_password(payload.password, _dummy_bcrypt_hash())
         if not user or not verify_password(payload.password, user.password_hash):
             locked_until = self._record_parent_login_failure(email=normalized_email)
             if locked_until is not None:
@@ -413,64 +590,93 @@ class AuthService:
                 },
             )
 
+        try:
+            two_factor_service.require_parent_login_code(account=user, code=payload.two_factor_code)
+        except HTTPException as exc:
+            # A *wrong* 2FA code counts toward the same lockout as a wrong
+            # password, otherwise someone with the password could guess the
+            # 6-digit code forever. A *missing* code is just step one of the
+            # 2FA login flow and is not counted.
+            detail = exc.detail if isinstance(exc.detail, dict) else {}
+            if detail.get("code") == "PARENT_INVALID_TWO_FACTOR_CODE":
+                locked_until = self._record_parent_login_failure(email=normalized_email)
+                if locked_until is not None:
+                    raise HTTPException(
+                        status_code=423,
+                        detail={
+                            "code": "PARENT_AUTH_TEMP_LOCKED",
+                            "message": AuthMessages.PARENT_AUTH_TEMP_LOCKED,
+                            "locked_until": locked_until,
+                        },
+                    )
+            raise
+        # Only a fully successful login (password + 2FA) resets the counter.
         self._clear_parent_login_failures(email=normalized_email)
-        two_factor_service.require_parent_login_code(account=user, code=payload.two_factor_code)
         user.updated_at = db_utc_now()
-        refresh_token = self._issue_refresh_token(user=user)
-        db.add(user)
-        db.commit()
-        db.refresh(user)
+        return self._token_response(db=db, user=user)
 
-        return {
-            "access_token": create_access_token(str(user.id), user.token_version),
-            "refresh_token": refresh_token,
-            "token_type": "bearer",
-            "user": user_to_json(user),
-        }
+    @staticmethod
+    def _registration_session_matches(user: User, token: str | None) -> bool:
+        """Is this verify call coming from the session that made the latest signup?
+
+        - With a token: it must be the latest signup's token.
+        - Without one (older app, or a pending user who came back through the
+          login screen): allowed only when nobody signed up again on top of the
+          original signup, i.e. there is no parked name/password to apply. That
+          keeps the original password, which the person logging in just proved.
+        """
+        if token:
+            expected = getattr(user, "registration_token_hash", None)
+            return bool(expected) and hmac.compare_digest(_sha256(token), expected)
+        return not getattr(user, "pending_password_hash", None)
 
     def verify_parent_email_otp(self, payload: VerifyEmailOtpIn, db: Session) -> dict:
         normalized_email = normalize_email(payload.email)
         user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
-        if user is None:
-            raise HTTPException(status_code=404, detail=AuthMessages.USER_NOT_FOUND)
-        if self._user_has_verified_email(user):
-            # Never issue tokens here: there is no live OTP to check, so doing so
-            # would let anyone who knows the email log in (and skip 2FA).
-            raise HTTPException(
-                status_code=409,
-                detail={
-                    "code": "EMAIL_ALREADY_VERIFIED",
-                    "message": AuthMessages.EMAIL_ALREADY_VERIFIED,
-                },
-            )
+        # Unknown and already-verified emails get the same "wrong code" answer as
+        # a bad OTP, so this endpoint can't be used to find registered emails.
+        # Never issue tokens for a verified account here: there is no live OTP to
+        # check, so doing so would let anyone who knows the email log in.
+        if user is None or self._user_has_verified_email(user):
+            verify_password(payload.otp, _dummy_bcrypt_hash())  # match a real check's timing
+            raise HTTPException(status_code=400, detail=AuthMessages.INVALID_OR_EXPIRED_OTP)
         if self._otp_expired(user) or not getattr(user, "email_otp_hash", None):
+            raise HTTPException(status_code=400, detail=AuthMessages.INVALID_OR_EXPIRED_OTP)
+        if not self._registration_session_matches(user, payload.registration_token):
+            verify_password(payload.otp, _dummy_bcrypt_hash())
             raise HTTPException(status_code=400, detail=AuthMessages.INVALID_OR_EXPIRED_OTP)
         if not verify_password(payload.otp, user.email_otp_hash):
             raise HTTPException(status_code=400, detail=AuthMessages.INVALID_OR_EXPIRED_OTP)
 
+        if user.pending_password_hash:
+            # The OTP was confirmed by the session that made the latest signup,
+            # so its name/password now become the account's.
+            user.password_hash = user.pending_password_hash
+            user.name = user.pending_name or user.name
+        user.pending_password_hash = None
+        user.pending_name = None
+        user.registration_token_hash = None
         user.email_verified = True
         user.email_verified_at = db_utc_now()
         user.is_active = True
         self._clear_email_otp(user)
-        refresh_token = self._issue_refresh_token(user=user)
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-
-        return {
-            "access_token": create_access_token(str(user.id), user.token_version),
-            "refresh_token": refresh_token,
-            "token_type": "bearer",
-            "user": user_to_json(user),
-        }
+        return self._token_response(db=db, user=user)
 
     def resend_parent_email_otp(self, payload: ResendEmailOtpIn, db: Session) -> dict:
         normalized_email = normalize_email(payload.email)
         user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
-        if user is None:
-            raise HTTPException(status_code=404, detail=AuthMessages.USER_NOT_FOUND)
-        if self._user_has_verified_email(user):
-            raise HTTPException(status_code=400, detail=AuthMessages.EMAIL_VERIFIED_SUCCESSFULLY)
+        if user is None or self._user_has_verified_email(user):
+            # Nothing to resend, but answer exactly like a real resend so the
+            # endpoint doesn't reveal which emails are registered.
+            hash_password(self._generate_email_otp())
+            otp_expires_at, resend_available_at = self._decoy_otp_timing()
+            return {
+                "success": True,
+                "message": AuthMessages.OTP_RESENT_SUCCESSFULLY,
+                "email": normalized_email,
+                "otp_expires_at": otp_expires_at,
+                "resend_available_at": resend_available_at,
+            }
         if not self._otp_can_be_resent(user):
             raise HTTPException(
                 status_code=429,
@@ -491,7 +697,7 @@ class AuthService:
             self._send_email_otp(email=user.email, name=user.name, otp_code=otp_code)
         except Exception as exc:
             logger.error(
-                "Failed to resend registration OTP to %s: %s", user.email, exc, exc_info=True
+                "Failed to resend registration OTP to user_id=%s: %s", user.id, exc, exc_info=True
             )
             raise HTTPException(status_code=503, detail=AuthMessages.OTP_SEND_FAILED)
 
@@ -506,7 +712,11 @@ class AuthService:
     def two_factor_status(self, *, user: User) -> dict[str, Any]:
         return two_factor_service.status_payload(account=user)
 
-    def two_factor_setup(self, *, db: Session, user: User) -> dict[str, Any]:
+    def two_factor_setup(self, *, db: Session, user: User, password: str | None) -> dict[str, Any]:
+        # A stolen access token alone must not be enough to bind the account
+        # to the attacker's authenticator app.
+        if not password or not verify_password(password, user.password_hash):
+            raise HTTPException(status_code=401, detail=AuthMessages.CURRENT_PASSWORD_IS_INCORRECT)
         payload = two_factor_service.setup_totp(account=user)
         user.updated_at = db_utc_now()
         db.add(user)
@@ -532,6 +742,57 @@ class AuthService:
         return payload
 
     def refresh_parent_access_token(self, payload: RefreshIn, db: Session) -> dict:
+        parts = (payload.refresh_token or "").split(":")
+        if len(parts) == 3:
+            return self._refresh_session_token(parts=parts, db=db)
+        return self._refresh_legacy_token(payload=payload, db=db)
+
+    def _refresh_session_token(self, *, parts: list[str], db: Session) -> dict:
+        user_id_str, session_id_str, secret = parts
+        if not secret or not user_id_str.isdigit() or not session_id_str.isdigit():
+            raise HTTPException(status_code=401, detail=AuthMessages.INVALID_REFRESH_TOKEN)
+        session = (
+            db.query(ParentRefreshSession)
+            .filter(
+                ParentRefreshSession.id == int(session_id_str),
+                ParentRefreshSession.user_id == int(user_id_str),
+            )
+            .first()
+        )
+        if session is None:
+            raise HTTPException(status_code=401, detail=AuthMessages.INVALID_REFRESH_TOKEN)
+        # Signed out (logout, password change) or expired: same answer as the
+        # old single-slot flow, which the app treats as "log in again".
+        if session.revoked_at is not None or ensure_utc(session.expires_at) <= utc_now():
+            raise HTTPException(status_code=401, detail=AuthMessages.SESSION_EXPIRED)
+
+        if not secrets.compare_digest(self._hash_refresh_token_secret(secret), session.token_hash):
+            # An old token of this session was replayed after rotation: it was
+            # probably stolen, so end this device's session (other devices are
+            # unaffected - they have their own sessions).
+            session.revoked_at = db_utc_now()
+            db.add(session)
+            db.commit()
+            raise HTTPException(status_code=401, detail=AuthMessages.INVALID_REFRESH_TOKEN)
+
+        user = db.query(User).filter(User.id == session.user_id).first()
+        if user is None or not bool(getattr(user, "is_active", False)):
+            raise HTTPException(status_code=401, detail=AuthMessages.INVALID_REFRESH_TOKEN)
+
+        new_refresh_token, session_id = self._issue_refresh_token(db=db, user=user, session=session)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return {
+            "access_token": create_access_token(
+                str(user.id), user.token_version, session_id=session_id
+            ),
+            "refresh_token": new_refresh_token,
+            "token_type": "bearer",
+        }
+
+    def _refresh_legacy_token(self, *, payload: RefreshIn, db: Session) -> dict:
+        """Accept a pre-sessions "{user_id}:{secret}" token once, moving it to a session."""
         user_id_str, _, secret = payload.refresh_token.partition(":")
         if not secret or not user_id_str.isdigit():
             raise HTTPException(status_code=401, detail=AuthMessages.INVALID_REFRESH_TOKEN)
@@ -551,18 +812,23 @@ class AuthService:
             # The presented token doesn't match the current one on file, i.e. it
             # was already rotated away (or forged). Treat as reuse and revoke
             # every outstanding token for this user rather than just this one.
-            self._revoke_refresh_session(user)
+            self._revoke_refresh_session(user, db)
             db.add(user)
             db.commit()
             raise HTTPException(status_code=401, detail=AuthMessages.INVALID_REFRESH_TOKEN)
 
-        new_refresh_token = self._issue_refresh_token(user=user)
+        if not bool(getattr(user, "is_active", False)):
+            raise HTTPException(status_code=401, detail=AuthMessages.INVALID_REFRESH_TOKEN)
+
+        new_refresh_token, session_id = self._issue_refresh_token(db=db, user=user)
         db.add(user)
         db.commit()
         db.refresh(user)
 
         return {
-            "access_token": create_access_token(str(user.id), user.token_version),
+            "access_token": create_access_token(
+                str(user.id), user.token_version, session_id=session_id
+            ),
             "refresh_token": new_refresh_token,
             "token_type": "bearer",
         }
@@ -610,7 +876,7 @@ class AuthService:
                 )
 
             user.password_hash = hash_password(payload.new_password)
-            self._revoke_refresh_session(user)
+            self._revoke_refresh_session(user, db)
             db.add(user)
             db.commit()
             db.refresh(user)
@@ -637,9 +903,16 @@ class AuthService:
                 detail=AuthMessages.FAILED_CHANGE_PASSWORD,
             )
 
-    def logout(self, *, db: Session, user: User) -> dict:
+    def logout(self, *, db: Session, user: User, session_id: int | None = None) -> dict:
         try:
-            self._revoke_refresh_session(user)
+            if session_id is not None:
+                # Sign out only this device. Its access token carries the session
+                # id, so get_current_user rejects it as soon as the row is revoked.
+                self._revoke_one_refresh_session(db=db, user_id=user.id, session_id=session_id)
+                db.commit()
+                return {"success": True}
+            # Token from before per-device sessions: fall back to signing out everywhere.
+            self._revoke_refresh_session(user, db)
             db.add(user)
             db.commit()
             db.refresh(user)
@@ -855,6 +1128,8 @@ class AuthService:
     ) -> None:
         reset_url = f"{app_base_url.rstrip('/')}/#/parent/reset-password?token={token}"
         greeting_name = (name or "there").strip() or "there"
+        html_greeting = html.escape(greeting_name)
+        html_reset_url = html.escape(reset_url, quote=True)
         subject = "Reset Your Kinder World Password"
         body = (
             f"Hello {greeting_name},\n\n"
@@ -873,13 +1148,13 @@ class AuthService:
           <h1 style="margin:0;font-size:26px;color:#1a3a6b;">Kinder World</h1>
         </td></tr>
         <tr><td style="font-size:16px;color:#333333;padding-bottom:16px;">
-          Hello <strong>{greeting_name}</strong>,
+          Hello <strong>{html_greeting}</strong>,
         </td></tr>
         <tr><td style="font-size:16px;color:#333333;padding-bottom:24px;">
           We received a request to reset your password. Click the button below to create a new one:
         </td></tr>
         <tr><td align="center" style="padding-bottom:24px;">
-          <a href="{reset_url}" style="display:inline-block;background:linear-gradient(135deg,#1a3a6b,#4a6cf7);color:#ffffff;text-decoration:none;border-radius:10px;padding:14px 36px;font-size:16px;font-weight:bold;">
+          <a href="{html_reset_url}" style="display:inline-block;background:linear-gradient(135deg,#1a3a6b,#4a6cf7);color:#ffffff;text-decoration:none;border-radius:10px;padding:14px 36px;font-size:16px;font-weight:bold;">
             Reset Password
           </a>
         </td></tr>
@@ -901,23 +1176,44 @@ class AuthService:
             to_email=email, subject=subject, body=body, html_body=html_body
         )
 
-    def request_password_reset(self, payload: ForgotPasswordIn, db: Session) -> dict:
+    def _deliver_password_reset_email(
+        self, *, user_id: int, email: str, name: str | None, token: str
+    ) -> None:
+        app_base_url = os.getenv("APP_BASE_URL", "http://localhost:44377")
+        try:
+            self._send_password_reset_email(
+                email=email, name=name, token=token, app_base_url=app_base_url
+            )
+            logger.info("Password reset email dispatched for user_id=%s.", user_id)
+        except Exception as exc:
+            # Not surfaced to the caller: a 503 only for real accounts would
+            # reveal which emails are registered. The user can simply retry.
+            logger.error(
+                "Failed to send password reset email for user_id=%s: %s",
+                user_id,
+                exc,
+                exc_info=True,
+            )
+
+    def request_password_reset(
+        self,
+        payload: ForgotPasswordIn,
+        db: Session,
+        background_tasks: Any | None = None,
+    ) -> dict:
+        """Always answers the same generic success. With ``background_tasks``
+        the email goes out after the response, so a real account doesn't take
+        noticeably longer to answer than an unknown email."""
         normalized_email = normalize_email(payload.email)
         user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
 
-        # These diagnostics are server-side only and never leak to the API
-        # response, so the anti-enumeration guarantee (always returning success)
-        # is preserved. They make it possible to tell from the logs whether an
-        # email was actually dispatched or silently skipped.
+        # Server-side diagnostics only; they never change the response.
         if user is None:
-            logger.info(
-                "Password reset requested for %s but no matching account exists; skipping send.",
-                normalized_email,
-            )
+            logger.info("Password reset requested for an unknown email; skipping send.")
         elif not self._user_has_verified_email(user):
             logger.info(
-                "Password reset requested for %s but the account email is not verified; skipping send.",
-                normalized_email,
+                "Password reset requested for user_id=%s with an unverified email; skipping send.",
+                user.id,
             )
 
         if user and self._user_has_verified_email(user):
@@ -925,21 +1221,16 @@ class AuthService:
             db.add(user)
             db.commit()
 
-            app_base_url = os.getenv("APP_BASE_URL", "http://localhost:44377")
-            try:
-                self._send_password_reset_email(
-                    email=user.email, name=user.name, token=token, app_base_url=app_base_url
-                )
-                logger.info("Password reset email dispatched to %s.", user.email)
-            except Exception as exc:
-                logger.error(
-                    "Failed to send password reset email to %s: %s",
-                    user.email,
-                    exc,
-                    exc_info=True,
-                )
-                db.rollback()
-                raise HTTPException(status_code=503, detail=AuthMessages.PASSWORD_RESET_SEND_FAILED)
+            send_kwargs = {
+                "user_id": user.id,
+                "email": user.email,
+                "name": user.name,
+                "token": token,
+            }
+            if background_tasks is not None:
+                background_tasks.add_task(self._deliver_password_reset_email, **send_kwargs)
+            else:
+                self._deliver_password_reset_email(**send_kwargs)
 
         return {"success": True, "message": AuthMessages.PASSWORD_RESET_EMAIL_SENT}
 
@@ -976,7 +1267,7 @@ class AuthService:
             raise HTTPException(status_code=400, detail=AuthMessages.INVALID_OR_EXPIRED_RESET_TOKEN)
 
         matching_user.password_hash = hash_password(payload.new_password)
-        self._revoke_refresh_session(matching_user)
+        self._revoke_refresh_session(matching_user, db)
         self._clear_password_reset_token(matching_user)
         matching_user.updated_at = db_utc_now()
         db.add(matching_user)
@@ -1067,8 +1358,8 @@ def two_factor_status(*, user: User) -> dict:
     return auth_service.two_factor_status(user=user)
 
 
-def setup_two_factor(*, db: Session, user: User) -> dict:
-    return auth_service.two_factor_setup(db=db, user=user)
+def setup_two_factor(*, db: Session, user: User, password: str | None) -> dict:
+    return auth_service.two_factor_setup(db=db, user=user, password=password)
 
 
 def enable_two_factor(*, db: Session, user: User, code: str | None) -> dict:

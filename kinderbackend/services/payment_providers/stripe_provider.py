@@ -169,6 +169,15 @@ class StripePaymentProvider:
         response = self._client_object().payment_methods.detach(payment_method_id)
         return response.to_dict_recursive()
 
+    def delete_customer(self, *, customer_id: str) -> dict[str, Any]:
+        """Delete the Stripe customer (account deletion).
+
+        Stripe cancels the customer's active subscriptions immediately and
+        removes their saved payment methods; past invoices stay in Stripe.
+        """
+        response = self._client_object().customers.delete(customer_id)
+        return response.to_dict_recursive()
+
     def _ensure_customer(self, *, email: str, name: str | None, metadata: dict[str, str]) -> str:
         customer = self._client_object().customers.create(
             params={
@@ -210,6 +219,11 @@ class StripePaymentProvider:
                 payment_method_id = None
 
         subscription_id = getattr(session, "subscription", None)
+        raw_metadata = getattr(session, "metadata", None) or {}
+        try:
+            metadata = {str(k): str(v) for k, v in dict(raw_metadata).items()}
+        except (TypeError, ValueError):
+            metadata = {}
         return CheckoutSessionResult(
             provider=self.provider_key,
             session_id=session.id,
@@ -221,6 +235,7 @@ class StripePaymentProvider:
             payment_intent_id=payment_intent,
             payment_method_id=payment_method_id,
             raw=session.to_dict_recursive(),
+            metadata=metadata,
         )
 
     def _serialize_subscription(self, subscription) -> ProviderSubscriptionSnapshot:

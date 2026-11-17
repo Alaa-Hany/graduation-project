@@ -237,6 +237,15 @@ mixin _AuthRepositoryStateMixin on _AuthRepositorySupportMixin {
         if (role == UserRoles.parent) {
           await _secureStorage.saveParentAccessToken(newToken);
         }
+        // The server rotates the refresh token on every refresh and treats a
+        // reused old one as stolen (ending the session), so keep the new one.
+        final newRefreshToken = data['refresh_token'];
+        if (newRefreshToken is String && newRefreshToken.isNotEmpty) {
+          await _secureStorage.saveRefreshToken(newRefreshToken);
+          if (role == UserRoles.parent) {
+            await _secureStorage.saveParentRefreshToken(newRefreshToken);
+          }
+        }
         return newToken;
       }
 

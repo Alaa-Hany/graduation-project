@@ -1,4 +1,4 @@
-<!DOCTYPE html><html><head>
+<!DOCTYPE html><html lang="en"><head>
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -16,7 +16,8 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Kinder World is a safe learning app for children, with lessons, stories, games and an AI buddy, plus progress reports and controls for parents.">
+  <meta name="theme-color" content="#FFFFFF">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -51,27 +52,8 @@
   <title>Kinder World</title>
   <link rel="manifest" href="manifest.json">
 
-  <script>
-    // The web app is built with `--pwa-strategy=none`, so no service worker is
-    // registered. Older builds DID register one, and a stale service worker in a
-    // returning visitor's browser keeps serving its cached old bundle/assets even
-    // after a new deploy — which shows up as old UI, broken Arabic, and mojibake
-    // content from old caches. Whenever this fresh page loads, remove any leftover
-    // service worker and drop its caches so the visitor always gets the latest
-    // deployed build going forward.
-    (function () {
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function (regs) {
-          regs.forEach(function (reg) { reg.unregister(); });
-        });
-      }
-      if (window.caches && caches.keys) {
-        caches.keys().then(function (keys) {
-          keys.forEach(function (k) { caches.delete(k); });
-        });
-      }
-    })();
-  </script>
+  <!-- Removes any service worker left by older builds (see the file). -->
+  <script src="sw_cleanup.js"></script>
   <style>
     /* No native web splash: the blue logo page used to linger until the Flutter
        engine rendered its first frame, which felt slow. We now show a neutral
@@ -87,7 +69,8 @@
       background-color: #FFFFFF;
     }
   </style>
-  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+  <!-- Zoom stays allowed (no user-scalable / maximum-scale limits): people who need to zoom must be able to. -->
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
 </head>
 <body>
   <script src="flutter_bootstrap.js" async=""></script>

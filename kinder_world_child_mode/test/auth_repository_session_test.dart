@@ -395,6 +395,35 @@ void main() {
     );
   });
 
+  test('refreshToken keeps the rotated refresh token for the next refresh',
+      () async {
+    storage.userRole = UserRoles.parent;
+    storage.refreshToken = '1:5:old-secret';
+    storage.parentRefreshToken = '1:5:old-secret';
+    authApi.refreshPayload = {
+      'access_token': 'new.jwt',
+      'refresh_token': '1:5:new-secret',
+    };
+
+    final token = await repository.refreshToken();
+
+    expect(token, 'new.jwt');
+    expect(storage.authToken, 'new.jwt');
+    // Reusing the old one would make the server end this session.
+    expect(storage.refreshToken, '1:5:new-secret');
+    expect(storage.parentRefreshToken, '1:5:new-secret');
+  });
+
+  test('refreshToken keeps the stored refresh token when none is returned',
+      () async {
+    storage.userRole = UserRoles.parent;
+    storage.refreshToken = 'still-valid';
+    authApi.refreshPayload = {'access_token': 'new.jwt'};
+
+    expect(await repository.refreshToken(), 'new.jwt');
+    expect(storage.refreshToken, 'still-valid');
+  });
+
   test('loginParent persists parent auth and clears stale child session state',
       () async {
     storage.childSession = 'child-7';

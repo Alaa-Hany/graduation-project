@@ -219,14 +219,34 @@ def test_ignored_result_shape(svc):
 # ---------------------------------------------------------------------------
 
 
-def test_signature_invalid_records_failed_event(db):
+def test_signature_invalid_is_logged_but_not_stored(db, caplog):
     service = _service(error=WebhookVerificationError("bad sig"))
-    with pytest.raises(HTTPException) as exc:
-        service.handle_stripe_webhook(db=db, payload=b"{}", signature="bad")
-    assert exc.value.status_code == 400
-    record = db.query(PaymentWebhookEvent).order_by(PaymentWebhookEvent.id.desc()).first()
-    assert record.event_type == "signature_invalid"
-    assert record.signature_valid is False
+    before = db.query(PaymentWebhookEvent).count()
+    with caplog.at_level("WARNING"):
+        for _ in range(3):
+            with pytest.raises(HTTPException) as exc:
+                service.handle_stripe_webhook(db=db, payload=b"{}", signature="bad")
+            assert exc.value.status_code == 400
+    # A flood of forged requests must not grow the table.
+    assert db.query(PaymentWebhookEvent).count() == before
+    assert any("webhook_signature_invalid" in r.getMessage() for r in caplog.records)
+
+
+def test_signed_webhook_is_still_stored(db):
+    """Normal use: a correctly signed event is still recorded."""
+    event = {
+        "id": "evt_signed_kept_1",
+        "type": "customer.created",
+        "data": {"object": {}},
+    }
+    service = _service(event=event)
+    service.handle_stripe_webhook(db=db, payload=b"{}", signature="ok")
+    stored = (
+        db.query(PaymentWebhookEvent)
+        .filter(PaymentWebhookEvent.event_id == "evt_signed_kept_1")
+        .one()
+    )
+    assert stored.signature_valid is True
 
 
 def test_missing_id_or_type_raises_400(db):

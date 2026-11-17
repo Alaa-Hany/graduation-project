@@ -2665,6 +2665,7 @@ class _AdminVideoPreviewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return CloudinaryVideoPlayerView(
       videoUrl: videoUrl,
+      requireParentGate: false, // admin preview, not child mode
     );
   }
 }

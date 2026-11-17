@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy.orm import Session
 
-from deps import get_current_user, get_db
+from deps import get_current_session_id, get_current_user, get_db
 from models import User
 from rate_limit import (
     parent_pin_mutation_rate_limit,
@@ -214,8 +214,58 @@ def change_password_endpoint(
 def logout_endpoint(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
+    session_id: int | None = Depends(get_current_session_id),
 ):
-    return auth_service.logout(db=db, user=user)
+    return auth_service.logout(db=db, user=user, session_id=session_id)
+
+
+class TwoFactorSetupRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    password: str = Field(
+        ...,
+        min_length=1,
+        max_length=256,
+        validation_alias=AliasChoices("password", "current_password", "currentPassword"),
+    )
+
+
+class DeleteAccountRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    password: str = Field(..., min_length=1, max_length=256)
+    two_factor_code: str | None = Field(
+        default=None,
+        max_length=16,
+        validation_alias=AliasChoices("two_factor_code", "twoFactorCode"),
+    )
+
+
+@router.delete(
+    "/auth/account",
+    summary="Delete Parent Account",
+    description=(
+        "Permanently delete the authenticated parent account, every linked child "
+        "profile and all their data. Requires the current password, plus a 2FA "
+        "code when 2FA is enabled. Billing history is kept without any link to "
+        "the person; the Stripe customer is deleted, which ends the subscription."
+    ),
+    response_description="Deletion result.",
+)
+def delete_account_endpoint(
+    payload: DeleteAccountRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+    rate_limit_check: None = password_change_rate_limit_check,
+):
+    from services.account_deletion_service import account_deletion_service
+
+    return account_deletion_service.delete_parent_account(
+        db=db,
+        user=user,
+        password=payload.password,
+        two_factor_code=payload.two_factor_code,
+    )
 
 
 @router.get(
@@ -308,14 +358,19 @@ def get_two_factor_status_endpoint(user: User = Depends(get_current_user)):
     "/auth/2fa/setup",
     response_model=TwoFactorSetupResponse,
     summary="Setup Parent 2FA",
-    description="Generate TOTP setup details for the current parent account.",
+    description=(
+        "Generate TOTP setup details for the current parent account. "
+        "Requires the current password."
+    ),
     response_description="TOTP provisioning details and current 2FA state.",
 )
 def setup_two_factor_endpoint(
+    payload: TwoFactorSetupRequest,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
+    rate_limit_check: None = two_factor_rate_limit_check,
 ):
-    return auth_service.two_factor_setup(db=db, user=user)
+    return auth_service.two_factor_setup(db=db, user=user, password=payload.password)
 
 
 @router.post(

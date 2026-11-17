@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import hmac
 import logging
+import os
 import time
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -96,28 +98,36 @@ def health_db(db: Session = Depends(get_db)) -> dict[str, object]:
     return _check_db(db)
 
 
+def _details_allowed(token: str | None) -> bool:
+    """Readiness details (which env vars are missing, provider modes, schedules)
+    help an attacker map the deployment, so production only shows them to a
+    caller holding HEALTH_DETAILS_TOKEN. Elsewhere they stay on for debugging."""
+    if not settings.is_production:
+        return True
+    expected = (os.getenv("HEALTH_DETAILS_TOKEN") or "").strip()
+    if not expected or not token:
+        return False
+    return hmac.compare_digest(token.strip().encode("utf-8"), expected.encode("utf-8"))
+
+
 @router.get("/ready")
-def readiness(db: Session = Depends(get_db)) -> dict[str, object]:
+def readiness(
+    db: Session = Depends(get_db),
+    health_token: str | None = Header(default=None, alias="X-Health-Token"),
+) -> dict[str, object]:
     db_status = _check_db(db)
     payment = _payment_readiness()
-    ai = _ai_readiness()
-    background = _background_readiness()
     ok = db_status["status"] == "ok" and payment["configured"]
-    if not ok:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail={
-                "status": "fail",
+    result: dict[str, object] = {"status": "ok" if ok else "fail"}
+    if _details_allowed(health_token):
+        result.update(
+            {
                 "db": db_status,
                 "payment": payment,
-                "ai": ai,
-                "background_jobs": background,
-            },
+                "ai": _ai_readiness(),
+                "background_jobs": _background_readiness(),
+            }
         )
-    return {
-        "status": "ok",
-        "db": db_status,
-        "payment": payment,
-        "ai": ai,
-        "background_jobs": background,
-    }
+    if not ok:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=result)
+    return result

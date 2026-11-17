@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import hashlib
+import os
 import time
 from dataclasses import dataclass
+from typing import BinaryIO
 
 import httpx
 
@@ -60,16 +62,31 @@ class MediaService:
     def upload_video(
         self,
         *,
-        file_bytes: bytes,
         filename: str,
+        file_bytes: bytes | None = None,
+        file_obj: BinaryIO | None = None,
         axis_key: str | None = None,
         category_slug: str | None = None,
         content_slug: str | None = None,
         mime_type: str | None = None,
     ) -> UploadedVideoAsset:
+        """Upload a video to Cloudinary.
+
+        Pass ``file_obj`` (a seekable binary file) to stream the upload without
+        holding the whole video in memory; ``file_bytes`` is kept for callers
+        that already have the content in memory.
+        """
         if not self.is_configured:
             raise MediaServiceError("Cloudinary media uploads are not configured")
-        if not file_bytes:
+        if file_obj is not None:
+            file_obj.seek(0, os.SEEK_END)
+            is_empty = file_obj.tell() == 0
+            file_obj.seek(0)
+            content: bytes | BinaryIO = file_obj
+        else:
+            is_empty = not file_bytes
+            content = file_bytes or b""
+        if is_empty:
             raise MediaServiceError("Uploaded video file is empty")
 
         timestamp = int(time.time())
@@ -91,7 +108,7 @@ class MediaService:
             files={
                 "file": (
                     filename,
-                    file_bytes,
+                    content,
                     mime_type or "application/octet-stream",
                 )
             },

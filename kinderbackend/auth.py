@@ -51,13 +51,18 @@ def decode_token(token: str) -> dict:
     raise last_error
 
 
-def create_access_token(user_id: str, token_version: Optional[int] = 0) -> str:
+def create_access_token(
+    user_id: str,
+    token_version: Optional[int] = 0,
+    session_id: Optional[int] = None,
+) -> str:
     resolved_token_version = 0 if token_version is None else int(token_version)
-    return create_token(
-        user_id,
-        minutes=60,
-        extra_claims={"token_version": resolved_token_version},
-    )
+    claims: Dict = {"token_version": resolved_token_version}
+    if session_id is not None:
+        # Ties the access token to one device's refresh session, so signing
+        # out that device revokes this token immediately.
+        claims["sid"] = int(session_id)
+    return create_token(user_id, minutes=60, extra_claims=claims)
 
 
 def create_refresh_token(user_id: str, token_version: int = 0) -> str:

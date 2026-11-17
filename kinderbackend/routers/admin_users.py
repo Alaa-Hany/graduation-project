@@ -17,9 +17,11 @@ from admin_utils import (
 from auth import hash_password
 from core.admin_security import require_sensitive_action_confirmation
 from core.time_utils import db_utc_now
+from core.validators import generate_temporary_password, validate_password_policy
 from deps import get_db
 from models import User
 from plan_service import PLAN_FREE, validate_plan_value
+from services.auth_service import auth_service
 from services.subscription_service import subscription_service
 
 router = APIRouter(prefix="/admin/users", tags=["Admin Users"])
@@ -224,7 +226,8 @@ def disable_admin_user(
     user = _get_user_or_404(user_id, db)
     before = serialize_user_detail(user, db)
     user.is_active = False
-    user.token_version = (user.token_version or 0) + 1
+    # Ends every device session too, not just current access tokens.
+    auth_service._revoke_refresh_session(user, db)  # noqa: SLF001
     user.updated_at = db_utc_now()
     db.add(user)
     write_audit_log(
@@ -280,10 +283,19 @@ def reset_admin_user_password(
 ):
     require_sensitive_action_confirmation(request, action="user.reset_password")
     user = _get_user_or_404(user_id, db)
-    temp_password = payload.new_password or "Temp@123456"
+    if payload.new_password:
+        is_valid, error_msg = validate_password_policy(payload.new_password)
+        if not is_valid:
+            raise HTTPException(status_code=422, detail=error_msg)
+        temp_password = payload.new_password
+    else:
+        # A fresh random password every time; a fixed default would be known
+        # to anyone who has seen this code.
+        temp_password = generate_temporary_password()
     before = {"id": user.id, "email": user.email}
     user.password_hash = hash_password(temp_password)
-    user.token_version = (user.token_version or 0) + 1
+    # Ends every device session too, not just current access tokens.
+    auth_service._revoke_refresh_session(user, db)  # noqa: SLF001
     user.updated_at = db_utc_now()
     db.add(user)
     write_audit_log(

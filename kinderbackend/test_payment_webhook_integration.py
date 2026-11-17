@@ -50,7 +50,12 @@ class FakeStripeProvider:
             subscription_id=self.state.subscription_id,
             payment_intent_id=self.state.payment_intent_id,
             raw={"metadata": metadata, "plan_id": plan_id, "email": user_email, "name": user_name},
+            metadata=self._remember_metadata(metadata),
         )
+
+    def _remember_metadata(self, metadata):
+        self.last_metadata = dict(metadata)
+        return dict(metadata)
 
     def retrieve_checkout_session(self, *, session_id):
         return CheckoutSessionResult(
@@ -64,6 +69,7 @@ class FakeStripeProvider:
             payment_intent_id=self.state.payment_intent_id,
             payment_method_id="pm_card_visa",
             raw={},
+            metadata=dict(getattr(self, "last_metadata", {})),
         )
 
     def create_billing_portal_session(self, *, customer_id, metadata):
@@ -181,14 +187,13 @@ def test_webhook_service_accepts_injected_verifier(db) -> None:
         subscription_service_instance=subscription_service,
     )
 
+    before = db.query(PaymentWebhookEvent).count()
     with pytest.raises(HTTPException) as exc_info:
         service.handle_stripe_webhook(db=db, payload=b"{}", signature="bad")
 
     assert exc_info.value.status_code == 400
-    record = db.query(PaymentWebhookEvent).order_by(PaymentWebhookEvent.id.desc()).first()
-    assert record is not None
-    assert record.event_type == "signature_invalid"
-    assert record.signature_valid is False
+    # Unsigned requests are logged only, never written to the database.
+    assert db.query(PaymentWebhookEvent).count() == before
 
 
 def test_checkout_completed_webhook_updates_lifecycle_and_deduplicates(

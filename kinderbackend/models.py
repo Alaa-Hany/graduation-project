@@ -39,6 +39,13 @@ class User(Base):
     email_otp_hash = Column(String, nullable=True)
     email_otp_expires_at = Column(UTCDateTime(), nullable=True)
     email_otp_last_sent_at = Column(UTCDateTime(), nullable=True)
+    # A signup repeated on a not-yet-verified email parks its name/password
+    # here; they only replace the real ones once the OTP is confirmed by the
+    # same app session (registration_token), so nobody can set a password on
+    # an account they don't own.
+    pending_name = Column(String, nullable=True)
+    pending_password_hash = Column(String, nullable=True)
+    registration_token_hash = Column(String(64), nullable=True)
     is_premium = Column(Boolean, default=False, nullable=False, server_default=false())
     plan = Column(String, nullable=False, default="FREE", server_default=text("'FREE'"))
 
@@ -85,6 +92,27 @@ class User(Base):
     ai_buddy_sessions = relationship(
         "AiBuddySession", back_populates="parent_user", cascade="all, delete-orphan"
     )
+
+
+class ParentRefreshSession(Base):
+    """One refresh-token session per signed-in device.
+
+    Replaces the single users.refresh_token_hash slot, so signing in on a
+    second device no longer logs the first one out, and a reused (stolen)
+    refresh token only kills that one device's session.
+    """
+
+    __tablename__ = "parent_refresh_sessions"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    token_hash = Column(String(64), nullable=False)
+    created_at = Column(UTCDateTime(), server_default=func.now(), nullable=False)
+    last_used_at = Column(UTCDateTime(), nullable=True)
+    expires_at = Column(UTCDateTime(), nullable=False, index=True)
+    revoked_at = Column(UTCDateTime(), nullable=True, index=True)
 
 
 class SubscriptionProfile(Base):
@@ -395,6 +423,10 @@ class ChildSessionLog(Base):
             "archived_at",
             "started_at",
         ),
+        # A retried upload carrying the same Idempotency-Key is stored once.
+        UniqueConstraint(
+            "child_id", "idempotency_key", name="uq_child_session_logs_child_idempotency"
+        ),
     )
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
@@ -402,6 +434,7 @@ class ChildSessionLog(Base):
         Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), nullable=False, index=True
     )
     session_id = Column(String, nullable=True, index=True)
+    idempotency_key = Column(String(128), nullable=True)
     source = Column(String, nullable=False, default="app", server_default=text("'app'"))
     started_at = Column(UTCDateTime(), nullable=False, index=True)
     ended_at = Column(UTCDateTime(), nullable=False, index=True)
@@ -423,12 +456,17 @@ class ChildActivityEvent(Base):
             "archived_at",
             "occurred_at",
         ),
+        # A retried upload carrying the same Idempotency-Key is stored once.
+        UniqueConstraint(
+            "child_id", "idempotency_key", name="uq_child_activity_events_child_idempotency"
+        ),
     )
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     child_id = Column(
         Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    idempotency_key = Column(String(128), nullable=True)
     event_type = Column(String, nullable=False, index=True)
     occurred_at = Column(UTCDateTime(), nullable=False, index=True)
     source = Column(String, nullable=False, default="app", server_default=text("'app'"))
@@ -717,6 +755,11 @@ class ChildDailyActivitySummary(Base):
     mood_entries = Column(Integer, nullable=False, default=0, server_default=text("0"))
     achievements_unlocked = Column(Integer, nullable=False, default=0, server_default=text("0"))
     ai_interactions_count = Column(Integer, nullable=False, default=0, server_default=text("0"))
+    # Totals for events/sessions that were NOT stored individually because the
+    # parent turned analytics off. Added on top of event-level sums for progress.
+    unlogged_points = Column(Integer, nullable=False, default=0, server_default=text("0"))
+    unlogged_activities = Column(Integer, nullable=False, default=0, server_default=text("0"))
+    unlogged_screen_seconds = Column(Integer, nullable=False, default=0, server_default=text("0"))
     data_source = Column(
         String, nullable=False, default="realtime", server_default=text("'realtime'")
     )

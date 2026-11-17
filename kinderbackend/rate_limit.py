@@ -6,6 +6,7 @@ REDIS_URL is configured.  Falls back to a single-process in-memory store for
 local development / tests — NOT safe across multiple workers.
 """
 
+import ipaddress
 import logging
 import time
 from collections import defaultdict
@@ -15,6 +16,7 @@ from fastapi import Depends, HTTPException, Request
 from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 
 from core.redis_client import get_redis_client
+from core.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -109,6 +111,21 @@ rate_limiter = RedisRateLimiter()
 
 
 def _client_ip(request: Request) -> str:
+    """Best-effort real client IP for rate-limit keys.
+
+    Behind Cloudflare, ``CF-Connecting-IP`` is set by Cloudflare itself and
+    overwrites anything the client sent, so it can't be spoofed the way the
+    left-most ``X-Forwarded-For`` entry can. It is only trusted when
+    ``TRUST_CF_CONNECTING_IP`` is on. A missing or malformed value falls back
+    to the socket peer as resolved by uvicorn.
+    """
+    if settings.trust_cf_connecting_ip:
+        cf_ip = (request.headers.get("CF-Connecting-IP") or "").strip()
+        if cf_ip:
+            try:
+                return str(ipaddress.ip_address(cf_ip))
+            except ValueError:
+                logger.warning("Ignoring malformed CF-Connecting-IP header")
     return request.client.host if request.client else "unknown"
 
 
@@ -296,6 +313,42 @@ def ai_principal_rate_limit(
     return check_rate_limit
 
 
+def analytics_principal_rate_limit(
+    *,
+    max_requests: int,
+    window_seconds: int = 60,
+    scope: str = "analytics_ingest",
+):
+    """Per-child (or per-parent) throttling for analytics ingest endpoints.
+
+    Keyed by ``scope`` rather than path so a caller cannot double its budget by
+    alternating /analytics/events and /analytics/sessions. Fails open on a
+    Redis outage: dropping a child's progress sync is worse than a burst.
+    """
+
+    from deps import get_analytics_principal
+
+    def check_rate_limit(principal=Depends(get_analytics_principal)) -> None:
+        if principal.child is not None:
+            key = f"{scope}:child:{principal.child.id}"
+        else:
+            key = f"{scope}:parent:{principal.parent.id}"
+
+        if not rate_limiter.is_allowed(key, max_requests, window_seconds, fail_open=True):
+            raise HTTPException(
+                status_code=HTTP_429_TOO_MANY_REQUESTS,
+                detail=_rate_limit_detail(
+                    code="RATE_LIMIT_EXCEEDED",
+                    message="Too many analytics requests. Please slow down.",
+                    retry_after=window_seconds,
+                    scope=scope,
+                ),
+                headers={"Retry-After": str(window_seconds)},
+            )
+
+    return check_rate_limit
+
+
 # ---------------------------------------------------------------------------
 # Pre-configured limiters
 # ---------------------------------------------------------------------------
@@ -423,6 +476,15 @@ def voice_rate_limit():
         scope="voice",
         message="Too many voice requests. Please wait a moment and try again.",
     )
+
+
+def analytics_ingest_rate_limit():
+    """Per-child/parent cap on analytics writes.
+
+    Generous enough for an offline queue flushing a backlog (the app sends one
+    request per activity), small enough to stop a script from flooding reports.
+    """
+    return analytics_principal_rate_limit(max_requests=120, window_seconds=60)
 
 
 def password_reset_rate_limit():

@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Header, Query
 from sqlalchemy.orm import Session
 
 from core.errors import http_error
@@ -14,6 +14,7 @@ from core.report_cache import (
 from core.system_settings import require_ai_buddy_enabled
 from deps import AnalyticsPrincipal, get_analytics_principal, get_db, require_feature
 from models import User
+from rate_limit import analytics_ingest_rate_limit
 from schemas.analytics import ActivityEventIn, GamificationStateIn, SessionLogIn
 from services.analytics_service import analytics_service
 from services.child_development_service import child_development_service
@@ -25,11 +26,21 @@ from services.premium_behavior_service import premium_behavior_service
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["features"])
 FEATURE_ERROR_CODE = "FEATURE_NOT_AVAILABLE_IN_PLAN"
+analytics_ingest_rate_limit_check = Depends(analytics_ingest_rate_limit())
 
 
 # ===============================
 # ANALYTICS INGESTION
 # ===============================
+
+
+IDEMPOTENCY_KEY_HEADER = Header(default=None, alias="Idempotency-Key", max_length=128)
+
+
+def _clean_idempotency_key(value: str | None) -> str | None:
+    """The app sends a stable key per record so a retried upload is stored once."""
+    cleaned = (value or "").strip()
+    return cleaned or None
 
 
 def _authorize_child_scope(principal: AnalyticsPrincipal, child_id: int) -> None:
@@ -47,10 +58,15 @@ def ingest_activity_event(
     payload: ActivityEventIn,
     db: Session = Depends(get_db),
     principal: AnalyticsPrincipal = Depends(get_analytics_principal),
+    rate_limit_check: None = analytics_ingest_rate_limit_check,
+    idempotency_key: str | None = IDEMPOTENCY_KEY_HEADER,
 ):
     _authorize_child_scope(principal, payload.child_id)
     result = analytics_service.record_activity_event(
-        db=db, parent=principal.parent, payload=payload
+        db=db,
+        parent=principal.parent,
+        payload=payload,
+        idempotency_key=_clean_idempotency_key(idempotency_key),
     )
     # New activity invalidates every cached report variant for this parent.
     invalidate_report_cache(principal.parent.id)
@@ -62,9 +78,16 @@ def ingest_session_log(
     payload: SessionLogIn,
     db: Session = Depends(get_db),
     principal: AnalyticsPrincipal = Depends(get_analytics_principal),
+    rate_limit_check: None = analytics_ingest_rate_limit_check,
+    idempotency_key: str | None = IDEMPOTENCY_KEY_HEADER,
 ):
     _authorize_child_scope(principal, payload.child_id)
-    result = analytics_service.record_session_log(db=db, parent=principal.parent, payload=payload)
+    result = analytics_service.record_session_log(
+        db=db,
+        parent=principal.parent,
+        payload=payload,
+        idempotency_key=_clean_idempotency_key(idempotency_key),
+    )
     # New screen-time data changes report aggregates → drop cached reports.
     invalidate_report_cache(principal.parent.id)
     return result
@@ -75,6 +98,7 @@ def sync_gamification_state(
     payload: GamificationStateIn,
     db: Session = Depends(get_db),
     principal: AnalyticsPrincipal = Depends(get_analytics_principal),
+    rate_limit_check: None = analytics_ingest_rate_limit_check,
 ):
     """Persist the child's local-first gamification snapshot (coins, badges,
     achievements, reward-store purchases) so it survives a fresh device / web

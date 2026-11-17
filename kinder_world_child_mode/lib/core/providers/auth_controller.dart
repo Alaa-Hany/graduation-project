@@ -547,9 +547,8 @@ class AuthController extends StateNotifier<AuthState> {
   String _childLoginErrorForStatus(int? statusCode, [String? detailCode]) {
     switch (statusCode) {
       case 401:
-        if (detailCode == 'CHILD_INVALID_NAME') {
-          return 'child_login_invalid_name';
-        }
+        // The backend now answers every wrong-credential case with one code
+        // (CHILD_INVALID_CREDENTIALS) so it can't be used to guess names.
         return 'child_login_401';
       case 404:
         return 'child_login_404';

@@ -13,7 +13,7 @@ from auth import decode_token
 from core.errors import http_error, not_found, unauthorized
 from core.message_catalog import AuthMessages, FeatureMessages
 from database import SessionLocal
-from models import ChildProfile, User
+from models import ChildProfile, ParentRefreshSession, User
 
 logger = logging.getLogger(__name__)
 security = HTTPBearer(auto_error=False, bearerFormat="JWT")
@@ -103,6 +103,7 @@ def get_current_user(
             raise unauthorized(AuthMessages.INVALID_TOKEN_TYPE)
         user_id = payload.get("sub")
         token_version = _coerce_token_version(payload.get("token_version"))
+        session_id = _coerce_token_version(payload.get("sid"))
     except JWTError:
         raise unauthorized(AuthMessages.INVALID_TOKEN)
 
@@ -116,9 +117,33 @@ def get_current_user(
         raise not_found(AuthMessages.USER_NOT_FOUND)
     if token_version != int(user.token_version or 0):
         raise unauthorized(AuthMessages.TOKEN_REVOKED)
+    if session_id is not None:
+        revoked = (
+            db.query(ParentRefreshSession.id)
+            .filter(
+                ParentRefreshSession.id == session_id,
+                ParentRefreshSession.user_id == user.id,
+                ParentRefreshSession.revoked_at.is_(None),
+            )
+            .first()
+        ) is None
+        if revoked:
+            raise unauthorized(AuthMessages.TOKEN_REVOKED)
     if not bool(getattr(user, "is_active", False)) or not _is_parent_user_verified(user):
         raise unauthorized(AuthMessages.EMAIL_VERIFICATION_REQUIRED)
     return user
+
+
+def get_current_session_id(
+    creds: HTTPAuthorizationCredentials = Depends(security),
+) -> int | None:
+    """The refresh-session id ("sid") baked into the caller's access token, if any."""
+    if creds is None or not creds.credentials:
+        return None
+    try:
+        return _coerce_token_version(decode_token(creds.credentials).get("sid"))
+    except JWTError:
+        return None
 
 
 def get_ai_buddy_principal(

@@ -1,6 +1,7 @@
+import asyncio
 import logging
 import time
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 
 import sentry_sdk
 from fastapi import FastAPI
@@ -17,6 +18,7 @@ from core.request_id_middleware import RequestIdMiddleware
 from core.security_headers import apply_security_headers
 from core.settings import settings
 from core.system_settings import is_maintenance_mode
+from core.upload_size_limit import UploadSizeLimitMiddleware
 from database import SessionLocal, engine
 from db_migrations import verify_database_schema
 from routers.admin_admins import router as admin_admins_router
@@ -158,6 +160,21 @@ def _cors_config() -> dict[str, object]:
     }
 
 
+async def _data_purge_loop() -> None:
+    """Hard-delete children whose soft delete passed the grace period.
+
+    First pass a minute after startup (so it never slows boot), then every
+    DATA_PURGE_INTERVAL_HOURS. Safe with several workers: each pass only
+    deletes rows that are already due, so overlapping runs are harmless.
+    """
+    from services.account_deletion_service import data_purge_interval_seconds, run_data_purge_once
+
+    await asyncio.sleep(60)
+    while True:
+        await asyncio.to_thread(run_data_purge_once)
+        await asyncio.sleep(data_purge_interval_seconds())
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     log_with_context(
@@ -169,9 +186,16 @@ async def lifespan(_: FastAPI):
         environment=getattr(settings, "environment", None),
     )
     _run_startup_checks()
+    from services.account_deletion_service import data_purge_enabled
+
+    purge_task = asyncio.create_task(_data_purge_loop()) if data_purge_enabled() else None
     try:
         yield
     finally:
+        if purge_task is not None:
+            purge_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await purge_task
         log_with_context(
             logger,
             logging.INFO,
@@ -201,6 +225,12 @@ register_exception_handlers(app)
 # request_id in context), then EnvelopeMiddleware reads that id when wrapping.
 app.add_middleware(EnvelopeMiddleware)
 app.add_middleware(RequestIdMiddleware)
+# Added before CORS so a 413 still carries CORS headers for the admin panel.
+app.add_middleware(
+    UploadSizeLimitMiddleware,
+    path_suffixes=("/admin/media/videos/upload",),
+    max_bytes=lambda: settings.media_max_upload_size_mb * 1024 * 1024,
+)
 
 cors_config = _cors_config()
 
@@ -218,6 +248,8 @@ app.add_middleware(
         "X-Request-ID",
         "X-Admin-Confirm",
         "X-Admin-Confirm-Action",
+        "X-Admin-Bootstrap-Secret",
+        "Idempotency-Key",
     ],
     expose_headers=["X-Request-ID"],
     allow_credentials=bool(cors_config["allow_credentials"]),
@@ -329,6 +361,20 @@ if ADMIN_SEED_ENABLED:
         outcome="warning",
     )
     _include_api_router(admin_seed_router)
+
+if settings.is_production and not settings.trust_cf_connecting_ip:
+    # Rate limits then key on the uvicorn-resolved peer, which can be spoofed
+    # via X-Forwarded-For when FORWARDED_ALLOW_IPS="*".
+    log_with_context(
+        logger,
+        logging.WARNING,
+        "client_ip_cf_header_not_trusted",
+        event="client_ip_cf_header_not_trusted",
+        category="app",
+        environment=getattr(settings, "environment", None),
+        outcome="warning",
+        hint="Set TRUST_CF_CONNECTING_IP=true when running behind Cloudflare",
+    )
 
 # --- Unversioned infrastructure routes ------------------------------------
 # health_router stays at /health — probed by load balancers without a version.

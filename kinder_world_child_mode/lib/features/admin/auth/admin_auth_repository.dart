@@ -146,6 +146,11 @@ class AdminAuthRepository {
       final newAccessToken = body['access_token'] as String;
 
       await _storage.saveAdminToken(newAccessToken);
+      // Keep a rotated refresh token if the server sends one.
+      final newRefreshToken = body['refresh_token'];
+      if (newRefreshToken is String && newRefreshToken.isNotEmpty) {
+        await _storage.saveAdminRefreshToken(newRefreshToken);
+      }
 
       return AdminAuthResult.ok(accessToken: newAccessToken);
     } on DioException catch (e) {

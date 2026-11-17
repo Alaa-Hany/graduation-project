@@ -5,6 +5,7 @@ from datetime import date, datetime, timedelta
 from math import floor
 
 from fastapi import HTTPException
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from core.time_utils import ensure_utc, to_db_utc, utc_now, utc_start_of_day
@@ -13,6 +14,7 @@ from models import (
     ChildDailyActivitySummary,
     ChildProfile,
     ChildSessionLog,
+    PrivacySetting,
     User,
 )
 
@@ -47,6 +49,14 @@ class AnalyticsIngestionService:
         if child.parent_id != parent.id:
             raise HTTPException(status_code=403, detail="Forbidden")
         return child
+
+    @staticmethod
+    def _tracking_disabled(*, db: Session, parent: User) -> bool:
+        """True when the parent turned analytics off in privacy settings."""
+        setting = db.query(PrivacySetting).filter(PrivacySetting.user_id == parent.id).first()
+        if setting is None:
+            return False
+        return (not bool(setting.analytics_enabled)) or bool(setting.data_collection_opt_out)
 
     @staticmethod
     def _retention_days() -> int:
@@ -104,6 +114,9 @@ class AnalyticsIngestionService:
         mood_entries: int = 0,
         achievements_unlocked: int = 0,
         ai_interactions_count: int = 0,
+        unlogged_points: int = 0,
+        unlogged_activities: int = 0,
+        unlogged_screen_seconds: int = 0,
     ) -> None:
         summary = self._get_or_create_daily_summary(
             db=db,
@@ -134,11 +147,20 @@ class AnalyticsIngestionService:
             int(summary.ai_interactions_count or 0) + max(ai_interactions_count, 0),
             0,
         )
+        summary.unlogged_points = int(summary.unlogged_points or 0) + max(unlogged_points, 0)
+        summary.unlogged_activities = int(summary.unlogged_activities or 0) + max(
+            unlogged_activities, 0
+        )
+        summary.unlogged_screen_seconds = int(summary.unlogged_screen_seconds or 0) + max(
+            unlogged_screen_seconds, 0
+        )
         if summary.last_event_at is None or occurred_at > summary.last_event_at:
             summary.last_event_at = occurred_at
         db.add(summary)
 
-    def record_activity_event(self, *, db: Session, parent: User, payload) -> dict:
+    def record_activity_event(
+        self, *, db: Session, parent: User, payload, idempotency_key: str | None = None
+    ) -> dict:
         if payload.event_type not in TRACKED_EVENT_TYPES:
             raise HTTPException(
                 status_code=422,
@@ -151,9 +173,42 @@ class AnalyticsIngestionService:
 
         self._ensure_parent_child_access(db=db, parent=parent, child_id=payload.child_id)
         occurred_at = to_db_utc(payload.occurred_at or utc_now())
+        is_completion = payload.event_type in COMPLETION_EVENT_TYPES
+
+        if self._tracking_disabled(db=db, parent=parent):
+            # Parent turned analytics off: keep only the day's totals, never
+            # the event itself (no activity name, lesson, mood or metadata).
+            self._increment_daily_summary(
+                db=db,
+                child_id=payload.child_id,
+                occurred_at=occurred_at,
+                activities_completed=1 if is_completion else 0,
+                lessons_completed=1 if payload.event_type == "lesson_completed" else 0,
+                mood_entries=1 if payload.event_type == "mood_entry" else 0,
+                achievements_unlocked=1 if payload.event_type == "achievement_unlocked" else 0,
+                unlogged_points=int(payload.points or 0) if is_completion else 0,
+                unlogged_activities=1 if is_completion else 0,
+            )
+            db.commit()
+            return {
+                "event": {
+                    "id": None,
+                    "child_id": payload.child_id,
+                    "event_type": payload.event_type,
+                    "occurred_at": occurred_at.isoformat(),
+                    "stored": False,
+                }
+            }
+
+        duplicate = self._find_by_idempotency_key(
+            db=db, model=ChildActivityEvent, child_id=payload.child_id, key=idempotency_key
+        )
+        if duplicate is not None:
+            return self._event_payload(duplicate, duplicate_request=True)
 
         event = ChildActivityEvent(
             child_id=payload.child_id,
+            idempotency_key=idempotency_key,
             event_type=payload.event_type,
             occurred_at=occurred_at,
             source=payload.source,
@@ -176,19 +231,73 @@ class AnalyticsIngestionService:
             mood_entries=1 if payload.event_type == "mood_entry" else 0,
             achievements_unlocked=1 if payload.event_type == "achievement_unlocked" else 0,
         )
-        db.commit()
+        if not self._commit_or_find_duplicate(db=db):
+            # Another copy of this request won the race; return what it stored.
+            existing = self._find_by_idempotency_key(
+                db=db, model=ChildActivityEvent, child_id=payload.child_id, key=idempotency_key
+            )
+            if existing is None:
+                self._raise_store_conflict()
+            return self._event_payload(existing, duplicate_request=True)
         db.refresh(event)
+        return self._event_payload(event)
 
-        return {
-            "event": {
-                "id": event.id,
-                "child_id": event.child_id,
-                "event_type": event.event_type,
-                "occurred_at": event.occurred_at.isoformat() if event.occurred_at else None,
-            }
+    @staticmethod
+    def _event_payload(event: ChildActivityEvent, *, duplicate_request: bool = False) -> dict:
+        body = {
+            "id": event.id,
+            "child_id": event.child_id,
+            "event_type": event.event_type,
+            "occurred_at": event.occurred_at.isoformat() if event.occurred_at else None,
         }
+        if duplicate_request:
+            body["duplicate"] = True
+        return {"event": body}
 
-    def record_session_log(self, *, db: Session, parent: User, payload) -> dict:
+    @staticmethod
+    def _session_payload(session_log: ChildSessionLog, *, duplicate_request: bool = False) -> dict:
+        body = {
+            "id": session_log.id,
+            "child_id": session_log.child_id,
+            "duration_seconds": session_log.duration_seconds,
+            "started_at": session_log.started_at.isoformat() if session_log.started_at else None,
+            "ended_at": session_log.ended_at.isoformat() if session_log.ended_at else None,
+        }
+        if duplicate_request:
+            body["duplicate"] = True
+        return {"session": body}
+
+    @staticmethod
+    def _find_by_idempotency_key(*, db: Session, model, child_id: int, key: str | None):
+        if not key:
+            return None
+        return (
+            db.query(model).filter(model.child_id == child_id, model.idempotency_key == key).first()
+        )
+
+    @staticmethod
+    def _commit_or_find_duplicate(*, db: Session) -> bool:
+        """Commit; on a unique-key clash (a concurrent copy of the same request
+        got in first) roll back the whole insert, summary bump included."""
+        try:
+            db.commit()
+            return True
+        except IntegrityError:
+            db.rollback()
+            return False
+
+    @staticmethod
+    def _raise_store_conflict() -> None:
+        """The insert failed for a reason other than a duplicate key (e.g. the
+        child was deleted meanwhile): answer 409 instead of crashing."""
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "ANALYTICS_STORE_CONFLICT", "message": "Could not store record"},
+        )
+
+    def record_session_log(
+        self, *, db: Session, parent: User, payload, idempotency_key: str | None = None
+    ) -> dict:
         self._ensure_parent_child_access(db=db, parent=parent, child_id=payload.child_id)
         started_at = ensure_utc(payload.started_at)
         ended_at = ensure_utc(payload.ended_at)
@@ -198,8 +307,36 @@ class AnalyticsIngestionService:
                 detail="ended_at must be greater than or equal to started_at",
             )
         duration = max(int((ended_at - started_at).total_seconds()), 0)
+
+        if self._tracking_disabled(db=db, parent=parent):
+            self._increment_daily_summary(
+                db=db,
+                child_id=payload.child_id,
+                occurred_at=started_at,
+                screen_time_minutes=floor(duration / 60),
+                unlogged_screen_seconds=duration,
+            )
+            db.commit()
+            return {
+                "session": {
+                    "id": None,
+                    "child_id": payload.child_id,
+                    "duration_seconds": duration,
+                    "started_at": started_at.isoformat(),
+                    "ended_at": ended_at.isoformat(),
+                    "stored": False,
+                }
+            }
+
+        duplicate = self._find_by_idempotency_key(
+            db=db, model=ChildSessionLog, child_id=payload.child_id, key=idempotency_key
+        )
+        if duplicate is not None:
+            return self._session_payload(duplicate, duplicate_request=True)
+
         session_log = ChildSessionLog(
             child_id=payload.child_id,
+            idempotency_key=idempotency_key,
             session_id=payload.session_id,
             source=payload.source,
             started_at=started_at,
@@ -215,17 +352,12 @@ class AnalyticsIngestionService:
             occurred_at=started_at,
             screen_time_minutes=floor(duration / 60),
         )
-        db.commit()
+        if not self._commit_or_find_duplicate(db=db):
+            existing = self._find_by_idempotency_key(
+                db=db, model=ChildSessionLog, child_id=payload.child_id, key=idempotency_key
+            )
+            if existing is None:
+                self._raise_store_conflict()
+            return self._session_payload(existing, duplicate_request=True)
         db.refresh(session_log)
-
-        return {
-            "session": {
-                "id": session_log.id,
-                "child_id": session_log.child_id,
-                "duration_seconds": session_log.duration_seconds,
-                "started_at": (
-                    session_log.started_at.isoformat() if session_log.started_at else None
-                ),
-                "ended_at": session_log.ended_at.isoformat() if session_log.ended_at else None,
-            }
-        }
+        return self._session_payload(session_log)

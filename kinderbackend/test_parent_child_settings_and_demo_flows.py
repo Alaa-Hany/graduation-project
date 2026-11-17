@@ -166,9 +166,12 @@ def test_parent_register_login_refresh_and_logout_revokes_refresh_token(client, 
     assert refresh_after_logout.status_code == 401
     assert refresh_after_logout.json()["detail"] == "Session expired. Please log in again."
 
-    user = db.query(User).filter(User.email == "parent.example@gmail.com").first()
-    assert user is not None
-    assert user.token_version == 1
+    # Logout ends this device's session: its access token stops working at once.
+    me_after_logout = client.get(
+        "/api/v1/auth/me",
+        headers={"Authorization": f"Bearer {verify_data['access_token']}"},
+    )
+    assert me_after_logout.status_code == 401
 
 
 def test_free_plan_child_limit_is_enforced(client, db):
@@ -336,6 +339,7 @@ def test_child_validation_duplicate_name_update_login_and_picture_password_flow(
             "current_picture_password": ["sun", "moon", "star"],
             "new_picture_password": ["tree", "book", "fish"],
         },
+        headers=headers,
     )
     assert wrong_change.status_code == 401
 
@@ -347,6 +351,7 @@ def test_child_validation_duplicate_name_update_login_and_picture_password_flow(
             "current_picture_password": ["cat", "dog", "apple"],
             "new_picture_password": ["tree", "book"],
         },
+        headers=headers,
     )
     assert invalid_new_password.status_code == 422
 
@@ -358,6 +363,7 @@ def test_child_validation_duplicate_name_update_login_and_picture_password_flow(
             "current_picture_password": ["cat", "dog", "apple"],
             "new_picture_password": ["tree", "book", "fish"],
         },
+        headers=headers,
     )
     assert change.status_code == 200
     assert change.json()["success"] is True

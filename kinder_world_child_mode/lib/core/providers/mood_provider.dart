@@ -253,6 +253,7 @@ class MoodNotifier extends StateNotifier<MoodState> {
           },
         },
         parentAccessToken: parentAccessToken,
+        idempotencyKey: 'mood:$clientEntryId',
       );
     } catch (e) {
       _logger.e('MoodNotifier backend sync error: $e');

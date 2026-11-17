@@ -27,11 +27,13 @@ class _FakeMoodRepository extends Fake implements MoodRepository {
   Future<MoodEntry?> getTodayEntry(String childId) async => todayEntry;
 
   @override
-  Future<List<MoodEntry>> getRecentEntries(String childId, {int limit = 7}) async =>
+  Future<List<MoodEntry>> getRecentEntries(String childId,
+          {int limit = 7}) async =>
       entries.take(limit).toList();
 
   @override
-  Future<Map<String, int>> getMoodCounts(String childId, {int days = 7}) async =>
+  Future<Map<String, int>> getMoodCounts(String childId,
+          {int days = 7}) async =>
       counts;
 
   @override
@@ -55,14 +57,17 @@ class _FakeChildRepository extends Fake implements ChildRepository {
 class _FakeReportsApi extends Fake implements ReportsApi {
   int ingestCalls = 0;
   Map<String, dynamic>? lastPayload;
+  String? lastIdempotencyKey;
 
   @override
   Future<Map<String, dynamic>> ingestActivityEvent(
     Map<String, dynamic> payload, {
     String? parentAccessToken,
+    String? idempotencyKey,
   }) async {
     ingestCalls++;
     lastPayload = payload;
+    lastIdempotencyKey = idempotencyKey;
     return {};
   }
 }
@@ -154,6 +159,11 @@ void main() {
       expect(childRepo.lastMood, 'happy');
       expect(reportsApi.ingestCalls, 1);
       expect(reportsApi.lastPayload!['mood_value'], 5); // happy => 5
+      // Stable per entry, so a re-sync is de-duplicated by the backend.
+      expect(
+        reportsApi.lastIdempotencyKey,
+        'mood:${(reportsApi.lastPayload!['metadata_json'] as Map)['client_entry_id']}',
+      );
       expect(n.state.todayMood, 'happy');
       expect(n.state.justSaved, isFalse); // reset after the feedback delay
     });

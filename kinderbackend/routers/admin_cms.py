@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import re
 from typing import Any, Optional
 from urllib.parse import urlparse
@@ -36,6 +37,7 @@ PUBLISHED_STATUS = "published"
 READY_STATUS = "ready"
 ARCHIVED_STATUS = "archived"
 CONTENT_TYPES = {"lesson", "story", "video", "activity", "page"}
+UPLOAD_CHUNK_BYTES = 1024 * 1024
 AGE_GROUP_PATTERN = re.compile(r"^\s*(\d{1,2}\s*-\s*\d{1,2}|\d{1,2}\+)\s*$")
 
 
@@ -762,18 +764,26 @@ async def upload_admin_content_video(
     if mime_type and not mime_type.startswith("video/"):
         raise _error("Uploaded file must be a video", status_code=415)
 
-    file_bytes = await file.read()
+    # Measure the spooled file in chunks instead of loading it all into memory;
+    # the middleware has already refused bodies far over the limit.
     max_bytes = settings.media_max_upload_size_mb * 1024 * 1024
-    if len(file_bytes) > max_bytes:
-        raise _error(
-            f"Uploaded video exceeds the {settings.media_max_upload_size_mb} MB limit",
-            status_code=413,
-        )
+    total = 0
+    while chunk := await file.read(UPLOAD_CHUNK_BYTES):
+        total += len(chunk)
+        if total > max_bytes:
+            raise _error(
+                f"Uploaded video exceeds the {settings.media_max_upload_size_mb} MB limit",
+                status_code=413,
+            )
+    await file.seek(0)
 
     normalized_axis_key = _normalize_axis_key_or_error(axis_key)
     try:
-        asset = media_service.upload_video(
-            file_bytes=file_bytes,
+        # The Cloudinary call is blocking network I/O (can take minutes for a
+        # large video); run it off the event loop so other requests keep flowing.
+        asset = await asyncio.to_thread(
+            media_service.upload_video,
+            file_obj=file.file,
             filename=filename,
             axis_key=normalized_axis_key,
             category_slug=_trim_or_none(category_slug),

@@ -5887,6 +5887,11 @@ Future<void> _launchSkillCmsVideo(BuildContext context, String rawUrl) async {
     return;
   }
 
+  // Leaving the app from child mode needs a grown-up.
+  final allowed = await showParentGate(context);
+  if (!allowed) {
+    return;
+  }
   final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
   if (!opened && context.mounted) {
     messenger.showSnackBar(

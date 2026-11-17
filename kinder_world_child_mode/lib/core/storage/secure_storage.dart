@@ -586,6 +586,37 @@ class SecureStorage {
     }
   }
 
+  // Signup registration token (one per email) — kept until the emailed code is
+  // confirmed, so a page reload or app restart doesn't lose it.
+  static String _registrationTokenKey(String email) =>
+      'registration_token:${email.trim().toLowerCase()}';
+
+  Future<String?> getRegistrationToken(String email) async {
+    try {
+      return await _storage.read(key: _registrationTokenKey(email));
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<bool> saveRegistrationToken(String email, String token) async {
+    try {
+      await _storage.write(key: _registrationTokenKey(email), value: token);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> deleteRegistrationToken(String email) async {
+    try {
+      await _storage.delete(key: _registrationTokenKey(email));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   Future<String?> getAdminId() async {
     try {
       return await _storage.read(key: _keyAdminId);

@@ -14,9 +14,11 @@ from admin_auth import (
 )
 from admin_utils import build_admin_payload, write_audit_log
 from auth import verify_password
+from core.log_privacy import email_fingerprint
 from core.message_catalog import AdminAuthMessages
 from core.settings import settings
 from core.time_utils import db_utc_now, ensure_utc, utc_now
+from rate_limit import _client_ip
 from services.two_factor_service import two_factor_service
 
 logger = logging.getLogger(__name__)
@@ -29,7 +31,8 @@ class AdminAuthService:
         email = payload.email.strip().lower()
         admin = db.query(AdminUser).filter(AdminUser.email == email).first()
         now = db_utc_now()
-        client_host = request.client.host if request.client else None
+        resolved_ip = _client_ip(request)
+        client_host = None if resolved_ip == "unknown" else resolved_ip
         user_agent = request.headers.get("user-agent")
 
         if admin and admin.locked_until and ensure_utc(admin.locked_until) > utc_now():
@@ -59,7 +62,11 @@ class AdminAuthService:
 
         password_ok = verify_password(payload.password, admin.password_hash) if admin else False
         if not admin or not password_ok:
-            logger.warning("Failed admin login attempt for email: %s", email)
+            logger.warning(
+                "Failed admin login attempt admin_id=%s ref=%s",
+                admin.id if admin is not None else None,
+                email_fingerprint(email),
+            )
             failure_entity_type = "admin_auth"
             failure_entity_id = email
 
@@ -110,7 +117,7 @@ class AdminAuthService:
             )
 
         if not admin.is_active:
-            logger.warning("Disabled admin login attempt: %s (id=%s)", admin.email, admin.id)
+            logger.warning("Disabled admin login attempt admin_id=%s", admin.id)
             write_audit_log(
                 db=db,
                 request=request,
@@ -148,7 +155,7 @@ class AdminAuthService:
         db.commit()
         db.refresh(admin)
 
-        logger.info("Admin login success: %s (id=%s)", admin.email, admin.id)
+        logger.info("Admin login success admin_id=%s", admin.id)
         write_audit_log(
             db=db,
             request=request,
@@ -265,7 +272,7 @@ class AdminAuthService:
         )
         db.commit()
 
-        logger.info("Admin logout: %s (id=%s)", admin.email, admin.id)
+        logger.info("Admin logout admin_id=%s", admin.id)
         return {"success": True, "message": AdminAuthMessages.LOGGED_OUT_SUCCESSFULLY}
 
     def current_profile(self, *, admin, db: Session) -> dict:
@@ -274,7 +281,9 @@ class AdminAuthService:
     def two_factor_status(self, *, admin) -> dict:
         return two_factor_service.status_payload(account=admin)
 
-    def two_factor_setup(self, *, admin, db: Session) -> dict:
+    def two_factor_setup(self, *, admin, db: Session, password: str | None) -> dict:
+        if not password or not verify_password(password, admin.password_hash):
+            raise HTTPException(status_code=401, detail="Current password is incorrect")
         payload = two_factor_service.setup_totp(account=admin)
         admin.updated_at = db_utc_now()
         db.add(admin)

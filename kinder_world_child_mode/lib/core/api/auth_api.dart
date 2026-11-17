@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:kinder_world/core/network/network_service.dart';
 import 'package:kinder_world/core/services/device_identity_service.dart';
+import 'package:kinder_world/core/storage/secure_storage.dart';
 
 class AuthSessionPayload {
   const AuthSessionPayload({
@@ -74,14 +75,60 @@ class ChildLoginPayload {
   final Map<String, dynamic> raw;
 }
 
+/// Where a signup's registration token waits until the emailed code is
+/// confirmed. The backend only lets the session that made the latest signup
+/// confirm the OTP, so nobody can set the password of a pending account that
+/// isn't theirs — which means losing the token (page reload, app restart)
+/// would block a real user's own verification. The app keeps it in secure
+/// storage; tests can use the in-memory one.
+abstract class RegistrationTokenStore {
+  Future<String?> read(String email);
+  Future<void> write(String email, String token);
+  Future<void> delete(String email);
+}
+
+class MemoryRegistrationTokenStore implements RegistrationTokenStore {
+  final Map<String, String> _tokens = {};
+
+  @override
+  Future<String?> read(String email) async => _tokens[email];
+
+  @override
+  Future<void> write(String email, String token) async =>
+      _tokens[email] = token;
+
+  @override
+  Future<void> delete(String email) async => _tokens.remove(email);
+}
+
+class SecureRegistrationTokenStore implements RegistrationTokenStore {
+  SecureRegistrationTokenStore(this._storage);
+
+  final SecureStorage _storage;
+
+  @override
+  Future<String?> read(String email) => _storage.getRegistrationToken(email);
+
+  @override
+  Future<void> write(String email, String token) =>
+      _storage.saveRegistrationToken(email, token);
+
+  @override
+  Future<void> delete(String email) => _storage.deleteRegistrationToken(email);
+}
+
 class AuthApi {
   AuthApi(
     this._network, {
     DeviceIdentityService? deviceIdentityService,
-  }) : _deviceIdentityService = deviceIdentityService;
+    RegistrationTokenStore? registrationTokenStore,
+  })  : _deviceIdentityService = deviceIdentityService,
+        _registrationTokens =
+            registrationTokenStore ?? MemoryRegistrationTokenStore();
 
   final NetworkService _network;
   final DeviceIdentityService? _deviceIdentityService;
+  final RegistrationTokenStore _registrationTokens;
 
   Future<AuthSessionPayload> login({
     required String email,
@@ -115,20 +162,31 @@ class AuthApi {
         'confirm_password': confirmPassword,
       },
     );
-    return _toPendingVerificationPayload(response.data);
+    final payload = _toPendingVerificationPayload(response.data);
+    final token = payload.raw['registration_token'];
+    if (token is String && token.isNotEmpty) {
+      await _registrationTokens.write(email.trim().toLowerCase(), token);
+    }
+    return payload;
   }
 
   Future<AuthSessionPayload> verifyEmailOtp({
     required String email,
     required String otp,
   }) async {
+    final normalizedEmail = email.trim().toLowerCase();
+    final registrationToken = await _registrationTokens.read(normalizedEmail);
     final response = await _network.post<Map<String, dynamic>>(
       '/auth/verify-email-otp',
       data: {
-        'email': email.trim().toLowerCase(),
+        'email': normalizedEmail,
         'otp': otp.trim(),
+        if (registrationToken != null && registrationToken.isNotEmpty)
+          'registration_token': registrationToken,
       },
     );
+    // Only after success: a wrong code keeps the token for the next try.
+    await _registrationTokens.delete(normalizedEmail);
     return _toSessionPayload(response.data);
   }
 
@@ -263,6 +321,7 @@ class AuthApi {
     required String name,
     required List<String> currentPicturePassword,
     required List<String> newPicturePassword,
+    required String parentAccessToken,
   }) async {
     final response = await _network.post<Map<String, dynamic>>(
       '/auth/child/change-password',
@@ -271,6 +330,25 @@ class AuthApi {
         'name': name.trim(),
         'current_picture_password': currentPicturePassword,
         'new_picture_password': newPicturePassword,
+      },
+      options: Options(
+        headers: {'Authorization': 'Bearer $parentAccessToken'},
+      ),
+    );
+    return Map<String, dynamic>.from(response.data ?? const {});
+  }
+
+  /// Permanently deletes the signed-in parent account and all child data.
+  Future<Map<String, dynamic>> deleteAccount({
+    required String password,
+    String? twoFactorCode,
+  }) async {
+    final code = twoFactorCode?.trim();
+    final response = await _network.delete<Map<String, dynamic>>(
+      '/auth/account',
+      data: {
+        'password': password,
+        if (code != null && code.isNotEmpty) 'two_factor_code': code,
       },
     );
     return Map<String, dynamic>.from(response.data ?? const {});

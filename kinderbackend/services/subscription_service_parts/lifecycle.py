@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import HTTPException
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from core.message_catalog import SubscriptionMessages
@@ -10,7 +11,7 @@ from models import PaymentAttempt, SubscriptionProfile, User
 from plan_service import (
     PLAN_FREE,
     get_plan_catalog,
-    get_user_plan,
+    get_stored_user_plan,
     normalize_billing_interval,
     validate_plan_value,
 )
@@ -451,6 +452,39 @@ class SubscriptionLifecycleMixin:
             db.commit()
             raise HTTPException(status_code=502, detail=str(exc))
 
+        self._verify_checkout_ownership(
+            db=db,
+            user=user,
+            profile=profile,
+            plan=requested,
+            checkout=checkout,
+        )
+
+        # A session that already activated this account can't be replayed to
+        # re-grant the plan later (e.g. after a refund or a lapse to FREE).
+        # If the plan from it is still active, answer idempotently instead.
+        already_consumed = (
+            db.query(PaymentAttempt.id)
+            .filter(
+                PaymentAttempt.provider_reference == checkout.session_id,
+                PaymentAttempt.user_id == user.id,
+                PaymentAttempt.status == PAYMENT_STATUS_SUCCEEDED,
+            )
+            .first()
+        )
+        if already_consumed is not None:
+            if (
+                profile.current_plan_id == requested
+                and profile.status == SUBSCRIPTION_STATUS_ACTIVE
+            ):
+                payload_out = self._build_status_payload(user=user, profile=profile)
+                payload_out.update(self._build_checkout_payload(checkout=checkout))
+                return payload_out
+            raise HTTPException(
+                status_code=409,
+                detail=SubscriptionMessages.CHECKOUT_SESSION_ALREADY_USED,
+            )
+
         now = db_utc_now()
         if checkout_attempt is None:
             checkout_attempt = self._record_payment_attempt(
@@ -569,6 +603,80 @@ class SubscriptionLifecycleMixin:
         payload_out = self._build_status_payload(user=user, profile=profile)
         payload_out.update(self._build_checkout_payload(checkout=checkout))
         return payload_out
+
+    def _verify_checkout_ownership(
+        self,
+        *,
+        db: Session,
+        user: User,
+        profile: SubscriptionProfile,
+        plan: str,
+        checkout: CheckoutSessionResult,
+    ) -> None:
+        """Refuse to activate a plan from a checkout session that isn't the caller's.
+
+        The session id comes from the client, so without this check a parent
+        could activate premium with any paid session id they got hold of (their
+        own old one for a cheaper plan, or someone else's). The session's
+        metadata is set by us at creation time and read back from the provider,
+        so it can't be forged by the client.
+        """
+        metadata = checkout.metadata or {}
+        owner_id = str(metadata.get("user_id") or "").strip()
+        session_plan = str(metadata.get("plan_id") or "").strip().lower()
+        if owner_id != str(user.id) or session_plan != str(plan).strip().lower():
+            emit_event(
+                "subscription.activation.rejected",
+                category="payment",
+                severity="warn",
+                user_id=user.id,
+                profile_id=profile.id,
+                plan_id=plan,
+                session_id=checkout.session_id,
+                code="CHECKOUT_SESSION_MISMATCH",
+            )
+            logger.warning(
+                "activate_session_mismatch user_id=%s plan=%s session_id=%s",
+                user.id,
+                plan,
+                checkout.session_id,
+            )
+            raise HTTPException(
+                status_code=403,
+                detail=SubscriptionMessages.CHECKOUT_SESSION_MISMATCH,
+            )
+
+        # A session that some other account already used must never activate
+        # a second account (rows whose user was deleted count as "other" too).
+        used_elsewhere = (
+            db.query(PaymentAttempt.id)
+            .filter(
+                PaymentAttempt.provider_reference == checkout.session_id,
+                or_(PaymentAttempt.user_id.is_(None), PaymentAttempt.user_id != user.id),
+            )
+            .first()
+        )
+        if used_elsewhere is not None:
+            emit_event(
+                "subscription.activation.rejected",
+                category="payment",
+                severity="warn",
+                user_id=user.id,
+                profile_id=profile.id,
+                plan_id=plan,
+                session_id=checkout.session_id,
+                code="CHECKOUT_SESSION_ALREADY_USED",
+            )
+            logger.warning(
+                "activate_session_reused user_id=%s plan=%s session_id=%s",
+                user.id,
+                plan,
+                checkout.session_id,
+            )
+            raise HTTPException(
+                status_code=409,
+                detail=SubscriptionMessages.CHECKOUT_SESSION_ALREADY_USED,
+            )
 
     def manage_subscription(self, *, db: Session, user: User) -> dict[str, object]:
         profile = self._ensure_subscription_profile(db=db, user=user)
@@ -902,7 +1010,7 @@ class SubscriptionLifecycleMixin:
         if profile is not None:
             updated = False
             now = db_utc_now()
-            plan = get_user_plan(user)
+            plan = get_stored_user_plan(user)
             if profile.current_plan_id != plan:
                 profile.current_plan_id = plan
                 updated = True
@@ -951,7 +1059,7 @@ class SubscriptionLifecycleMixin:
             return profile
 
         now = db_utc_now()
-        plan = get_user_plan(user)
+        plan = get_stored_user_plan(user)
         status = SUBSCRIPTION_STATUS_FREE
         started_at = None
         expires_at = None

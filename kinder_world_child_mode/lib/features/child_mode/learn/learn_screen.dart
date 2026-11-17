@@ -26,6 +26,7 @@ import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
 import 'package:kinder_world/core/widgets/child_safe_ui.dart';
 import 'package:kinder_world/core/widgets/cloudinary_video_player_view.dart';
+import 'package:kinder_world/core/widgets/parent_gate_dialog.dart';
 import 'package:kinder_world/features/child_mode/learn/data/learn_catalog.dart';
 import 'package:kinder_world/features/child_mode/learn/coloring_gallery_screen.dart';
 import 'package:kinder_world/routing/route_paths.dart';

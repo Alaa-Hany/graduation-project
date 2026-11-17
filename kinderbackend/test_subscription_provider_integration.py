@@ -52,7 +52,12 @@ class FakeStripeProvider:
             subscription_id=self.state.subscription_id,
             payment_intent_id=self.state.payment_intent_id,
             raw={"metadata": metadata, "plan_id": plan_id, "email": user_email, "name": user_name},
+            metadata=self._remember_metadata(metadata),
         )
+
+    def _remember_metadata(self, metadata):
+        self.last_metadata = dict(metadata)
+        return dict(metadata)
 
     def retrieve_checkout_session(self, *, session_id: str) -> CheckoutSessionResult:
         assert session_id == self.state.session_id
@@ -67,6 +72,7 @@ class FakeStripeProvider:
             payment_intent_id=self.state.payment_intent_id,
             payment_method_id="pm_card_visa",
             raw={"mode": "external_test"},
+            metadata=dict(getattr(self, "last_metadata", {})),
         )
 
     def create_billing_portal_session(

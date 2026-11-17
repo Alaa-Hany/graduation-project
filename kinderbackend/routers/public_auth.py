@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from sqlalchemy.orm import Session
 
 from deps import get_current_user, get_db
 from models import User
 from rate_limit import (
+    _client_ip,
     auth_rate_limit,
     email_otp_resend_rate_limit,
     email_otp_verify_rate_limit,
@@ -149,7 +150,7 @@ def child_login(
     db: Session = Depends(get_db),
     rate_limit_check: None = auth_rate_limit_check,
 ):
-    client_ip = request.client.host if request.client else "unknown"
+    client_ip = _client_ip(request)
     user_agent = request.headers.get("User-Agent")
     return login_child(payload, db, client_ip=client_ip, user_agent=user_agent)
 
@@ -170,15 +171,19 @@ def child_session_validate(
 @router.post(
     "/auth/child/change-password",
     summary="Change Child Picture Password",
-    description="Rotate the child's picture-password sequence after validating the current sequence.",
+    description=(
+        "Rotate the child's picture-password sequence after validating the current "
+        "sequence. Requires the owning parent's access token."
+    ),
     response_description="Success status for the password rotation request.",
 )
 def child_change_password(
     payload: ChildChangePasswordIn,
     db: Session = Depends(get_db),
+    parent: User = Depends(get_current_user),
     rate_limit_check: None = auth_rate_limit_check,
 ):
-    return change_child_password(payload, db)
+    return change_child_password(payload, parent, db)
 
 
 @router.post(
@@ -221,10 +226,11 @@ def child_reset_picture_password(
 )
 def forgot_password(
     payload: ForgotPasswordIn,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     rate_limit_check: None = password_reset_rate_limit_check,
 ):
-    return auth_service.request_password_reset(payload, db)
+    return auth_service.request_password_reset(payload, db, background_tasks=background_tasks)
 
 
 @router.post(

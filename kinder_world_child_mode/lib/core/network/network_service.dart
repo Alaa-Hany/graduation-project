@@ -12,6 +12,9 @@ import 'package:kinder_world/core/utils/session_token_utils.dart';
 import 'package:logger/logger.dart';
 
 class NetworkService {
+  /// Header that marks a write as safe to retry (the backend de-duplicates it).
+  static const idempotencyKeyHeader = 'Idempotency-Key';
+
   final Dio _dio;
   final Connectivity _connectivity;
   final SecureStorage _secureStorage;
@@ -644,11 +647,30 @@ class RetryInterceptor extends Interceptor {
   }
 
   bool _shouldRetry(DioException err) {
-    return err.type == DioExceptionType.connectionError ||
+    final transient = err.type == DioExceptionType.connectionError ||
         err.type == DioExceptionType.connectionTimeout ||
         err.type == DioExceptionType.receiveTimeout ||
         err.type == DioExceptionType.sendTimeout ||
         (err.response?.statusCode != null && err.response!.statusCode! >= 500);
+    return transient && isSafeToRetry(err.requestOptions);
+  }
+
+  /// Only replay requests that cannot do anything twice. A POST that timed
+  /// out may already have been applied on the server (a payment, a message,
+  /// a deleted account), so it is retried only when it carries an
+  /// Idempotency-Key the backend uses to drop the duplicate.
+  static bool isSafeToRetry(RequestOptions options) {
+    const safeMethods = {'GET', 'HEAD', 'OPTIONS'};
+    if (safeMethods.contains(options.method.toUpperCase())) {
+      return true;
+    }
+    final key = options.headers.entries
+        .where((entry) =>
+            entry.key.toLowerCase() ==
+            NetworkService.idempotencyKeyHeader.toLowerCase())
+        .map((entry) => entry.value?.toString().trim() ?? '')
+        .firstWhere((value) => value.isNotEmpty, orElse: () => '');
+    return key.isNotEmpty;
   }
 
   bool _shouldUseAltDevPort(
